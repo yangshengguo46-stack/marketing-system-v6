@@ -186,6 +186,8 @@ _FRAMEWORK_STRUCTURED_TAGS = [
     "critical_reminders",
     "response_style",
     "citations",
+    "content_intelligence",
+    "content_intelligence_method",
     "skill_index",
     "available_skills",
     "disabled_skills",

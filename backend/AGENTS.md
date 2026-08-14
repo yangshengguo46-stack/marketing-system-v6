@@ -150,6 +150,23 @@ from deerflow.config import get_app_config
 # from app.gateway.routers.uploads import ...  # ← will fail CI
 ```
 
+### V6 Content Incubation Core
+
+`packages/harness/deerflow/content_intelligence/` defines one inspectable
+`ComprehensionRecord` plus three optional projections: `BusinessSemanticView`,
+`ContentWorldView`, and `TopicBrief`. The built-in
+`analyze_content_intelligence` tool performs one structured model call and
+returns the bundle to the Lead; the Lead retains final incubation judgment. The tool
+is optional and must not become middleware or a fixed stage.
+
+The deterministic layer validates IDs, source and basis references, claim provenance,
+and projection binding. It must not contain industry examples or decide content roots.
+Model knowledge without supplied evidence remains a visible hypothesis with a
+limitation or verification query. Do not add presentation format, platform, sales,
+experiments, publishing, or fixed delivery quantities to this module. Tests live in
+`tests/test_content_intelligence_*.py`; architecture and decisions live in
+`../docs/content-intelligence-v6/`.
+
 Package import hygiene: the `deerflow.agents` and `deerflow.subagents` package
 roots expose heavyweight graph/executor entrypoints lazily. Internal modules
 that only need lightweight types, config, or registries should import the
