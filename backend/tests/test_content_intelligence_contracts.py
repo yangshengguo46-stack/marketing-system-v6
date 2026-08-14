@@ -4,12 +4,14 @@ import pytest
 from pydantic import ValidationError
 
 from deerflow.content_intelligence import (
+    AnalysisFocus,
     BasisRef,
     BusinessSemanticView,
     ComprehensionRecord,
     ContentIntelligenceBundle,
     ContentPath,
     ContentPathStep,
+    ContentRootCandidate,
     ContentWorldView,
     GroundedStatement,
     Interpretation,
@@ -19,6 +21,7 @@ from deerflow.content_intelligence import (
     TopicBrief,
     Unknown,
 )
+from deerflow.tools.builtins.content_intelligence_tool import _lead_projection
 
 
 def _source(content: str = "我是做重庆火锅底料的") -> SourceItem:
@@ -199,14 +202,13 @@ def _bundle(record_id: str = "record-1") -> ContentIntelligenceBundle:
                 basis_refs=(BasisRef(kind="interpretation", ref_id="interpretation-1"),),
             ),
         ),
-        rationale="保留从内容世界回到商业对象的路径。",
+        rationale="这是具体选题的理解路径，不属于内容地图。",
     )
     content_world = ContentWorldView(
         record_id=record_id,
         source_object="重庆火锅底料",
         content_root="火锅",
         root_rationale="火锅是待展开的内容世界，不是销售方案。",
-        return_path=content_path,
     )
     topic_brief = TopicBrief(
         record_id=record_id,
@@ -234,7 +236,46 @@ def test_three_projections_share_one_record_without_becoming_one_stage() -> None
     assert bundle.content_world is not None
     assert bundle.content_world.content_root == "火锅"
     assert bundle.topic_brief is not None
-    assert bundle.topic_brief.path.path_id == bundle.content_world.return_path.path_id
+    assert bundle.topic_brief.path.path_id == "path-1"
+
+
+def test_semantic_and_world_views_keep_the_attention_handoff_visible() -> None:
+    record = _record()
+    semantic_basis = (BasisRef(kind="interpretation", ref_id="interpretation-1"),)
+    semantics = BusinessSemanticView(
+        record_id=record.record_id,
+        commercial_object=GroundedStatement(text="重庆火锅底料", basis_refs=semantic_basis),
+        lexical_head=GroundedStatement(text="底料", basis_refs=semantic_basis),
+        offering_role="intermediate_enabler",
+        role_rationale="底料用于完成火锅，而不是终端餐饮对象。",
+        served_objects=(GroundedStatement(text="火锅", basis_refs=semantic_basis),),
+        served_activities=(GroundedStatement(text="制作火锅", basis_refs=semantic_basis),),
+        defining_functions_or_uses=(GroundedStatement(text="形成火锅锅底风味", basis_refs=semantic_basis),),
+        social_or_cultural_frames=(GroundedStatement(text="火锅饮食文化", basis_refs=semantic_basis),),
+    )
+    world = ContentWorldView(
+        record_id=record.record_id,
+        source_object="重庆火锅底料",
+        audience_territory=GroundedStatement(text="火锅", basis_refs=semantic_basis),
+        content_root="火锅",
+        root_rationale="底料是火锅的中间实现物，火锅是更完整的对象世界。",
+        root_candidates=(
+            ContentRootCandidate(
+                candidate_id="candidate-firepot",
+                label="火锅",
+                relation_to_business="底料服务的完整对象",
+                strength="完整且可长期展开",
+                overreach_risk="不能把任何饮食习惯都混成火锅",
+                basis_refs=semantic_basis,
+            ),
+        ),
+    )
+
+    assert semantics.offering_role == "intermediate_enabler"
+    assert semantics.served_objects[0].text == "火锅"
+    assert semantics.served_activities[0].text == "制作火锅"
+    assert world.audience_territory.text == "火锅"
+    assert world.root_candidates[0].candidate_id == "candidate-firepot"
 
 
 def test_projection_cannot_attach_to_a_different_record() -> None:
@@ -248,10 +289,47 @@ def test_projection_contracts_do_not_own_format_sales_platform_or_experiments() 
         ContentWorldView.model_json_schema(),
         TopicBrief.model_json_schema(),
     )
-    forbidden = {"presentation_format", "platform", "sales_plan", "experiment"}
+    forbidden = {
+        "presentation_format",
+        "platform",
+        "sales_plan",
+        "experiment",
+        "object_anchor",
+        "return_path",
+        "bridge_path",
+    }
 
     for schema in schemas:
         assert forbidden.isdisjoint(schema["properties"])
+
+
+def test_lead_projection_is_compact_and_keeps_map_claims_provisional() -> None:
+    payload = _lead_projection(_bundle(), focus=AnalysisFocus.CONTENT_WORLD)
+
+    assert "record" not in payload
+    assert "observations" not in payload
+    assert "interpretations" not in payload
+    assert payload["record_fingerprint"]
+    assert payload["content_world"]["content_root"] == "火锅"
+    assert payload["scope"]["map_axis"] == "火锅"
+    assert "commercial_object_role" not in payload["scope"]
+    assert "unrequested downstream operating plan" in payload["scope"]["does_not_support"]
+    assert payload["scope"]["supports"] == [
+        "semantic transition",
+        "content root",
+        "audience territory",
+        "research directions",
+    ]
+    assert "object_anchor" not in payload["content_world"]
+    assert "bridge_path" not in payload["content_world"]
+    assert "root_candidates" not in payload["content_world"]
+    assert "source_object" not in payload["content_world"]
+    assert "business_semantics" not in payload
+    assert "unknowns" not in payload
+    assert payload["semantic_transition"]["lexical_head"] == "底料"
+    assert "platform choice" in payload["scope"]["does_not_support"]
+    assert "posting cadence" in payload["scope"]["does_not_support"]
+    assert "numeric quota" in payload["scope"]["does_not_support"]
 
 
 def test_record_fingerprint_is_stable_and_changes_with_source_content() -> None:

@@ -11,8 +11,13 @@ from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceDraft,
     ContentIntelligenceRequest,
+    ContentRootSelectionDraft,
+    FrozenContentMapDraft,
+    SemanticReadingDraft,
     SourceMaterial,
     analyze_content_intelligence,
+    render_content_world_narration,
+    synthesize_content_world_narration,
 )
 
 
@@ -59,6 +64,172 @@ class StructuredFakeModel:
             "parsed": parsed,
             "parsing_error": parsing_error,
         }
+
+
+class SequencedStructuredFakeModel:
+    def __init__(self, payloads: dict[type, dict[str, Any]]) -> None:
+        self.payloads = payloads
+        self.current_schema = None
+        self.schemas: list[type] = []
+        self.message_batches: list[tuple[object, ...]] = []
+        self.include_raw_flags: list[bool] = []
+        self.calls = 0
+
+    def with_structured_output(self, schema, *, include_raw: bool = False):
+        self.current_schema = schema
+        self.schemas.append(schema)
+        self.include_raw_flags.append(include_raw)
+        return self
+
+    async def ainvoke(self, messages, config=None):
+        self.calls += 1
+        self.message_batches.append(tuple(messages))
+        return self.current_schema.model_validate(self.payloads[self.current_schema])
+
+
+class RawContentSequencedFakeModel(SequencedStructuredFakeModel):
+    async def ainvoke(self, messages, config=None):
+        self.calls += 1
+        self.message_batches.append(tuple(messages))
+        payload = self.payloads[self.current_schema]
+        if self.current_schema is SemanticReadingDraft:
+            return {
+                "raw": AIMessage(content=f"```json\n{json.dumps(payload, ensure_ascii=False)}\n```"),
+                "parsed": None,
+                "parsing_error": ValueError("provider returned JSON as message content"),
+            }
+        return self.current_schema.model_validate(payload)
+
+
+class MalformedToolArgumentsSequencedFakeModel(SequencedStructuredFakeModel):
+    async def ainvoke(self, messages, config=None):
+        self.calls += 1
+        self.message_batches.append(tuple(messages))
+        payload = self.payloads[self.current_schema]
+        if self.current_schema is FrozenContentMapDraft:
+            malformed = json.dumps(payload, ensure_ascii=False).replace('"unknowns": []', "\"unknowns\": ['待核验']")
+            return {
+                "raw": AIMessage(
+                    content="",
+                    invalid_tool_calls=[
+                        {
+                            "name": "FrozenContentMapDraft",
+                            "args": malformed,
+                            "id": "malformed-map-call",
+                            "error": None,
+                            "type": "invalid_tool_call",
+                        }
+                    ],
+                ),
+                "parsed": None,
+                "parsing_error": ValueError("provider emitted one Python-style string inside JSON arguments"),
+            }
+        return self.current_schema.model_validate(payload)
+
+
+class RetryableMalformedMapFakeModel(SequencedStructuredFakeModel):
+    def __init__(self, payloads: dict[type, dict[str, Any]]) -> None:
+        super().__init__(payloads)
+        self.map_attempts = 0
+
+    async def ainvoke(self, messages, config=None):
+        self.calls += 1
+        self.message_batches.append(tuple(messages))
+        payload = self.payloads[self.current_schema]
+        if self.current_schema is FrozenContentMapDraft:
+            self.map_attempts += 1
+            if self.map_attempts == 1:
+                return {
+                    "raw": AIMessage(
+                        content="",
+                        invalid_tool_calls=[
+                            {
+                                "name": "FrozenContentMapDraft",
+                                "args": json.dumps(payload, ensure_ascii=False) + "}",
+                                "id": "structurally-invalid-map-call",
+                                "error": None,
+                                "type": "invalid_tool_call",
+                            }
+                        ],
+                    ),
+                    "parsed": None,
+                    "parsing_error": ValueError("provider emitted an extra closing brace"),
+                }
+        return self.current_schema.model_validate(payload)
+
+
+class PlainNarrationFakeModel:
+    def __init__(self, content: str) -> None:
+        self.content = content
+        self.message_batches: list[tuple[object, ...]] = []
+        self.configs: list[object] = []
+        self.calls = 0
+
+    def with_structured_output(self, schema, *, include_raw: bool = False):
+        raise AssertionError("the prose editor must not serialize long-form copy as JSON")
+
+    async def ainvoke(self, messages, config=None):
+        self.calls += 1
+        self.message_batches.append(tuple(messages))
+        self.configs.append(config)
+        return AIMessage(content=self.content)
+
+
+def _semantic_payload() -> dict[str, Any]:
+    return {
+        "source_object": "重庆火锅底料",
+        "lexical_head": "底料",
+        "modifiers": [
+            {"term": "重庆火锅", "relation": "served_object", "modifies": "底料"},
+        ],
+        "offering_role": "intermediate_enabler",
+        "role_rationale": "底料是完成火锅的调味基底。",
+        "served_objects": ["火锅"],
+        "served_activities": ["制作火锅"],
+        "defining_functions_or_uses": ["形成火锅锅底风味"],
+        "social_or_cultural_frames": ["火锅饮食文化"],
+        "seller_actions": [],
+        "uncertainties": [],
+    }
+
+
+def _root_selection_payload() -> dict[str, Any]:
+    return {
+        "source_object": "重庆火锅底料",
+        "audience_territory": "火锅",
+        "root_rationale": "底料是中间实现物，火锅是完整对象世界。",
+        "candidates": [
+            {
+                "level": "served_object_or_activity",
+                "label": "火锅",
+                "relation_to_business": "底料服务的完整对象",
+                "strength": "完整且有长期内容容量",
+                "overreach_risk": "不能把任何饮食习惯都混成火锅",
+            },
+        ],
+        "selected_candidate_index": 0,
+        "unknowns": [],
+    }
+
+
+def _frozen_map_payload() -> dict[str, Any]:
+    return {
+        "map_directions": [
+            {"dimension": "地域饮食", "actual_directions": ["不同地区火锅锅底为什么不同"]},
+        ],
+        "named_candidates": [],
+        "unknowns": [],
+    }
+
+
+def _focused_model() -> SequencedStructuredFakeModel:
+    return SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: _semantic_payload(),
+            ContentRootSelectionDraft: _root_selection_payload(),
+            FrozenContentMapDraft: _frozen_map_payload(),
+        }
+    )
 
 
 def _payload() -> dict[str, Any]:
@@ -108,21 +279,7 @@ def _payload() -> dict[str, Any]:
         "content_world": {
             "source_object": "咖啡设备维修服务",
             "content_root": "咖啡设备故障与出品问题",
-            "root_rationale": "这个世界能回到维修服务，但仍需要客户信息验证。",
-            "return_path": {
-                "path_id": "path-1",
-                "steps": [
-                    {
-                        "from_label": "咖啡设备维修服务",
-                        "relation": "解决",
-                        "to_label": "设备故障与出品问题",
-                        "basis_refs": [{"kind": "interpretation", "ref_id": "interpretation-1"}],
-                        "status": "grounded",
-                        "verification_needed": False,
-                    }
-                ],
-                "rationale": "保留与商业对象的回程。",
-            },
+            "root_rationale": "这个世界围绕设备故障与出品关系展开，但仍需要具体故障证据。",
             "dimensions": [],
             "named_candidates": [
                 {
@@ -174,7 +331,7 @@ async def test_analyzer_builds_one_shared_record_and_optional_views() -> None:
 
 @pytest.mark.asyncio
 async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota() -> None:
-    model = StructuredFakeModel(_payload())
+    model = _focused_model()
     request = ContentIntelligenceRequest(
         user_request="我是做咖啡设备维修的，这个账号可以讲什么？",
         subject_expression="我是做咖啡设备维修的",
@@ -182,7 +339,7 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     )
 
     await analyze_content_intelligence(request, model=model)
-    system_text = model.messages[0].content
+    system_text = "\n".join(batch[0].content for batch in model.message_batches)
 
     assert "黄金礼品" not in system_text
     assert "海鲜" not in system_text
@@ -190,6 +347,19 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "10 天" not in system_text
     assert "3 个候选" not in system_text
     assert "列表可以为空" in system_text
+    assert "商业特异性不必重复在内容根中" in system_text
+    assert "某种关系或场景很常见、很有内容，不等于它定义了该品类" in system_text
+    assert "去掉该关系或场景后，对象仍可独立成立" in system_text
+    assert "不得把对一个完整对象的制作、使用或消费动作冒充成更完整的对象" in system_text
+    assert "地图边界只受已冻结内容根约束" in system_text
+    assert "商品回桥" not in system_text
+    assert "回到商品" not in system_text
+    assert "不能把较窄对象与较宽关系世界拼成折中混合根" in system_text
+    assert "不要用抽象的‘XX文化’代替已经识别出的具体活动与关系" in system_text
+    assert "逐层拆解复合修饰关系" in system_text
+    assert "输入只包含已冻结的内容根" in system_text
+    assert "向下的种类与子世界" in system_text
+    assert "跨领域作品与公共对象" in system_text
 
 
 @pytest.mark.asyncio
@@ -210,7 +380,7 @@ async def test_analyzer_rejects_a_model_observation_that_cannot_be_traced() -> N
 @pytest.mark.asyncio
 async def test_same_sources_produce_the_same_record_id_across_requested_views() -> None:
     first_model = StructuredFakeModel(_payload())
-    second_model = StructuredFakeModel(_payload())
+    second_model = _focused_model()
     first_request = ContentIntelligenceRequest(
         user_request="解释这句业务表达",
         subject_expression="我是做咖啡设备维修的",
@@ -227,12 +397,26 @@ async def test_same_sources_produce_the_same_record_id_across_requested_views() 
 @pytest.mark.asyncio
 async def test_analyzer_decodes_provider_stringified_projection_objects_without_retry() -> None:
     payload = _payload()
+    topic_path = {
+        "path_id": "path-1",
+        "steps": [
+            {
+                "from_label": "咖啡设备故障",
+                "relation": "影响",
+                "to_label": "咖啡出品",
+                "basis_refs": [{"kind": "interpretation", "ref_id": "interpretation-1"}],
+                "status": "grounded",
+                "verification_needed": False,
+            }
+        ],
+        "rationale": "这是当前选题的理解路径。",
+    }
     payload["topic_brief"] = {
         "question": "咖啡为什么会因设备故障变难喝？",
         "central_claim": "部分口感问题可能来自设备状态，而不只是咖啡豆。",
         "mechanism": "从设备故障与出品问题的关系中形成待取证命题。",
         "counterpoint": "当前材料尚未证明任何具体故障与口感的因果关系。",
-        "path": payload["content_world"]["return_path"],
+        "path": topic_path,
         "evidence_refs": [{"kind": "observation", "ref_id": "observation-1"}],
         "unknown_refs": ["unknown-1"],
         "research_needed": ["取得具体故障与出品变化的可核验材料"],
@@ -252,3 +436,172 @@ async def test_analyzer_decodes_provider_stringified_projection_objects_without_
     assert bundle.business_semantics is not None
     assert bundle.content_world is not None
     assert bundle.topic_brief is not None
+
+
+@pytest.mark.asyncio
+async def test_content_world_focus_uses_semantic_attention_before_map_expansion() -> None:
+    model = _focused_model()
+    request = ContentIntelligenceRequest(
+        user_request="我是做重庆火锅底料的，我要怎么起号？",
+        subject_expression="我是做重庆火锅底料的",
+        focus=AnalysisFocus.CONTENT_WORLD,
+    )
+
+    bundle = await analyze_content_intelligence(request, model=model)
+
+    assert model.schemas == [SemanticReadingDraft, ContentRootSelectionDraft, FrozenContentMapDraft]
+    assert model.include_raw_flags == [True, True, True]
+    assert model.calls == 3
+    assert "怎么起号" not in model.message_batches[0][1].content
+    assert "怎么起号" not in model.message_batches[1][1].content
+    assert "怎么起号" not in model.message_batches[2][1].content
+    assert "intermediate_enabler" in model.message_batches[1][1].content
+    assert '"primary_content_center": "火锅"' in model.message_batches[2][1].content
+    assert "重庆火锅底料" not in model.message_batches[2][1].content
+    assert "semantic_reading" not in model.message_batches[2][1].content
+    assert "source_object" not in model.message_batches[2][1].content
+    assert "object_anchor" not in model.message_batches[2][1].content
+    assert "bridge_path" not in model.message_batches[2][1].content
+    assert "商品" not in model.message_batches[2][0].content
+    assert "销售" not in model.message_batches[2][0].content
+    assert bundle.business_semantics.offering_role == "intermediate_enabler"
+    assert bundle.business_semantics.served_objects[0].text == "火锅"
+    assert bundle.business_semantics.served_activities[0].text == "制作火锅"
+    assert bundle.content_world.content_root == "火锅"
+    assert bundle.content_world.dimensions[0].paths[0].steps[0].to_label == "不同地区火锅锅底为什么不同"
+
+
+@pytest.mark.asyncio
+async def test_analyzer_recovers_provider_json_message_content_without_retry() -> None:
+    model = RawContentSequencedFakeModel(
+        {
+            SemanticReadingDraft: _semantic_payload(),
+            ContentRootSelectionDraft: _root_selection_payload(),
+            FrozenContentMapDraft: _frozen_map_payload(),
+        }
+    )
+    request = ContentIntelligenceRequest(
+        user_request="我是做重庆火锅底料的，我要怎么起号？",
+        subject_expression="我是做重庆火锅底料的",
+        focus=AnalysisFocus.CONTENT_WORLD,
+    )
+
+    bundle = await analyze_content_intelligence(request, model=model)
+
+    assert model.calls == 3
+    assert bundle.business_semantics.offering_role == "intermediate_enabler"
+    assert bundle.content_world.content_root == "火锅"
+
+
+@pytest.mark.asyncio
+async def test_analyzer_recovers_safe_python_literal_in_invalid_tool_arguments() -> None:
+    model = MalformedToolArgumentsSequencedFakeModel(
+        {
+            SemanticReadingDraft: _semantic_payload(),
+            ContentRootSelectionDraft: _root_selection_payload(),
+            FrozenContentMapDraft: _frozen_map_payload(),
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做重庆火锅底料的，我要怎么起号？",
+            subject_expression="我是做重庆火锅底料的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+    assert model.calls == 3
+    assert bundle.content_world.content_root == "火锅"
+    assert bundle.record.unknowns[-1].question == "待核验"
+
+
+@pytest.mark.asyncio
+async def test_analyzer_retries_one_structurally_invalid_specialist_response() -> None:
+    model = RetryableMalformedMapFakeModel(
+        {
+            SemanticReadingDraft: _semantic_payload(),
+            ContentRootSelectionDraft: _root_selection_payload(),
+            FrozenContentMapDraft: _frozen_map_payload(),
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做重庆火锅底料的，我要怎么起号？",
+            subject_expression="我是做重庆火锅底料的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+    assert model.map_attempts == 2
+    assert model.calls == 4
+    assert len(model.message_batches[-1]) == 3
+    assert "只重新返回符合结构合同的内容" in model.message_batches[-1][-1].content
+    assert bundle.content_world.content_root == "火锅"
+
+
+def test_root_selection_requires_the_chosen_root_to_be_an_explicit_candidate() -> None:
+    payload = _root_selection_payload()
+    payload["selected_candidate_index"] = 99
+
+    with pytest.raises(ValidationError, match="explicit candidate"):
+        ContentRootSelectionDraft.model_validate(payload)
+
+
+def test_root_selection_schema_does_not_own_commercial_return_design() -> None:
+    properties = ContentRootSelectionDraft.model_json_schema()["properties"]
+
+    assert "object_anchor" not in properties
+    assert "bridge_path" not in properties
+
+
+def test_frozen_map_schema_cannot_reselect_the_content_root() -> None:
+    properties = FrozenContentMapDraft.model_json_schema()["properties"]
+
+    assert "primary_content_center" not in properties
+    assert "object_anchor" not in properties
+    assert "audience_territory" not in properties
+
+
+@pytest.mark.asyncio
+async def test_content_world_narrator_only_converges_the_frozen_map() -> None:
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做重庆火锅底料的，我要怎么起号？",
+            subject_expression="我是做重庆火锅底料的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=_focused_model(),
+    )
+    narration = "# 火锅\n\n底料是完成火锅的中间载体，内容世界应进入火锅本身。\n\n## 地域与饮食习惯\n\n从“为什么这里吃这种火锅”理解地域环境和生活。\n\n- 不同地区火锅锅底为什么不同"
+    narrator = PlainNarrationFakeModel(narration)
+
+    draft = await synthesize_content_world_narration(
+        bundle,
+        model=narrator,
+        runnable_config={"callbacks": ["user-visible-stream"]},
+    )
+    rendered = render_content_world_narration(bundle, draft)
+
+    assert narrator.calls == 1
+    assert narrator.configs == [{"callbacks": []}]
+    narration_input = narrator.message_batches[0][1].content
+    assert '"content_root": "火锅"' in narration_input
+    assert '"offering_role": "intermediate_enabler"' in narration_input
+    assert '"served_objects"' in narration_input
+    assert '"served_activities"' in narration_input
+    assert '"root_rationale": "底料是中间实现物，火锅是完整对象世界。"' in narration_input
+    assert "root_candidates" not in narration_input
+    assert "unknowns" not in narration_input
+    assert "bridge" not in narration_input.lower()
+    assert "正文到内容判断为止" in narrator.message_batches[0][0].content
+    assert "商品回桥" not in narrator.message_batches[0][0].content
+    assert "商品" not in narrator.message_batches[0][0].content
+    assert "产品" not in narrator.message_batches[0][0].content
+    assert rendered == narration
+    assert "不同地区火锅锅底为什么不同" in rendered
+    assert "平台" not in rendered
+    assert "请告诉我" not in rendered

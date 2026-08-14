@@ -745,11 +745,18 @@ Use it as-is. Or tear it apart and make it yours.
 ### Content Incubation Intelligence (V6 candidate)
 
 This branch adds an optional, inspectable comprehension workspace for content
-incubation and new-media operations. A single structured model call separates source
-observations, interpretations, hypotheses, counterevidence, and unknowns into one
-`ComprehensionRecord`, then exposes independent business-semantic, content-world, and
-topic-brief views. The Lead agent keeps final judgment; the tool is not a mandatory
-workflow and does not choose presentation format, sales, experiments, or publishing.
+incubation and new-media operations. Business-semantic and topic-specific requests can
+still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
+the direct `explore_content_world` path: isolated semantic reading, content-root
+selection, frozen-root expansion, and a prose editor. Each specialist sees only the
+input it owns. The completed prose is delivered through the native return-direct exit
+and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
+it back into a product catalogue.
+
+The content-world contract contains no product anchor or commercial return path. It
+does not choose presentation format, platform, sales, experiments, or publishing.
+Commercial conversion, when implemented, belongs to a later independent projection and
+must not rewrite the semantic reading or content map.
 
 The contracts and first decision record are documented in
 [`docs/content-intelligence-v6/`](docs/content-intelligence-v6/).

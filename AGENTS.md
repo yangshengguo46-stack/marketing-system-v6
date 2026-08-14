@@ -180,8 +180,8 @@ These apply repo-wide; module guides own the module-specific detail.
 - **Test-driven development** — features and bug fixes ship with tests. Backend tests live
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
-- **V6 content incubation core** — `deerflow.content_intelligence` owns one shared
-  comprehension record and three optional projections. It is not a mandatory workflow;
-  see `backend/AGENTS.md` and `docs/content-intelligence-v6/` for its boundaries.
+- **V6 content incubation core** — broad content-world requests use bounded specialists
+  and no commercial-return map fields. See `backend/AGENTS.md` and
+  `docs/content-intelligence-v6/` for the full boundary.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

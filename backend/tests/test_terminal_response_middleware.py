@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 import pytest
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
-from langchain_core.tools import tool
+from langchain_core.tools import InjectedToolCallId, tool
+from langgraph.types import Command
 
 from deerflow.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
 from deerflow.runtime.runs.worker import _extract_llm_error_fallback_message
@@ -17,6 +18,26 @@ from deerflow.runtime.runs.worker import _extract_llm_error_fallback_message
 def lookup_status() -> str:
     """Return a deterministic tool result."""
     return "tool completed"
+
+
+@tool(return_direct=True)
+def direct_status(tool_call_id: Annotated[str, InjectedToolCallId]) -> Command:
+    """Return a final user-facing response without another model turn."""
+    return Command(
+        update={
+            "messages": [
+                ToolMessage(
+                    content="# Direct answer\n\nOne model turn is enough.",
+                    tool_call_id=tool_call_id,
+                    name="direct_status",
+                    additional_kwargs={
+                        "hide_from_ui": True,
+                        "deerflow_direct_response": True,
+                    },
+                )
+            ]
+        }
+    )
 
 
 class _PostToolResponseModel(BaseChatModel):
@@ -87,6 +108,32 @@ class _PerRunRetryBudgetModel(BaseChatModel):
         return self._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
 
 
+class _ReturnDirectModel(BaseChatModel):
+    call_count: int = 0
+
+    @property
+    def _llm_type(self) -> str:
+        return "return-direct"
+
+    def bind_tools(self, tools, **kwargs):
+        return self
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        self.call_count += 1
+        if self.call_count == 1:
+            message = AIMessage(
+                content="",
+                tool_calls=[{"id": "direct-call-1", "name": "direct_status", "args": {}}],
+                response_metadata={"finish_reason": "tool_calls"},
+            )
+        else:
+            message = AIMessage(content="This second model call must never happen.")
+        return ChatResult(generations=[ChatGeneration(message=message)])
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        return self._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
+
+
 def _agent(model: BaseChatModel):
     return create_agent(
         model=model,
@@ -114,6 +161,28 @@ def test_retries_empty_post_tool_response_once_and_returns_model_answer():
     assert _empty_terminal_messages(result["messages"]) == []
     assert any(isinstance(message, HumanMessage) and message.name == "terminal_response_recovery" and message.additional_kwargs.get("hide_from_ui") is True for message in model.observed_messages[-1])
     assert not any(isinstance(message, HumanMessage) and message.name == "terminal_response_recovery" for message in result["messages"])
+
+
+def test_return_direct_tool_is_promoted_after_routing_without_a_second_model_call():
+    model = _ReturnDirectModel()
+    agent = create_agent(
+        model=model,
+        tools=[direct_status],
+        middleware=[TerminalResponseMiddleware()],
+    )
+
+    result = agent.invoke(
+        {"messages": [HumanMessage(content="Give me the direct answer")]},
+        context={"thread_id": "thread-direct", "run_id": "run-direct"},
+    )
+
+    assert model.call_count == 1
+    assert isinstance(result["messages"][-2], ToolMessage)
+    assert result["messages"][-2].additional_kwargs["hide_from_ui"] is True
+    final = result["messages"][-1]
+    assert isinstance(final, AIMessage)
+    assert final.id == "direct-call-1:answer"
+    assert final.content == "# Direct answer\n\nOne model turn is enough."
 
 
 def test_second_empty_post_tool_response_becomes_visible_error_fallback():

@@ -22,6 +22,12 @@ BasisKind = Literal[
 ]
 InterpretationKind = Literal["derived", "hypothesis"]
 ClaimProvenance = Literal["observed", "derived", "hypothesis"]
+OfferingRole = Literal[
+    "complete_object_or_service",
+    "intermediate_enabler",
+    "operating_container",
+    "ambiguous",
+]
 
 
 class ContractModel(BaseModel):
@@ -233,6 +239,12 @@ class BusinessSemanticView(ContractModel):
     lexical_head: GroundedStatement | None = None
     modifiers: tuple[ModifierReading, ...] = ()
     subject_actions: tuple[GroundedStatement, ...] = ()
+    offering_role: OfferingRole | None = None
+    role_rationale: NonEmptyStr | None = None
+    served_objects: tuple[GroundedStatement, ...] = ()
+    served_activities: tuple[GroundedStatement, ...] = ()
+    defining_functions_or_uses: tuple[GroundedStatement, ...] = ()
+    social_or_cultural_frames: tuple[GroundedStatement, ...] = ()
     summary: NonEmptyStr | None = None
     unknown_refs: tuple[NonEmptyStr, ...] = ()
 
@@ -289,12 +301,22 @@ class NamedCandidate(ContractModel):
         return self
 
 
+class ContentRootCandidate(ContractModel):
+    candidate_id: NonEmptyStr
+    label: NonEmptyStr
+    relation_to_business: NonEmptyStr
+    strength: NonEmptyStr
+    overreach_risk: NonEmptyStr
+    basis_refs: BasisRefs
+
+
 class ContentWorldView(ContractModel):
     record_id: NonEmptyStr
     source_object: NonEmptyStr | None = None
+    audience_territory: GroundedStatement | None = None
     content_root: NonEmptyStr | None = None
     root_rationale: NonEmptyStr | None = None
-    return_path: ContentPath | None = None
+    root_candidates: tuple[ContentRootCandidate, ...] = ()
     dimensions: tuple[ContentDimension, ...] = ()
     named_candidates: tuple[NamedCandidate, ...] = ()
     unknown_refs: tuple[NonEmptyStr, ...] = ()
@@ -390,6 +412,10 @@ def _projection_basis_refs(
                 projection.commercial_object,
                 projection.lexical_head,
                 *projection.subject_actions,
+                *projection.served_objects,
+                *projection.served_activities,
+                *projection.defining_functions_or_uses,
+                *projection.social_or_cultural_frames,
             )
             if statement is not None
         )
@@ -398,8 +424,10 @@ def _projection_basis_refs(
             *tuple(ref for modifier in projection.modifiers for ref in modifier.basis_refs),
         )
     if isinstance(projection, ContentWorldView):
+        statements = tuple(statement for statement in (projection.audience_territory,) if statement is not None)
         return (
-            *tuple(_path_basis_refs(projection.return_path)),
+            *tuple(ref for statement in statements for ref in statement.basis_refs),
+            *tuple(ref for candidate in projection.root_candidates for ref in candidate.basis_refs),
             *tuple(ref for dimension in projection.dimensions for path in dimension.paths for ref in _path_basis_refs(path)),
             *tuple(ref for candidate in projection.named_candidates for ref in candidate.basis_refs),
         )

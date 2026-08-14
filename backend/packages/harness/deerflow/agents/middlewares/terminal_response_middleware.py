@@ -1,4 +1,4 @@
-"""Ensure tool-using lead-agent turns end with a visible assistant response."""
+"""Ensure tool-using lead-agent turns end with one visible assistant response."""
 
 from __future__ import annotations
 
@@ -25,6 +25,7 @@ _RECOVERY_PROMPT = (
 _FALLBACK_CONTENT = "The model completed the tool run but returned no final response, including after one automatic retry. Please try again or use a different model."
 
 _TOOL_CALL_FINISH_REASONS = {"tool_calls", "function_call"}
+_DIRECT_RESPONSE_KEY = "deerflow_direct_response"
 
 
 def _has_visible_content(message: AIMessage) -> bool:
@@ -71,8 +72,37 @@ def _tool_result_in_current_turn(messages: list[Any]) -> bool:
     return any(isinstance(message, ToolMessage) for message in messages[latest_user_index + 1 :])
 
 
+def _promote_direct_tool_response(state: AgentState) -> dict[str, Any] | None:
+    """Expose a tagged terminal tool result after return-direct routing has stopped."""
+    messages = list(state.get("messages") or [])
+    if not messages or not isinstance(messages[-1], ToolMessage):
+        return None
+
+    tool_message = messages[-1]
+    if (tool_message.additional_kwargs or {}).get(_DIRECT_RESPONSE_KEY) is not True:
+        return None
+    if not tool_message.tool_call_id:
+        return None
+
+    answer_id = f"{tool_message.tool_call_id}:answer"
+    if any(isinstance(message, AIMessage) and message.id == answer_id for message in messages):
+        return None
+    return {
+        "messages": [
+            AIMessage(
+                id=answer_id,
+                content=tool_message.content,
+                additional_kwargs={
+                    _DIRECT_RESPONSE_KEY: True,
+                    "source_tool_name": tool_message.name,
+                },
+            )
+        ]
+    }
+
+
 class TerminalResponseMiddleware(AgentMiddleware[AgentState]):
-    """Retry one empty post-tool response, then persist a visible error fallback."""
+    """Recover empty post-tool turns and promote tagged direct responses."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -206,9 +236,9 @@ class TerminalResponseMiddleware(AgentMiddleware[AgentState]):
     @override
     def after_agent(self, state: AgentState, runtime: Runtime) -> dict | None:
         self._clear(runtime)
-        return None
+        return _promote_direct_tool_response(state)
 
     @override
     async def aafter_agent(self, state: AgentState, runtime: Runtime) -> dict | None:
         self._clear(runtime)
-        return None
+        return _promote_direct_tool_response(state)

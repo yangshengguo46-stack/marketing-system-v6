@@ -154,16 +154,33 @@ from deerflow.config import get_app_config
 
 `packages/harness/deerflow/content_intelligence/` defines one inspectable
 `ComprehensionRecord` plus three optional projections: `BusinessSemanticView`,
-`ContentWorldView`, and `TopicBrief`. The built-in
-`analyze_content_intelligence` tool performs one structured model call and
-returns the bundle to the Lead; the Lead retains final incubation judgment. The tool
-is optional and must not become middleware or a fixed stage.
+`ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` remains an optional
+shared-record analysis for business semantics and topic briefs. Broad account-starting
+and long-term-content requests use the `return_direct` `explore_content_world` tool and
+four bounded specialists: semantic reader, content-root selector, frozen-root mapper,
+and prose editor.
+
+The first three specialists use local structured contracts. The mapper receives only
+the selected content root. The editor receives the semantic transition, frozen root,
+and map, then emits Markdown directly rather than serializing long Chinese prose into
+JSON. Its parent run callbacks must not be forwarded, otherwise the internal draft and
+direct tool result render twice. The tool node returns one hidden, tagged `ToolMessage`
+only. LangChain's native `return_direct` edge exits the model loop while the original
+tool-calling `AIMessage` is still the routing anchor; `TerminalResponseMiddleware` then
+promotes the tagged content to one visible `AIMessage` in `after_agent`. Never append
+that `AIMessage` inside the tool command: doing so changes the last AI routing anchor
+and causes an unwanted second Lead call. These specialists are bounded model workers
+inside one tool, not free-running DeerFlow `task` subagents, and they cannot mutate
+shared state. The tool is optional and must not become a fixed workflow stage.
 
 The deterministic layer validates IDs, source and basis references, claim provenance,
 and projection binding. It must not contain industry examples or decide content roots.
 Model knowledge without supplied evidence remains a visible hypothesis with a
-limitation or verification query. Do not add presentation format, platform, sales,
-experiments, publishing, or fixed delivery quantities to this module. Tests live in
+limitation or verification query. `ContentWorldView` must not gain `object_anchor`,
+`return_path`, `bridge_path`, product-placement, or conversion fields. Any future
+commercial acceptance logic belongs to a separate later projection and cannot rewrite
+the map. Do not add presentation format, platform, sales, experiments, publishing, or
+fixed delivery quantities to this module. Tests live in
 `tests/test_content_intelligence_*.py`; architecture and decisions live in
 `../docs/content-intelligence-v6/`.
 
