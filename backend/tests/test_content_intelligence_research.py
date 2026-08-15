@@ -1,0 +1,615 @@
+from __future__ import annotations
+
+from typing import Any
+
+import pytest
+from pydantic import ValidationError
+
+from deerflow.content_intelligence import (
+    AnalysisFocus,
+    ContentIntelligenceRequest,
+    EvidenceReadingDraft,
+    ResearchBudget,
+    ResearchDiscoveryDraft,
+    ResearchSearchResult,
+    TopicEditorialDecisionDraft,
+    enrich_content_world_with_research,
+    render_content_world_narration,
+)
+from deerflow.content_intelligence.analyzer import (
+    ContentRootSelectionDraft,
+    FrozenContentMapDraft,
+    SemanticReadingDraft,
+    analyze_content_intelligence,
+)
+from deerflow.content_intelligence.research import (
+    EVIDENCE_READING_SYSTEM_PROMPT,
+    RESEARCH_DISCOVERY_SYSTEM_PROMPT,
+    TOPIC_EDITOR_SYSTEM_PROMPT,
+)
+
+
+class SequencedStructuredFakeModel:
+    def __init__(self, payloads: dict[type, dict[str, Any]]) -> None:
+        self.payloads = payloads
+        self.current_schema = None
+        self.schemas: list[type] = []
+        self.message_batches: list[tuple[object, ...]] = []
+
+    def with_structured_output(self, schema, *, include_raw: bool = False):
+        self.current_schema = schema
+        self.schemas.append(schema)
+        return self
+
+    async def ainvoke(self, messages, config=None):
+        self.message_batches.append(tuple(messages))
+        return self.current_schema.model_validate(self.payloads[self.current_schema])
+
+
+def _semantic_payload() -> dict[str, Any]:
+    return {
+        "source_object": "regional meal base",
+        "lexical_head": "base",
+        "modifiers": [],
+        "offering_role": "intermediate_enabler",
+        "role_rationale": "The base helps complete a meal.",
+        "served_objects": ["shared meal"],
+        "served_activities": ["preparing the shared meal"],
+        "defining_functions_or_uses": ["forming its characteristic flavor"],
+        "social_or_cultural_frames": ["communal dining"],
+        "seller_actions": [],
+        "uncertainties": [],
+    }
+
+
+def _root_payload() -> dict[str, Any]:
+    return {
+        "source_object": "regional meal base",
+        "audience_territory": "shared meal",
+        "root_rationale": "The base is an enabler and the meal is the complete world.",
+        "candidates": [
+            {
+                "level": "served_object_or_activity",
+                "label": "shared meal",
+                "relation_to_business": "complete object served by the base",
+                "strength": "complete and durable",
+                "overreach_risk": "unrelated dining must stay outside the map",
+            }
+        ],
+        "selected_candidate_index": 0,
+        "unknowns": [],
+    }
+
+
+def _map_payload() -> dict[str, Any]:
+    return {
+        "map_directions": [
+            {
+                "dimension": "emotion and relationships",
+                "actual_directions": ["how the shared meal carries emotion and group belonging"],
+            },
+            {
+                "dimension": "history and public records",
+                "actual_directions": ["documented changes in the shared meal over time"],
+            },
+        ],
+        "named_candidates": [],
+        "unknowns": [],
+    }
+
+
+async def _content_world_bundle():
+    model = SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: _semantic_payload(),
+            ContentRootSelectionDraft: _root_payload(),
+            FrozenContentMapDraft: _map_payload(),
+        }
+    )
+    return await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="Help this business start an account",
+            subject_expression="regional meal base",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+
+def _discovery_payload() -> dict[str, Any]:
+    return {
+        "candidates": [
+            {
+                "candidate_id": "candidate-public-record",
+                "map_dimension": "history and public records",
+                "entity": "a documented public event",
+                "relation_to_root": "the event changed how the shared meal was understood",
+                "why_worth_reading": "it may turn a broad history branch into a concrete question",
+                "search_queries": ["shared meal documented public event"],
+            }
+        ],
+        "unknowns": [],
+    }
+
+
+def _reading_payload(*, source_ref: str = "source-web-1") -> dict[str, Any]:
+    return {
+        "selected_candidate_id": "candidate-public-record",
+        "observations": [
+            {
+                "observation_id": "reading-observation-1",
+                "claim": "The supplied search evidence reports a dated public event.",
+                "source_refs": [source_ref],
+            }
+        ],
+        "relations": [
+            {
+                "subject": "documented public event",
+                "predicate": "changed public understanding of",
+                "object": "shared meal",
+                "observation_refs": ["reading-observation-1"],
+            }
+        ],
+        "state_changes": [],
+        "interpretations": [
+            {
+                "interpretation_id": "reading-interpretation-1",
+                "claim": "The event is a useful lens for explaining a change in meaning.",
+                "observation_refs": ["reading-observation-1"],
+                "limitations": ["A search-result snippet is not the full primary source."],
+            }
+        ],
+        "limitations": ["The current receipt contains a search snippet rather than the full record."],
+        "unknowns": ["The full primary record still needs to be read."],
+    }
+
+
+def _editorial_payload(
+    *,
+    candidate_id: str = "candidate-public-record",
+    narrative_frame: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return {
+        "selected_candidate_id": candidate_id,
+        "topic_brief": {
+            "question": "How did one public event change what this shared meal meant to people?",
+            "central_claim": "The event made an existing social meaning newly visible.",
+            "mechanism": "The documented event connects a concrete change with the frozen content root.",
+            "counterpoint": "The available snippet cannot establish a universal historical cause.",
+            "evidence_observation_refs": ["reading-observation-1"],
+            "narrative_frame": narrative_frame,
+            "limitations": ["The current topic is supported by one bounded evidence receipt."],
+            "unknowns": ["The full primary record still needs to be read."],
+            "research_needed": ["Open and compare the full source before drafting."],
+        },
+        "abstention_reason": None,
+    }
+
+
+@pytest.mark.asyncio
+async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+    seen_queries: list[tuple[str, int]] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append((query, max_results))
+        return (
+            ResearchSearchResult(
+                title="Public archive entry",
+                url="https://example.com/archive-entry",
+                content="A dated archive snippet describing the public event and the shared meal.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        budget=ResearchBudget(max_queries=6, max_results_per_query=4, max_evidence_items=12),
+    )
+
+    assert research_model.schemas == [
+        ResearchDiscoveryDraft,
+        EvidenceReadingDraft,
+        TopicEditorialDecisionDraft,
+    ]
+    assert seen_queries == [("shared meal documented public event", 4)]
+    discovery_input = research_model.message_batches[0][1].content
+    assert '"content_root": "shared meal"' in discovery_input
+    assert '"map_dimensions"' in discovery_input
+    assert "regional meal base" not in discovery_input
+    assert "business_semantics" not in discovery_input
+    reading_input = research_model.message_batches[1][1].content
+    assert '"source_id": "source-web-1"' in reading_input
+    assert '"why_worth_reading"' not in reading_input
+    assert '"search_query"' not in reading_input
+    assert "untrusted evidence" in research_model.message_batches[1][0].content.lower()
+    editorial_input = research_model.message_batches[2][1].content
+    assert '"selected_candidate_id": "candidate-public-record"' in editorial_input
+    assert '"observations"' in editorial_input
+    assert '"why_worth_reading"' not in editorial_input
+    assert '"search_queries"' not in editorial_input
+    assert "regional meal base" not in editorial_input
+    assert "叙事结构" in research_model.message_batches[2][0].content
+
+    assert enriched.content_world is not None
+    assert enriched.content_world.content_root == "shared meal"
+    assert enriched.topic_brief is not None
+    assert enriched.topic_brief.question.startswith("How did one public event")
+    assert enriched.topic_brief.path.steps[0].from_label == "shared meal"
+    assert enriched.topic_brief.path.steps[0].to_label == "a documented public event"
+    assert enriched.topic_brief.path.rationale == "The documented event connects a concrete change with the frozen content root."
+    assert enriched.topic_brief.evidence_refs[0].ref_id == "research-observation-1"
+    assert enriched.topic_brief.limitations == ("The current topic is supported by one bounded evidence receipt.",)
+    assert enriched.record.sources[-1].uri == "https://example.com/archive-entry"
+    assert enriched.record.observations[-1].source_refs == ("source-web-1",)
+    assert enriched.record.interpretations[-1].limitations
+
+    rendered = render_content_world_narration(
+        enriched,
+        "# shared meal\n\nA rooted map of the shared meal.",
+    )
+    assert "一条已经取证的具体选题" in rendered
+    assert "How did one public event" in rendered
+    assert "[Public archive entry](https://example.com/archive-entry)" in rendered
+    assert "Open and compare the full source" in rendered
+
+
+@pytest.mark.asyncio
+async def test_evidence_bound_story_frame_is_preserved_and_rendered_after_the_map() -> None:
+    bundle = await _content_world_bundle()
+    narrative_frame = {
+        "protagonist": "a participant",
+        "goal": "preserve the public meal",
+        "obstacle": "the original gathering could no longer proceed",
+        "action_or_choice": "the participant reorganized the event",
+        "stakes_or_consequence": "a shared practice might disappear",
+        "outcome_or_change": "the practice continued with a changed public meaning",
+        "evidence_observation_refs": ["reading-observation-1"],
+        "limitations": ["The full record still needs verification."],
+    }
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(narrative_frame=narrative_frame),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Public archive entry",
+                url="https://example.com/story-record",
+                content="A dated record of the participant's goal, obstacle, action, stakes, and outcome.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+    assert enriched.topic_brief is not None
+    assert enriched.topic_brief.narrative_frame is not None
+    assert enriched.topic_brief.narrative_frame.goal == "preserve the public meal"
+    assert enriched.topic_brief.narrative_frame.basis_refs[0].ref_id == "research-observation-1"
+
+    rendered = render_content_world_narration(enriched, "# shared meal\n\nA rooted map.")
+    assert "**叙事骨架：**" in rendered
+    assert "**主体：** a participant" in rendered
+    assert "**阻碍：** the original gathering could no longer proceed" in rendered
+    assert enriched.record.sources[-1].uri == "https://example.com/story-record"
+
+
+@pytest.mark.asyncio
+async def test_search_failure_preserves_the_rooted_map_without_inventing_a_topic() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def no_results(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return ()
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=no_results,
+    )
+
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+    assert enriched is bundle
+    assert enriched.content_world.content_root == "shared meal"
+    assert enriched.topic_brief is None
+
+
+@pytest.mark.asyncio
+async def test_weak_evidence_can_abstain_without_forcing_a_topic() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: {
+                "selected_candidate_id": "candidate-public-record",
+                "topic_brief": None,
+                "abstention_reason": "The promotional receipt cannot support a topic claim.",
+            },
+        }
+    )
+
+    async def weak_search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Promotional course listing",
+                url="https://example.com/buy-this-course",
+                content="Book this experience now.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(bundle, model=research_model, search=weak_search)
+
+    assert enriched is bundle
+    assert enriched.content_world.content_root == "shared meal"
+    assert enriched.topic_brief is None
+    assert research_model.schemas == [
+        ResearchDiscoveryDraft,
+        EvidenceReadingDraft,
+        TopicEditorialDecisionDraft,
+    ]
+
+
+@pytest.mark.asyncio
+async def test_search_budget_rotates_across_candidates_before_reusing_one_candidate() -> None:
+    bundle = await _content_world_bundle()
+    discovery = _discovery_payload()
+    discovery["candidates"] = [
+        {
+            "candidate_id": f"candidate-{index}",
+            "map_dimension": "history and public records",
+            "entity": f"public subject {index}",
+            "relation_to_root": "reveals one rooted public meaning",
+            "why_worth_reading": "turns one map branch into a concrete question",
+            "search_queries": [f"candidate {index} first", f"candidate {index} second"],
+        }
+        for index in range(1, 4)
+    ]
+    reading = _reading_payload()
+    reading["selected_candidate_id"] = "candidate-1"
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: discovery,
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="candidate-1"),
+        }
+    )
+    seen_queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append(query)
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/{len(seen_queries)}",
+                content=f"Evidence for {query}.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        budget=ResearchBudget(max_queries=3, max_results_per_query=1, max_evidence_items=3),
+    )
+
+    assert seen_queries == ["candidate 1 first", "candidate 2 first", "candidate 3 first"]
+    assert enriched.topic_brief is not None
+    editorial_input = research_model.message_batches[2][1].content
+    assert "candidate 1 first" in editorial_input
+    assert "candidate 2 first" not in editorial_input
+    assert "candidate 3 first" not in editorial_input
+
+
+@pytest.mark.asyncio
+async def test_reading_cannot_reference_evidence_outside_the_search_receipt() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(source_ref="source-web-invented"),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Known source",
+                url="https://example.com/known",
+                content="Known evidence.",
+            ),
+        )
+
+    with pytest.raises(ValueError, match="outside the search receipt"):
+        await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+
+@pytest.mark.asyncio
+async def test_reading_cannot_use_another_candidates_evidence() -> None:
+    bundle = await _content_world_bundle()
+    discovery = _discovery_payload()
+    discovery["candidates"].append(
+        {
+            "candidate_id": "candidate-other-record",
+            "map_dimension": "history and public records",
+            "entity": "another documented event",
+            "relation_to_root": "a separate candidate path",
+            "why_worth_reading": "it may support a different question",
+            "search_queries": ["another documented event"],
+        }
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: discovery,
+            EvidenceReadingDraft: _reading_payload(source_ref="source-web-2"),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/{query.replace(' ', '-')}",
+                content=f"Evidence only for {query}.",
+            ),
+        )
+
+    with pytest.raises(ValueError, match="selected candidate"):
+        await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+
+@pytest.mark.asyncio
+async def test_narrative_only_evidence_is_preserved_in_topic_refs_and_citations() -> None:
+    bundle = await _content_world_bundle()
+    reading = _reading_payload()
+    reading["observations"].append(
+        {
+            "observation_id": "reading-observation-2",
+            "claim": "A second source records the participant's action and outcome.",
+            "source_refs": ["source-web-2"],
+        }
+    )
+    editorial = _editorial_payload(
+        narrative_frame={
+            "protagonist": "a participant",
+            "goal": "preserve the public meal",
+            "obstacle": "the original gathering could no longer proceed",
+            "action_or_choice": "the participant reorganized the event",
+            "stakes_or_consequence": "a shared practice might disappear",
+            "outcome_or_change": "the practice continued with a changed public meaning",
+            "evidence_observation_refs": ["reading-observation-2"],
+            "limitations": ["The action chain is supported by the second source."],
+        }
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: editorial,
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Context record",
+                url="https://example.com/context-record",
+                content="Evidence for the topic's central claim.",
+            ),
+            ResearchSearchResult(
+                title="Action record",
+                url="https://example.com/action-record",
+                content="Evidence for the participant's action and outcome.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+    assert enriched.topic_brief is not None
+    assert [ref.ref_id for ref in enriched.topic_brief.evidence_refs] == [
+        "research-observation-1",
+        "research-observation-2",
+    ]
+    rendered = render_content_world_narration(enriched, "# shared meal\n\nA rooted map.")
+    assert "[Context record](https://example.com/context-record)" in rendered
+    assert "[Action record](https://example.com/action-record)" in rendered
+
+
+def test_research_contract_has_no_required_candidate_or_query_quota() -> None:
+    discovery_schema = ResearchDiscoveryDraft.model_json_schema()
+
+    assert "minItems" not in discovery_schema["properties"]["candidates"]
+    assert "maxItems" not in discovery_schema["properties"]["candidates"]
+    assert "content_root" not in EvidenceReadingDraft.model_json_schema()["properties"]
+
+
+def test_topic_editor_keeps_story_structure_optional_but_complete_when_used() -> None:
+    explanatory = TopicEditorialDecisionDraft.model_validate(_editorial_payload())
+
+    assert explanatory.topic_brief is not None
+    assert explanatory.topic_brief.narrative_frame is None
+
+    complete_story = _editorial_payload(
+        narrative_frame={
+            "protagonist": "a participant",
+            "goal": "preserve the public meal",
+            "obstacle": "the original gathering could no longer proceed",
+            "action_or_choice": "the participant reorganized the event",
+            "stakes_or_consequence": "a shared practice might disappear",
+            "outcome_or_change": "the practice continued with a changed public meaning",
+            "evidence_observation_refs": ["reading-observation-1"],
+            "limitations": ["The full record still needs verification."],
+        }
+    )
+
+    story = TopicEditorialDecisionDraft.model_validate(complete_story)
+    assert story.topic_brief is not None
+    assert story.topic_brief.narrative_frame is not None
+    assert story.topic_brief.narrative_frame.obstacle.startswith("the original")
+
+    incomplete_story = _editorial_payload(
+        narrative_frame={
+            "protagonist": "a participant",
+            "goal": "preserve the public meal",
+            "obstacle": "the original gathering could no longer proceed",
+            "evidence_observation_refs": ["reading-observation-1"],
+        }
+    )
+    with pytest.raises(ValidationError):
+        TopicEditorialDecisionDraft.model_validate(incomplete_story)
+
+
+def test_topic_editor_requires_an_explicit_abstention_instead_of_an_empty_answer() -> None:
+    with pytest.raises(ValidationError, match="topic or an abstention"):
+        TopicEditorialDecisionDraft.model_validate(
+            {
+                "selected_candidate_id": "candidate-public-record",
+                "topic_brief": None,
+                "abstention_reason": None,
+            }
+        )
+
+
+def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> None:
+    budget = ResearchBudget()
+
+    assert (budget.max_queries, budget.max_results_per_query, budget.max_evidence_items) == (3, 3, 8)
+    assert "人的行为、关系、情绪、选择、变化或共同记忆" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "冲突" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "博弈" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "卖方经营案例" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "可核验的专名对象" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "泛化教程词" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "售卖页、推广页、聚合页、社交收藏页" in EVIDENCE_READING_SYSTEM_PROMPT
+    assert "不负责立题或编排故事" in EVIDENCE_READING_SYSTEM_PROMPT
+    assert "topic_brief" not in EvidenceReadingDraft.model_json_schema()["properties"]
+    assert "主体想达成的具体目标" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "阻碍" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "采取的行动或选择" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "只有关系张力、观点差异、利益差异或情绪波动" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "narrative_frame 保持 null" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "召回理由和搜索词只是检索假设" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "同一命名对象内" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "不要求证据兑现召回理由" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "KTV" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "KTV" not in TOPIC_EDITOR_SYSTEM_PROMPT

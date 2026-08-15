@@ -534,6 +534,9 @@ For a broad account-starting, positioning, or long-term-content request, decide 
 account should talk about before how to operate it. Use `explore_content_world` when the
 semantic handoff and rooted map would help. Its isolated editorial convergence is the
 direct answer for that content-world task; do not perform a second synthesis after it.
+When using `explore_content_world`, do not pair it with `web_search`, `web_fetch`, or
+another evidence tool in the same turn. Its internal post-map research starts only after
+the content root is frozen, so a generic pre-map search would bias the semantic reading.
 Do not invent a platform choice, presentation format, posting cadence, numeric quota,
 operating schedule, sales plan, experiment, or questionnaire unless the user specifically
 asks for that decision and the available facts support it.

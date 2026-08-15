@@ -254,3 +254,194 @@ second Lead rewrite: absent
 已通过的是两个业务与交付判断：黄金礼品进入赠礼往来中的人际关系与仪式，重庆火锅底料进入“火锅”世界；两者均由最终消息机制单次交付，没有第二次 Lead 品类改写。这证明拆开语义、选根、地图和表达比单次大合同稳定，也证明删除商业回桥有必要。
 
 当前不可宣称 80 分营销脑已完成：海鲜、水果和全新留出题尚未用最终架构完成真实回归。当前单次仍需 3 至 5.5 分钟和 21K 至 25K Token，产品延迟与成本仍待优化。
+
+## A12 根后阅读理解链恢复与 KTV 失败定位
+
+第五版冻结前已经形成一条可用但未接入第六版的下游链：
+
+```text
+冻结内容根
+-> 具体命名召回
+-> 联网搜索回执
+-> 证据阅读
+-> TopicBrief
+```
+
+第六版最初只迁移到冻结地图和总编，因此能讲大类，却无法稳定从地图走到具体人物、作品或事件。本轮新增 `research.py`，把命名召回和证据阅读放在地图之后；搜索结果只进入白名单标题、URL 和摘要，研究失败必须原样保留地图。
+
+第一次 KTV 新链实测仍失败。内容根选择为 `KTV门店`，地图被设备、供应链、合规与经营知识占据：
+
+```text
+thread: 818206dc-54bd-4b98-8ecd-aaa41ea585f8
+run: 7e0ab6f1-de41-4de6-ad5c-e94206ab146e
+result: failed; venue operations displaced singing and emotion
+tokens: 43,553
+elapsed: 488.7s
+```
+
+第二次虽召回卡拉 OK 发明史与《K歌之王》，Lead 却在同一动作中并行发起“怎么起号”的通用搜索，还把自己补写的抖音、小红书运营需求作为 `source_materials` 传入。隐藏直答随后与泛搜索一起进入第二次 Lead 合成，最终又出现业态分类、设备、同城获客、口播和“前 20 条”等内容：
+
+```text
+thread: 42b06989-2408-442e-976d-fa2c5551068d
+run: 72214cdf-d68d-4166-acb5-8f23b90d52b6
+result: failed; pre-map search and model-authored source contamination
+tokens: 59,123
+elapsed: 718.1s
+```
+
+由此落地三条边界：
+
+- `explore_content_world` 的模型可见参数只保留用户原话，不能接模型改写来源。
+- 调用直答内容世界工具时，不与 Lead 级 `web_search` 或 `web_fetch` 并行；搜索只在根冻结后发生。
+- 对经营容器做构成性移除反事实时，判断去掉参与者活动后品类身份和用户进入理由是否仍成立，不能把空房间、设备或卖方流程仍存在视为品类仍成立。
+
+GLM 修正版运行已经生成“卡拉 OK 发明、录像厅历史、NHK 歌唱节目”等根后查询，但在证据阅读处因账户欠费返回 403。运行表虽记为 `success`，业务工具实际失败，因此不得作为验收通过：
+
+```text
+thread: 0dc20842-f786-4bf4-95d4-da54d5aaaaf3
+run: ebeb277a-572d-425e-8256-1a752d738e01
+result: infrastructure failure; AccountOverdueError during evidence reading
+tokens before failure: 41,122
+elapsed: 581.0s
+```
+
+## A13 快速受控工作者与跨案例验收
+
+DeepSeek V4 Pro 在页面思考模式下能让 Lead 正常选择工具，但内部结构化调用返回 `Thinking mode does not support this tool_choice`。这证明外层决策与内部工位不应无条件继承同一思考开关。现在外层 Lead 保留用户选择的思考模式，工具内受控工作者固定关闭供应商隐藏思考，以结构合同作为可检查的中间推理。
+
+修复后 KTV 真实结果以“唱歌/K歌体验”为内容根，明确保留身体与心理、情绪宣泄、社交角色、歌曲与个人经历及媒介变迁，没有经营模板；根后取证落到井上大佑与卡拉 OK 发明史：
+
+```text
+thread: 5d459752-e499-4ec0-8df9-385617f76b2d
+run: bdd187be-f98e-44d1-8e03-19a7327b3073
+model: deepseek-v4-pro
+result: semantic root, map, topic, and single delivery passed
+tokens: 25,998
+elapsed: 112.3s
+```
+
+首个陌生场馆题“陶艺体验馆”正确迁移到亲手做陶活动，但第一次地图混入定价、会员、获客、排班和交付，记为部分失败。增加“活动根面向参与者、不得改写成组织者运营”边界后，复跑只保留技法、触觉、失败、情绪、关系、历史、作品与跨手作比较，并召回《人鬼情未了》的拉坯场景：
+
+```text
+thread: 9c912050-10bc-4ef5-880b-0045365ecba1
+run: f931e121-612d-4e67-a7f5-1ca6e241a9c7
+result: root passed; map purity failed
+tokens: 30,013
+elapsed: 149.1s
+
+thread: b962ac1e-dacc-4095-b5b1-5128f06b9977
+run: b7f81cde-a005-4603-a3b7-ac5d15f67b4f
+result: semantic and map passed; root label remained wider than ideal
+tokens: 27,110
+elapsed: 123.5s
+```
+
+真正留出的服务型题“婚礼主持”没有被用于调参。结果从使能角色迁移到 `婚礼仪式`，展开仪式动作、人物与家庭关系、文化差异、历史变化、人生过渡、复杂情绪及作品中的婚礼，没有主持行业运营。搜索召回过渡礼仪、日本三三九度和勃鲁盖尔画作，但证据阅读认为当前回执不足，最终保留地图而不强塞 TopicBrief，证明弱证据弃权生效：
+
+```text
+thread: 386ab461-8f3c-41ef-8485-8c32b9b8de7b
+run: 7b3700c0-d934-4b0c-8dcf-1b4c0c8407f2
+model: deepseek-v4-pro
+result: held-out semantic root, participant map, abstention, and delivery passed
+tokens: 26,050
+elapsed: 114.3s
+```
+
+本轮可确认“语义识别、冻结地图、具体命名召回、可选证据选题”已经形成可用纵切，并在 KTV 与陌生服务题上达到约 80 分的内容判断。仍不能把它等同于完整营销 Agent：来源等级、全文抓取、表现形式、项目事实、账号证据、变现、发布和复盘尚未接入；陶艺根名也显示内容根与受众领地仍可能被模型合并，必须继续保留人工可见与版本评测。
+
+## A14 冲突边界复盘与编剧脑拆分
+
+婚礼页面结果再次出现“成员互动、让步甚至潜在冲突”，火锅结果也曾把关系差异写成博弈。这不是缺少一个更好的“冲突地图节点”，而是地图和编剧组织混在了一起。
+
+本轮冻结定义：
+
+```text
+内容地图 = 围绕冻结根发散可研究的人、时间、地点、事件、种类、文化、作品和关系
+编剧脑 = 在一条已取证路径上识别主体、目标、阻碍、行动、代价、结果变化
+```
+
+地图提示已移除“事件与冲突”和所有博弈式召回，改为可核验事件及实际关系；关系差异按差异、协商、角色互动或融合表达。证据阅读不再产出 TopicBrief。新增选题总编，先判断证据是否足以立题，再决定是否附带可选 `NarrativeFrame`。叙事六项必须完整且引用真实观察，说明型选题可以没有故事，弱证据可以完全弃权。
+
+测试按红绿重构：第一次因 `TopicEditorialDecisionDraft` 不存在而在收集阶段失败；实现合同后，候选 ID 不一致测试抓到夹具错误；新增叙事完整性、显式弃权、证据引用、渲染、Lead 投影与框架标签净化回归，聚焦结果为：
+
+```text
+202 passed in 2.94s
+```
+
+## A15 真实模型反例、召回污染与珠峰行动链
+
+婚礼主持反例使用 DeepSeek V4 Pro 运行。内容根为 `婚礼仪式`；网页搜索无结果后保留仪式形态、环节与象征、人物角色、地域、历史变化、比较及作品地图，没有 TopicBrief 或叙事骨架。它仍使用了一次“习俗冲突与融合”措辞，虽非剧情结构，但语义容易混淆，因此地图与正文总编进一步收紧为“差异、协商、角色互动或融合”，不升级为戏剧阻碍。
+
+```text
+embedded thread: live-conflict-wedding-v6
+model: deepseek-v4-pro
+result: root and map passed; research degraded safely; no forced story
+```
+
+陌生登山装备题选择登山/徒步活动并展开路线、季节、身体、同行、风险、地域、历史与作品。该次没有召回到已取证命名事件，正确没有生成故事：
+
+```text
+embedded thread: live-story-editor-mountaineering-v6
+model: deepseek-v4-pro
+result: divergent map passed; no named evidence and no forced story
+```
+
+随后使用 [英国皇家地理学会 1953 珠峰资料](https://www.rgs.org/our-collections/buy-and-license-images/limited-edition-platinum-prints/everest-1953-limited-edition-platinum-prints) 做受控证据测试，先后发现两层真实故障：
+
+1. 命名召回猜测“两人背景差异、功绩归属争议”，证据仅支持首次突击折返、第二次冲顶、希拉里台阶和最终登顶。旧总编把召回理由误当必须兑现的选题合同，因此弃掉了已经完整的事件行动链。
+2. 隔离召回假设后，总编开始形成 TopicBrief，但自然返回的选题级 `limitations` 不在合同内，严格 Schema 拒绝输出，修复重试仍失败。
+
+修复方式不是追加行业案例。阅读与总编输入删除 `why_worth_reading`、`relation_to_root` 和 `search_queries`；最终路径理由与命名连接改由已取证 TopicBrief 机制生成；`TopicBrief.limitations` 正式进入合同、渲染与 Lead 投影。
+
+最终受控运行生成：
+
+```text
+record: record-controlled-everest-3
+model: deepseek-v4-pro
+topic: 首次突击折返后，希拉里与丹增的第二次冲顶如何成功
+narrative: protagonist + goal + obstacle + action + stakes + outcome all present
+fact boundary: single-source limits and inferred stakes shown explicitly
+result: passed
+```
+
+这证明当前“编剧脑”不是一个强迫每条内容制造戏剧的写作模板，而是证据后的可选组织能力。真正页面能否稳定召回足够好的全文资料仍取决于后续搜索与抓取质量，不能用这次受控证据通过冒充全链路来源能力已经完成。
+
+## A16 全量回归与运行环境说明
+
+第一次全仓回归在根 `AGENTS.md` 软预算与本地认证开关处失败。前者通过把根指南恢复为导航层解决；后者来自未跟踪 `.env` 中用于本地页面的 `DEER_FLOW_AUTH_DISABLED=1`，不是产品代码回归。测试子进程显式使用 `DEER_FLOW_AUTH_DISABLED=0`，同时保留 Gateway 的本地免登录运行方式。
+
+最终完整离线后端套件：
+
+```text
+11601 passed, 76 skipped, 17 warnings
+elapsed: 442.39s
+NO_PROXY: 127.0.0.1,localhost
+test auth mode: DEER_FLOW_AUTH_DISABLED=0
+```
+
+Gateway 已用当前源码重启在 `127.0.0.1:8003`，前端 `127.0.0.1:3001` 返回 200。未跟踪配置与 API Key 未进入测试输出、文档或提交候选。
+
+## A17 提交前证据隔离审阅
+
+全量回归前的逐文件审阅又发现三处不会改变架构、但会污染证据归属的实现缺口：
+
+1. 证据阅读原本只能保证来源属于本轮搜索，却没有保证来源属于最终所选候选；候选 A 理论上可以借候选 B 的搜索回执立题。
+2. 选题总编原本会看到所有候选的来源标题与 URL，即使规范化阅读只选择了其中一条路径。
+3. `NarrativeFrame` 可以引用中心判断之外的额外观察，但这些观察原本不会自动进入 TopicBrief 的总证据引用和最终来源列表。
+
+三条都先增加失败测试，再做最小修正：阅读观察必须绑定所选候选的来源；选题总编只接收阅读实际引用的来源回执；叙事专用观察并入选题证据并参与最终引用。另增加运行边界测试，确认任何根后研究异常都降级为已经冻结的地图，不让可选研究拖垮主要回答。
+
+最终聚焦回归：
+
+```text
+220 passed in 3.95s
+```
+
+最终完整后端回归：
+
+```text
+11601 passed, 76 skipped, 17 warnings
+elapsed: 442.39s
+```
+
+文档架构图同步更正：内容世界总编只写地图正文；可选的证据 TopicBrief 由确定性渲染器在模型调用后追加，因此正文模型看不到也不能改写已经绑定的事实、限制或叙事骨架。

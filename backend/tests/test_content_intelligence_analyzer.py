@@ -19,6 +19,10 @@ from deerflow.content_intelligence import (
     render_content_world_narration,
     synthesize_content_world_narration,
 )
+from deerflow.content_intelligence.analyzer import (
+    CONTENT_WORLD_NARRATION_SYSTEM_PROMPT,
+    FROZEN_CONTENT_MAP_SYSTEM_PROMPT,
+)
 
 
 class StructuredFakeModel:
@@ -344,6 +348,7 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "黄金礼品" not in system_text
     assert "海鲜" not in system_text
     assert "火锅底料" not in system_text
+    assert "KTV" not in system_text
     assert "10 天" not in system_text
     assert "3 个候选" not in system_text
     assert "列表可以为空" in system_text
@@ -358,8 +363,28 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "不要用抽象的‘XX文化’代替已经识别出的具体活动与关系" in system_text
     assert "逐层拆解复合修饰关系" in system_text
     assert "输入只包含已冻结的内容根" in system_text
+    assert "面向参与者的内容主题" in system_text
+    assert "不得把活动改写成组织者的运营流程" in system_text
+    assert "定价、获客、会员、排班、供应链、合规或交付管理" in system_text
     assert "向下的种类与子世界" in system_text
     assert "跨领域作品与公共对象" in system_text
+    assert "叙事组织由后续选题模块负责" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "关系差异应按差异、协商、角色互动或融合表达" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "冲突" not in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "博弈" not in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "隐含场所或经营容器" in system_text
+    assert "多种同时成立的构成功能" in system_text
+    assert "情绪" in system_text
+    assert "具体命名人物、事件、作品或日期" in system_text
+    assert "提问动作、交付请求" in system_text
+    assert "完整商业实体不自动等于" in system_text
+    assert "持续发生的人类活动" in system_text
+    assert "社交或情绪功能" in system_text
+    assert "物理外壳、设备或卖方流程仍然存在" in system_text
+    assert "品类身份和用户进入它的理由是否仍然成立" in system_text
+    assert "优先比较它承载的完整对象或参与者活动" in system_text
+    assert "不要贬低或删除语义阅读中同时成立的人类活动、社交功能和情绪功能" in CONTENT_WORLD_NARRATION_SYSTEM_PROMPT
+    assert "不要把关系差异升级为戏剧阻碍或对抗结构" in CONTENT_WORLD_NARRATION_SYSTEM_PROMPT
 
 
 @pytest.mark.asyncio

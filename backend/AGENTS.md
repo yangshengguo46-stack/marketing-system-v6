@@ -157,13 +157,21 @@ from deerflow.config import get_app_config
 `ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` remains an optional
 shared-record analysis for business semantics and topic briefs. Broad account-starting
 and long-term-content requests use the `return_direct` `explore_content_world` tool and
-four bounded specialists: semantic reader, content-root selector, frozen-root mapper,
-and prose editor.
+seven bounded workers: semantic reader, content-root selector, frozen-root mapper, named
+recall, evidence reader, topic editor, and prose editor. Post-map research is optional;
+no evidence result may change the frozen root.
 
-The first three specialists use local structured contracts. The mapper receives only
-the selected content root. The editor receives the semantic transition, frozen root,
+The first six workers use local structured contracts. The mapper receives only
+the selected content root. The content map is divergent research space and does not own
+screenwriting conflict. The evidence reader cannot create a topic, and the topic editor
+cannot see recall rationales or search queries. It may add `NarrativeFrame` only when
+protagonist, concrete goal, obstacle, action or choice, stakes or consequence, and
+outcome or change all resolve to record observations. Relationship tension alone is not
+narrative conflict. The prose editor receives the semantic transition, frozen root,
 and map, then emits Markdown directly rather than serializing long Chinese prose into
-JSON. Its parent run callbacks must not be forwarded, otherwise the internal draft and
+JSON. A deterministic renderer appends the optional evidence-bound topic afterward, so
+the prose model cannot rewrite its facts or narrative frame. Its parent run callbacks
+must not be forwarded, otherwise the internal draft and
 direct tool result render twice. The tool node returns one hidden, tagged `ToolMessage`
 only. LangChain's native `return_direct` edge exits the model loop while the original
 tool-calling `AIMessage` is still the routing anchor; `TerminalResponseMiddleware` then
@@ -173,10 +181,28 @@ and causes an unwanted second Lead call. These specialists are bounded model wor
 inside one tool, not free-running DeerFlow `task` subagents, and they cannot mutate
 shared state. The tool is optional and must not become a fixed workflow stage.
 
+The model-visible schema for `explore_content_world` exposes only `user_request`; it
+must be copied from the user without model-authored source materials. Do not pair this
+tool with Lead-level `web_search` or `web_fetch`: its internal search starts after root
+selection and degrades to the unchanged map on failure. Post-map research has bounded,
+round-robin query limits and may return no `TopicBrief` when sources are merely sales,
+promotion, aggregation, social-save, or untraceable pages. The outer Lead may use model
+thinking, but these bounded workers intentionally instantiate their model with provider
+thinking disabled; their inspectable contracts are the reasoning trace, and some
+providers reject structured tool choice while thinking is enabled.
+
+Each evidence observation must cite a source collected for its selected named
+candidate. The topic editor sees only source receipts referenced by that reading, not
+titles from competing candidates. Evidence used only by an optional narrative frame is
+still included in the topic-level evidence references and final citations. Any research
+exception degrades to the unchanged rooted map; cancellation remains outside that
+boundary.
+
 The deterministic layer validates IDs, source and basis references, claim provenance,
 and projection binding. It must not contain industry examples or decide content roots.
 Model knowledge without supplied evidence remains a visible hypothesis with a
-limitation or verification query. `ContentWorldView` must not gain `object_anchor`,
+limitation or verification query. Retrieval rationales are hypotheses used only to find
+sources; never bind them as grounded path rationales or candidate connections. `ContentWorldView` must not gain `object_anchor`,
 `return_path`, `bridge_path`, product-placement, or conversion fields. Any future
 commercial acceptance logic belongs to a separate later projection and cannot rewrite
 the map. Do not add presentation format, platform, sales, experiments, publishing, or

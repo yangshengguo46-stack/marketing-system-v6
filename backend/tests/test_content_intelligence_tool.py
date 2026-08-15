@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import importlib
-from unittest.mock import AsyncMock
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
@@ -12,6 +13,33 @@ from deerflow.tools.builtins.content_intelligence_tool import content_intelligen
 from deerflow.tools.tools import BUILTIN_TOOLS
 
 content_intelligence_tool_module = importlib.import_module("deerflow.tools.builtins.content_intelligence_tool")
+
+
+def test_content_intelligence_workers_do_not_inherit_lead_thinking_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    app_config_module = importlib.import_module("deerflow.config.app_config")
+    app_config = SimpleNamespace(
+        models=[SimpleNamespace(name="deepseek-v4-pro")],
+        get_model_config=lambda name: object() if name == "deepseek-v4-pro" else None,
+    )
+    monkeypatch.setattr(app_config_module, "get_app_config", lambda: app_config)
+    create_model = Mock(return_value=object())
+    monkeypatch.setattr(content_intelligence_tool_module, "create_chat_model", create_model)
+
+    content_intelligence_tool_module._create_content_intelligence_model(
+        {
+            "configurable": {
+                "model_name": "deepseek-v4-pro",
+                "thinking_enabled": True,
+            }
+        }
+    )
+
+    create_model.assert_called_once_with(
+        name="deepseek-v4-pro",
+        thinking_enabled=False,
+        app_config=app_config,
+        attach_tracing=False,
+    )
 
 
 def test_content_intelligence_tool_is_available_to_the_lead_by_default() -> None:
@@ -25,12 +53,20 @@ def test_content_intelligence_tool_is_available_to_the_lead_by_default() -> None
 @pytest.mark.asyncio
 async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monkeypatch: pytest.MonkeyPatch) -> None:
     bundle = object()
+    enriched_bundle = object()
     narration = object()
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    analysis = AsyncMock(return_value=bundle)
     monkeypatch.setattr(
         content_intelligence_tool_module,
         "analyze_content_intelligence",
-        AsyncMock(return_value=bundle),
+        analysis,
+    )
+    research = AsyncMock(return_value=enriched_bundle)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        research,
     )
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -48,7 +84,6 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
             "name": "explore_content_world",
             "args": {
                 "user_request": "我是卖重庆火锅底料的，该怎么起号？",
-                "subject_expression": "重庆火锅底料",
             },
             "id": "content-world-call-1",
             "type": "tool_call",
@@ -68,6 +103,53 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
     assert tool_message.additional_kwargs["deerflow_direct_response"] is True
     assert tool_message.content == "# 火锅\n\n围绕火锅本身展开内容世界。"
     assert not any(isinstance(message, AIMessage) for message in messages)
+    research.assert_awaited_once()
+    assert analysis.await_args.args[0].subject_expression == "我是卖重庆火锅底料的，该怎么起号？"
+    assert analysis.await_args.args[0].source_materials == ()
+    assert research.await_args.args[0] is bundle
+    assert content_intelligence_tool_module.synthesize_content_world_narration.await_args.args[0] is enriched_bundle
+
+
+@pytest.mark.asyncio
+async def test_content_world_tool_preserves_the_rooted_map_when_optional_research_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "analyze_content_intelligence",
+        AsyncMock(return_value=bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        AsyncMock(side_effect=RuntimeError("provider unavailable")),
+    )
+    narration = AsyncMock(return_value="# 火锅\n\n围绕火锅本身展开内容世界。")
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_content_world_narration",
+        narration,
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_content_world_narration",
+        lambda actual_bundle, actual_narration: actual_narration,
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {"user_request": "我是卖重庆火锅底料的，该怎么起号？"},
+            "id": "content-world-call-research-failure",
+            "type": "tool_call",
+        }
+    )
+
+    assert isinstance(result, Command)
+    assert result.update["messages"][0].content == "# 火锅\n\n围绕火锅本身展开内容世界。"
+    assert narration.await_args.args[0] is bundle
 
 
 def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -> None:
@@ -75,8 +157,6 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
 
     assert set(schema["properties"]) == {
         "user_request",
-        "subject_expression",
-        "source_materials",
     }
 
 
@@ -118,6 +198,8 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "Treat the rooted content map as complete for the current question" in normalized_section
     assert "do not extend it into an unrequested downstream operating plan" in normalized_section
     assert "do not add an arbitrary number of posts, days, or branches" in normalized_section
+    assert "do not pair it with `web_search`" in normalized_section
+    assert "internal post-map research" in normalized_section
     for attention_leak in (
         "return path",
         "product-return",

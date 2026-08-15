@@ -27,6 +27,7 @@ from deerflow.content_intelligence.contracts import (
     Interpretation,
     ModifierReading,
     NamedCandidate,
+    NarrativeFrame,
     Observation,
     RelationEdge,
     RoleAssignment,
@@ -34,6 +35,14 @@ from deerflow.content_intelligence.contracts import (
     StateChange,
     TopicBrief,
     Unknown,
+)
+from deerflow.content_intelligence.research import (
+    EvidenceReadingDraft,
+    ResearchBudget,
+    ResearchDiscoveryDraft,
+    ResearchSearchResult,
+    TopicEditorialDecisionDraft,
+    enrich_content_world_with_research,
 )
 
 __all__ = [
@@ -52,12 +61,17 @@ __all__ = [
     "ContentWorldView",
     "Counterevidence",
     "Entity",
+    "EvidenceReadingDraft",
     "GroundedStatement",
     "Interpretation",
     "ModifierReading",
     "NamedCandidate",
+    "NarrativeFrame",
     "Observation",
     "RelationEdge",
+    "ResearchBudget",
+    "ResearchDiscoveryDraft",
+    "ResearchSearchResult",
     "RoleAssignment",
     "SourceItem",
     "SourceMaterial",
@@ -66,8 +80,10 @@ __all__ = [
     "SemanticReadingDraft",
     "StateChange",
     "TopicBrief",
+    "TopicEditorialDecisionDraft",
     "Unknown",
     "analyze_content_intelligence",
+    "enrich_content_world_with_research",
     "render_content_world_narration",
     "synthesize_content_world_narration",
 ]

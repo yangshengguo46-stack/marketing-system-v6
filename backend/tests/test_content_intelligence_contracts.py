@@ -16,6 +16,7 @@ from deerflow.content_intelligence import (
     GroundedStatement,
     Interpretation,
     ModifierReading,
+    NarrativeFrame,
     Observation,
     SourceItem,
     TopicBrief,
@@ -237,6 +238,61 @@ def test_three_projections_share_one_record_without_becoming_one_stage() -> None
     assert bundle.content_world.content_root == "火锅"
     assert bundle.topic_brief is not None
     assert bundle.topic_brief.path.path_id == "path-1"
+
+
+def test_narrative_frame_must_resolve_every_claim_to_the_shared_record() -> None:
+    bundle = _bundle()
+    assert bundle.topic_brief is not None
+    invalid_frame = NarrativeFrame(
+        protagonist="一个人物",
+        goal="完成一件具体的事",
+        obstacle="一个真实阻碍",
+        action_or_choice="采取一个行动",
+        stakes_or_consequence="失败会产生代价",
+        outcome_or_change="行动后发生变化",
+        basis_refs=(BasisRef(kind="observation", ref_id="observation-missing"),),
+    )
+
+    with pytest.raises(ValidationError, match="unknown record item"):
+        ContentIntelligenceBundle(
+            record=bundle.record,
+            business_semantics=bundle.business_semantics,
+            content_world=bundle.content_world,
+            topic_brief=bundle.topic_brief.model_copy(update={"narrative_frame": invalid_frame}),
+        )
+
+
+def test_lead_projection_exposes_an_optional_complete_narrative_frame() -> None:
+    bundle = _bundle()
+    assert bundle.topic_brief is not None
+    frame = NarrativeFrame(
+        protagonist="一个人物",
+        goal="完成一件具体的事",
+        obstacle="一个真实阻碍",
+        action_or_choice="采取一个行动",
+        stakes_or_consequence="失败会产生代价",
+        outcome_or_change="行动后发生变化",
+        basis_refs=(BasisRef(kind="observation", ref_id="observation-1"),),
+        limitations=("当前只由一条记录支持。",),
+    )
+    bound = ContentIntelligenceBundle(
+        record=bundle.record,
+        business_semantics=bundle.business_semantics,
+        content_world=bundle.content_world,
+        topic_brief=bundle.topic_brief.model_copy(update={"narrative_frame": frame}),
+    )
+
+    payload = _lead_projection(bound)
+
+    assert payload["topic_brief"]["narrative_frame"] == {
+        "protagonist": "一个人物",
+        "goal": "完成一件具体的事",
+        "obstacle": "一个真实阻碍",
+        "action_or_choice": "采取一个行动",
+        "stakes_or_consequence": "失败会产生代价",
+        "outcome_or_change": "行动后发生变化",
+        "limitations": ["当前只由一条记录支持。"],
+    }
 
 
 def test_semantic_and_world_views_keep_the_attention_handoff_visible() -> None:

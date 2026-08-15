@@ -15,8 +15,10 @@ from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceBundle,
     ContentIntelligenceRequest,
+    ResearchSearchResult,
     SourceMaterial,
     analyze_content_intelligence,
+    enrich_content_world_with_research,
     render_content_world_narration,
     synthesize_content_world_narration,
 )
@@ -45,12 +47,7 @@ class _ContentIntelligenceToolInput(BaseModel):
 
 class _ExploreContentWorldToolInput(BaseModel):
     user_request: str = Field(description="The current broad account-starting or long-term-content request, copied without adding requirements.")
-    subject_expression: str = Field(description="The user's exact business, brand, product, expert, or content-subject expression.")
     tool_call_id: Annotated[str, InjectedToolCallId]
-    source_materials: list[SourceMaterial] = Field(
-        default_factory=list,
-        description="Optional source excerpts already obtained from the user or evidence tools. Do not pass unsupported model claims as source material.",
-    )
 
 
 def _create_content_intelligence_model(config: RunnableConfig):
@@ -70,7 +67,10 @@ def _create_content_intelligence_model(config: RunnableConfig):
         raise ValueError("No chat models are configured for content intelligence analysis.")
     return create_chat_model(
         name=model_name,
-        thinking_enabled=bool(runtime_options.get("thinking_enabled", False)),
+        # The parent Lead may use provider thinking, but these bounded workers
+        # expose their reasoning through typed intermediate records. Some
+        # providers also reject structured tool choice while thinking is on.
+        thinking_enabled=False,
         app_config=app_config,
         attach_tracing=False,
     )
@@ -114,18 +114,15 @@ async def _analyze_content_intelligence(
 
 async def _explore_content_world(
     user_request: str,
-    subject_expression: str,
     tool_call_id: Annotated[str, InjectedToolCallId],
-    source_materials: list[SourceMaterial] | None = None,
     config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> Command:
     model = _create_content_intelligence_model(config)
-    materials = tuple(material if isinstance(material, SourceMaterial) else SourceMaterial.model_validate(material) for material in (source_materials or []))
     request = ContentIntelligenceRequest(
         user_request=user_request,
-        subject_expression=subject_expression,
+        subject_expression=user_request,
         focus=AnalysisFocus.CONTENT_WORLD,
-        source_materials=materials,
+        source_materials=(),
     )
     try:
         bundle = await analyze_content_intelligence(
@@ -133,6 +130,18 @@ async def _explore_content_world(
             model=model,
             runnable_config=config,
         )
+        try:
+            bundle = await enrich_content_world_with_research(
+                bundle,
+                model=model,
+                search=_search_content_world_evidence,
+                runnable_config=config,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Post-map research was unavailable; preserving the rooted map: %s",
+                type(exc).__name__,
+            )
         narration = await synthesize_content_world_narration(
             bundle,
             model=model,
@@ -151,6 +160,41 @@ async def _explore_content_world(
             "这次内容世界分析没有通过结构校验，因此没有用不可核验的结果替你补出起号方案。",
             tool_call_id=tool_call_id,
         )
+
+
+async def _search_content_world_evidence(
+    query: str,
+    max_results: int,
+) -> tuple[ResearchSearchResult, ...]:
+    """Run the configured local web-search tool and expose only its public receipt."""
+
+    from deerflow.community.ddg_search.tools import web_search_tool
+
+    raw = await web_search_tool.ainvoke(
+        {
+            "query": query,
+            "max_results": max_results,
+        }
+    )
+    if not isinstance(raw, str):
+        return ()
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return ()
+    results = payload.get("results")
+    if not isinstance(results, list):
+        return ()
+
+    normalized: list[ResearchSearchResult] = []
+    for result in results[:max_results]:
+        if not isinstance(result, dict):
+            continue
+        try:
+            normalized.append(ResearchSearchResult.model_validate(result))
+        except ValidationError:
+            continue
+    return tuple(normalized)
 
 
 def _terminal_content_world_command(content: str, *, tool_call_id: str) -> Command:
@@ -315,6 +359,20 @@ def _lead_projection(
                 "central_claim": topic.central_claim,
                 "mechanism": topic.mechanism,
                 "counterpoint": topic.counterpoint,
+                "narrative_frame": (
+                    {
+                        "protagonist": topic.narrative_frame.protagonist,
+                        "goal": topic.narrative_frame.goal,
+                        "obstacle": topic.narrative_frame.obstacle,
+                        "action_or_choice": topic.narrative_frame.action_or_choice,
+                        "stakes_or_consequence": topic.narrative_frame.stakes_or_consequence,
+                        "outcome_or_change": topic.narrative_frame.outcome_or_change,
+                        "limitations": list(topic.narrative_frame.limitations),
+                    }
+                    if topic.narrative_frame is not None
+                    else None
+                ),
+                "limitations": list(topic.limitations),
                 "research_needed": list(topic.research_needed),
             }
             if topic

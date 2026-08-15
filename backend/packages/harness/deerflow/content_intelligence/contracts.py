@@ -322,6 +322,19 @@ class ContentWorldView(ContractModel):
     unknown_refs: tuple[NonEmptyStr, ...] = ()
 
 
+class NarrativeFrame(ContractModel):
+    """Optional evidence-bound action chain for a topic that is genuinely narrative."""
+
+    protagonist: NonEmptyStr
+    goal: NonEmptyStr
+    obstacle: NonEmptyStr
+    action_or_choice: NonEmptyStr
+    stakes_or_consequence: NonEmptyStr
+    outcome_or_change: NonEmptyStr
+    basis_refs: BasisRefs
+    limitations: tuple[NonEmptyStr, ...] = ()
+
+
 class TopicBrief(ContractModel):
     record_id: NonEmptyStr
     question: NonEmptyStr
@@ -330,6 +343,8 @@ class TopicBrief(ContractModel):
     counterpoint: NonEmptyStr
     path: ContentPath
     evidence_refs: tuple[BasisRef, ...] = ()
+    narrative_frame: NarrativeFrame | None = None
+    limitations: tuple[NonEmptyStr, ...] = ()
     unknown_refs: tuple[NonEmptyStr, ...] = ()
     research_needed: tuple[NonEmptyStr, ...] = ()
 
@@ -431,7 +446,5 @@ def _projection_basis_refs(
             *tuple(ref for dimension in projection.dimensions for path in dimension.paths for ref in _path_basis_refs(path)),
             *tuple(ref for candidate in projection.named_candidates for ref in candidate.basis_refs),
         )
-    return (
-        *tuple(_path_basis_refs(projection.path)),
-        *projection.evidence_refs,
-    )
+    narrative_refs = projection.narrative_frame.basis_refs if projection.narrative_frame is not None else ()
+    return (*tuple(_path_basis_refs(projection.path)), *projection.evidence_refs, *narrative_refs)
