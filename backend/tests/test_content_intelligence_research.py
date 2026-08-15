@@ -603,6 +603,7 @@ def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> Non
     assert "售卖页、推广页、聚合页、社交收藏页" in EVIDENCE_READING_SYSTEM_PROMPT
     assert "不负责立题或编排故事" in EVIDENCE_READING_SYSTEM_PROMPT
     assert "topic_brief" not in EvidenceReadingDraft.model_json_schema()["properties"]
+    assert "创意收敛器" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "主体想达成的具体目标" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "阻碍" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "采取的行动或选择" in TOPIC_EDITOR_SYSTEM_PROMPT
@@ -611,5 +612,8 @@ def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> Non
     assert "召回理由和搜索词只是检索假设" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "同一命名对象内" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "不要求证据兑现召回理由" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "叙事主角必须是证据中的人或集体行动者" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "商品、品类、材质或抽象概念" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "人的关系、选择和变化" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "KTV" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "KTV" not in TOPIC_EDITOR_SYSTEM_PROMPT

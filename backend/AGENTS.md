@@ -156,18 +156,19 @@ from deerflow.config import get_app_config
 `ComprehensionRecord` plus three optional projections: `BusinessSemanticView`,
 `ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` remains an optional
 shared-record analysis for business semantics and topic briefs. Broad account-starting
-and long-term-content requests use the `return_direct` `explore_content_world` tool and
-seven bounded workers: semantic reader, content-root selector, frozen-root mapper, named
-recall, evidence reader, topic editor, and prose editor. Post-map research is optional;
-no evidence result may change the frozen root.
+and long-term-content requests use the `return_direct` `explore_content_world` tool.
+Its bounded workers cover semantic reading, root selection, frozen mapping, named recall,
+evidence reading, creative convergence, and prose. Research is optional and cannot change the root.
 
-The first six workers use local structured contracts. The mapper receives only
-the selected content root. The content map is divergent research space and does not own
-screenwriting conflict. The evidence reader cannot create a topic, and the topic editor
-cannot see recall rationales or search queries. It may add `NarrativeFrame` only when
+The first six workers use local structured contracts; the mapper sees only the selected root.
+Root selection compares the largest effective content world, with no complete-object priority.
+The map is divergent research space and does not own screenwriting conflict. Evidence reading
+cannot create a topic; creative convergence cannot see recall rationales or queries and may add
+`NarrativeFrame` only when
 protagonist, concrete goal, obstacle, action or choice, stakes or consequence, and
 outcome or change all resolve to record observations. Relationship tension alone is not
-narrative conflict. The prose editor receives the semantic transition, frozen root,
+narrative conflict. It is not a screenwriting agent; scripts belong to later presentation adaptation.
+The prose editor receives the semantic transition, frozen root,
 and map, then emits Markdown directly rather than serializing long Chinese prose into
 JSON. A deterministic renderer appends the optional evidence-bound topic afterward, so
 the prose model cannot rewrite its facts or narrative frame. Its parent run callbacks
@@ -192,7 +193,7 @@ thinking disabled; their inspectable contracts are the reasoning trace, and some
 providers reject structured tool choice while thinking is enabled.
 
 Each evidence observation must cite a source collected for its selected named
-candidate. The topic editor sees only source receipts referenced by that reading, not
+candidate. Creative convergence sees only source receipts referenced by that reading, not
 titles from competing candidates. Evidence used only by an optional narrative frame is
 still included in the topic-level evidence references and final citations. Any research
 exception degrades to the unchanged rooted map; cancellation remains outside that

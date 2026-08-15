@@ -1,7 +1,7 @@
 # ADR-004：内容地图不拥有冲突，编剧脑位于证据之后
 
 - 日期：2026-08-15
-- 状态：accepted after focused and live evaluation
+- 状态：boundary retained; “编剧脑” naming superseded by ADR-005
 
 ## 决策
 

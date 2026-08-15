@@ -353,8 +353,13 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "3 个候选" not in system_text
     assert "列表可以为空" in system_text
     assert "商业特异性不必重复在内容根中" in system_text
-    assert "某种关系或场景很常见、很有内容，不等于它定义了该品类" in system_text
-    assert "去掉该关系或场景后，对象仍可独立成立" in system_text
+    assert "不是品类定义测验" in system_text
+    assert "完整商品或服务没有先验优先权" in system_text
+    assert "对象能够脱离某个场景独立存在，不足以否决" in system_text
+    assert "具体人物、事件、关系、选择与跨时间空间的展开能力" in system_text
+    assert "某种关系或场景很常见、很有内容，不等于它定义了该品类" not in system_text
+    assert "去掉该关系或场景后，对象仍可独立成立、被识别和使用时，保留完整对象为内容根" not in system_text
+    assert "优先保留该对象为最小完整中心" not in system_text
     assert "不得把对一个完整对象的制作、使用或消费动作冒充成更完整的对象" in system_text
     assert "地图边界只受已冻结内容根约束" in system_text
     assert "商品回桥" not in system_text

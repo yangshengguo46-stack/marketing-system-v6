@@ -748,13 +748,17 @@ This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
 the direct `explore_content_world` path: isolated semantic reading, content-root
-selection, frozen-root expansion, named recall, evidence reading, topic editing, and a prose editor.
+selection, frozen-root expansion, named recall, evidence reading, creative convergence,
+and a prose editor. Root selection compares the largest effective content world rather
+than giving a complete product or service automatic priority.
 Each specialist sees only the input it owns. Search begins only after the content root
 is frozen, and weak or unavailable evidence leaves the rooted map intact instead of
 forcing a factual-sounding topic. The map does not own screenwriting conflict. After
-evidence reading, an optional narrative frame is emitted only when protagonist, goal,
+evidence reading, the creative-convergence step may emit an optional narrative frame
+only when protagonist, goal,
 obstacle, action, stakes, and outcome are all evidence-bound; explanatory topics remain
-non-narrative. The completed prose is delivered through the native return-direct exit
+non-narrative. This is not a separate screenwriting agent. Actual scriptwriting belongs
+to later presentation adaptation when a narrative format is selected. The completed prose is delivered through the native return-direct exit
 and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
 it back into a product catalogue.
 
