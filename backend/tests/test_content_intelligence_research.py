@@ -9,12 +9,12 @@ from pydantic import ValidationError
 from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceRequest,
-    ContentRootCandidateSetDraft,
     ContentRootDecisionDraft,
     EvidenceReadingDraft,
     ResearchBudget,
     ResearchDiscoveryDraft,
     ResearchSearchResult,
+    SharedWorldReviewDraft,
     SharedWorldSynthesisDraft,
     TopicEditorialDecisionDraft,
     enrich_content_world_with_research,
@@ -88,10 +88,19 @@ def _shared_world_payload() -> dict[str, Any]:
     }
 
 
+def _shared_world_review_payload() -> dict[str, Any]:
+    return {
+        "reviewed_world_label": "shared meals",
+        "subject_is_constitutive": False,
+        "substitution_counterfactual": "People can share many unrelated meals without this particular served object.",
+        "rationale": "The social setting is adjacent to the object rather than constitutive of it.",
+    }
+
+
 def _root_decision_payload() -> dict[str, Any]:
     return {
-        "selected_candidate_index": 0,
-        "audience_territory_candidate_index": 0,
+        "selected_candidate_index": 2,
+        "audience_territory_candidate_index": 2,
         "root_rationale": "The base is an enabler and the meal is the complete world.",
         "unknowns": [],
     }
@@ -119,7 +128,7 @@ async def _content_world_bundle():
         {
             SemanticReadingDraft: _semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
-            ContentRootCandidateSetDraft: _root_candidates_payload(),
+            SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _map_payload(),
         }
@@ -379,7 +388,9 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     assert len(seen_queries) == 3
     assert ("shared meal documented public event", 4) in seen_queries
     assert all(max_results == 4 for _, max_results in seen_queries)
-    assert sum("人物 事件 作品 记录" in query for query, _ in seen_queries) == 2
+    assert all("人物 事件 作品 记录" not in query for query, _ in seen_queries)
+    assert "shared meal how the shared meal carries emotion and group belonging" in {query for query, _ in seen_queries}
+    assert "shared meal documented changes in the shared meal over time" in {query for query, _ in seen_queries}
     discovery_input = research_model.message_batches[0][1].content
     assert '"content_root": "shared meal"' in discovery_input
     assert '"map_dimensions"' in discovery_input
@@ -495,6 +506,9 @@ async def test_fetch_failure_keeps_the_search_receipt_available_to_evidence_read
 
     assert "BOUNDED SEARCH RECEIPT" in research_model.message_batches[1][1].content
     assert enriched.record.sources[-1].kind == "web_search_result"
+    assert enriched.record.sources[-1].evidence_role == "topic_evidence"
+    assert '"evidence_role": "topic_evidence"' in research_model.message_batches[1][1].content
+    assert "benchmark_account" not in research_model.message_batches[1][1].content
 
 
 @pytest.mark.asyncio
@@ -650,7 +664,7 @@ async def test_search_budget_gives_both_lanes_a_turn_before_reusing_a_latent_can
     assert seen_queries[0].startswith("shared meal ")
     assert {f"candidate {index} first" for index in range(1, 4)}.issubset(seen_queries)
     assert not any(query.endswith("second") for query in seen_queries)
-    assert sum("人物 事件 作品 记录" in query for query in seen_queries) == 2
+    assert all("人物 事件 作品 记录" not in query for query in seen_queries)
     assert enriched.topic_brief is not None
     editorial_input = research_model.message_batches[2][1].content
     assert "candidate 1 first" in editorial_input

@@ -157,40 +157,36 @@ from deerflow.config import get_app_config
 `ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` remains an optional
 shared-record analysis for business semantics and topic briefs. Broad account-starting
 and long-term-content requests use the `return_direct` `explore_content_world` tool.
-Its workers handle literal semantics, blind shared-world synthesis, candidate
-recall/adjudication, maps, and research. The shared
-worker sees only the lexical head, activities, and frames. Recall marks root candidates
-and example branches; adjudication indexes only roots, and validation blocks branches.
+Its workers handle literal semantics, blind shared-world synthesis and review,
+candidate adjudication, maps, and research. The shared worker sees only the lexical head,
+activities, and frames. An independent counterfactual reviewer rejects generic adjacent
+contexts; code assembles exact typed candidates. Adjudication sees only the offering role
+and frozen candidate types/names, indexes only roots, and validation blocks branches.
 The mapper sees only the selected largest effective world; research cannot change it.
 The map is divergent space and does not own screenwriting conflict. Evidence reading
 cannot create a topic. Creative convergence cannot see recall rationales or queries and
 adds `NarrativeFrame` only when protagonist, goal, obstacle, action or choice, stakes,
 and outcome all resolve to observations. Relationship tension is not narrative conflict;
 scripts belong to later presentation adaptation.
-The prose editor receives the semantic transition, frozen root,
-and map, then emits Markdown directly rather than serializing long Chinese prose into
-JSON. A deterministic renderer appends the optional evidence-bound topic afterward, so
-the prose model cannot rewrite its facts or narrative frame. Its parent run callbacks
-must not be forwarded, otherwise the internal draft and
-direct tool result render twice. The tool node returns one hidden, tagged `ToolMessage`
-only. LangChain's native `return_direct` edge exits the model loop while the original
-tool-calling `AIMessage` is still the routing anchor; `TerminalResponseMiddleware` then
-promotes the tagged content to one visible `AIMessage` in `after_agent`. Never append
-that `AIMessage` inside the tool command: doing so changes the last AI routing anchor
-and causes an unwanted second Lead call. These specialists are bounded model workers
-inside one tool, not free-running DeerFlow `task` subagents, and they cannot mutate
-shared state. The tool is optional and must not become a fixed workflow stage.
+The prose editor receives only the semantic transition, frozen root, and map. A
+deterministic renderer appends any evidence-bound topic. Return one hidden tagged
+`ToolMessage`; native `return_direct` exits before `TerminalResponseMiddleware` promotes
+it once. Never append an `AIMessage` inside the tool command or forward parent streaming
+callbacks. These are bounded workers, not free-running `task` subagents, and the optional
+tool must not become a fixed workflow stage.
 
 The model-visible `explore_content_world` schema exposes only verbatim `user_request`.
-Do not pair it with Lead-level `web_search` or `web_fetch`. After root selection, map-
-direction search starts alongside model named recall; their queries alternate under one
-bounded budget and merge before evidence reading. A direction route may identify an
-evidence-bound entity; a recall route cannot rename its guess. Search failure preserves
-the map. Unique result URLs are opened by a bounded local public-page reader, with the
-configured `web_fetch` tool as fallback; every redirect is revalidated as public and
-the original URL is rejected before either reader can run. Only bounded text/HTML enters
-the untrusted evidence payload. Weak pages may yield no
-`TopicBrief`. Workers keep provider thinking off because their contracts are the trace.
+Do not pair it with Lead-level `web_search` or `web_fetch`. After root selection, map
+search starts alongside named recall; queries alternate under one budget and merge before
+reading. Do not append generic token lists. Direction routes may discover an entity;
+recall routes cannot rename guesses. Search failure preserves the map. Open unique public
+URLs with bounded local reading, using configured `web_fetch` only as fallback; revalidate
+every redirect and admit bounded text/HTML only. Weak evidence may yield no `TopicBrief`.
+Workers keep provider thinking off because their contracts are the trace.
+The configured `web_search` provider owns retrieval. Generic search results are always
+`topic_evidence`, never benchmark-account evidence; account analysis requires a separate
+identity-bound multi-post receipt. ByteDance Web Search uses `WEB_SEARCH_API_KEY`, not an
+Ark model key.
 
 Every selected entity and observation must cite sources owned by its selected route.
 Known observations from losing routes are removed before creative convergence; they may

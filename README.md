@@ -747,16 +747,19 @@ Use it as-is. Or tear it apart and make it yours.
 This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
-the direct `explore_content_world` path: isolated semantic reading, content-root
-candidate recall, independent candidate-only root adjudication, frozen-root expansion,
+the direct `explore_content_world` path: isolated semantic reading, a product-blind
+shared-world proposal and independent counterfactual review, deterministic typed
+candidate assembly, candidate-only root adjudication, frozen-root expansion,
 parallel map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
 Root selection compares the largest effective content world rather than giving a
 complete product or service automatic priority.
-Before candidate recall, a narrow cross-frame reader sees only the unmodified lexical
+Before candidate assembly, a narrow cross-frame reader sees only the unmodified lexical
 subject, participant activities, and concrete contexts. It identifies a shared human
 practice or relationship without seeing the full product name or product-value
-functions. Candidate recall labels narrow contexts as non-selectable example branches;
+functions. An independent reviewer rejects generic use or consumption contexts that do
+not require the subject. Code then assembles exact upstream candidates and labels narrow
+contexts as non-selectable example branches;
 the final adjudicator can only choose among frozen root candidates. Each specialist sees
 only the input it owns. Search begins only after the content root
 is frozen. A map-direction search starts alongside model recall, so an unsupported
@@ -772,6 +775,12 @@ non-narrative. This is not a separate screenwriting agent. Actual scriptwriting 
 to later presentation adaptation when a narrative format is selected. The completed prose is delivered through the native return-direct exit
 and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
 it back into a product catalogue.
+
+Post-map research uses the configured `web_search` tool. The optional official
+ByteDance/Volcengine provider requires a separate `WEB_SEARCH_API_KEY`; an Ark model key
+is not reused. Generic search receipts are topic evidence only. A video or account page
+returned by search is never treated as competitor-account analysis without a separate
+identity-bound, multi-post collection receipt.
 
 The content-world contract contains no product anchor or commercial return path. It
 does not choose presentation format, platform, sales, experiments, or publishing.

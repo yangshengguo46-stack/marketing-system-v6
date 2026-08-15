@@ -179,33 +179,73 @@ async def _search_content_world_evidence(
 ) -> tuple[ResearchSearchResult, ...]:
     """Run the configured local web-search tool and expose only its public receipt."""
 
-    from deerflow.community.ddg_search.tools import web_search_tool
+    from deerflow.config import get_app_config
+    from deerflow.reflection import resolve_variable
 
-    raw = await web_search_tool.ainvoke(
-        {
-            "query": query,
-            "max_results": max_results,
-        }
-    )
+    search_config = get_app_config().get_tool_config("web_search")
+    if search_config is None:
+        return ()
+    search_tool = resolve_variable(search_config.use, BaseTool)
+    tool_input: dict[str, Any] = {"query": query}
+    if "max_results" in search_tool.args:
+        tool_input["max_results"] = max_results
+    raw = await search_tool.ainvoke(tool_input)
     if not isinstance(raw, str):
         return ()
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
         return ()
-    results = payload.get("results")
-    if not isinstance(results, list):
-        return ()
+    results = _search_result_items(payload)
 
     normalized: list[ResearchSearchResult] = []
     for result in results[:max_results]:
         if not isinstance(result, dict):
             continue
         try:
-            normalized.append(ResearchSearchResult.model_validate(result))
+            normalized.append(
+                ResearchSearchResult(
+                    title=_first_search_text(result, "title", "Title"),
+                    url=_first_search_text(result, "url", "Url", "link", "href"),
+                    content=_first_search_text(
+                        result,
+                        "content",
+                        "snippet",
+                        "summary",
+                        "body",
+                        "Content",
+                        "Snippet",
+                        "Summary",
+                    ),
+                )
+            )
         except ValidationError:
             continue
     return tuple(normalized)
+
+
+def _search_result_items(payload: Any) -> list[Any]:
+    if isinstance(payload, list):
+        return payload
+    if not isinstance(payload, dict):
+        return []
+    results = payload.get("results")
+    if isinstance(results, list):
+        return results
+    provider_result = payload.get("Result")
+    if isinstance(provider_result, dict):
+        web_results = provider_result.get("WebResults")
+        if isinstance(web_results, list):
+            return web_results
+    return []
+
+
+def _first_search_text(result: dict[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = result.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
 
 
 async def _fetch_content_world_evidence(url: str) -> str | None:

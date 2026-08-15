@@ -11,11 +11,11 @@ from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceDraft,
     ContentIntelligenceRequest,
-    ContentRootCandidateSetDraft,
     ContentRootDecisionDraft,
     ContentRootSelectionDraft,
     FrozenContentMapDraft,
     SemanticReadingDraft,
+    SharedWorldReviewDraft,
     SharedWorldSynthesisDraft,
     SourceMaterial,
     analyze_content_intelligence,
@@ -252,10 +252,19 @@ def _shared_world_payload() -> dict[str, Any]:
     }
 
 
+def _shared_world_review_payload(*, subject_is_constitutive: bool = False) -> dict[str, Any]:
+    return {
+        "reviewed_world_label": "围绕火锅的共同用餐生活",
+        "subject_is_constitutive": subject_is_constitutive,
+        "substitution_counterfactual": "换成其他餐食后，共同用餐仍完整成立。",
+        "rationale": "共同用餐是普通使用场景，不是该主词特有的社会实践。",
+    }
+
+
 def _root_decision_payload() -> dict[str, Any]:
     return {
-        "selected_candidate_index": 0,
-        "audience_territory_candidate_index": 0,
+        "selected_candidate_index": 2,
+        "audience_territory_candidate_index": 2,
         "root_rationale": "底料是中间实现物，火锅是完整对象世界。",
         "unknowns": [],
     }
@@ -283,7 +292,7 @@ def _focused_model() -> SequencedStructuredFakeModel:
         {
             SemanticReadingDraft: _semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
-            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
@@ -416,6 +425,9 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "去掉该关系或场景后，对象仍可独立成立、被识别和使用时，保留完整对象为内容根" not in system_text
     assert "优先保留该对象为最小完整中心" not in system_text
     assert "不得把对一个完整对象的制作、使用或消费动作冒充成更完整的对象" in system_text
+    assert "不得停在另一个中间产物" in system_text
+    assert "共同行动或关系是去修饰主词成立的构成性条件" in system_text
+    assert "普通使用、消费、制作或发生场合" in system_text
     assert "地图边界只受已冻结内容根约束" in system_text
     assert "商品回桥" not in system_text
     assert "回到商品" not in system_text
@@ -537,7 +549,7 @@ async def test_content_world_focus_uses_semantic_attention_before_map_expansion(
     assert model.schemas == [
         SemanticReadingDraft,
         SharedWorldSynthesisDraft,
-        ContentRootCandidateSetDraft,
+        SharedWorldReviewDraft,
         ContentRootDecisionDraft,
         FrozenContentMapDraft,
     ]
@@ -548,9 +560,14 @@ async def test_content_world_focus_uses_semantic_attention_before_map_expansion(
     assert "怎么起号" not in model.message_batches[2][1].content
     assert "怎么起号" not in model.message_batches[3][1].content
     assert "怎么起号" not in model.message_batches[4][1].content
-    assert "intermediate_enabler" in model.message_batches[2][1].content
+    assert '"unmodified_subject": "底料"' in model.message_batches[2][1].content
     assert '"world_label": "围绕火锅的共同用餐生活"' in model.message_batches[2][1].content
-    assert '"label": "火锅"' in model.message_batches[3][1].content
+    decision_input = model.message_batches[3][1].content
+    assert '"offering_role": "intermediate_enabler"' in decision_input
+    assert '"level": "served_object"' in decision_input
+    assert '"label": "火锅"' in decision_input
+    assert '"level": "subject_activity"' in decision_input
+    assert "普通制作、处理、食用或使用动作" in model.message_batches[3][0].content
     assert '"primary_content_center": "火锅"' in model.message_batches[4][1].content
     assert "重庆火锅底料" not in model.message_batches[4][1].content
     assert "semantic_reading" not in model.message_batches[4][1].content
@@ -572,7 +589,7 @@ async def test_analyzer_recovers_provider_json_message_content_without_retry() -
         {
             SemanticReadingDraft: _semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
-            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
@@ -596,7 +613,7 @@ async def test_analyzer_recovers_safe_python_literal_in_invalid_tool_arguments()
         {
             SemanticReadingDraft: _semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
-            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
@@ -622,7 +639,7 @@ async def test_analyzer_retries_one_structurally_invalid_specialist_response() -
         {
             SemanticReadingDraft: _semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
-            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
@@ -702,42 +719,15 @@ async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_bran
         "served_activities": ["送礼", "收礼", "回礼"],
         "defining_functions_or_uses": ["通过礼物表达情感、关系与礼数"],
         "social_or_cultural_frames": ["婚嫁礼俗", "节庆赠礼", "商务馈赠", "人生礼仪"],
+        "unmodified_subject_activities": ["送礼", "收礼", "回礼"],
+        "unmodified_subject_functions_or_uses": ["通过礼物表达情感、关系与礼数"],
+        "unmodified_subject_frames": ["婚嫁礼俗", "节庆赠礼", "商务馈赠", "人生礼仪"],
         "seller_actions": [],
         "uncertainties": [],
     }
-    candidates = {
-        "source_object": "黄金礼品",
-        "candidates": [
-            {
-                "level": "commercial_object",
-                "label": "黄金礼品",
-                "scope_role": "root_candidate",
-                "relation_to_business": "直接经营对象",
-                "strength": "具体",
-                "overreach_risk": "容易停在工艺和选款",
-            },
-            {
-                "level": "social_or_cultural_world",
-                "label": "送礼与人情往来",
-                "scope_role": "root_candidate",
-                "relation_to_business": "礼品的定义性人际功能",
-                "strength": "覆盖反复发生的赠受、回礼与关系表达",
-                "overreach_risk": "不能扩成与礼品无关的泛关系话题",
-            },
-            {
-                "level": "social_or_cultural_world",
-                "label": "婚嫁礼俗",
-                "scope_role": "example_branch",
-                "relation_to_business": "平行赠礼场景之一",
-                "strength": "有具体人物与仪式",
-                "overreach_risk": "会排除节庆、商务和其他人生礼仪",
-            },
-        ],
-        "unknowns": [],
-    }
     decision = {
-        "selected_candidate_index": 1,
-        "audience_territory_candidate_index": 1,
+        "selected_candidate_index": 6,
+        "audience_territory_candidate_index": 6,
         "root_rationale": "礼品的长期内容来自反复发生的赠受与人情关系；婚嫁只是其中一个分支。",
         "unknowns": [],
     }
@@ -761,7 +751,12 @@ async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_bran
                 "covered_frames": ["婚嫁礼俗", "节庆赠礼", "商务馈赠", "人生礼仪"],
                 "limitations": ["不能扩成与礼品无关的泛人际关系"],
             },
-            ContentRootCandidateSetDraft: candidates,
+            SharedWorldReviewDraft: {
+                "reviewed_world_label": "送礼与人情往来",
+                "subject_is_constitutive": True,
+                "substitution_counterfactual": "移除礼物的赠送、收受与回礼后，这一具体实践不再成立。",
+                "rationale": "礼物的流动是该人情实践的构成部分。",
+            },
             ContentRootDecisionDraft: decision,
             FrozenContentMapDraft: content_map,
         }
@@ -785,6 +780,92 @@ async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_bran
     assert '"primary_content_center": "送礼与人情往来"' in model.message_batches[4][1].content
     assert "婚嫁" not in model.message_batches[4][1].content
     assert bundle.content_world.dimensions[0].paths[0].steps[0].to_label == "婚嫁中的赠礼与回礼"
+
+
+@pytest.mark.asyncio
+async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_decision() -> None:
+    semantic = {
+        "source_object": "黄金礼品",
+        "lexical_head": "礼品",
+        "modifiers": [
+            {
+                "term": "黄金",
+                "relation": "材质",
+                "modifies": "礼品",
+                "removal_counterfactual": "去掉黄金后仍是用于赠送、收受和回礼的礼品",
+            }
+        ],
+        "offering_role": "complete_object_or_service",
+        "role_rationale": "黄金是材质，礼品是完整赠送对象。",
+        "served_objects": ["黄金材质的礼品"],
+        "served_activities": ["赠礼", "婚庆与节日仪式赠送", "收藏与保值"],
+        "defining_functions_or_uses": ["表达关系与礼数", "黄金保值"],
+        "social_or_cultural_frames": ["婚嫁赠礼（三金/五金）", "节庆赠礼", "商务馈赠", "投资保值与收藏"],
+        "unmodified_subject_activities": ["赠礼", "收礼", "回礼"],
+        "unmodified_subject_functions_or_uses": ["表达关系与礼数"],
+        "unmodified_subject_frames": ["婚嫁赠礼", "节庆赠礼", "商务馈赠", "人生礼仪"],
+        "seller_actions": [],
+        "uncertainties": [],
+    }
+    model = SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: semantic,
+            SharedWorldSynthesisDraft: {
+                "common_action_or_relation": "通过赠送、收受与回礼表达和维系关系",
+                "participant_relationship": "赠礼者、收礼者与关系人",
+                "world_label": "送礼、收礼与回礼的人情往来",
+                "covered_frames": ["婚嫁赠礼", "节庆赠礼", "商务馈赠", "人生礼仪"],
+                "limitations": ["不包含依赖黄金材质的投资保值活动"],
+            },
+            SharedWorldReviewDraft: {
+                "reviewed_world_label": "送礼、收礼与回礼的人情往来",
+                "subject_is_constitutive": True,
+                "substitution_counterfactual": "移除礼物的赠送、收受与回礼后，这一具体实践不再成立。",
+                "rationale": "礼物的流动是该人情实践的构成部分。",
+            },
+            ContentRootDecisionDraft: {
+                "selected_candidate_index": 6,
+                "audience_territory_candidate_index": 6,
+                "root_rationale": "去修饰后的共同人类活动覆盖多个平行场景。",
+                "unknowns": [],
+            },
+            FrozenContentMapDraft: {
+                "map_directions": [
+                    {
+                        "dimension": "时间、地域、人物与事件",
+                        "actual_directions": ["不同人生节点如何送礼与回礼"],
+                    }
+                ],
+                "named_candidates": [],
+                "unknowns": [],
+            },
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+    shared_world_input = model.message_batches[1][1].content
+    assert "黄金" not in shared_world_input
+    assert "保值" not in shared_world_input
+    assert "三金" not in shared_world_input
+    assert "赠礼" in shared_world_input
+    assert "回礼" in shared_world_input
+
+    decision_input = model.message_batches[3][1].content
+    assert '"semantic_reading"' not in decision_input
+    assert '"shared_world_synthesis"' not in decision_input
+    assert '"non_selectable_example_branches"' not in decision_input
+    assert '"strength"' not in decision_input
+    assert '"overreach_risk"' not in decision_input
+    assert "贵重赠予与价值传承" not in decision_input
+    assert bundle.content_world.content_root == "送礼、收礼与回礼的人情往来"
 
 
 def test_root_selection_schema_does_not_own_commercial_return_design() -> None:

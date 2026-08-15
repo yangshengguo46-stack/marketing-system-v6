@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import importlib
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.tools import tool
 from langgraph.types import Command
 
 from deerflow.agents.lead_agent.prompt import SYSTEM_PROMPT_TEMPLATE
@@ -153,6 +155,95 @@ async def test_content_world_tool_preserves_the_rooted_map_when_optional_researc
     assert isinstance(result, Command)
     assert result.update["messages"][0].content == "# 火锅\n\n围绕火锅本身展开内容世界。"
     assert narration.await_args.args[0] is bundle
+
+
+@pytest.mark.asyncio
+async def test_content_world_search_uses_configured_query_only_provider_and_normalizes_list_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    @tool("web_search")
+    async def configured_search(query: str) -> str:
+        """Search through the configured test provider."""
+        calls.append(query)
+        return json.dumps(
+            [
+                {
+                    "title": "A public source",
+                    "url": "https://example.com/source",
+                    "snippet": "A bounded public search receipt.",
+                }
+            ]
+        )
+
+    search_config = SimpleNamespace(use="tests.fake:configured_search")
+    app_config = SimpleNamespace(
+        get_tool_config=lambda name: search_config if name == "web_search" else None,
+    )
+    monkeypatch.setattr("deerflow.config.get_app_config", lambda: app_config)
+    monkeypatch.setattr("deerflow.reflection.resolve_variable", lambda use, expected: configured_search)
+    monkeypatch.setattr(
+        "deerflow.community.ddg_search.tools.web_search_tool",
+        AsyncMock(return_value=json.dumps({"results": []})),
+    )
+
+    results = await content_intelligence_tool_module._search_content_world_evidence(
+        "human gift exchange",
+        2,
+    )
+
+    assert calls == ["human gift exchange"]
+    assert len(results) == 1
+    assert results[0].title == "A public source"
+    assert results[0].content == "A bounded public search receipt."
+
+
+@pytest.mark.asyncio
+async def test_content_world_search_passes_supported_limit_and_normalizes_byted_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, int]] = []
+
+    @tool("web_search")
+    async def configured_search(query: str, max_results: int = 5) -> str:
+        """Search through a provider with an explicit result limit."""
+        calls.append((query, max_results))
+        return json.dumps(
+            {
+                "Result": {
+                    "WebResults": [
+                        {
+                            "Title": "Official-style result",
+                            "Url": "https://example.com/official",
+                            "Summary": "Provider summary.",
+                        },
+                        {
+                            "Title": "Second result",
+                            "Url": "https://example.com/second",
+                            "Snippet": "Second provider snippet.",
+                        },
+                    ]
+                }
+            }
+        )
+
+    search_config = SimpleNamespace(use="tests.fake:configured_search")
+    app_config = SimpleNamespace(
+        get_tool_config=lambda name: search_config if name == "web_search" else None,
+    )
+    monkeypatch.setattr("deerflow.config.get_app_config", lambda: app_config)
+    monkeypatch.setattr("deerflow.reflection.resolve_variable", lambda use, expected: configured_search)
+
+    results = await content_intelligence_tool_module._search_content_world_evidence(
+        "gift customs",
+        1,
+    )
+
+    assert calls == [("gift customs", 1)]
+    assert len(results) == 1
+    assert results[0].title == "Official-style result"
+    assert results[0].content == "Provider summary."
 
 
 @pytest.mark.asyncio

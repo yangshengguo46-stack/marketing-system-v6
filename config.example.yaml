@@ -685,6 +685,19 @@ tools:
     # region: wt-wt          # wt-wt is normalized for Wikipedia when backend includes auto/all/wikipedia.
     # safesearch: moderate   # on, moderate, off
 
+  # Web search tool (official ByteDance/Volcengine search, requires WEB_SEARCH_API_KEY)
+  # This key comes from the Search Infinity or Coding Plan search console. An Ark
+  # model API key is a different credential and is deliberately not reused here.
+  # Documentation: https://www.volcengine.com/docs/85508/1650263
+  # - name: web_search
+  #   group: web
+  #   use: deerflow.community.byted_search.tools:web_search_tool
+  #   max_results: 5
+  #   query_rewrite: true
+  #   # time_range: OneWeek
+  #   # auth_level: 1
+  #   # api_key: $WEB_SEARCH_API_KEY
+
   # Web search tool (uses SearXNG, self-hosted, no API key required)
   # SearXNG is a free internet metasearch engine which aggregates results from
   # various search services. Deploy your own instance: https://github.com/searxng/searxng

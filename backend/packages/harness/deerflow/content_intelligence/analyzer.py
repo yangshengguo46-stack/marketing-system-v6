@@ -120,6 +120,9 @@ class SemanticReadingDraft(ContractModel):
     served_activities: tuple[NonEmptyStr, ...] = ()
     defining_functions_or_uses: tuple[NonEmptyStr, ...] = ()
     social_or_cultural_frames: tuple[NonEmptyStr, ...] = ()
+    unmodified_subject_activities: tuple[NonEmptyStr, ...] | None = None
+    unmodified_subject_functions_or_uses: tuple[NonEmptyStr, ...] | None = None
+    unmodified_subject_frames: tuple[NonEmptyStr, ...] | None = None
     seller_actions: tuple[NonEmptyStr, ...] = ()
     uncertainties: tuple[NonEmptyStr, ...] = ()
 
@@ -132,10 +135,20 @@ class SharedWorldSynthesisDraft(ContractModel):
     limitations: tuple[NonEmptyStr, ...] = ()
 
 
+class SharedWorldReviewDraft(ContractModel):
+    reviewed_world_label: NonEmptyStr
+    subject_is_constitutive: bool
+    substitution_counterfactual: NonEmptyStr
+    rationale: NonEmptyStr
+
+
 class RootCandidateDraft(ContractModel):
     level: Literal[
         "commercial_object",
         "lexical_head",
+        "served_object",
+        "subject_activity",
+        "subject_function_or_use",
         "served_object_or_activity",
         "defining_function_or_use",
         "social_or_cultural_world",
@@ -256,8 +269,11 @@ SEMANTIC_READING_SYSTEM_PROMPT = """<content_intelligence_method>
 - 场所或经营容器可能由专名、缩写或行业惯用名隐含表达；即使没有“店、馆、场所”等显式后缀，也要检查是否属于隐含场所或经营容器。
 - 对场所或经营容器，必须显化它承载的完整对象或参与者活动，并判断去掉这些对象或活动后，品类身份和用户进入它的理由是否仍然成立；物理空间还能被描述不等于原品类仍成立。
 - 将它明确服务的完整对象写入 served_objects，将对象参与的活动写入 served_activities，不得把对一个完整对象的制作、使用或消费动作冒充成更完整的对象。
+- 若当前对象先形成的仍是部件、原料、半成品、调味基底或其他中间载体，不得停在另一个中间产物；沿“它继续完成什么”再追一层，将最终可被独立识别、体验或参与的完整对象也写入 served_objects。中间产物可以保留，但不能冒充终点。
 - 同一对象可以具有多种同时成立的构成功能，包括实际用途、人际或社交功能、情绪表达与宣泄、身份确认等；不要为了得到单一答案而让它们互相覆盖。
 - 显化可能参与的具体社会文化框架，但不在本步骤概括它们的共同上位世界；对象、活动、用途和具体场景都只是可纠正语义材料，不替下游选择内容根。
+- 另外做一次真正的去修饰反事实：`unmodified_subject_activities`、`unmodified_subject_functions_or_uses` 和 `unmodified_subject_frames` 只保留移除材质、地域、价格、人群等修饰后，仍由去修饰主词自然支持的活动、功能与场景。
+- 依赖被移除修饰语的功能、价值、案例或场景不得换词后混入。没有修饰语时，三个字段仍只保留直接属于主词的项。
 - 用户没有明说的关系只能来自词义和通识，不得冒充客户、能力、资源或结果事实。
 - 不输出内容地图、平台、表现形式、发布节奏、销售、实验、问卷或数量。
 
@@ -268,7 +284,10 @@ SEMANTIC_READING_SYSTEM_PROMPT = """<content_intelligence_method>
 SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT = """<content_intelligence_method>
 你只做跨场景共同语义阅读，不选择内容根，也不展开内容地图。输入已经刻意移除了完整商业对象、修饰语和商品价值功能，只保留去修饰后的主词、参与活动与场景；不得重新引入输入中已经移除的信息。
 
-- 输入会给出一个商业表达已经识别的活动、功能和若干具体社会场景。判断两个或更多场景是否只是同一种反复发生的人类行动、关系或生活实践在不同环境中的实例。
+- 输入会给出去修饰主词仍支持的活动和若干具体社会场景。判断两个或更多场景是否只是同一种反复发生的人类行动、关系或生活实践在不同环境中的实例。
+- 若场景已被上游概括成一条，但多个活动仍明确构成一种反复发生的人类实践或关系，仍可识别共同世界；不得因为文字列表只有一项就机械弃权。
+- 只有当共同行动或关系是去修饰主词成立的构成性条件，而且共同世界仍以该主词特有的实践为边界时，才输出 world_label。
+- 普通使用、消费、制作或发生场合只是对象的相邻情境；如果同样的人类活动换成许多无关对象仍完整成立，或只有少数分支涉及该关系，字段应保持为空，不得用一个泛社会世界替代主词。
 - 若共同项成立，分别写出所有相关场景共同具有的动作或关系、参与者关系，以及观众能直接理解的共同世界名称。
 - 共同世界名称不能复制任何一个具体场景作为前缀，不能只复述一次性使用动作，也不能扩大到无法由输入自然解释的泛概念。
 - 当参与者关系正是这些活动反复发生的原因时，world_label 应同时显化共同活动与关系，而不是只写物品、材质或一次动作。
@@ -280,20 +299,16 @@ SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT = """<content_intelligence_method>
 </content_intelligence_method>"""
 
 
-CONTENT_ROOT_CANDIDATE_SYSTEM_PROMPT = """<content_intelligence_method>
-你只召回互相独立的内容根候选，不选择赢家、不写 audience_territory，也不展开内容地图。输入中的上游语义阅读是可纠正的注意力材料，不是硬规则。
+SHARED_WORLD_REVIEW_SYSTEM_PROMPT = """<content_intelligence_method>
+你是独立的共同世界反事实审查者，不选择内容根，不生成新候选，不展开内容地图。输入只有去修饰主词、仍存活动与场景，以及另一工作者提出的共同世界。
 
-- 将完整对象、词法主词、它明确服务的完整对象、相关活动、直接用途或结果、shared_world_synthesis 中已经成立的共同人类世界作为平等候选；不存在越抽象越好，也不存在离商品越近越好。
-- shared_world_synthesis.world_label 非空时，必须原样列为 root_candidate；它覆盖的每个具体时间、地点、人群、阶段、场合、人物或事件只能单独列为 example_branch。
-- scope_role=root_candidate 表示该候选有资格覆盖原商业表达自然通向的长期世界；scope_role=example_branch 表示它只覆盖其中一个场景、人物、事件或子类，内容再丰富也只是下游地图分支。
-- 不得把一个 example_branch 的名称冠在共同世界前面，也不能把较窄对象与较宽关系世界拼成折中混合根或候选。
-- 完整商业实体不自动等于最好的内容根。持续发生的人类活动、社交或情绪功能及关系世界必须得到独立候选位置，不能被设备、流程或行业知识覆盖。
-- 对经营容器做构成性移除反事实时，判断的是品类身份和用户进入它的理由是否仍然成立，而不是物理外壳、设备或卖方流程仍然存在。若容器没有独立内容对象，优先比较它承载的完整对象或参与者活动。
-- 对可能进入候选的修饰语做去词反事实；去掉后若核心世界仍成立，不要为了保留商品限定词而把它塞回候选名称。
-- 用观众能直接理解的对象、活动或关系命名候选；不要用抽象的‘XX文化’代替已经识别出的具体活动与关系。
-- 不评价最终赢家，不输出 selected_candidate_index、地图、命名案例、选题、平台、表现形式、销售、实验或数量。候选没有固定配额，但至少保留一个 root_candidate。
+- reviewed_world_label 必须原样复制待审名称，不得改名或修复。
+- 做替换反事实：若换成多种与主词无关的对象，待审的人类活动、参与者关系和实践身份是否仍完整不变。
+- 只有主词的语义角色是该实践不可替换的构成部分时，subject_is_constitutive 才为 true。待审名称里包含主词，不等于构成性已成立。
+- 如果只是普通使用、消费、制作、交易、聚会或发生场合，而同一实践可以换用大量无关对象，必须为 false。
+- 只审查已给候选；不输出商品、平台、销售、表现形式、实验或数量。
 
-只返回结构化合同，列表可以为空。
+只返回结构化合同。
 </content_intelligence_method>"""
 
 
@@ -301,13 +316,21 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 你只裁决一个已经冻结的候选集合，不生成、改名、合并或补充候选，也不展开内容地图。
 
 - selected_candidate_index 只能指向 scope_role=root_candidate；example_branch 无论多具体、多热闹、搜索资料多丰富，都不能成为内容根。
+- 只能在输入索引中选择，不能把较窄对象与较宽关系世界拼成折中混合根。
 - primary_content_center 是账号当前最值得长期占领的最大有效内容世界：它必须具体、与原表达有直接可解释关系，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级。
 - 内容根选择不是品类定义测验。完整商品或服务没有先验优先权；对象能够脱离某个场景独立存在，不足以否决与原表达直接相连、解释力更强的人类活动或关系世界。
+- 完整商业实体不自动等于最好的内容根。持续发生的人类活动、社交或情绪功能及关系世界已由上游分开绑定，必须与对象候选平等比较。
+- 候选来源不是胜负规则，但必须辨清层级：served_object 是中间实现物所服务的完整对象；subject_activity 是围绕主词发生的动作；subject_function_or_use 是主词承担的功能或结果。
+- 普通制作、处理、食用或使用动作通常只是对象地图中的一条路径，不能仅因动词短语看起来更宽就压过完整对象。只有它本身形成可独立命名、反复发生且能解释更多人物、事件与关系的人类实践时，才可能成为内容根。
+- 当商业对象是 intermediate_enabler 时，优先检验 served_object 是否才是完整内容对象；中间实现物的使用步骤不能冒充它所完成的对象世界。
+- 对经营容器做构成性判断时，比较的是品类身份和用户进入它的理由是否仍然成立，不是物理外壳、设备或卖方流程仍然存在。容器没有独立内容对象时，优先比较它承载的完整对象或参与者活动。
 - 对每个候选比较具体人物、事件、关系、选择与跨时间空间的展开能力，也比较它是否仍由原商业表达自然通向，而不是只比较对象是否完整或知识点是否容易列举。
+- 用观众可直接理解的对象、活动或关系判断，不要用抽象的‘XX文化’代替已经识别出的具体活动与关系。
 - 若一个候选只取多个平行场景中的一个，或擅自增加用户未给出的地域、人生阶段、人群、用途等范围限制，它应当是 example_branch，不能压过覆盖这些场景的共同世界。
 - 对象型候选可以胜出，但只能因为它本身比竞争活动或关系世界拥有更大、更具体且不失真的长期内容容量，不能仅凭“它是完整对象”获胜。
 - audience_territory_candidate_index 也只能指向冻结的 root_candidate；通常与内容根相同，只有另一候选确实更准确表达观众长期进入的人、事、活动或关系世界时才不同。
 - 商业特异性不必重复在内容根中。本任务只比较候选，不把下游运营约束带入判断。
+- 候选生成者写的优势、风险、案例分支和上游详细语义已被隔离；下游成交便利性不是内容根的优先条件。
 - 只输出索引、判断理由和未知项；不得创造新标签，不输出地图、选题、平台、表现形式、销售、实验或数量。
 
 只返回结构化合同，列表可以为空。
@@ -571,6 +594,9 @@ async def _analyze_focused_content_world(
             "served_activities",
             "defining_functions_or_uses",
             "social_or_cultural_frames",
+            "unmodified_subject_activities",
+            "unmodified_subject_functions_or_uses",
+            "unmodified_subject_frames",
             "seller_actions",
             "uncertainties",
         },
@@ -587,25 +613,24 @@ async def _analyze_focused_content_world(
         include_raw=True,
         container_fields={"covered_frames", "limitations"},
     )
-    candidate_messages = (
-        SystemMessage(content=CONTENT_ROOT_CANDIDATE_SYSTEM_PROMPT),
-        HumanMessage(content=_render_root_candidate_input(request.subject_expression, semantic, shared_world, sources)),
-    )
-    candidate_set = await _invoke_structured(
-        model,
-        ContentRootCandidateSetDraft,
-        candidate_messages,
-        runnable_config=runnable_config,
-        include_raw=True,
-        container_fields={
-            "candidates",
-            "unknowns",
-        },
-    )
-    candidate_set = _ensure_shared_world_candidate(candidate_set, shared_world)
+    if shared_world.world_label is not None:
+        review_messages = (
+            SystemMessage(content=SHARED_WORLD_REVIEW_SYSTEM_PROMPT),
+            HumanMessage(content=_render_shared_world_review_input(semantic, shared_world)),
+        )
+        shared_world_review = await _invoke_structured(
+            model,
+            SharedWorldReviewDraft,
+            review_messages,
+            runnable_config=runnable_config,
+            include_raw=True,
+            container_fields=set(),
+        )
+        shared_world = _apply_shared_world_review(shared_world, shared_world_review)
+    candidate_set = _build_root_candidate_set(semantic, shared_world)
     decision_messages = (
         SystemMessage(content=CONTENT_ROOT_DECISION_SYSTEM_PROMPT),
-        HumanMessage(content=_render_root_decision_input(request.subject_expression, semantic, shared_world, candidate_set)),
+        HumanMessage(content=_render_root_decision_input(candidate_set, offering_role=semantic.offering_role)),
     )
     decision = await _invoke_structured(
         model,
@@ -881,6 +906,7 @@ def _build_record_id(subject_expression: str, sources: tuple[SourceItem, ...]) -
             {
                 "source_id": source.source_id,
                 "kind": source.kind,
+                "evidence_role": source.evidence_role,
                 "title": source.title,
                 "uri": source.uri,
                 "content_hash": source.content_hash(),
@@ -919,67 +945,189 @@ def _render_semantic_input(
 
 
 def _render_shared_world_input(semantic: SemanticReadingDraft) -> str:
+    activities = semantic.unmodified_subject_activities
+    if activities is None:
+        activities = semantic.served_activities
+    frames = semantic.unmodified_subject_frames
+    if frames is None:
+        frames = semantic.social_or_cultural_frames
     payload = {
         "unmodified_subject": semantic.lexical_head,
-        "served_activities": semantic.served_activities,
-        "social_or_cultural_frames": semantic.social_or_cultural_frames,
+        "served_activities": activities,
+        "social_or_cultural_frames": frames,
     }
     return "--- BEGIN SHARED WORLD INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SHARED WORLD INPUT ---"
 
 
-def _render_root_candidate_input(
-    subject_expression: str,
+def _render_shared_world_review_input(
     semantic: SemanticReadingDraft,
     shared_world: SharedWorldSynthesisDraft,
-    sources: tuple[SourceItem, ...],
 ) -> str:
+    activities = semantic.unmodified_subject_activities
+    if activities is None:
+        activities = semantic.served_activities
+    frames = semantic.unmodified_subject_frames
+    if frames is None:
+        frames = semantic.social_or_cultural_frames
     payload = {
-        "subject_expression": subject_expression,
-        "semantic_reading": semantic.model_dump(mode="json", exclude_none=True),
-        "shared_world_synthesis": shared_world.model_dump(mode="json", exclude_none=True),
-        "sources": [source.model_dump(mode="json", exclude_none=True) for source in sources],
+        "unmodified_subject": semantic.lexical_head,
+        "surviving_activities": activities,
+        "surviving_frames": frames,
+        "proposed_shared_world": shared_world.model_dump(mode="json", exclude_none=True),
     }
-    return "--- BEGIN CONTENT ROOT CANDIDATE INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END CONTENT ROOT CANDIDATE INPUT ---"
+    return "--- BEGIN SHARED WORLD REVIEW INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SHARED WORLD REVIEW INPUT ---"
 
 
 def _render_root_decision_input(
-    subject_expression: str,
-    semantic: SemanticReadingDraft,
-    shared_world: SharedWorldSynthesisDraft,
     candidate_set: ContentRootCandidateSetDraft,
+    *,
+    offering_role: OfferingRole,
 ) -> str:
-    root_candidates = [candidate.model_dump(mode="json") for candidate in candidate_set.candidates if candidate.scope_role == "root_candidate"]
-    example_branches = [candidate.model_dump(mode="json") for candidate in candidate_set.candidates if candidate.scope_role == "example_branch"]
+    root_candidates = [
+        {
+            "level": candidate.level,
+            "label": candidate.label,
+        }
+        for candidate in candidate_set.candidates
+        if candidate.scope_role == "root_candidate"
+    ]
     payload = {
-        "subject_expression": subject_expression,
-        "semantic_reading": semantic.model_dump(mode="json", exclude_none=True),
-        "shared_world_synthesis": shared_world.model_dump(mode="json", exclude_none=True),
+        "offering_role": offering_role,
         "root_candidates": root_candidates,
-        "non_selectable_example_branches": example_branches,
     }
     return "--- BEGIN CONTENT ROOT DECISION INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END CONTENT ROOT DECISION INPUT ---"
 
 
-def _ensure_shared_world_candidate(
-    candidate_set: ContentRootCandidateSetDraft,
+def _apply_shared_world_review(
+    shared_world: SharedWorldSynthesisDraft,
+    review: SharedWorldReviewDraft,
+) -> SharedWorldSynthesisDraft:
+    if shared_world.world_label is None or review.reviewed_world_label != shared_world.world_label:
+        raise ValueError("shared-world review must bind the exact proposed label")
+    if review.subject_is_constitutive:
+        return shared_world
+    return shared_world.model_copy(
+        update={
+            "world_label": None,
+            "limitations": tuple(
+                dict.fromkeys(
+                    (
+                        *shared_world.limitations,
+                        review.substitution_counterfactual,
+                        review.rationale,
+                    )
+                )
+            ),
+        }
+    )
+
+
+def _build_root_candidate_set(
+    semantic: SemanticReadingDraft,
     shared_world: SharedWorldSynthesisDraft,
 ) -> ContentRootCandidateSetDraft:
-    if shared_world.world_label is None or any(candidate.label == shared_world.world_label for candidate in candidate_set.candidates):
-        return candidate_set
+    candidates: list[RootCandidateDraft] = []
+    seen_labels: set[str] = set()
 
-    relation = shared_world.common_action_or_relation or shared_world.participant_relationship or "跨场景共同世界"
-    covered = "、".join(shared_world.covered_frames)
-    strength = f"共同解释已识别场景：{covered}" if covered else "由独立跨场景语义阅读识别"
-    overreach_risk = "；".join(shared_world.limitations) or "不能扩展到输入未支持的其他对象、活动或关系"
-    candidate = RootCandidateDraft(
-        level="social_or_cultural_world",
-        label=shared_world.world_label,
+    def add(
+        *,
+        level: Literal[
+            "commercial_object",
+            "lexical_head",
+            "served_object",
+            "subject_activity",
+            "subject_function_or_use",
+            "served_object_or_activity",
+            "defining_function_or_use",
+            "social_or_cultural_world",
+            "other",
+        ],
+        label: str,
+        scope_role: Literal["root_candidate", "example_branch"],
+        relation: str,
+    ) -> None:
+        normalized = label.strip()
+        if not normalized or normalized in seen_labels:
+            return
+        seen_labels.add(normalized)
+        candidates.append(
+            RootCandidateDraft(
+                level=level,
+                label=normalized,
+                scope_role=scope_role,
+                relation_to_business=relation,
+                strength="由上游语义记录直接识别",
+                overreach_risk="仍需与其他已绑定候选比较边界与解释力",
+            )
+        )
+
+    add(
+        level="commercial_object",
+        label=semantic.source_object,
         scope_role="root_candidate",
-        relation_to_business=relation,
-        strength=strength,
-        overreach_risk=overreach_risk,
+        relation="用户商业表达中的完整对象",
     )
-    return candidate_set.model_copy(update={"candidates": (*candidate_set.candidates, candidate)})
+    add(
+        level="lexical_head",
+        label=semantic.lexical_head,
+        scope_role="root_candidate",
+        relation="去修饰后的词法主词",
+    )
+    if semantic.offering_role != "complete_object_or_service":
+        for label in semantic.served_objects:
+            add(
+                level="served_object",
+                label=label,
+                scope_role="root_candidate",
+                relation="当前对象明确服务或承载的完整对象",
+            )
+
+    activities = semantic.unmodified_subject_activities
+    if activities is None:
+        activities = semantic.served_activities
+    for label in activities:
+        add(
+            level="subject_activity",
+            label=label,
+            scope_role="root_candidate",
+            relation="去修饰主词仍直接支持的活动",
+        )
+
+    functions = semantic.unmodified_subject_functions_or_uses
+    if functions is None:
+        functions = semantic.defining_functions_or_uses
+    for label in functions:
+        add(
+            level="subject_function_or_use",
+            label=label,
+            scope_role="root_candidate",
+            relation="去修饰主词仍直接支持的功能或结果",
+        )
+
+    if shared_world.world_label is not None:
+        add(
+            level="social_or_cultural_world",
+            label=shared_world.world_label,
+            scope_role="root_candidate",
+            relation=shared_world.common_action_or_relation or shared_world.participant_relationship or "经独立反事实审查的共同世界",
+        )
+
+    frames = semantic.unmodified_subject_frames
+    if frames is None:
+        frames = semantic.social_or_cultural_frames
+    for label in frames:
+        add(
+            level="social_or_cultural_world",
+            label=label,
+            scope_role="example_branch",
+            relation="去修饰主词可进入的具体场景或分支",
+        )
+
+    return ContentRootCandidateSetDraft(
+        source_object=semantic.source_object,
+        candidates=tuple(candidates),
+        unknowns=semantic.uncertainties,
+    )
 
 
 def _resolve_root_selection(

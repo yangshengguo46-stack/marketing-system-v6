@@ -226,6 +226,7 @@ EVIDENCE_READING_SYSTEM_PROMPT = """<content_intelligence_research>
 - 先记录来源文字直接支持的观察，再显化观察之间的关系、状态变化和带限制的解释。
 - 只能引用输入中存在的 source_id；搜索摘要不能被夸大成全文、原始档案或市场因果。
 - 比较来源质量：优先依赖一手记录、公共机构、原始作品或可靠报道；推广页、聚合页和无出处转述只能作为待核线索，不能独立支撑强结论。
+- 本管道的公开搜索回执只是 topic_evidence。即使来源是某条短视频或账号页，也不得由单条结果推断该账号的定位、内容模式、受众或成绩；对标账号需要独立的账号身份与多作品回执。
 - 如搜索回执只有售卖页、推广页、聚合页、社交收藏页或无出处摘要，要把来源限制明确写入 limitations，不能替它增强可信度。
 - 本步骤只负责阅读与归纳证据，不负责立题或编排故事；不得为了戏剧性补造目标、阻碍、行动、代价或结局。
 - 可以比较所有路线后再选择，但 observations、relations、state_changes 和 interpretations 只记录最终选中路线的证据；其他路线只能被拒绝，不能给最终选题借证据。
@@ -471,7 +472,6 @@ def _map_direction_routes(bundle: ContentIntelligenceBundle) -> tuple[_ResearchR
                     (
                         world.content_root,
                         direction,
-                        "人物 事件 作品 记录",
                     )
                 )
             )
@@ -573,6 +573,7 @@ def _materialize_search_evidence(
             source = SourceItem(
                 source_id=source_id,
                 kind="web_search_result",
+                evidence_role="topic_evidence",
                 title=normalized.title,
                 uri=normalized.url,
                 content=normalized.content[:4000],
