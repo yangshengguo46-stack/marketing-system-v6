@@ -157,17 +157,16 @@ from deerflow.config import get_app_config
 `ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` remains an optional
 shared-record analysis for business semantics and topic briefs. Broad account-starting
 and long-term-content requests use the `return_direct` `explore_content_world` tool.
-Its bounded workers cover semantic reading, root selection, frozen mapping, named recall,
-evidence reading, creative convergence, and prose. Research is optional and cannot change the root.
+Its bounded workers cover semantics, root selection, frozen mapping, parallel post-map
+discovery, evidence reading, creative convergence, and prose. Research cannot change the root.
 
-The first six workers use local structured contracts; the mapper sees only the selected root.
-Root selection compares the largest effective content world, with no complete-object priority.
-The map is divergent research space and does not own screenwriting conflict. Evidence reading
-cannot create a topic; creative convergence cannot see recall rationales or queries and may add
-`NarrativeFrame` only when
-protagonist, concrete goal, obstacle, action or choice, stakes or consequence, and
-outcome or change all resolve to record observations. Relationship tension alone is not
-narrative conflict. It is not a screenwriting agent; scripts belong to later presentation adaptation.
+The first six workers use local contracts; the mapper sees only the selected root. Root
+selection chooses the largest effective content world without complete-object priority.
+The map is divergent space and does not own screenwriting conflict. Evidence reading
+cannot create a topic. Creative convergence cannot see recall rationales or queries and
+adds `NarrativeFrame` only when protagonist, goal, obstacle, action or choice, stakes,
+and outcome all resolve to observations. Relationship tension is not narrative conflict;
+scripts belong to later presentation adaptation.
 The prose editor receives the semantic transition, frozen root,
 and map, then emits Markdown directly rather than serializing long Chinese prose into
 JSON. A deterministic renderer appends the optional evidence-bound topic afterward, so
@@ -182,22 +181,22 @@ and causes an unwanted second Lead call. These specialists are bounded model wor
 inside one tool, not free-running DeerFlow `task` subagents, and they cannot mutate
 shared state. The tool is optional and must not become a fixed workflow stage.
 
-The model-visible schema for `explore_content_world` exposes only `user_request`; it
-must be copied from the user without model-authored source materials. Do not pair this
-tool with Lead-level `web_search` or `web_fetch`: its internal search starts after root
-selection and degrades to the unchanged map on failure. Post-map research has bounded,
-round-robin query limits and may return no `TopicBrief` when sources are merely sales,
-promotion, aggregation, social-save, or untraceable pages. The outer Lead may use model
-thinking, but these bounded workers intentionally instantiate their model with provider
-thinking disabled; their inspectable contracts are the reasoning trace, and some
-providers reject structured tool choice while thinking is enabled.
+The model-visible `explore_content_world` schema exposes only verbatim `user_request`.
+Do not pair it with Lead-level `web_search` or `web_fetch`. After root selection, map-
+direction search starts alongside model named recall; their queries alternate under one
+bounded budget and merge before evidence reading. A direction route may identify an
+evidence-bound entity; a recall route cannot rename its guess. Search failure preserves
+the map. Unique result URLs are opened by a bounded local public-page reader, with the
+configured `web_fetch` tool as fallback; every redirect is revalidated as public and
+the original URL is rejected before either reader can run. Only bounded text/HTML enters
+the untrusted evidence payload. Weak pages may yield no
+`TopicBrief`. Workers keep provider thinking off because their contracts are the trace.
 
-Each evidence observation must cite a source collected for its selected named
-candidate. Creative convergence sees only source receipts referenced by that reading, not
-titles from competing candidates. Evidence used only by an optional narrative frame is
-still included in the topic-level evidence references and final citations. Any research
-exception degrades to the unchanged rooted map; cancellation remains outside that
-boundary.
+Every selected entity and observation must cite sources owned by its selected route.
+Known observations from losing routes are removed before creative convergence; they may
+be compared but cannot invalidate or support the winner. Unknown sources and attempts
+to ground the winner with another route still fail. Multiple structured tool calls for
+one contract are rejected. Research exceptions preserve the map; cancellation does not.
 
 The deterministic layer validates IDs, source and basis references, claim provenance,
 and projection binding. It must not contain industry examples or decide content roots.

@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from enum import StrEnum
 from typing import Annotated, Any
+from urllib.parse import urljoin
 
+import httpx
 from langchain_core.messages import ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool, InjectedToolArg, InjectedToolCallId, StructuredTool
 from langgraph.types import Command
 from pydantic import BaseModel, Field, ValidationError
 
+from deerflow.community.url_safety import validate_public_http_url
 from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceBundle,
@@ -23,8 +27,14 @@ from deerflow.content_intelligence import (
     synthesize_content_world_narration,
 )
 from deerflow.models import create_chat_model
+from deerflow.utils.readability import ReadabilityExtractor
 
 logger = logging.getLogger(__name__)
+
+_DIRECT_FETCH_MAX_BYTES = 2_000_000
+_DIRECT_FETCH_MAX_REDIRECTS = 3
+_DIRECT_FETCH_USER_AGENT = "Mozilla/5.0 (compatible; DeerFlowContentResearch/1.0)"
+_direct_readability_extractor = ReadabilityExtractor()
 
 
 class ToolAnalysisFocus(StrEnum):
@@ -135,6 +145,7 @@ async def _explore_content_world(
                 bundle,
                 model=model,
                 search=_search_content_world_evidence,
+                fetch=_fetch_content_world_evidence,
                 runnable_config=config,
             )
         except Exception as exc:
@@ -195,6 +206,109 @@ async def _search_content_world_evidence(
         except ValidationError:
             continue
     return tuple(normalized)
+
+
+async def _fetch_content_world_evidence(url: str) -> str | None:
+    """Open an exact search-result URL locally, then use the configured fallback."""
+
+    url_error = await asyncio.to_thread(
+        validate_public_http_url,
+        url,
+        action="read",
+    )
+    if url_error:
+        return None
+    direct_content = await _fetch_public_page_direct(url)
+    if direct_content is not None:
+        return direct_content
+    return await _invoke_configured_web_fetch(url)
+
+
+async def _invoke_configured_web_fetch(url: str) -> str | None:
+    """Use the operator-configured reader for pages local HTTP cannot extract."""
+
+    from deerflow.config import get_app_config
+    from deerflow.reflection import resolve_variable
+
+    fetch_config = next(
+        (tool for tool in get_app_config().tools if tool.name == "web_fetch"),
+        None,
+    )
+    if fetch_config is None:
+        return None
+    fetch_tool = resolve_variable(fetch_config.use, BaseTool)
+    raw = await fetch_tool.ainvoke({"url": url})
+    if not isinstance(raw, str):
+        return None
+    content = raw.strip()
+    if not content or content.lower().startswith("error:"):
+        return None
+    return content
+
+
+async def _fetch_public_page_direct(url: str) -> str | None:
+    """Read bounded public HTML while rechecking every redirect target."""
+
+    current_url = url
+    try:
+        async with httpx.AsyncClient(
+            timeout=httpx.Timeout(10.0),
+            follow_redirects=False,
+            trust_env=True,
+            headers={"User-Agent": _DIRECT_FETCH_USER_AGENT},
+        ) as client:
+            for _ in range(_DIRECT_FETCH_MAX_REDIRECTS + 1):
+                url_error = await asyncio.to_thread(
+                    validate_public_http_url,
+                    current_url,
+                    action="read",
+                )
+                if url_error:
+                    return None
+
+                async with client.stream("GET", current_url) as response:
+                    if response.status_code in {301, 302, 303, 307, 308}:
+                        location = response.headers.get("location")
+                        if not location:
+                            return None
+                        current_url = urljoin(current_url, location)
+                        continue
+
+                    response.raise_for_status()
+                    content_type = response.headers.get("content-type", "").lower()
+                    if content_type and not content_type.startswith(("text/html", "application/xhtml+xml", "text/plain")):
+                        return None
+
+                    chunks: list[bytes] = []
+                    size = 0
+                    async for chunk in response.aiter_bytes():
+                        remaining = _DIRECT_FETCH_MAX_BYTES - size
+                        if remaining <= 0:
+                            break
+                        chunks.append(chunk[:remaining])
+                        size += min(len(chunk), remaining)
+                        if size >= _DIRECT_FETCH_MAX_BYTES:
+                            break
+                    encoding = response.encoding or "utf-8"
+
+                raw = b"".join(chunks)
+                if not raw:
+                    return None
+                try:
+                    html = raw.decode(encoding, errors="replace")
+                except LookupError:
+                    html = raw.decode("utf-8", errors="replace")
+                article = await asyncio.to_thread(
+                    _direct_readability_extractor.extract_article,
+                    html,
+                )
+                markdown = article.to_markdown().strip()
+                if not markdown or "No content could be extracted from this page" in markdown:
+                    return None
+                return markdown
+    except (httpx.HTTPError, OSError, UnicodeError, ValueError):
+        return None
+    return None
 
 
 def _terminal_content_world_command(content: str, *, tool_call_id: str) -> Command:

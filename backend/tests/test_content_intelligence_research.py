@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
@@ -135,6 +136,8 @@ def _discovery_payload() -> dict[str, Any]:
 def _reading_payload(*, source_ref: str = "source-web-1") -> dict[str, Any]:
     return {
         "selected_candidate_id": "candidate-public-record",
+        "selected_entity": "a documented public event",
+        "selected_entity_observation_refs": ["reading-observation-1"],
         "observations": [
             {
                 "observation_id": "reading-observation-1",
@@ -187,6 +190,142 @@ def _editorial_payload(
 
 
 @pytest.mark.asyncio
+async def test_map_direction_search_runs_in_parallel_with_latent_recall_and_can_win() -> None:
+    bundle = await _content_world_bundle()
+    discovery = _discovery_payload()
+    discovery["candidates"][0].update(
+        {
+            "entity": "an unsupported recalled anecdote",
+            "search_queries": ["unsupported recalled anecdote shared meal"],
+        }
+    )
+    reading = _reading_payload()
+    reading.update(
+        {
+            "selected_candidate_id": "map-direction-1-1",
+            "selected_entity": "a verified community supper event",
+        }
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: discovery,
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="map-direction-1-1"),
+        }
+    )
+    started_queries: list[str] = []
+    both_lanes_started = asyncio.Event()
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        started_queries.append(query)
+        if len(started_queries) >= 2:
+            both_lanes_started.set()
+        await asyncio.wait_for(both_lanes_started.wait(), timeout=0.25)
+        if query == "unsupported recalled anecdote shared meal":
+            return (
+                ResearchSearchResult(
+                    title="Weak recollection",
+                    url="https://example.com/weak-recollection",
+                    content="A page that does not verify the recalled anecdote.",
+                ),
+            )
+        return (
+            ResearchSearchResult(
+                title="Community supper archive",
+                url="https://example.com/community-supper",
+                content="A dated public record identifies a community supper event.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        budget=ResearchBudget(max_queries=2, max_results_per_query=1, max_evidence_items=2),
+    )
+
+    assert both_lanes_started.is_set()
+    assert "unsupported recalled anecdote shared meal" in started_queries
+    assert any("how the shared meal carries emotion and group belonging" in query for query in started_queries)
+    reading_input = research_model.message_batches[1][1].content
+    assert '"discovery_mode": "map_direction_search"' in reading_input
+    assert '"discovery_mode": "latent_recall"' in reading_input
+    assert '"candidate_id": "map-direction-1-1"' in reading_input
+    assert '"candidate_id": "candidate-public-record"' in reading_input
+    assert "why_worth_reading" not in reading_input
+    assert "search_queries" not in reading_input
+
+    assert enriched.topic_brief is not None
+    assert enriched.topic_brief.path.steps[0].to_label == "a verified community supper event"
+
+
+@pytest.mark.asyncio
+async def test_map_direction_search_still_works_when_latent_recall_is_empty() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {"candidates": [], "unknowns": ["No reliable name was recalled."]},
+            EvidenceReadingDraft: {
+                **_reading_payload(),
+                "selected_candidate_id": "map-direction-1-1",
+                "selected_entity": "a documented neighborhood meal",
+            },
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="map-direction-1-1"),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Neighborhood meal record",
+                url="https://example.com/neighborhood-meal",
+                content="A public record names and dates a neighborhood meal.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+    assert research_model.schemas == [
+        ResearchDiscoveryDraft,
+        EvidenceReadingDraft,
+        TopicEditorialDecisionDraft,
+    ]
+    assert enriched.topic_brief is not None
+    assert enriched.topic_brief.path.steps[0].to_label == "a documented neighborhood meal"
+
+
+@pytest.mark.asyncio
+async def test_latent_recall_route_cannot_launder_a_different_selected_entity() -> None:
+    bundle = await _content_world_bundle()
+    reading = _reading_payload(source_ref="source-web-2")
+    reading["selected_entity"] = "a different unsupported event"
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/{abs(hash(query))}",
+                content=f"Evidence for {query}.",
+            ),
+        )
+
+    with pytest.raises(ValueError, match="changed the latent recall entity"):
+        await enrich_content_world_with_research(
+            bundle,
+            model=research_model,
+            search=search,
+            budget=ResearchBudget(max_queries=3, max_results_per_query=1, max_evidence_items=3),
+        )
+
+
+@pytest.mark.asyncio
 async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     bundle = await _content_world_bundle()
     research_model = SequencedStructuredFakeModel(
@@ -220,7 +359,10 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
         EvidenceReadingDraft,
         TopicEditorialDecisionDraft,
     ]
-    assert seen_queries == [("shared meal documented public event", 4)]
+    assert len(seen_queries) == 3
+    assert ("shared meal documented public event", 4) in seen_queries
+    assert all(max_results == 4 for _, max_results in seen_queries)
+    assert sum("人物 事件 作品 记录" in query for query, _ in seen_queries) == 2
     discovery_input = research_model.message_batches[0][1].content
     assert '"content_root": "shared meal"' in discovery_input
     assert '"map_dimensions"' in discovery_input
@@ -228,6 +370,8 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     assert "business_semantics" not in discovery_input
     reading_input = research_model.message_batches[1][1].content
     assert '"source_id": "source-web-1"' in reading_input
+    assert '"discovery_mode": "map_direction_search"' in reading_input
+    assert '"discovery_mode": "latent_recall"' in reading_input
     assert '"why_worth_reading"' not in reading_input
     assert '"search_query"' not in reading_input
     assert "untrusted evidence" in research_model.message_batches[1][0].content.lower()
@@ -260,6 +404,80 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     assert "How did one public event" in rendered
     assert "[Public archive entry](https://example.com/archive-entry)" in rendered
     assert "Open and compare the full source" in rendered
+
+
+@pytest.mark.asyncio
+async def test_search_result_is_opened_before_evidence_reading_when_fetch_is_available() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+    fetched_urls: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Primary public record",
+                url="https://example.com/primary-record",
+                content="SEARCH RESULT SNIPPET ONLY",
+            ),
+        )
+
+    async def fetch(url: str) -> str | None:
+        fetched_urls.append(url)
+        return "FULL PAGE: the dated public record describes the event, action, and outcome."
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        fetch=fetch,
+    )
+
+    assert fetched_urls == ["https://example.com/primary-record"]
+    reading_input = research_model.message_batches[1][1].content
+    assert "FULL PAGE: the dated public record" in reading_input
+    assert "SEARCH RESULT SNIPPET ONLY" not in reading_input
+    assert enriched.record.sources[-1].kind == "web_page"
+    assert enriched.record.sources[-1].content.startswith("FULL PAGE:")
+
+
+@pytest.mark.asyncio
+async def test_fetch_failure_keeps_the_search_receipt_available_to_evidence_reading() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Public record search result",
+                url="https://example.com/unavailable-page",
+                content="BOUNDED SEARCH RECEIPT",
+            ),
+        )
+
+    async def failed_fetch(url: str) -> str | None:
+        return "Error: upstream reader unavailable"
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        fetch=failed_fetch,
+    )
+
+    assert "BOUNDED SEARCH RECEIPT" in research_model.message_batches[1][1].content
+    assert enriched.record.sources[-1].kind == "web_search_result"
 
 
 @pytest.mark.asyncio
@@ -369,7 +587,7 @@ async def test_weak_evidence_can_abstain_without_forcing_a_topic() -> None:
 
 
 @pytest.mark.asyncio
-async def test_search_budget_rotates_across_candidates_before_reusing_one_candidate() -> None:
+async def test_search_budget_gives_both_lanes_a_turn_before_reusing_a_latent_candidate() -> None:
     bundle = await _content_world_bundle()
     discovery = _discovery_payload()
     discovery["candidates"] = [
@@ -383,8 +601,9 @@ async def test_search_budget_rotates_across_candidates_before_reusing_one_candid
         }
         for index in range(1, 4)
     ]
-    reading = _reading_payload()
+    reading = _reading_payload(source_ref="source-web-2")
     reading["selected_candidate_id"] = "candidate-1"
+    reading["selected_entity"] = "public subject 1"
     research_model = SequencedStructuredFakeModel(
         {
             ResearchDiscoveryDraft: discovery,
@@ -408,10 +627,13 @@ async def test_search_budget_rotates_across_candidates_before_reusing_one_candid
         bundle,
         model=research_model,
         search=search,
-        budget=ResearchBudget(max_queries=3, max_results_per_query=1, max_evidence_items=3),
+        budget=ResearchBudget(max_queries=5, max_results_per_query=1, max_evidence_items=5),
     )
 
-    assert seen_queries == ["candidate 1 first", "candidate 2 first", "candidate 3 first"]
+    assert seen_queries[0].startswith("shared meal ")
+    assert {f"candidate {index} first" for index in range(1, 4)}.issubset(seen_queries)
+    assert not any(query.endswith("second") for query in seen_queries)
+    assert sum("人物 事件 作品 记录" in query for query in seen_queries) == 2
     assert enriched.topic_brief is not None
     editorial_input = research_model.message_batches[2][1].content
     assert "candidate 1 first" in editorial_input
@@ -460,7 +682,7 @@ async def test_reading_cannot_use_another_candidates_evidence() -> None:
     research_model = SequencedStructuredFakeModel(
         {
             ResearchDiscoveryDraft: discovery,
-            EvidenceReadingDraft: _reading_payload(source_ref="source-web-2"),
+            EvidenceReadingDraft: _reading_payload(source_ref="source-web-4"),
             TopicEditorialDecisionDraft: _editorial_payload(),
         }
     )
@@ -476,6 +698,48 @@ async def test_reading_cannot_use_another_candidates_evidence() -> None:
 
     with pytest.raises(ValueError, match="selected candidate"):
         await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+
+@pytest.mark.asyncio
+async def test_unselected_route_noise_is_excluded_without_discarding_the_selected_reading() -> None:
+    bundle = await _content_world_bundle()
+    reading = _reading_payload(source_ref="source-web-1")
+    reading.update(
+        {
+            "selected_candidate_id": "map-direction-1-1",
+            "selected_entity": "a documented community meal",
+        }
+    )
+    reading["observations"].append(
+        {
+            "observation_id": "reading-noise-observation",
+            "claim": "A different candidate returned an unrelated promotional result.",
+            "source_refs": ["source-web-2"],
+        }
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="map-direction-1-1"),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/{abs(hash(query))}",
+                content=f"Evidence for {query}.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(bundle, model=research_model, search=search)
+
+    assert enriched.topic_brief is not None
+    assert all(observation.claim != reading["observations"][-1]["claim"] for observation in enriched.record.observations)
+    assert len(enriched.record.sources) == len(bundle.record.sources) + 1
+    assert enriched.record.sources[-1].source_id == "source-web-1"
 
 
 @pytest.mark.asyncio
@@ -541,6 +805,8 @@ def test_research_contract_has_no_required_candidate_or_query_quota() -> None:
     assert "minItems" not in discovery_schema["properties"]["candidates"]
     assert "maxItems" not in discovery_schema["properties"]["candidates"]
     assert "content_root" not in EvidenceReadingDraft.model_json_schema()["properties"]
+    assert "selected_entity" in EvidenceReadingDraft.model_json_schema()["required"]
+    assert "selected_entity_observation_refs" in EvidenceReadingDraft.model_json_schema()["required"]
 
 
 def test_topic_editor_keeps_story_structure_optional_but_complete_when_used() -> None:
@@ -593,7 +859,12 @@ def test_topic_editor_requires_an_explicit_abstention_instead_of_an_empty_answer
 def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> None:
     budget = ResearchBudget()
 
-    assert (budget.max_queries, budget.max_results_per_query, budget.max_evidence_items) == (3, 3, 8)
+    assert (
+        budget.max_queries,
+        budget.max_concurrent_queries,
+        budget.max_results_per_query,
+        budget.max_evidence_items,
+    ) == (6, 3, 3, 8)
     assert "人的行为、关系、情绪、选择、变化或共同记忆" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "冲突" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "博弈" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT

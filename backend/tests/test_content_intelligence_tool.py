@@ -4,6 +4,7 @@ import importlib
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
+import httpx
 import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Command
@@ -107,6 +108,8 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
     assert analysis.await_args.args[0].subject_expression == "我是卖重庆火锅底料的，该怎么起号？"
     assert analysis.await_args.args[0].source_materials == ()
     assert research.await_args.args[0] is bundle
+    assert research.await_args.kwargs["search"] is content_intelligence_tool_module._search_content_world_evidence
+    assert research.await_args.kwargs["fetch"] is content_intelligence_tool_module._fetch_content_world_evidence
     assert content_intelligence_tool_module.synthesize_content_world_narration.await_args.args[0] is enriched_bundle
 
 
@@ -150,6 +153,102 @@ async def test_content_world_tool_preserves_the_rooted_map_when_optional_researc
     assert isinstance(result, Command)
     assert result.update["messages"][0].content == "# 火锅\n\n围绕火锅本身展开内容世界。"
     assert narration.await_args.args[0] is bundle
+
+
+@pytest.mark.asyncio
+async def test_content_world_fetch_prefers_local_public_page_reading(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "deerflow.config.get_app_config",
+        lambda: SimpleNamespace(tools=[]),
+    )
+    local_fetch = AsyncMock(return_value="# Local article\n\nEvidence body.")
+    configured_fetch = AsyncMock(return_value="# Remote article\n\nFallback body.")
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_fetch_public_page_direct",
+        local_fetch,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_invoke_configured_web_fetch",
+        configured_fetch,
+        raising=False,
+    )
+
+    result = await content_intelligence_tool_module._fetch_content_world_evidence("https://example.com/article")
+
+    assert result == "# Local article\n\nEvidence body."
+    local_fetch.assert_awaited_once_with("https://example.com/article")
+    configured_fetch.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_content_world_fetch_uses_configured_reader_when_local_reading_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    local_fetch = AsyncMock(return_value=None)
+    configured_fetch = AsyncMock(return_value="# Remote article\n\nFallback body.")
+    monkeypatch.setattr(content_intelligence_tool_module, "_fetch_public_page_direct", local_fetch)
+    monkeypatch.setattr(content_intelligence_tool_module, "_invoke_configured_web_fetch", configured_fetch)
+
+    result = await content_intelligence_tool_module._fetch_content_world_evidence("https://example.com/article")
+
+    assert result == "# Remote article\n\nFallback body."
+    configured_fetch.assert_awaited_once_with("https://example.com/article")
+
+
+@pytest.mark.asyncio
+async def test_content_world_fetch_rejects_non_public_url_before_any_reader(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    local_fetch = AsyncMock(return_value=None)
+    configured_fetch = AsyncMock(return_value="# Private content")
+    monkeypatch.setattr(content_intelligence_tool_module, "_fetch_public_page_direct", local_fetch)
+    monkeypatch.setattr(content_intelligence_tool_module, "_invoke_configured_web_fetch", configured_fetch)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "validate_public_http_url",
+        lambda url, **kwargs: "Error: private address",
+    )
+
+    result = await content_intelligence_tool_module._fetch_content_world_evidence("http://127.0.0.1/private")
+
+    assert result is None
+    local_fetch.assert_not_awaited()
+    configured_fetch.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_direct_page_reader_rechecks_redirect_target_before_fetching_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checked_urls: list[str] = []
+    real_client = httpx.AsyncClient
+
+    def validate(url: str, **kwargs) -> str | None:
+        checked_urls.append(url)
+        if url.startswith("http://127.0.0.1"):
+            return "Error: private address"
+        return None
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"location": "http://127.0.0.1/private"})
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(content_intelligence_tool_module, "validate_public_http_url", validate)
+    monkeypatch.setattr(
+        content_intelligence_tool_module.httpx,
+        "AsyncClient",
+        lambda **kwargs: real_client(transport=transport, **kwargs),
+    )
+
+    result = await content_intelligence_tool_module._fetch_public_page_direct("https://example.com/start")
+
+    assert result is None
+    assert checked_urls == ["https://example.com/start", "http://127.0.0.1/private"]
 
 
 def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -> None:

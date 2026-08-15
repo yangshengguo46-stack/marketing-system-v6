@@ -619,15 +619,17 @@ def _parse_structured_result(
     if not isinstance(result, Mapping) or "parsed" not in result:
         return schema.model_validate(result)
 
+    raw_message = result.get("raw")
+    _validate_single_raw_tool_call(raw_message)
     parsed = result.get("parsed")
     if parsed is not None:
         return parsed if isinstance(parsed, schema) else schema.model_validate(parsed)
 
-    payload = _extract_raw_tool_arguments(result.get("raw"))
+    payload = _extract_raw_tool_arguments(raw_message)
     if payload is not None:
         return schema.model_validate(_decode_container_fields(payload, container_fields=container_fields))
 
-    payload = _extract_raw_message_content(result.get("raw"))
+    payload = _extract_raw_message_content(raw_message)
     if payload is not None:
         return schema.model_validate(_decode_container_fields(payload, container_fields=container_fields))
 
@@ -637,14 +639,27 @@ def _parse_structured_result(
     raise ValueError("The structured model returned neither a parsed draft nor recoverable tool arguments.")
 
 
-def _extract_raw_tool_arguments(raw_message: Any) -> dict[str, Any] | None:
-    tool_calls = (
+def _raw_tool_calls(raw_message: Any) -> tuple[Mapping[str, Any], ...]:
+    attribute_calls = (
         *(getattr(raw_message, "tool_calls", ()) or ()),
         *(getattr(raw_message, "invalid_tool_calls", ()) or ()),
     )
+    mapped_attribute_calls = tuple(call for call in attribute_calls if isinstance(call, Mapping))
+    if mapped_attribute_calls:
+        return mapped_attribute_calls
+
+    additional_kwargs = getattr(raw_message, "additional_kwargs", {}) or {}
+    return tuple(call for call in (additional_kwargs.get("tool_calls", ()) or ()) if isinstance(call, Mapping))
+
+
+def _validate_single_raw_tool_call(raw_message: Any) -> None:
+    if len(_raw_tool_calls(raw_message)) > 1:
+        raise ValueError("structured output requires exactly one structured tool call")
+
+
+def _extract_raw_tool_arguments(raw_message: Any) -> dict[str, Any] | None:
+    tool_calls = _raw_tool_calls(raw_message)
     for tool_call in tool_calls:
-        if not isinstance(tool_call, Mapping):
-            continue
         args = tool_call.get("args")
         if isinstance(args, Mapping):
             return dict(args)
@@ -653,10 +668,7 @@ def _extract_raw_tool_arguments(raw_message: Any) -> dict[str, Any] | None:
             if decoded is not None:
                 return decoded
 
-    additional_kwargs = getattr(raw_message, "additional_kwargs", {}) or {}
-    for tool_call in additional_kwargs.get("tool_calls", ()) or ():
-        if not isinstance(tool_call, Mapping):
-            continue
+    for tool_call in tool_calls:
         function = tool_call.get("function")
         if not isinstance(function, Mapping):
             continue

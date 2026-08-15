@@ -22,6 +22,7 @@ from deerflow.content_intelligence import (
 from deerflow.content_intelligence.analyzer import (
     CONTENT_WORLD_NARRATION_SYSTEM_PROMPT,
     FROZEN_CONTENT_MAP_SYSTEM_PROMPT,
+    _parse_structured_result,
 )
 
 
@@ -177,6 +178,30 @@ class PlainNarrationFakeModel:
         self.message_batches.append(tuple(messages))
         self.configs.append(config)
         return AIMessage(content=self.content)
+
+
+def test_structured_parser_rejects_multiple_tool_calls_instead_of_silently_using_first() -> None:
+    payload = _semantic_payload()
+    parsed = SemanticReadingDraft.model_validate(payload)
+    raw = AIMessage(
+        content="",
+        tool_calls=[
+            {
+                "name": "SemanticReadingDraft",
+                "args": payload,
+                "id": f"tool-call-{index}",
+                "type": "tool_call",
+            }
+            for index in range(1, 3)
+        ],
+    )
+
+    with pytest.raises(ValueError, match="exactly one structured tool call"):
+        _parse_structured_result(
+            {"raw": raw, "parsed": parsed, "parsing_error": None},
+            SemanticReadingDraft,
+            container_fields={"modifiers"},
+        )
 
 
 def _semantic_payload() -> dict[str, Any]:

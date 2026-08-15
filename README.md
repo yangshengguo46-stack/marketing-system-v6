@@ -748,11 +748,16 @@ This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
 the direct `explore_content_world` path: isolated semantic reading, content-root
-selection, frozen-root expansion, named recall, evidence reading, creative convergence,
-and a prose editor. Root selection compares the largest effective content world rather
-than giving a complete product or service automatic priority.
+selection, frozen-root expansion, parallel map-direction discovery and named recall,
+bounded public-page reading, evidence reading, creative convergence, and a prose editor.
+Root selection compares the largest effective content world rather than giving a
+complete product or service automatic priority.
 Each specialist sees only the input it owns. Search begins only after the content root
-is frozen, and weak or unavailable evidence leaves the rooted map intact instead of
+is frozen. A map-direction search starts alongside model recall, so an unsupported
+recalled name cannot monopolize the evidence path; both lanes merge before evidence
+reading. Search-result URLs are deduplicated and opened with a bounded local public-page
+reader; the configured `web_fetch` provider is a fallback. Only observations owned by
+the selected research route reach creative convergence. Weak or unavailable evidence leaves the rooted map intact instead of
 forcing a factual-sounding topic. The map does not own screenwriting conflict. After
 evidence reading, the creative-convergence step may emit an optional narrative frame
 only when protagonist, goal,
