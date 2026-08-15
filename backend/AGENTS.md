@@ -157,11 +157,11 @@ from deerflow.config import get_app_config
 `ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` remains an optional
 shared-record analysis for business semantics and topic briefs. Broad account-starting
 and long-term-content requests use the `return_direct` `explore_content_world` tool.
-Its bounded workers cover semantics, root selection, frozen mapping, parallel post-map
-discovery, evidence reading, creative convergence, and prose. Research cannot change the root.
-
-The first six workers use local contracts; the mapper sees only the selected root. Root
-selection chooses the largest effective content world without complete-object priority.
+Its workers handle literal semantics, blind shared-world synthesis, candidate
+recall/adjudication, maps, and research. The shared
+worker sees only the lexical head, activities, and frames. Recall marks root candidates
+and example branches; adjudication indexes only roots, and validation blocks branches.
+The mapper sees only the selected largest effective world; research cannot change it.
 The map is divergent space and does not own screenwriting conflict. Evidence reading
 cannot create a topic. Creative convergence cannot see recall rationales or queries and
 adds `NarrativeFrame` only when protagonist, goal, obstacle, action or choice, stakes,

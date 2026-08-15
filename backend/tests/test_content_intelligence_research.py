@@ -9,20 +9,18 @@ from pydantic import ValidationError
 from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceRequest,
+    ContentRootCandidateSetDraft,
+    ContentRootDecisionDraft,
     EvidenceReadingDraft,
     ResearchBudget,
     ResearchDiscoveryDraft,
     ResearchSearchResult,
+    SharedWorldSynthesisDraft,
     TopicEditorialDecisionDraft,
     enrich_content_world_with_research,
     render_content_world_narration,
 )
-from deerflow.content_intelligence.analyzer import (
-    ContentRootSelectionDraft,
-    FrozenContentMapDraft,
-    SemanticReadingDraft,
-    analyze_content_intelligence,
-)
+from deerflow.content_intelligence.analyzer import FrozenContentMapDraft, SemanticReadingDraft, analyze_content_intelligence
 from deerflow.content_intelligence.research import (
     EVIDENCE_READING_SYSTEM_PROMPT,
     RESEARCH_DISCOVERY_SYSTEM_PROMPT,
@@ -63,21 +61,38 @@ def _semantic_payload() -> dict[str, Any]:
     }
 
 
-def _root_payload() -> dict[str, Any]:
+def _root_candidates_payload() -> dict[str, Any]:
     return {
         "source_object": "regional meal base",
-        "audience_territory": "shared meal",
-        "root_rationale": "The base is an enabler and the meal is the complete world.",
         "candidates": [
             {
                 "level": "served_object_or_activity",
                 "label": "shared meal",
+                "scope_role": "root_candidate",
                 "relation_to_business": "complete object served by the base",
                 "strength": "complete and durable",
                 "overreach_risk": "unrelated dining must stay outside the map",
             }
         ],
+        "unknowns": [],
+    }
+
+
+def _shared_world_payload() -> dict[str, Any]:
+    return {
+        "common_action_or_relation": "sharing a meal",
+        "participant_relationship": "people eating together",
+        "world_label": "shared meals",
+        "covered_frames": ["communal dining"],
+        "limitations": [],
+    }
+
+
+def _root_decision_payload() -> dict[str, Any]:
+    return {
         "selected_candidate_index": 0,
+        "audience_territory_candidate_index": 0,
+        "root_rationale": "The base is an enabler and the meal is the complete world.",
         "unknowns": [],
     }
 
@@ -103,7 +118,9 @@ async def _content_world_bundle():
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            ContentRootSelectionDraft: _root_payload(),
+            SharedWorldSynthesisDraft: _shared_world_payload(),
+            ContentRootCandidateSetDraft: _root_candidates_payload(),
+            ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _map_payload(),
         }
     )

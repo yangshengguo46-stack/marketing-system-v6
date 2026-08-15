@@ -244,6 +244,7 @@ class BusinessSemanticView(ContractModel):
     served_objects: tuple[GroundedStatement, ...] = ()
     served_activities: tuple[GroundedStatement, ...] = ()
     defining_functions_or_uses: tuple[GroundedStatement, ...] = ()
+    recurring_human_worlds: tuple[GroundedStatement, ...] = ()
     social_or_cultural_frames: tuple[GroundedStatement, ...] = ()
     summary: NonEmptyStr | None = None
     unknown_refs: tuple[NonEmptyStr, ...] = ()
@@ -304,6 +305,7 @@ class NamedCandidate(ContractModel):
 class ContentRootCandidate(ContractModel):
     candidate_id: NonEmptyStr
     label: NonEmptyStr
+    scope_role: Literal["root_candidate", "example_branch"] = "root_candidate"
     relation_to_business: NonEmptyStr
     strength: NonEmptyStr
     overreach_risk: NonEmptyStr

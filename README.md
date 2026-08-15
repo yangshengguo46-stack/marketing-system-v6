@@ -748,11 +748,17 @@ This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
 the direct `explore_content_world` path: isolated semantic reading, content-root
-selection, frozen-root expansion, parallel map-direction discovery and named recall,
+candidate recall, independent candidate-only root adjudication, frozen-root expansion,
+parallel map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
 Root selection compares the largest effective content world rather than giving a
 complete product or service automatic priority.
-Each specialist sees only the input it owns. Search begins only after the content root
+Before candidate recall, a narrow cross-frame reader sees only the unmodified lexical
+subject, participant activities, and concrete contexts. It identifies a shared human
+practice or relationship without seeing the full product name or product-value
+functions. Candidate recall labels narrow contexts as non-selectable example branches;
+the final adjudicator can only choose among frozen root candidates. Each specialist sees
+only the input it owns. Search begins only after the content root
 is frozen. A map-direction search starts alongside model recall, so an unsupported
 recalled name cannot monopolize the evidence path; both lanes merge before evidence
 reading. Search-result URLs are deduplicated and opened with a bounded local public-page

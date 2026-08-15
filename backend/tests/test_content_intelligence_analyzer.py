@@ -11,9 +11,12 @@ from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceDraft,
     ContentIntelligenceRequest,
+    ContentRootCandidateSetDraft,
+    ContentRootDecisionDraft,
     ContentRootSelectionDraft,
     FrozenContentMapDraft,
     SemanticReadingDraft,
+    SharedWorldSynthesisDraft,
     SourceMaterial,
     analyze_content_intelligence,
     render_content_world_narration,
@@ -222,22 +225,46 @@ def _semantic_payload() -> dict[str, Any]:
     }
 
 
-def _root_selection_payload() -> dict[str, Any]:
+def _root_candidate_set_payload() -> dict[str, Any]:
     return {
         "source_object": "重庆火锅底料",
-        "audience_territory": "火锅",
-        "root_rationale": "底料是中间实现物，火锅是完整对象世界。",
         "candidates": [
             {
                 "level": "served_object_or_activity",
                 "label": "火锅",
+                "scope_role": "root_candidate",
                 "relation_to_business": "底料服务的完整对象",
                 "strength": "完整且有长期内容容量",
                 "overreach_risk": "不能把任何饮食习惯都混成火锅",
             },
         ],
-        "selected_candidate_index": 0,
         "unknowns": [],
+    }
+
+
+def _shared_world_payload() -> dict[str, Any]:
+    return {
+        "common_action_or_relation": "围绕火锅共同进食",
+        "participant_relationship": "共同用餐者",
+        "world_label": "围绕火锅的共同用餐生活",
+        "covered_frames": ["火锅饮食文化"],
+        "limitations": ["不能扩成与火锅无关的泛餐饮生活"],
+    }
+
+
+def _root_decision_payload() -> dict[str, Any]:
+    return {
+        "selected_candidate_index": 0,
+        "audience_territory_candidate_index": 0,
+        "root_rationale": "底料是中间实现物，火锅是完整对象世界。",
+        "unknowns": [],
+    }
+
+
+def _root_selection_payload() -> dict[str, Any]:
+    return {
+        **_root_candidate_set_payload(),
+        **_root_decision_payload(),
     }
 
 
@@ -255,7 +282,9 @@ def _focused_model() -> SequencedStructuredFakeModel:
     return SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            ContentRootSelectionDraft: _root_selection_payload(),
+            SharedWorldSynthesisDraft: _shared_world_payload(),
+            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
     )
@@ -374,6 +403,7 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "海鲜" not in system_text
     assert "火锅底料" not in system_text
     assert "KTV" not in system_text
+    assert "婚嫁" not in system_text
     assert "10 天" not in system_text
     assert "3 个候选" not in system_text
     assert "列表可以为空" in system_text
@@ -504,21 +534,31 @@ async def test_content_world_focus_uses_semantic_attention_before_map_expansion(
 
     bundle = await analyze_content_intelligence(request, model=model)
 
-    assert model.schemas == [SemanticReadingDraft, ContentRootSelectionDraft, FrozenContentMapDraft]
-    assert model.include_raw_flags == [True, True, True]
-    assert model.calls == 3
+    assert model.schemas == [
+        SemanticReadingDraft,
+        SharedWorldSynthesisDraft,
+        ContentRootCandidateSetDraft,
+        ContentRootDecisionDraft,
+        FrozenContentMapDraft,
+    ]
+    assert model.include_raw_flags == [True, True, True, True, True]
+    assert model.calls == 5
     assert "怎么起号" not in model.message_batches[0][1].content
     assert "怎么起号" not in model.message_batches[1][1].content
     assert "怎么起号" not in model.message_batches[2][1].content
-    assert "intermediate_enabler" in model.message_batches[1][1].content
-    assert '"primary_content_center": "火锅"' in model.message_batches[2][1].content
-    assert "重庆火锅底料" not in model.message_batches[2][1].content
-    assert "semantic_reading" not in model.message_batches[2][1].content
-    assert "source_object" not in model.message_batches[2][1].content
-    assert "object_anchor" not in model.message_batches[2][1].content
-    assert "bridge_path" not in model.message_batches[2][1].content
-    assert "商品" not in model.message_batches[2][0].content
-    assert "销售" not in model.message_batches[2][0].content
+    assert "怎么起号" not in model.message_batches[3][1].content
+    assert "怎么起号" not in model.message_batches[4][1].content
+    assert "intermediate_enabler" in model.message_batches[2][1].content
+    assert '"world_label": "围绕火锅的共同用餐生活"' in model.message_batches[2][1].content
+    assert '"label": "火锅"' in model.message_batches[3][1].content
+    assert '"primary_content_center": "火锅"' in model.message_batches[4][1].content
+    assert "重庆火锅底料" not in model.message_batches[4][1].content
+    assert "semantic_reading" not in model.message_batches[4][1].content
+    assert "source_object" not in model.message_batches[4][1].content
+    assert "object_anchor" not in model.message_batches[4][1].content
+    assert "bridge_path" not in model.message_batches[4][1].content
+    assert "商品" not in model.message_batches[4][0].content
+    assert "销售" not in model.message_batches[4][0].content
     assert bundle.business_semantics.offering_role == "intermediate_enabler"
     assert bundle.business_semantics.served_objects[0].text == "火锅"
     assert bundle.business_semantics.served_activities[0].text == "制作火锅"
@@ -531,7 +571,9 @@ async def test_analyzer_recovers_provider_json_message_content_without_retry() -
     model = RawContentSequencedFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            ContentRootSelectionDraft: _root_selection_payload(),
+            SharedWorldSynthesisDraft: _shared_world_payload(),
+            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
     )
@@ -543,7 +585,7 @@ async def test_analyzer_recovers_provider_json_message_content_without_retry() -
 
     bundle = await analyze_content_intelligence(request, model=model)
 
-    assert model.calls == 3
+    assert model.calls == 5
     assert bundle.business_semantics.offering_role == "intermediate_enabler"
     assert bundle.content_world.content_root == "火锅"
 
@@ -553,7 +595,9 @@ async def test_analyzer_recovers_safe_python_literal_in_invalid_tool_arguments()
     model = MalformedToolArgumentsSequencedFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            ContentRootSelectionDraft: _root_selection_payload(),
+            SharedWorldSynthesisDraft: _shared_world_payload(),
+            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
     )
@@ -567,7 +611,7 @@ async def test_analyzer_recovers_safe_python_literal_in_invalid_tool_arguments()
         model=model,
     )
 
-    assert model.calls == 3
+    assert model.calls == 5
     assert bundle.content_world.content_root == "火锅"
     assert bundle.record.unknowns[-1].question == "待核验"
 
@@ -577,7 +621,9 @@ async def test_analyzer_retries_one_structurally_invalid_specialist_response() -
     model = RetryableMalformedMapFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            ContentRootSelectionDraft: _root_selection_payload(),
+            SharedWorldSynthesisDraft: _shared_world_payload(),
+            ContentRootCandidateSetDraft: _root_candidate_set_payload(),
+            ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
         }
     )
@@ -592,7 +638,7 @@ async def test_analyzer_retries_one_structurally_invalid_specialist_response() -
     )
 
     assert model.map_attempts == 2
-    assert model.calls == 4
+    assert model.calls == 6
     assert len(model.message_batches[-1]) == 3
     assert "只重新返回符合结构合同的内容" in model.message_batches[-1][-1].content
     assert bundle.content_world.content_root == "火锅"
@@ -604,6 +650,141 @@ def test_root_selection_requires_the_chosen_root_to_be_an_explicit_candidate() -
 
     with pytest.raises(ValidationError, match="explicit candidate"):
         ContentRootSelectionDraft.model_validate(payload)
+
+
+def test_root_selection_rejects_a_narrow_example_branch_as_the_content_root() -> None:
+    payload = {
+        "source_object": "黄金礼品",
+        "candidates": [
+            {
+                "level": "social_or_cultural_world",
+                "label": "送礼与人情往来",
+                "scope_role": "root_candidate",
+                "relation_to_business": "礼品反复进入赠送、收受与回礼关系",
+                "strength": "覆盖婚嫁、节庆、商务与人生礼仪等平行场景",
+                "overreach_risk": "不能扩成与礼品无关的泛人际关系",
+            },
+            {
+                "level": "social_or_cultural_world",
+                "label": "婚嫁礼俗",
+                "scope_role": "example_branch",
+                "relation_to_business": "黄金礼品可能进入的一种具体赠礼场景",
+                "strength": "人物、礼仪与事件丰富",
+                "overreach_risk": "它只是多个平行场景之一，不能代表全部黄金礼品业务",
+            },
+        ],
+        "selected_candidate_index": 1,
+        "audience_territory_candidate_index": 0,
+        "root_rationale": "婚嫁内容很丰富。",
+        "unknowns": [],
+    }
+
+    with pytest.raises(ValidationError, match="example branch cannot be selected"):
+        ContentRootSelectionDraft.model_validate(payload)
+
+
+@pytest.mark.asyncio
+async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_branch() -> None:
+    semantic = {
+        "source_object": "黄金礼品",
+        "lexical_head": "礼品",
+        "modifiers": [
+            {
+                "term": "黄金",
+                "relation": "材质",
+                "modifies": "礼品",
+                "removal_counterfactual": "去掉材质后仍是可赠送和收受的礼品",
+            }
+        ],
+        "offering_role": "complete_object_or_service",
+        "role_rationale": "黄金是材质，礼品是完整赠送对象。",
+        "served_objects": ["黄金材质的礼品"],
+        "served_activities": ["送礼", "收礼", "回礼"],
+        "defining_functions_or_uses": ["通过礼物表达情感、关系与礼数"],
+        "social_or_cultural_frames": ["婚嫁礼俗", "节庆赠礼", "商务馈赠", "人生礼仪"],
+        "seller_actions": [],
+        "uncertainties": [],
+    }
+    candidates = {
+        "source_object": "黄金礼品",
+        "candidates": [
+            {
+                "level": "commercial_object",
+                "label": "黄金礼品",
+                "scope_role": "root_candidate",
+                "relation_to_business": "直接经营对象",
+                "strength": "具体",
+                "overreach_risk": "容易停在工艺和选款",
+            },
+            {
+                "level": "social_or_cultural_world",
+                "label": "送礼与人情往来",
+                "scope_role": "root_candidate",
+                "relation_to_business": "礼品的定义性人际功能",
+                "strength": "覆盖反复发生的赠受、回礼与关系表达",
+                "overreach_risk": "不能扩成与礼品无关的泛关系话题",
+            },
+            {
+                "level": "social_or_cultural_world",
+                "label": "婚嫁礼俗",
+                "scope_role": "example_branch",
+                "relation_to_business": "平行赠礼场景之一",
+                "strength": "有具体人物与仪式",
+                "overreach_risk": "会排除节庆、商务和其他人生礼仪",
+            },
+        ],
+        "unknowns": [],
+    }
+    decision = {
+        "selected_candidate_index": 1,
+        "audience_territory_candidate_index": 1,
+        "root_rationale": "礼品的长期内容来自反复发生的赠受与人情关系；婚嫁只是其中一个分支。",
+        "unknowns": [],
+    }
+    content_map = {
+        "map_directions": [
+            {
+                "dimension": "人生礼仪",
+                "actual_directions": ["婚嫁中的赠礼与回礼", "满月、祝寿与节庆中的礼数"],
+            }
+        ],
+        "named_candidates": [],
+        "unknowns": [],
+    }
+    model = SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: semantic,
+            SharedWorldSynthesisDraft: {
+                "common_action_or_relation": "通过赠送、收受与回礼表达情感和维系关系",
+                "participant_relationship": "赠礼者、收礼者与相关关系人",
+                "world_label": "送礼与人情往来",
+                "covered_frames": ["婚嫁礼俗", "节庆赠礼", "商务馈赠", "人生礼仪"],
+                "limitations": ["不能扩成与礼品无关的泛人际关系"],
+            },
+            ContentRootCandidateSetDraft: candidates,
+            ContentRootDecisionDraft: decision,
+            FrozenContentMapDraft: content_map,
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+    assert bundle.content_world.content_root == "送礼与人情往来"
+    assert bundle.content_world.audience_territory.text == "送礼与人情往来"
+    shared_world_input = model.message_batches[1][1].content
+    assert '"unmodified_subject": "礼品"' in shared_world_input
+    assert "黄金" not in shared_world_input
+    assert "保值" not in shared_world_input
+    assert '"primary_content_center": "送礼与人情往来"' in model.message_batches[4][1].content
+    assert "婚嫁" not in model.message_batches[4][1].content
+    assert bundle.content_world.dimensions[0].paths[0].steps[0].to_label == "婚嫁中的赠礼与回礼"
 
 
 def test_root_selection_schema_does_not_own_commercial_return_design() -> None:

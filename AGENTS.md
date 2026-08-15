@@ -180,8 +180,9 @@ These apply repo-wide; module guides own the module-specific detail.
 - **Test-driven development** — features and bug fixes ship with tests. Backend tests live
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
-- **V6 content core** — maps do not own story conflict; only a post-evidence editor may
-  add an evidence-bound narrative frame. Recall guesses never enter reading or final
-  convergence. See `backend/AGENTS.md` and `docs/content-intelligence-v6/`.
+- **V6 content core** — root selection separates literal reading, product-blind
+  shared-world synthesis, candidate recall, and candidate-only adjudication; example
+  branches cannot become roots. Maps do not own story conflict; only post-evidence
+  editing may add an evidence-bound narrative frame. See `docs/content-intelligence-v6/`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.
