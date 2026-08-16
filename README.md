@@ -846,6 +846,17 @@ redacted ledger failure does not discard the generated answer. Project history U
 confirmation/version switching, format adaptation, and production fact review remain
 later V6 work.
 
+Content-world research now reaches official Douyin video search only through the
+configured `douyin_search` MCP domain. It discovers the current Manifest, calls the exact
+`video_search` child as `topic_research`, and never falls back to the legacy directly
+configured Douyin search provider. Only official snapshots whose public URLs survive the
+final evidence reading are sealed; those `topic_evidence` artifacts become parents of the
+run-specific `content_reading`, while the durable `content_world` identity stays unchanged.
+The route and persistence are offline verified. Live v2 acceptance still requires local
+`DOUYIN_CLIENT_KEY`, `DOUYIN_CLIENT_SECRET`, and `DOUYIN_DEVICE_ID` environment values;
+their references remain in the ignored extensions config and credential values never enter
+Git, logs, artifacts, or model context.
+
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps
 actual coverage and exclusions explicit, seals the result as project-scoped

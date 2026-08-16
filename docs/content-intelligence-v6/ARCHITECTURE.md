@@ -153,6 +153,7 @@ flowchart LR
 线程绑定项目时，同一次成功纵切会把运行记录与长期地图分开封存，再建立如下父级：
 
 ```text
+selected topic_evidence -> content_reading
 content_reading + content_world
                 -> topic_brief
                 -> message_plan
@@ -163,6 +164,11 @@ content_reading + content_world
 因此一次新的搜索材料不会静默制造新地图版本。所有运行身份来自服务端注入的
 `ToolRuntime.context`，不出现在模型参数中。没有选项目时生成仍可继续，持久化失败也不覆盖已生成
 内容；只有后续制作、发布和复盘明确引用这些内容寻址产物时，项目台账才成为业务真相来源。
+
+抖音公开视频作为内容资料时只走运行时已加载的 `douyin_search` MCP 领域：先空对象发现当前
+Manifest，再精确调用 `video_search`，用途固定为 `topic_research`。Web 搜索与抖音 MCP 可以作为
+并列资料源，但对标候选角色不能进入本管道。只有最终证据阅读实际保留了该快照中的公开 URL，
+快照才以 `topic_evidence` 先于阅读产物封存；未采用的搜索结果不会为了完整感写入项目。
 
 ## 受控多专家协作
 

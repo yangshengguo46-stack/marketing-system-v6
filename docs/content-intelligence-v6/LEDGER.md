@@ -1340,3 +1340,28 @@ SQLite 同时确认五类产物各一条，父级和哈希匹配。聚焦测试 
 `implemented; E2E-01 semantic migration and lineage passed; fact-boundary and performance follow-up required`。
 详见 `audits/A47-content-run-artifact-lineage.md` 与
 `evidence/content-run-artifact-lineage-a47-2026-08-17.md`。
+
+## A48 抖音 MCP 选题证据接入内容谱系
+
+2026-08-17 复核发现，内容纵切中的抖音资料源仍依赖 `config.yaml` 的旧
+`douyin_video_search` 直连工具，而当前配置没有启用它；已经恢复的 16 域
+`douyin-openapi-mcp` 因而没有进入内容研究。新增薄适配器后，内容研究从当前
+`ToolRuntime.tools` 选择带 MCP 标记的 `douyin_search`，按
+`空对象发现 Manifest -> 精确 video_search` 调用，业务用途固定为 `topic_research`。
+旧直连配置即使存在也不会被调用。
+
+官方结果继续与 Web 资料并列参与证据阅读。确定性代码只保留角色为 `topic_evidence` 的回执，
+并在最终阅读确实保留其中公开 URL 时先封存 `evidence_snapshot`，再把它作为
+`content_reading` 父级。对标候选、未采用结果和凭据字段都不能进入内容产物谱系；长期
+`content_world` 仍不引用单次搜索证据。
+
+聚焦回归为 `51 passed in 4.26s`，后端全量为
+`11764 passed, 76 skipped, 17 warnings in 413.53s`。第一次未隔离本地免登录 `.env` 的全量
+运行使 36 条认证、CSRF 与归属测试按 `default` 用户执行；命令级设置
+`DEER_FLOW_AUTH_DISABLED=0` 后，相关 5 文件 `467 passed`，随后全量通过。这是测试环境回执，
+没有修改用户本地登录配置。真实本机探针确认 16 个 MCP 工具与
+`douyin_search` 均存在；解析后的本地 `CLIENT_KEY`、`CLIENT_SECRET`、`DEVICE_ID` 仍为空，
+所以 `video_search` 正确为 `callable=false / auth_not_configured`，没有发出搜索请求。本条状态为
+`implemented offline; live credential acceptance blocked`，不能记成抖音真实验收。详见
+`audits/A48-douyin-mcp-topic-evidence-lineage.md` 与
+`evidence/douyin-mcp-topic-evidence-a48-2026-08-17.md`。

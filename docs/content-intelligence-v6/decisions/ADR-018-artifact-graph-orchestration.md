@@ -139,6 +139,7 @@ IPProject
 首个真实内容纵切已按以下父级关系落入同一项目：
 
 ```text
+selected topic_evidence -> content_reading
 content_reading + content_world
                 -> topic_brief
                 -> message_plan
@@ -149,6 +150,8 @@ content_reading + content_world
 `ToolRuntime.context` 读取项目、用户、线程和运行身份；这些字段不进入模型工具 Schema。
 未选项目仍可生成回答，写入失败只产生脱敏状态，不把台账变成语义硬门。A47 的黄金礼品真实回执
 已经证明五类产物和哈希谱系可恢复；用户确认、地图版本切换、事实边界优化和前端读取仍未完成。
+后续 A48 又验证，只有最终阅读采用的抖音官方 MCP `topic_evidence` 才能成为
+`content_reading` 父级；搜索证据不会成为稳定 `content_world` 的父级。
 
 ## Agent 与确定性代码的分工
 

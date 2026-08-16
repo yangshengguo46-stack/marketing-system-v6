@@ -7,9 +7,11 @@ from pydantic import model_validator
 from deerflow.incubation.content_world import seal_content_world_version
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
+    ArtifactParentRef,
     IncubationContract,
     ProjectRef,
 )
+from deerflow.incubation.evidence import EvidenceSnapshot
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -54,6 +56,7 @@ def seal_content_run_artifacts(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    reading_parents: tuple[ArtifactParentRef, ...] = (),
 ) -> ContentRunArtifactSet:
     """Seal one content-intelligence run without changing its judgments."""
 
@@ -86,6 +89,7 @@ def seal_content_run_artifacts(
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
+        parents=reading_parents,
     )
     content_world = seal_content_world_version(
         project=project,
@@ -151,4 +155,27 @@ def seal_content_run_artifacts(
     )
 
 
-__all__ = ["ContentRunArtifactSet", "seal_content_run_artifacts"]
+def select_used_topic_evidence_snapshots(
+    bundle: ContentIntelligenceBundle,
+    snapshots: tuple[EvidenceSnapshot, ...],
+) -> tuple[EvidenceSnapshot, ...]:
+    """Keep only topic receipts whose public items survived final reading."""
+
+    if not snapshots:
+        return ()
+    used_uris = {source.uri for source in bundle.record.sources if source.evidence_role == "topic_evidence" and source.uri is not None}
+    selected: dict[str, EvidenceSnapshot] = {}
+    for snapshot in snapshots:
+        if snapshot.evidence_role != "topic_evidence":
+            continue
+        if not any(item.public_uri in used_uris for item in snapshot.items if item.public_uri is not None):
+            continue
+        selected[snapshot.model_dump_json()] = snapshot
+    return tuple(selected[key] for key in sorted(selected))
+
+
+__all__ = [
+    "ContentRunArtifactSet",
+    "seal_content_run_artifacts",
+    "select_used_topic_evidence_snapshots",
+]

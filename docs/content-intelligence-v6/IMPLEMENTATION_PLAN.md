@@ -48,7 +48,7 @@
 | 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented; golden-gift project persistence verified` | 保留现有运行时和项目版本谱系 | 用户确认、版本切换、事实边界与性能优化 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
-| 抖音公开视频/体验搜索 | 第六版 | `v2 contract and multi-page candidate aggregation implemented; live credentials pending` | 选题为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 配置本地凭据后做 v2 真实回执与项目入库复核 |
+| 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
@@ -112,7 +112,7 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; official evidence routing, benchmark candidates, and MediaKit input boundary implemented`
+状态：`in progress; Douyin MCP topic lineage implemented offline; live credentials and MediaKit execution pending`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
@@ -172,6 +172,15 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 已通过，实际解析、云端执行和恢复仍待接通。详见
 `audits/A44-evidence-isolation-and-mediakit-source-boundary.md` 与
 `evidence/evidence-isolation-mediakit-a44-2026-08-17.md`。
+
+2026-08-17 第七切片回执：内容纵切不再读取未启用的旧 `douyin_video_search` 直连配置，而是从
+当前 DeerFlow 运行时选择带 MCP 标记的 `douyin_search`，执行
+`Manifest discovery -> video_search(topic_research)`。最终阅读实际采用的官方 URL 才会触发
+`evidence_snapshot -> content_reading` 父级，未采用结果和对标角色会被丢弃。聚焦回归
+`51 passed`，后端全量 `11764 passed, 76 skipped`。当前忽略配置只保存 `$DOUYIN_*` 引用，
+Gateway 环境中的 Key、Secret 和 Device ID
+均为空，所以真实 Manifest 正确返回 `auth_not_configured` 且没有发送搜索请求。详见
+`audits/A48-douyin-mcp-topic-evidence-lineage.md`。
 
 ### W03 孵化与单条内容产物谱系
 
@@ -299,5 +308,5 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-ledger-a38-2026-08-16.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-下一实施断点回到 W02：内容纵切已经写入项目谱系，先取得抖音官方 v2 搜索的真实 MCP 回执并
-封存为明确角色的证据，再接 MediaKit 的真实感知执行；不得退回网页视觉采集。
+下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；代码主线可并行进入
+W04 MediaKit 感知执行接线。不得用网页视觉采集伪装 W02 已通过。

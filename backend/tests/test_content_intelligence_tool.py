@@ -107,6 +107,13 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
     enriched_bundle = object()
     narration = object()
     lexical_provider = object()
+    topic_snapshot = object()
+    topic_search = SimpleNamespace(snapshots=(topic_snapshot,))
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "DouyinMcpTopicEvidenceSearch",
+        Mock(return_value=topic_search),
+    )
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -141,6 +148,8 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
         "render_content_world_narration",
         lambda actual_bundle, actual_narration: "# 火锅\n\n围绕火锅本身展开内容世界。",
     )
+    persist = AsyncMock(return_value={"status": "not_selected"})
+    monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persist)
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -172,7 +181,9 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
     assert analysis.await_args.args[0].source_materials == ()
     assert analysis.await_args.kwargs["lexical_evidence_provider"] is lexical_provider
     assert research.await_args.args[0] is bundle
-    assert research.await_args.kwargs["search"] is content_intelligence_tool_module._search_content_world_evidence
+    assert callable(research.await_args.kwargs["search"])
+    persist.assert_awaited_once()
+    assert persist.await_args.kwargs["topic_evidence_snapshots"] == (topic_snapshot,)
     assert research.await_args.kwargs["fetch"] is content_intelligence_tool_module._fetch_content_world_evidence
     assert delivery.await_args.args[0] is enriched_bundle
     assert delivery.await_args.kwargs["user_request"] == "我是卖重庆火锅底料的，该怎么起号？"
@@ -388,45 +399,30 @@ async def test_content_world_search_interleaves_web_and_douyin_topic_evidence(
             }
         )
 
-    @tool("douyin_video_search")
-    async def configured_douyin_search(query: str, max_results: int = 5) -> str:
-        """Search official Douyin video evidence."""
+    async def mcp_douyin_search(query: str, max_results: int = 5):
         calls.append(("douyin", query, max_results))
-        return json.dumps(
-            {
-                "provider": "douyin_open_platform",
-                "evidence_role": "topic_evidence",
-                "results": [
-                    {
-                        "title": "Douyin video",
-                        "url": "https://www.douyin.com/video/123",
-                        "content": "A bounded official video-search receipt.",
-                        "source_type": "douyin_video",
-                    }
-                ],
-            }
+        return (
+            content_intelligence_tool_module.ResearchSearchResult(
+                title="Douyin video",
+                url="https://www.douyin.com/video/123",
+                content="A bounded official video-search receipt.",
+            ),
         )
 
-    configs = {
-        "web_search": SimpleNamespace(use="tests.fake:configured_web_search"),
-        "douyin_video_search": SimpleNamespace(use="tests.fake:configured_douyin_search"),
-    }
-    tools_by_use = {
-        "tests.fake:configured_web_search": configured_web_search,
-        "tests.fake:configured_douyin_search": configured_douyin_search,
-    }
+    configs = {"web_search": SimpleNamespace(use="tests.fake:configured_web_search")}
     monkeypatch.setattr(
         "deerflow.config.get_app_config",
         lambda: SimpleNamespace(get_tool_config=configs.get),
     )
     monkeypatch.setattr(
         "deerflow.reflection.resolve_variable",
-        lambda use, expected: tools_by_use[use],
+        lambda use, expected: configured_web_search,
     )
 
     results = await content_intelligence_tool_module._search_content_world_evidence(
         "人情往来 送礼",
         3,
+        douyin_search=mcp_douyin_search,
     )
 
     assert sorted(calls) == [
@@ -460,30 +456,15 @@ async def test_content_world_search_drops_douyin_benchmark_receipts(
             }
         )
 
-    @tool("douyin_video_search")
-    async def configured_douyin_search(query: str, max_results: int = 5) -> str:
-        """Return a deliberately misrouted benchmark receipt."""
-        return json.dumps(
-            {
-                "provider": "douyin_open_platform",
-                "evidence_role": "benchmark_account_candidate",
-                "results": [
-                    {
-                        "title": "对标账号视频",
-                        "url": "https://www.douyin.com/video/benchmark-1",
-                        "content": "这条证据只能进入对标管道。",
-                    }
-                ],
-            }
-        )
+    legacy_douyin_search = AsyncMock(side_effect=AssertionError("legacy direct Douyin tool must not run"))
 
     configs = {
         "web_search": SimpleNamespace(use="tests.fake:configured_web_search"),
-        "douyin_video_search": SimpleNamespace(use="tests.fake:configured_douyin_search"),
+        "douyin_video_search": SimpleNamespace(use="tests.fake:legacy_douyin_search"),
     }
     tools_by_use = {
         "tests.fake:configured_web_search": configured_web_search,
-        "tests.fake:configured_douyin_search": configured_douyin_search,
+        "tests.fake:legacy_douyin_search": legacy_douyin_search,
     }
     monkeypatch.setattr(
         "deerflow.config.get_app_config",
@@ -500,6 +481,7 @@ async def test_content_world_search_drops_douyin_benchmark_receipts(
     )
 
     assert [result.url for result in results] == ["https://example.com/gift-customs"]
+    legacy_douyin_search.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -688,6 +670,7 @@ async def test_content_run_persistence_uses_only_the_runtime_bound_project(
             },
             config={"configurable": {"thread_id": "thread-1"}},
         ),
+        topic_evidence_snapshots=(),
     )
 
     project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
@@ -700,6 +683,85 @@ async def test_content_run_persistence_uses_only_the_runtime_bound_project(
     assert receipt["project_id"] == "golden-gift"
     assert [item["artifact_type"] for item in receipt["artifacts"]] == [artifact.artifact_type for artifact in artifacts]
     assert "user-1" not in json.dumps(receipt)
+
+
+@pytest.mark.asyncio
+async def test_content_run_persistence_stores_used_topic_evidence_before_the_reading(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from deerflow.incubation import ArtifactParentRef
+
+    snapshot = object()
+    parent = ArtifactParentRef(
+        owner_user_id="user-1",
+        project_id="golden-gift",
+        artifact_id="artifact-evidence",
+        artifact_type="evidence_snapshot",
+        content_sha256="a" * 64,
+    )
+    evidence_artifact = SimpleNamespace(
+        artifact_type="evidence_snapshot",
+        artifact_id=parent.artifact_id,
+        content_sha256=parent.content_sha256,
+        to_parent_ref=lambda: parent,
+    )
+    content_artifacts = tuple(
+        SimpleNamespace(
+            artifact_type=artifact_type,
+            artifact_id=f"artifact-{artifact_type}",
+            content_sha256=f"sha-{artifact_type}",
+        )
+        for artifact_type in (
+            "content_reading",
+            "content_world",
+            "topic_brief",
+            "message_plan",
+            "draft_version",
+        )
+    )
+    seal_content = Mock(return_value=SimpleNamespace(storage_order=lambda: content_artifacts))
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(side_effect=lambda artifact: artifact),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "select_used_topic_evidence_snapshots",
+        Mock(return_value=(snapshot,)),
+    )
+    seal_evidence = Mock(return_value=evidence_artifact)
+    monkeypatch.setattr(content_intelligence_tool_module, "seal_evidence_snapshot", seal_evidence)
+    monkeypatch.setattr(content_intelligence_tool_module, "seal_content_run_artifacts", seal_content)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_get_incubation_repository",
+        Mock(return_value=repository),
+    )
+
+    receipt = await content_intelligence_tool_module._persist_content_run(
+        bundle=object(),
+        delivery=object(),
+        runtime=_tool_runtime(
+            "content-world-call-with-evidence",
+            context={"incubation_project_id": "golden-gift"},
+        ),
+        topic_evidence_snapshots=(snapshot,),
+    )
+
+    assert [call.args[0] for call in repository.put_artifact.await_args_list] == [
+        evidence_artifact,
+        *content_artifacts,
+    ]
+    assert seal_content.call_args.kwargs["reading_parents"] == (parent,)
+    assert seal_evidence.call_args.kwargs["snapshot"] is snapshot
+    assert [item["artifact_type"] for item in receipt["artifacts"]] == [
+        "evidence_snapshot",
+        "content_reading",
+        "content_world",
+        "topic_brief",
+        "message_plan",
+        "draft_version",
+    ]
 
 
 @pytest.mark.asyncio
@@ -717,6 +779,7 @@ async def test_content_run_persistence_is_optional_without_a_selected_project(
         bundle=object(),
         delivery=None,
         runtime=_tool_runtime("content-world-call-no-project"),
+        topic_evidence_snapshots=(),
     )
 
     assert receipt == {"status": "not_selected"}

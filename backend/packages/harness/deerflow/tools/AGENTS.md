@@ -17,6 +17,7 @@ Scheduled-task runtime note:
 
 V6 content-run note:
 - `explore_content_world` uses the standard `@tool`/`ToolRuntime` contract. With a selected project it seals `content_reading + content_world -> topic_brief -> message_plan -> draft_version`; project, user, thread, and run identity come only from `ToolRuntime.context` and stay outside the model schema. Run-specific research does not change durable map identity. No project remains a valid non-persistent path, and a redacted ledger failure must preserve the generated answer.
+- Douyin topic research must use the runtime's MCP-tagged `douyin_search` domain, discover its current Manifest, and execute only `video_search` with `purpose=topic_research`. Do not restore the old `config.yaml` direct-provider path. Persist only selected official topic snapshots before `content_reading`; benchmark roles and unused search results cannot enter that lineage.
 
 **Community tools** (`packages/harness/deerflow/community/`): optional integrations, each in its own subpackage and wired through `config.yaml`. Documented examples:
 - `tavily/` - Web search (5 results default) and web fetch (4KB limit)

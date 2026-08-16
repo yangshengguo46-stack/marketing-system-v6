@@ -15,7 +15,15 @@ from deerflow.content_intelligence import (
     SourceItem,
     TopicBrief,
 )
-from deerflow.incubation import ProjectRef, seal_content_run_artifacts
+from deerflow.incubation import (
+    ArtifactParentRef,
+    EvidenceCoverageReceipt,
+    EvidenceItem,
+    EvidenceSnapshot,
+    ProjectRef,
+    seal_content_run_artifacts,
+    select_used_topic_evidence_snapshots,
+)
 
 NOW = datetime(2026, 8, 17, 14, 0, tzinfo=UTC)
 
@@ -124,9 +132,43 @@ def _content_run() -> tuple[ContentIntelligenceBundle, ShootingDelivery]:
     return bundle, delivery
 
 
+def _topic_snapshot(*, uri: str, role: str = "topic_evidence") -> EvidenceSnapshot:
+    return EvidenceSnapshot(
+        provider="douyin_open_platform",
+        collection_method="official_openapi",
+        evidence_role=role,
+        captured_at=NOW,
+        rights_basis="public search through the configured Douyin Open Platform application",
+        query="人情往来 礼",
+        items=(
+            EvidenceItem(
+                source_ref=f"douyin:video:{uri.rsplit('/', 1)[-1]}",
+                source_type="douyin_video",
+                title="一条公开视频",
+                excerpt="公开证据摘要。",
+                provenance="observed",
+                public_uri=uri,
+            ),
+        ),
+        coverage=EvidenceCoverageReceipt(
+            population_scope="public_video_search_results",
+            requested_count=3,
+            returned_count=1,
+        ),
+        limitations=("This snapshot is bounded topic evidence.",),
+    )
+
+
 def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
     bundle, delivery = _content_run()
     project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    evidence_parent = ArtifactParentRef(
+        owner_user_id="user-1",
+        project_id="golden-gift",
+        artifact_id="artifact-evidence-1",
+        artifact_type="evidence_snapshot",
+        content_sha256="a" * 64,
+    )
 
     sealed = seal_content_run_artifacts(
         project=project,
@@ -135,6 +177,7 @@ def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
+        reading_parents=(evidence_parent,),
     )
 
     ordered = sealed.storage_order()
@@ -149,6 +192,7 @@ def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
         "user_material",
         "topic_evidence",
     ]
+    assert sealed.content_reading.parents == (evidence_parent,)
     assert set(sealed.topic_brief.parents) == {
         sealed.content_reading.to_parent_ref(),
         sealed.content_world.to_parent_ref(),
@@ -160,6 +204,23 @@ def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
     assert all(artifact.project == project for artifact in ordered)
     assert all(artifact.source_thread_id == "thread-1" for artifact in ordered)
     assert all(artifact.source_run_id == "run-1" for artifact in ordered)
+
+
+def test_content_run_selects_only_topic_snapshots_used_by_the_final_reading() -> None:
+    bundle, _delivery = _content_run()
+    selected = _topic_snapshot(uri="https://example.com/rites")
+    unrelated = _topic_snapshot(uri="https://www.douyin.com/video/unrelated")
+    wrong_role = _topic_snapshot(
+        uri="https://example.com/rites",
+        role="benchmark_account_candidate",
+    )
+
+    snapshots = select_used_topic_evidence_snapshots(
+        bundle,
+        (unrelated, wrong_role, selected, selected),
+    )
+
+    assert snapshots == (selected,)
 
 
 def test_content_run_without_a_topic_still_seals_the_reading_and_durable_map() -> None:

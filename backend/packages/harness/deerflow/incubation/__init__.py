@@ -47,6 +47,7 @@ _CONTENT_RUN_EXPORTS = frozenset(
     {
         "ContentRunArtifactSet",
         "seal_content_run_artifacts",
+        "select_used_topic_evidence_snapshots",
     }
 )
 
@@ -98,6 +99,7 @@ __all__ = [
     "ProjectRef",
     "seal_content_world_version",
     "seal_content_run_artifacts",
+    "select_used_topic_evidence_snapshots",
     "seal_benchmark_snapshot",
     "seal_evidence_snapshot",
     "seal_media_source_receipt",

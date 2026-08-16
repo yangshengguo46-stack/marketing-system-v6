@@ -33,8 +33,15 @@ from deerflow.content_intelligence import (
     synthesize_shooting_delivery,
 )
 from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
-from deerflow.incubation import ProjectRef, seal_content_run_artifacts
+from deerflow.incubation import (
+    EvidenceSnapshot,
+    ProjectRef,
+    seal_content_run_artifacts,
+    seal_evidence_snapshot,
+    select_used_topic_evidence_snapshots,
+)
 from deerflow.models import create_chat_model
+from deerflow.tools.builtins.douyin_topic_evidence import DouyinMcpTopicEvidenceSearch
 from deerflow.tools.types import Runtime
 from deerflow.utils.readability import ReadabilityExtractor
 
@@ -130,6 +137,7 @@ async def _persist_content_run(
     bundle: ContentIntelligenceBundle,
     delivery: ShootingDelivery | None,
     runtime: Runtime,
+    topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
 ) -> dict[str, Any]:
     project_id = _runtime_context_text(runtime, "incubation_project_id")
     if project_id is None:
@@ -154,6 +162,31 @@ async def _persist_content_run(
         repository = _get_incubation_repository()
         if repository is None or await repository.get_project(project) is None:
             return failure
+        selected_snapshots = select_used_topic_evidence_snapshots(
+            bundle,
+            topic_evidence_snapshots,
+        )
+        evidence_artifacts = {}
+        for snapshot in selected_snapshots:
+            artifact = seal_evidence_snapshot(
+                project=project,
+                snapshot=snapshot,
+                source_thread_id=thread_id,
+                source_run_id=run_id,
+            )
+            evidence_artifacts[artifact.artifact_id] = artifact
+        stored_receipts: list[dict[str, str]] = []
+        evidence_parents = []
+        for artifact_id in sorted(evidence_artifacts):
+            stored = await repository.put_artifact(evidence_artifacts[artifact_id])
+            evidence_parents.append(stored.to_parent_ref())
+            stored_receipts.append(
+                {
+                    "artifact_type": stored.artifact_type,
+                    "artifact_id": stored.artifact_id,
+                    "content_sha256": stored.content_sha256,
+                }
+            )
         sealed = seal_content_run_artifacts(
             project=project,
             bundle=bundle,
@@ -161,8 +194,8 @@ async def _persist_content_run(
             created_at=datetime.now(UTC),
             source_thread_id=thread_id,
             source_run_id=run_id,
+            reading_parents=tuple(evidence_parents),
         )
-        stored_receipts: list[dict[str, str]] = []
         for artifact in sealed.storage_order():
             stored = await repository.put_artifact(artifact)
             stored_receipts.append(
@@ -246,6 +279,18 @@ async def explore_content_world_tool(
         focus=AnalysisFocus.CONTENT_WORLD,
         source_materials=(),
     )
+    douyin_topic_search = DouyinMcpTopicEvidenceSearch(runtime)
+
+    async def search_content_evidence(
+        query: str,
+        max_results: int,
+    ) -> tuple[ResearchSearchResult, ...]:
+        return await _search_content_world_evidence(
+            query,
+            max_results,
+            douyin_search=douyin_topic_search,
+        )
+
     try:
         bundle = await analyze_content_intelligence(
             request,
@@ -257,7 +302,7 @@ async def explore_content_world_tool(
             bundle = await enrich_content_world_with_research(
                 bundle,
                 model=model,
-                search=_search_content_world_evidence,
+                search=search_content_evidence,
                 fetch=_fetch_content_world_evidence,
                 runnable_config=config,
             )
@@ -283,6 +328,7 @@ async def explore_content_world_tool(
             bundle=bundle,
             delivery=shooting_delivery,
             runtime=runtime,
+            topic_evidence_snapshots=douyin_topic_search.snapshots,
         )
         if shooting_delivery is not None:
             return _terminal_content_world_command(
@@ -314,21 +360,22 @@ async def explore_content_world_tool(
 async def _search_content_world_evidence(
     query: str,
     max_results: int,
+    *,
+    douyin_search: Any | None = None,
 ) -> tuple[ResearchSearchResult, ...]:
-    """Run configured public search providers and expose only bounded receipts."""
+    """Run web search and the official Douyin MCP as bounded topic evidence."""
 
     from deerflow.config import get_app_config
     from deerflow.reflection import resolve_variable
 
     app_config = get_app_config()
-    search_configs = tuple((name, config) for name in ("web_search", "douyin_video_search") if (config := app_config.get_tool_config(name)) is not None)
-    if not search_configs:
+    web_search_config = app_config.get_tool_config("web_search")
+    if web_search_config is None and douyin_search is None:
         return ()
 
-    async def invoke_provider(
-        provider_name: str,
-        search_config: Any,
-    ) -> tuple[ResearchSearchResult, ...]:
+    async def invoke_web_provider() -> tuple[ResearchSearchResult, ...]:
+        assert web_search_config is not None
+        search_config = web_search_config
         search_tool = resolve_variable(search_config.use, BaseTool)
         tool_input: dict[str, Any] = {"query": query}
         if "max_results" in search_tool.args:
@@ -337,11 +384,15 @@ async def _search_content_world_evidence(
         return _normalize_search_results(
             raw,
             max_results=max_results,
-            required_evidence_role=("topic_evidence" if provider_name == "douyin_video_search" else None),
         )
 
+    provider_calls = []
+    if web_search_config is not None:
+        provider_calls.append(invoke_web_provider())
+    if douyin_search is not None:
+        provider_calls.append(douyin_search(query, max_results))
     provider_results = await asyncio.gather(
-        *(invoke_provider(provider_name, search_config) for provider_name, search_config in search_configs),
+        *provider_calls,
         return_exceptions=True,
     )
     successful_results: list[tuple[ResearchSearchResult, ...]] = []
