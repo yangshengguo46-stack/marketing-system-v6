@@ -1272,3 +1272,21 @@ ASR、OCR、场景切分和元信息可直接接 `video_url`，但这必须是�
 `11742 passed, 76 skipped, 17 warnings in 463.85s`。
 首次全量运行的 13 个网页读取失败未能在失败四组或完整套件复现；
 详细回执保留了该非确定性现象，不把它冒充成稳定绿灯或本次功能回归。
+
+## A45 抖音 MCP 运行配置恢复与状态纠偏
+
+2026-08-17 按 A25-A27、A41-A43 和对应 Git 提交重新核账。既有实现已经包含
+`douyin-openapi-mcp`、16 个领域 Manifest、官方 v2 视频搜索、对标候选跨页聚合和
+Lead 高层工具；不得把运行配置缺失误判为功能未实现，也不得退回网页读取或重写采集器。
+
+本机第六版缺少被 Git 忽略的 `extensions_config.json`，导致运行中的 Gateway 记录
+`MCP tools: 0`。恢复现有 MCP 的本地启用配置并重载 Gateway 后，控制面显示
+`douyin_openapi` 已注册且启用，真实 stdio 初始化列出 16 个领域工具，Agent 构建日志显示
+`MCP tools: 16`。搜索领域只披露已声明获批的 `video_search` Child；由于本地进程仍未绑定
+应用身份，其状态诚实保持 `callable=false / auth_not_configured`，本轮没有向抖音发请求。
+
+这次只修复现有运行接线，没有修改业务代码、另建连接器或改变 A41-A43 的验收边界。
+下一步是在 MCP 私有环境中绑定现有抖音应用身份后，执行一次官方 v2 视频搜索真实回执；
+未取得回执前仍不得标记 `live verified`。详见
+`audits/A45-douyin-mcp-runtime-recovery.md` 与
+`evidence/douyin-mcp-runtime-recovery-a45-2026-08-17.md`。
