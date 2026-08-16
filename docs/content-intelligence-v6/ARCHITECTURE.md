@@ -50,6 +50,34 @@ Lead 不直接看全量抖音 Child，当前只注册一个高层对标候选工
 身份解析并在平台请求前检查。项目写入失败不会丢弃已采集证据，但会显式标记未保存。
 前端项目选择器和真实抖音凭据验收仍是 W02 未完成项。
 
+### 资料证据、对标证据与媒体感知
+
+内容地图查资料与对标账号采集是两条不可互换的上游：
+
+```mermaid
+flowchart LR
+    ROOT["冻结内容根 / 地图方向"] --> RESEARCH["公开资料搜索"]
+    RESEARCH --> TOPIC["topic_evidence"]
+    TARGET["明确对标账号"] --> DISCOVERY["账号发现 / 稳定身份 / 多作品"]
+    DISCOVERY --> BENCH["benchmark_account_candidate / benchmark_evidence"]
+    TOPIC --> TOPIC_MEDIA["MediaKit 资料感知：继承 topic 谱系"]
+    BENCH --> BENCH_MEDIA["MediaKit 对标感知：继承 benchmark 谱系"]
+    TOPIC_MEDIA --> ADAPT["后续用户孵化 / 内容适配判断"]
+    BENCH_MEDIA --> ADAPT
+```
+
+`content_intelligence.SourceItem` 只接受 `user_material` 和 `topic_evidence`。
+任何搜索源显式返回对标角色都会被丢弃；抖音内容研究回执还必须显式为
+`topic_evidence`，不得将缺失角色或对标回执重标为选题证据。对标链路反过来也不得用一条
+视频或搜索摘要代替稳定账号身份和多作品覆盖。
+
+MediaKit 能直接接受 `video_url`，但这里的 URL 是可直接访问的视频资源，
+不是抖音分享页或作品 HTML 页。平台连接先作为可持久证据进入平台解析器；
+解析器只有在响应已确认为 `video/*` 时才可生成 `EphemeralMediaSource`。
+签名直链或本地路径只在调用内存中存在；`MediaSourceReceipt` 仅保留来源、权利、
+解析器、哈希和时间。`MediaKitCapabilityRouter` 按当前 CLI 动态发现 Schema，
+已通过本机 `0.2.0` 的预备调用烟测；真实平台解析、云任务和恢复尚未验收。
+
 ## 内容理解纵切
 
 ```mermaid

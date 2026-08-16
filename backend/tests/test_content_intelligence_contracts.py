@@ -34,6 +34,40 @@ def _source(content: str = "我是做重庆火锅底料的") -> SourceItem:
     )
 
 
+@pytest.mark.parametrize(
+    "evidence_role",
+    (
+        "benchmark_account_candidate",
+        "benchmark_evidence",
+        "benchmark_audience_observation",
+    ),
+)
+def test_content_intelligence_source_rejects_benchmark_evidence_roles(
+    evidence_role: str,
+) -> None:
+    with pytest.raises(ValidationError, match="evidence_role"):
+        SourceItem(
+            source_id="source-wrong-role",
+            kind="external_evidence",
+            content="这是对标账号观察，不得冒充内容地图资料。",
+            evidence_role=evidence_role,
+        )
+
+
+@pytest.mark.parametrize("evidence_role", ("user_material", "topic_evidence"))
+def test_content_intelligence_source_accepts_only_its_owned_evidence_roles(
+    evidence_role: str,
+) -> None:
+    source = SourceItem(
+        source_id=f"source-{evidence_role}",
+        kind="external_evidence",
+        content="内容理解自己拥有的资料。",
+        evidence_role=evidence_role,
+    )
+
+    assert source.evidence_role == evidence_role
+
+
 def _record() -> ComprehensionRecord:
     return ComprehensionRecord(
         record_id="record-1",

@@ -22,6 +22,11 @@ from deerflow.incubation.evidence import (
     EvidenceSnapshot,
     seal_evidence_snapshot,
 )
+from deerflow.incubation.media import (
+    EphemeralMediaSource,
+    MediaSourceReceipt,
+    seal_media_source_receipt,
+)
 
 _PERSISTENCE_EXPORTS = frozenset(
     {
@@ -66,11 +71,13 @@ __all__ = [
     "EvidenceCoverageReceipt",
     "EvidenceItem",
     "EvidenceSnapshot",
+    "EphemeralMediaSource",
     "IncubationLedgerError",
     "IncubationLedgerRepository",
     "MissingAccountError",
     "MissingParentArtifactError",
     "MissingProjectError",
+    "MediaSourceReceipt",
     "PlatformAccountRecord",
     "PlatformAccountRef",
     "ProjectConflictError",
@@ -79,4 +86,5 @@ __all__ = [
     "seal_content_world_version",
     "seal_benchmark_snapshot",
     "seal_evidence_snapshot",
+    "seal_media_source_receipt",
 ]

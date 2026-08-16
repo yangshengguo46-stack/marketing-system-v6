@@ -416,6 +416,104 @@ async def test_content_world_search_interleaves_web_and_douyin_topic_evidence(
 
 
 @pytest.mark.asyncio
+async def test_content_world_search_drops_douyin_benchmark_receipts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    @tool("web_search")
+    async def configured_web_search(query: str, max_results: int = 5) -> str:
+        """Search public topic evidence."""
+        return json.dumps(
+            {
+                "results": [
+                    {
+                        "title": "送礼习俗资料",
+                        "url": "https://example.com/gift-customs",
+                        "content": "一条内容地图可用的公开资料。",
+                    }
+                ]
+            }
+        )
+
+    @tool("douyin_video_search")
+    async def configured_douyin_search(query: str, max_results: int = 5) -> str:
+        """Return a deliberately misrouted benchmark receipt."""
+        return json.dumps(
+            {
+                "provider": "douyin_open_platform",
+                "evidence_role": "benchmark_account_candidate",
+                "results": [
+                    {
+                        "title": "对标账号视频",
+                        "url": "https://www.douyin.com/video/benchmark-1",
+                        "content": "这条证据只能进入对标管道。",
+                    }
+                ],
+            }
+        )
+
+    configs = {
+        "web_search": SimpleNamespace(use="tests.fake:configured_web_search"),
+        "douyin_video_search": SimpleNamespace(use="tests.fake:configured_douyin_search"),
+    }
+    tools_by_use = {
+        "tests.fake:configured_web_search": configured_web_search,
+        "tests.fake:configured_douyin_search": configured_douyin_search,
+    }
+    monkeypatch.setattr(
+        "deerflow.config.get_app_config",
+        lambda: SimpleNamespace(get_tool_config=configs.get),
+    )
+    monkeypatch.setattr(
+        "deerflow.reflection.resolve_variable",
+        lambda use, expected: tools_by_use[use],
+    )
+
+    results = await content_intelligence_tool_module._search_content_world_evidence(
+        "人情往来 送礼",
+        3,
+    )
+
+    assert [result.url for result in results] == ["https://example.com/gift-customs"]
+
+
+@pytest.mark.asyncio
+async def test_content_world_search_drops_explicit_web_benchmark_receipts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    @tool("web_search")
+    async def configured_web_search(query: str, max_results: int = 5) -> str:
+        """Return a deliberately misrouted benchmark receipt."""
+        return json.dumps(
+            {
+                "evidence_role": "benchmark_evidence",
+                "results": [
+                    {
+                        "title": "对标账号观察",
+                        "url": "https://example.com/benchmark-account",
+                        "content": "这条证据不属于内容地图。",
+                    }
+                ],
+            }
+        )
+
+    monkeypatch.setattr(
+        "deerflow.config.get_app_config",
+        lambda: SimpleNamespace(get_tool_config=lambda name: SimpleNamespace(use="tests.fake:configured_web_search") if name == "web_search" else None),
+    )
+    monkeypatch.setattr(
+        "deerflow.reflection.resolve_variable",
+        lambda use, expected: configured_web_search,
+    )
+
+    results = await content_intelligence_tool_module._search_content_world_evidence(
+        "人情往来 送礼",
+        3,
+    )
+
+    assert results == ()
+
+
+@pytest.mark.asyncio
 async def test_content_world_fetch_prefers_local_public_page_reading(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

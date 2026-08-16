@@ -210,6 +210,12 @@ observation only; positioning, audience, causality, and transferability require 
 artifacts. Connector-local credentials and raw pages never enter either snapshot. The
 contract is implemented; Douyin live connector acceptance remains pending.
 
+Content-world research owns only `user_material` and `topic_evidence`; every search
+provider drops explicit non-topic roles, and Douyin also drops missing roles. MediaKit inputs
+use `deerflow.incubation.media`: a platform page is not a `video_url`, raw signed URLs
+and local paths remain execution-only, and durable receipts retain hashes and provenance.
+The router discovers CLI `--schema`; it does not yet submit, poll, or register a Lead tool.
+
 ## Development Workflow
 
 ### Test-Driven Development (TDD) — MANDATORY

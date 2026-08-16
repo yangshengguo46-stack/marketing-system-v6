@@ -52,7 +52,7 @@
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
-| MediaKit 感知 | 第五版 E15 | `reviewed; isolated live receipts` | 迁移动态 Schema、回执、哈希和恢复边界 | 一个授权账号的单视频与跨视频人工核对 |
+| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `dynamic schema and ephemeral input boundary implemented; execution pending` | 保留动态 Schema、脱敏回执和哈希；继续接任务、恢复与证据角色继承 | 一个授权账号的单视频与跨视频人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
 | 表现形式选择 | 第四版方法审计 | `adopted; unimplemented` | 新增薄 `FormatDecision`，不改写选题 | 口播、图文、纯素材、访谈与短剧的资源匹配 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
@@ -112,7 +112,7 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; official v2 search routing, multi-page benchmark candidates, and benchmark snapshot contract slices implemented`
+状态：`in progress; official evidence routing, benchmark candidates, and MediaKit input boundary implemented`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
@@ -163,6 +163,16 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 详见 `audits/A43-douyin-benchmark-lead-tool.md` 与
 `evidence/douyin-benchmark-lead-tool-a43-2026-08-17.md`。
 
+2026-08-17 第六切片回执：修复内容地图的证据洗标漏洞。内容理解来源
+只允许 `user_material | topic_evidence`；抖音研究回执必须显式为
+`topic_evidence`，任何搜索源显式声明的对标回执都不再被重新包装。
+同时新增 MediaKit 的薄输入边界：
+平台页先经解析，只有确认为 `video/*` 的临时直链或现有本地文件才可进入
+动态 Schema Router；台账只留定位符哈希。本机 `mediakit-cli 0.2.0` Schema 预备调用
+已通过，实际解析、云端执行和恢复仍待接通。详见
+`audits/A44-evidence-isolation-and-mediakit-source-boundary.md` 与
+`evidence/evidence-isolation-mediakit-a44-2026-08-17.md`。
+
 ### W03 孵化与单条内容产物谱系
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
@@ -179,6 +189,10 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的
 `MediaArtifact`。
+
+前置合同已实现：`MediaKitCapabilityRouter` 动态读取版本和 Schema，
+`EphemeralMediaSource` 与 `MediaSourceReceipt` 分离执行定位符和持久回执。
+这不等于 W04 已开始制作执行；费用、提交、轮询、重启恢复和输出质检仍是后续验收。
 
 首批验收：
 

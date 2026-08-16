@@ -1246,3 +1246,29 @@ Client Key/Secret，且前端尚无项目选择器，因此状态为
 
 最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 复跑完整后端离线套件，结果为
 `11730 passed, 76 skipped, 17 warnings in 465.97s`。
+
+## A44 W02 证据隔离与 MediaKit 来源边界
+
+2026-08-17 在继续对标账号感知链之前，先复核内容地图查资料和对标采集是否会混料。
+失败测试证明两个合同漏洞：`SourceItem` 仍允许 `benchmark_account_candidate`；
+内容地图的抖音搜索适配会丢掉上游角色，并把错路由的对标回执重标成
+`topic_evidence`。追加失败测试又证明普通网页搜索的显式对标角色也可流入；
+现在领域类型与所有搜索适配均会按证据角色拒绝，不再按平台猜测。
+
+同一切片完成 MediaKit 输入基础。本机 `mediakit-cli 0.2.0` 实际 Schema 确认
+ASR、OCR、场景切分和元信息可直接接 `video_url`，但这必须是视频资源而不是
+抖音分享 HTML 页。新合同只让解析器确认为 `video/*` 的短命直链或已存在的本地文件
+进入预备调用；原始定位符不进 Lead 或台账，持久回执仅留哈希和权利谱系。
+
+内容、抖音、台账与 MediaKit 联合聚焦回归 `174 passed`；本机真实 CLI Schema
+预备调用返回版本 `0.2.0` 和稳定 Schema 哈希。本轮没有解析真实抖音媒体，
+没有发起付费云任务，也没有实现轮询恢复和感知证据的父角色继承，因此状态为
+`reviewed -> implemented; real resolver and execution pending`。详见
+`audits/A44-evidence-isolation-and-mediakit-source-boundary.md` 与
+`evidence/evidence-isolation-mediakit-a44-2026-08-17.md`。
+
+追加普通网页搜索角色边界后，聚焦回归为 `60 passed in 4.27s`。
+最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 执行完整后端离线套件，结果为
+`11742 passed, 76 skipped, 17 warnings in 463.85s`。
+首次全量运行的 13 个网页读取失败未能在失败四组或完整套件复现；
+详细回执保留了该非确定性现象，不把它冒充成稳定绿灯或本次功能回归。

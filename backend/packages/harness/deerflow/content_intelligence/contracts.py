@@ -22,7 +22,7 @@ BasisKind = Literal[
 ]
 InterpretationKind = Literal["derived", "hypothesis"]
 ClaimProvenance = Literal["observed", "derived", "hypothesis"]
-EvidenceRole = Literal["user_material", "topic_evidence", "benchmark_account_candidate"]
+EvidenceRole = Literal["user_material", "topic_evidence"]
 OfferingRole = Literal[
     "complete_object_or_service",
     "intermediate_enabler",

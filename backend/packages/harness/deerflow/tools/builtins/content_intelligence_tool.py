@@ -223,20 +223,27 @@ async def _search_content_world_evidence(
     from deerflow.reflection import resolve_variable
 
     app_config = get_app_config()
-    search_configs = tuple(config for name in ("web_search", "douyin_video_search") if (config := app_config.get_tool_config(name)) is not None)
+    search_configs = tuple((name, config) for name in ("web_search", "douyin_video_search") if (config := app_config.get_tool_config(name)) is not None)
     if not search_configs:
         return ()
 
-    async def invoke_provider(search_config: Any) -> tuple[ResearchSearchResult, ...]:
+    async def invoke_provider(
+        provider_name: str,
+        search_config: Any,
+    ) -> tuple[ResearchSearchResult, ...]:
         search_tool = resolve_variable(search_config.use, BaseTool)
         tool_input: dict[str, Any] = {"query": query}
         if "max_results" in search_tool.args:
             tool_input["max_results"] = max_results
         raw = await search_tool.ainvoke(tool_input)
-        return _normalize_search_results(raw, max_results=max_results)
+        return _normalize_search_results(
+            raw,
+            max_results=max_results,
+            required_evidence_role=("topic_evidence" if provider_name == "douyin_video_search" else None),
+        )
 
     provider_results = await asyncio.gather(
-        *(invoke_provider(search_config) for search_config in search_configs),
+        *(invoke_provider(provider_name, search_config) for provider_name, search_config in search_configs),
         return_exceptions=True,
     )
     successful_results: list[tuple[ResearchSearchResult, ...]] = []
@@ -248,13 +255,24 @@ async def _search_content_world_evidence(
     return _interleave_search_results(successful_results, max_results=max_results)
 
 
-def _normalize_search_results(raw: Any, *, max_results: int) -> tuple[ResearchSearchResult, ...]:
+def _normalize_search_results(
+    raw: Any,
+    *,
+    max_results: int,
+    required_evidence_role: str | None = None,
+) -> tuple[ResearchSearchResult, ...]:
     if not isinstance(raw, str):
         return ()
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
         return ()
+    declared_evidence_role = payload.get("evidence_role") if isinstance(payload, dict) else None
+    if declared_evidence_role is not None and declared_evidence_role != "topic_evidence":
+        return ()
+    if required_evidence_role is not None:
+        if declared_evidence_role != required_evidence_role:
+            return ()
     results = _search_result_items(payload)
 
     normalized: list[ResearchSearchResult] = []

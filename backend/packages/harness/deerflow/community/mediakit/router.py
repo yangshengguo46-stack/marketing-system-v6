@@ -1,0 +1,255 @@
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import re
+from collections.abc import Awaitable, Callable, Mapping
+from datetime import UTC, datetime
+from typing import Any
+
+from jsonschema import Draft202012Validator
+
+from deerflow.incubation.media import EphemeralMediaSource
+
+from .contracts import (
+    CommandResult,
+    ExecutionMode,
+    MediaKitCapability,
+    PreparedMediaKitCall,
+)
+
+CommandRunner = Callable[[tuple[str, ...], float], Awaitable[CommandResult]]
+
+_COMMAND_TOKEN = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
+_VERSION_LINE = re.compile(r"^mediakit-cli(?:\s+version)?\s+([^\s]+)$", re.MULTILINE)
+_MAX_PROCESS_OUTPUT_BYTES = 1024 * 1024
+
+
+class MediaKitCommandError(RuntimeError):
+    """A bounded error that never includes command arguments or provider payloads."""
+
+
+async def _default_runner(
+    command: tuple[str, ...],
+    timeout_seconds: float,
+) -> CommandResult:
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except OSError as exc:
+        raise MediaKitCommandError("MediaKit CLI could not be started") from exc
+    try:
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=timeout_seconds,
+        )
+    except TimeoutError as exc:
+        process.kill()
+        await process.communicate()
+        raise MediaKitCommandError("MediaKit CLI timed out") from exc
+    return CommandResult(
+        returncode=process.returncode or 0,
+        stdout=stdout[:_MAX_PROCESS_OUTPUT_BYTES].decode("utf-8", errors="replace"),
+        stderr=stderr[:_MAX_PROCESS_OUTPUT_BYTES].decode("utf-8", errors="replace"),
+    )
+
+
+def _canonical_sha256(value: Any) -> str:
+    canonical = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _require_command_token(value: str, *, name: str) -> str:
+    if not _COMMAND_TOKEN.fullmatch(value):
+        raise ValueError(f"MediaKit {name} contains unsupported characters")
+    return value
+
+
+def _json_payload(result: CommandResult, *, operation: str) -> dict[str, Any]:
+    if result.returncode != 0:
+        raise MediaKitCommandError(f"MediaKit {operation} failed")
+    if len(result.stdout.encode("utf-8")) > _MAX_PROCESS_OUTPUT_BYTES:
+        raise MediaKitCommandError(f"MediaKit {operation} exceeded its output budget")
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise MediaKitCommandError(f"MediaKit {operation} returned invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise MediaKitCommandError(f"MediaKit {operation} returned an invalid payload")
+    return payload
+
+
+def _notice_messages(value: Any) -> tuple[str, ...]:
+    messages: list[str] = []
+
+    def visit(node: Any) -> None:
+        if isinstance(node, dict):
+            message = node.get("message")
+            if isinstance(message, str) and message.strip():
+                messages.append(message.strip()[:500])
+            for child in node.values():
+                visit(child)
+        elif isinstance(node, list):
+            for child in node:
+                visit(child)
+
+    visit(value)
+    return tuple(dict.fromkeys(messages))
+
+
+def _validate_client_token(value: str) -> str:
+    if not 1 <= len(value) <= 64 or any(ord(character) < 33 or ord(character) > 126 for character in value):
+        raise ValueError("MediaKit client_token must contain 1-64 visible ASCII characters")
+    return value
+
+
+def _flag_arguments(name: str, value: Any) -> tuple[str, ...]:
+    flag = f"--{name.replace('_', '-')}"
+    if isinstance(value, bool):
+        return (f"{flag}={'true' if value else 'false'}",)
+    if isinstance(value, (dict, list)):
+        return (flag, json.dumps(value, ensure_ascii=False, separators=(",", ":")))
+    if isinstance(value, (str, int, float)) and not isinstance(value, bool):
+        return (flag, str(value))
+    raise ValueError(f"MediaKit argument {name!r} has an unsupported value type")
+
+
+class MediaKitCapabilityRouter:
+    def __init__(
+        self,
+        *,
+        cli_path: str = "mediakit-cli",
+        runner: CommandRunner = _default_runner,
+        discovery_timeout_seconds: float = 30,
+    ) -> None:
+        if not cli_path.strip():
+            raise ValueError("MediaKit CLI path cannot be empty")
+        if discovery_timeout_seconds <= 0:
+            raise ValueError("MediaKit discovery timeout must be positive")
+        self._cli_path = cli_path
+        self._runner = runner
+        self._discovery_timeout_seconds = discovery_timeout_seconds
+        self._cli_version: str | None = None
+        self._capabilities: dict[tuple[str, str], MediaKitCapability] = {}
+
+    async def discover_cli_version(self) -> str:
+        if self._cli_version is not None:
+            return self._cli_version
+        result = await self._runner(
+            (self._cli_path, "version"),
+            self._discovery_timeout_seconds,
+        )
+        if result.returncode != 0:
+            raise MediaKitCommandError("MediaKit version discovery failed")
+        match = _VERSION_LINE.search(result.stdout.strip())
+        if match is None:
+            raise MediaKitCommandError("MediaKit version discovery returned an invalid result")
+        self._cli_version = match.group(1)
+        return self._cli_version
+
+    async def discover_capability(self, domain: str, tool: str) -> MediaKitCapability:
+        domain = _require_command_token(domain, name="domain")
+        tool = _require_command_token(tool, name="tool")
+        cache_key = (domain, tool)
+        cached = self._capabilities.get(cache_key)
+        if cached is not None:
+            return cached
+
+        cli_version = await self.discover_cli_version()
+        result = await self._runner(
+            (self._cli_path, domain, tool, "--schema"),
+            self._discovery_timeout_seconds,
+        )
+        payload = _json_payload(result, operation="schema discovery")
+        notices = _notice_messages(payload.get("_notice"))
+        schema_payload = {key: value for key, value in payload.items() if key != "_notice"}
+        input_schema = schema_payload.get("input_schema")
+        output_schema = schema_payload.get("output_schema")
+        if not isinstance(input_schema, dict) or not isinstance(output_schema, dict):
+            raise MediaKitCommandError("MediaKit schema discovery returned an invalid contract")
+        try:
+            Draft202012Validator.check_schema(input_schema)
+            Draft202012Validator.check_schema(output_schema)
+        except Exception as exc:
+            raise MediaKitCommandError("MediaKit schema discovery returned an invalid JSON Schema") from exc
+
+        name = schema_payload.get("name")
+        description = schema_payload.get("description")
+        capability = MediaKitCapability(
+            domain=domain,
+            tool=tool,
+            name=name.strip() if isinstance(name, str) and name.strip() else tool,
+            description=(description.strip() if isinstance(description, str) and description.strip() else ""),
+            cli_version=cli_version,
+            schema_sha256=_canonical_sha256(schema_payload),
+            input_schema=input_schema,
+            output_schema=output_schema,
+            notices=notices,
+        )
+        self._capabilities[cache_key] = capability
+        return capability
+
+    async def prepare_video_call(
+        self,
+        *,
+        domain: str,
+        tool: str,
+        source: EphemeralMediaSource,
+        mode: ExecutionMode = "auto",
+        arguments: Mapping[str, Any] | None = None,
+        client_token: str | None = None,
+    ) -> PreparedMediaKitCall:
+        if mode not in {"auto", "local", "cloud"}:
+            raise ValueError("unsupported MediaKit execution mode")
+        if source.expires_at is not None and source.expires_at <= datetime.now(UTC):
+            raise ValueError("resolved media source has expired")
+        capability = await self.discover_capability(domain, tool)
+        properties = capability.input_schema.get("properties")
+        if not isinstance(properties, dict) or "video_url" not in properties:
+            raise MediaKitCommandError("MediaKit capability does not accept video_url")
+
+        supplied = dict(arguments or {})
+        reserved = {"video_url", "audio_url", "client_token"} & supplied.keys()
+        if reserved:
+            raise ValueError("MediaKit source and client_token must use their dedicated arguments")
+        input_payload: dict[str, Any] = {"video_url": source.locator, **supplied}
+        if client_token is not None:
+            input_payload["client_token"] = _validate_client_token(client_token)
+        errors = sorted(
+            Draft202012Validator(capability.input_schema).iter_errors(input_payload),
+            key=lambda error: list(error.absolute_path),
+        )
+        if errors:
+            raise ValueError("MediaKit arguments do not match the discovered capability schema")
+
+        command: list[str] = [self._cli_path]
+        if mode != "auto":
+            command.append(f"--{mode}")
+        command.extend((capability.domain, capability.tool))
+        command.extend(_flag_arguments("video_url", source.locator))
+        for name, value in supplied.items():
+            command.extend(_flag_arguments(name, value))
+        if client_token is not None:
+            command.extend(_flag_arguments("client_token", client_token))
+
+        return PreparedMediaKitCall(
+            capability=capability,
+            source=source,
+            mode=mode,
+            command=tuple(command),
+            input_sha256=_canonical_sha256(input_payload),
+            client_token_sha256=(hashlib.sha256(client_token.encode("utf-8")).hexdigest() if client_token is not None else None),
+        )
+
+
+__all__ = ["MediaKitCapabilityRouter", "MediaKitCommandError"]
