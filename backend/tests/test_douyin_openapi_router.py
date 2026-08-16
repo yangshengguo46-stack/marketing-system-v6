@@ -35,7 +35,7 @@ async def _valid_video_handler(arguments: dict[str, Any], context: CapabilityCon
     return {
         "query": arguments["query"],
         "provider": "douyin_open_platform",
-        "evidence_role": "topic_evidence",
+        "evidence_role": ("benchmark_account_candidate" if arguments.get("purpose") == "benchmark_discovery" else "topic_evidence"),
         "total_results": 0,
         "cursor": 0,
         "has_more": False,
@@ -72,6 +72,10 @@ def test_official_catalog_snapshot_covers_every_directory_row_once() -> None:
         "分身技能数据": 1,
         "汽水音乐": 2,
     }
+    video_search = next(entry for entry in catalog.entries if entry.name_zh == "抖音视频搜索")
+    assert video_search.http_url == "https://open.douyin.com/dy_open_api/v2/search/video/"
+    assert video_search.scope == "aweme.dy.video_search_v2"
+    assert video_search.required_scopes == ("aweme.dy.video_search_v2",)
 
 
 def test_catalog_loader_rejects_snapshot_content_hash_drift(
@@ -116,7 +120,7 @@ def test_discovery_hides_ungranted_children() -> None:
 def test_discovery_keeps_authorized_but_unavailable_child_with_reason() -> None:
     manifest = _router(handler=None).discover(
         "search",
-        _context(scopes={"aweme.dy.video_search"}, auth_modes={"client_token"}),
+        _context(scopes={"aweme.dy.video_search_v2"}, auth_modes={"client_token"}),
     )
 
     assert [child["name"] for child in manifest["children"]] == ["video_search"]
@@ -147,7 +151,7 @@ def test_search_domain_can_disclose_both_reviewed_search_children() -> None:
     manifest = router.discover(
         "search",
         _context(
-            scopes={"aweme.dy.video_search", "aweme.experience.search"},
+            scopes={"aweme.dy.video_search_v2", "aweme.experience.search"},
             auth_modes={"client_token"},
         ),
     )
@@ -163,7 +167,7 @@ def test_discovery_marks_missing_auth_without_exposing_credentials() -> None:
     raw = json.dumps(
         _router().discover(
             "search",
-            _context(scopes={"aweme.dy.video_search"}),
+            _context(scopes={"aweme.dy.video_search_v2"}),
         ),
         ensure_ascii=False,
     )
@@ -179,7 +183,7 @@ def test_discovery_marks_missing_auth_without_exposing_credentials() -> None:
 async def test_exact_child_dispatch_revalidates_manifest_and_schemas() -> None:
     router = _router()
     context = _context(
-        scopes={"aweme.dy.video_search"},
+        scopes={"aweme.dy.video_search_v2"},
         auth_modes={"client_token"},
     )
     manifest = router.discover("search", context)
@@ -202,6 +206,30 @@ async def test_exact_child_dispatch_revalidates_manifest_and_schemas() -> None:
 
 
 @pytest.mark.asyncio
+async def test_video_search_dispatch_accepts_benchmark_discovery_as_candidate_evidence() -> None:
+    router = _router()
+    context = _context(
+        scopes={"aweme.dy.video_search_v2"},
+        auth_modes={"client_token"},
+    )
+    manifest = router.discover("search", context)
+
+    result = await router.dispatch(
+        domain_id="search",
+        child_tool="video_search",
+        arguments={
+            "query": "大能 腕表",
+            "purpose": "benchmark_discovery",
+            "max_results": 10,
+        },
+        manifest_version=manifest["manifest_version"],
+        context=context,
+    )
+
+    assert result["data"]["evidence_role"] == "benchmark_account_candidate"
+
+
+@pytest.mark.asyncio
 async def test_stale_manifest_is_rejected_before_handler_runs() -> None:
     calls = 0
 
@@ -212,7 +240,7 @@ async def test_stale_manifest_is_rejected_before_handler_runs() -> None:
 
     router = _router(handler)
     old_context = _context(
-        scopes={"aweme.dy.video_search"},
+        scopes={"aweme.dy.video_search_v2"},
         auth_modes={"client_token"},
         generation="generation-one",
     )
@@ -224,7 +252,7 @@ async def test_stale_manifest_is_rejected_before_handler_runs() -> None:
         arguments={"query": "腕表 历史"},
         manifest_version=old_manifest["manifest_version"],
         context=_context(
-            scopes={"aweme.dy.video_search"},
+            scopes={"aweme.dy.video_search_v2"},
             auth_modes={"client_token"},
             generation="generation-two",
         ),
@@ -245,7 +273,7 @@ async def test_invalid_child_input_is_rejected_before_handler_runs() -> None:
 
     router = _router(handler)
     context = _context(
-        scopes={"aweme.dy.video_search"},
+        scopes={"aweme.dy.video_search_v2"},
         auth_modes={"client_token"},
     )
     manifest = router.discover("search", context)
@@ -270,7 +298,7 @@ async def test_invalid_child_output_is_rejected_without_leaking_payload() -> Non
 
     router = _router(invalid_handler)
     context = _context(
-        scopes={"aweme.dy.video_search"},
+        scopes={"aweme.dy.video_search_v2"},
         auth_modes={"client_token"},
     )
     manifest = router.discover("search", context)
@@ -293,7 +321,7 @@ async def test_invalid_child_output_is_rejected_without_leaking_payload() -> Non
 @pytest.mark.asyncio
 async def test_mcp_server_exposes_only_domain_tools() -> None:
     context = _context(
-        scopes={"aweme.dy.video_search"},
+        scopes={"aweme.dy.video_search_v2"},
         auth_modes={"client_token"},
     )
     server = build_server(router=_router(), context_provider=lambda: context)

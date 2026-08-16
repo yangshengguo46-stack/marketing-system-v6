@@ -17,6 +17,8 @@ _MAX_DOMAIN_CHILDREN = 32
 _MAX_TOOL_LIST_BYTES = 24 * 1024
 _MAX_CHILD_DESCRIPTION_BYTES = 800
 _MAX_SCHEMA_BYTES = 4 * 1024
+_VIDEO_SEARCH_V2_URL = "https://open.douyin.com/dy_open_api/v2/search/video/"
+_VIDEO_SEARCH_V2_SCOPE = "aweme.dy.video_search_v2"
 
 _VIDEO_SEARCH_INPUT_SCHEMA: dict[str, Any] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -25,6 +27,11 @@ _VIDEO_SEARCH_INPUT_SCHEMA: dict[str, Any] = {
     "required": ["query"],
     "properties": {
         "query": {"type": "string", "minLength": 1, "maxLength": 200},
+        "purpose": {
+            "type": "string",
+            "enum": ["topic_research", "benchmark_discovery"],
+            "default": "topic_research",
+        },
         "max_results": {"type": "integer", "minimum": 1, "maximum": 20, "default": 5},
         "cursor": {"type": "integer", "minimum": 0, "default": 0},
         "publish_time": {"type": "integer", "enum": [0, 1, 7, 180], "default": 0},
@@ -67,7 +74,7 @@ _VIDEO_SEARCH_OUTPUT_SCHEMA: dict[str, Any] = {
             "properties": {
                 "query": {"type": "string", "maxLength": 200},
                 "provider": {"const": "douyin_open_platform"},
-                "evidence_role": {"const": "topic_evidence"},
+                "evidence_role": {"enum": ["topic_evidence", "benchmark_account_candidate"]},
                 "total_results": {"type": "integer", "minimum": 0, "maximum": 20},
                 "cursor": {"type": "integer", "minimum": 0},
                 "has_more": {"type": "boolean"},
@@ -169,7 +176,9 @@ def _contract_overrides(entry: CapabilityEntry) -> CapabilityEntry:
             entry,
             child_name="video_search",
             handler_key="search.video_search",
-            required_scopes=("aweme.dy.video_search",),
+            http_url=_VIDEO_SEARCH_V2_URL,
+            scope=_VIDEO_SEARCH_V2_SCOPE,
+            required_scopes=(_VIDEO_SEARCH_V2_SCOPE,),
             auth_mode="client_token",
             risk_level="read",
             input_schema=_VIDEO_SEARCH_INPUT_SCHEMA,

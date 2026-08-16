@@ -815,6 +815,12 @@ is not reused. Generic search receipts are topic evidence only. A video or accou
 returned by search is never treated as competitor-account analysis without a separate
 identity-bound, multi-post collection receipt.
 
+Official Douyin video search uses the current v2 contract. The same bounded adapter can
+return `topic_evidence` for subject research or `benchmark_account_candidate` for account
+discovery. The purpose flag is local and is never forwarded to Douyin. A candidate author
+label is not a stable account identity and cannot become a `BenchmarkSnapshot` until an
+official account route supplies author-consistent posts and a coverage receipt.
+
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps
 actual coverage and exclusions explicit, seals the result as project-scoped

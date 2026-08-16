@@ -17,6 +17,10 @@ def _clear_token_cache() -> None:
     tools._reset_token_cache_for_tests()
 
 
+def test_douyin_video_search_uses_the_current_official_v2_endpoint() -> None:
+    assert tools._VIDEO_SEARCH_URL == "https://open.douyin.com/dy_open_api/v2/search/video/"
+
+
 @pytest.mark.asyncio
 async def test_douyin_video_search_uses_stable_token_cache_and_normalizes_public_receipt(
     monkeypatch: pytest.MonkeyPatch,
@@ -175,6 +179,50 @@ async def test_douyin_video_search_refreshes_once_after_expired_token(
     assert token_calls == 2
     assert search_tokens == ["clt.expired", "clt.fresh"]
     assert json.loads(raw)["total_results"] == 0
+
+
+@pytest.mark.asyncio
+async def test_douyin_video_search_marks_benchmark_discovery_without_sending_purpose_to_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        tools,
+        "get_app_config",
+        lambda: SimpleNamespace(
+            get_tool_config=lambda name: _config(
+                client_key="douyin-client-key",
+                client_secret="douyin-client-secret",
+                device_id=123456789,
+            )
+        ),
+    )
+    search_params: list[dict[str, object]] = []
+
+    async def request_token(client_key: str, client_secret: str) -> tuple[str, int]:
+        return "clt.private-token", 7200
+
+    async def request_search(access_token: str, params: dict[str, object]) -> dict[str, object]:
+        search_params.append(params)
+        return {
+            "err_no": 0,
+            "err_msg": "success",
+            "data": {"data": {"cursor": 0, "has_more": False, "video_list": []}},
+        }
+
+    monkeypatch.setattr(tools, "_request_stable_client_token", request_token)
+    monkeypatch.setattr(tools, "_request_video_search", request_search)
+
+    raw = await tools.douyin_video_search_tool.ainvoke(
+        {
+            "query": "大能 腕表",
+            "purpose": "benchmark_discovery",
+            "max_results": 10,
+        }
+    )
+
+    assert json.loads(raw)["evidence_role"] == "benchmark_account_candidate"
+    assert search_params
+    assert "purpose" not in search_params[0]
 
 
 @pytest.mark.asyncio

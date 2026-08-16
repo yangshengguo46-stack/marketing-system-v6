@@ -92,7 +92,7 @@ current app's declared Scope become callable Children.
 1. Set `DOUYIN_CLIENT_KEY` and `DOUYIN_CLIENT_SECRET` in local environment
    configuration. Never put literal values in the checked-in JSON or YAML.
 2. Set `DOUYIN_APPROVED_SCOPES` to the exact comma-separated Scopes approved for
-   this app. The initial adapters use `aweme.dy.video_search` and
+   this app. The initial adapters use `aweme.dy.video_search_v2` and
    `aweme.experience.search`.
 3. Add `douyin-openapi-mcp` to
    `DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST`; it is a first-party installed console

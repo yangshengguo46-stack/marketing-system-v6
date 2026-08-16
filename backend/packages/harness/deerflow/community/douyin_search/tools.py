@@ -8,7 +8,7 @@ import os
 import secrets
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 from langchain.tools import tool
@@ -18,7 +18,7 @@ from deerflow.config import get_app_config
 logger = logging.getLogger(__name__)
 
 _STABLE_TOKEN_URL = "https://open.douyin.com/oauth/stable_client_token/"
-_VIDEO_SEARCH_URL = "https://open.douyin.com/dy_open_api/v1/search/video/"
+_VIDEO_SEARCH_URL = "https://open.douyin.com/dy_open_api/v2/search/video/"
 _MAX_RESULTS = 20
 _TOKEN_REFRESH_SKEW_SECONDS = 60
 _TOKEN_RETRY_ERROR_CODES = {28001003, 28001008}
@@ -181,7 +181,12 @@ def _optional_int(value: Any) -> int | None:
     return number if number >= 0 else None
 
 
-def _normalize_video_results(payload: dict[str, object], *, query: str) -> dict[str, object]:
+def _normalize_video_results(
+    payload: dict[str, object],
+    *,
+    query: str,
+    purpose: Literal["topic_research", "benchmark_discovery"],
+) -> dict[str, object]:
     error_code = _provider_error_code(payload)
     if error_code != 0:
         receipt: dict[str, object] = {
@@ -228,7 +233,7 @@ def _normalize_video_results(payload: dict[str, object], *, query: str) -> dict[
     receipt = {
         "query": query,
         "provider": "douyin_open_platform",
-        "evidence_role": "topic_evidence",
+        "evidence_role": ("benchmark_account_candidate" if purpose == "benchmark_discovery" else "topic_evidence"),
         "total_results": len(normalized),
         "cursor": _coerce_non_negative_int(data.get("cursor"), default=0),
         "has_more": bool(data.get("has_more")),
@@ -241,6 +246,7 @@ def _normalize_video_results(payload: dict[str, object], *, query: str) -> dict[
 @tool("douyin_video_search", parse_docstring=True)
 async def douyin_video_search_tool(
     query: str,
+    purpose: Literal["topic_research", "benchmark_discovery"] = "topic_research",
     max_results: int = 5,
     cursor: int = 0,
     publish_time: int = 0,
@@ -249,11 +255,13 @@ async def douyin_video_search_tool(
 ) -> str:
     """Search public Douyin videos through the official Douyin Open Platform.
 
-    Results are bounded topic evidence. A single video result is not a competitor-account
-    analysis and does not establish an account's audience, positioning, or performance.
+    Results are bounded topic evidence or benchmark-account candidate evidence. A search
+    result is never a complete competitor-account analysis and does not establish an
+    account's identity, audience, positioning, or performance.
 
     Args:
         query: Search keywords describing the public Douyin videos to find.
+        purpose: Use topic_research for subjects or benchmark_discovery to find candidate accounts.
         max_results: Maximum normalized results to return, capped at 20.
         cursor: Pagination cursor. Use 0 for the first page.
         publish_time: Publish window: 0 any time, 1 one day, 7 seven days, 180 half-year.
@@ -305,4 +313,7 @@ async def douyin_video_search_tool(
             ensure_ascii=False,
         )
 
-    return json.dumps(_normalize_video_results(payload, query=query), ensure_ascii=False)
+    return json.dumps(
+        _normalize_video_results(payload, query=query, purpose=purpose),
+        ensure_ascii=False,
+    )

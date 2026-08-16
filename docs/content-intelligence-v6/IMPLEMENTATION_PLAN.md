@@ -48,8 +48,8 @@
 | 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented` | 保留现有运行时，接入项目版本 | 地图持久化、用户确认与版本切换 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
-| 抖音公开视频/体验搜索 | 第六版 | `search verified; video evidence adapter implemented` | 作为 `topic_evidence` | 生产 Tool 写入项目台账并做真实回执复核 |
-| 对标账号采集 | 第五版 E15 + 第六版 `BenchmarkSnapshot` | `contract implemented; Douyin connector pending` | 已重写账号身份、作者一致多作品、覆盖回执与有界投影 | 抖音链接连接器与真实账号入库验收 |
+| 抖音公开视频/体验搜索 | 第六版 | `v2 contract implemented; live credentials pending` | 选题为 `topic_evidence`，对标发现为候选证据 | 配置本地凭据后做 v2 真实回执与项目入库复核 |
+| 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `candidate discovery implemented; stable identity connector pending` | 官方搜索先发现候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 官方账号/星图路径逐项验收；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
 | MediaKit 感知 | 第五版 E15 | `reviewed; isolated live receipts` | 迁移动态 Schema、回执、哈希和恢复边界 | 一个授权账号的单视频与跨视频人工核对 |
@@ -112,15 +112,15 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; official video-search and benchmark snapshot contract slices implemented`
+状态：`in progress; official v2 search routing and benchmark snapshot contract slices implemented`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
 
 实施顺序：
 
-1. 抖音公开视频搜索回执进入 `topic_evidence`。
-2. 迁移 E15 的账号身份、作者一致多作品清单和覆盖回执。
+1. 抖音 v2 公共视频搜索按目的进入 `topic_evidence` 或 `benchmark_account_candidate`。
+2. 用官方账号能力或审阅后的官方页面连接器补齐稳定账号身份、作者一致多作品清单和覆盖回执。
 3. 迁移 MediaKit 感知回执，再接窄语义提取与确定性跨视频聚合。
 4. 最后接自有账号授权数据和受众快照。
 
@@ -138,6 +138,14 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 主页/作品观察和哈希，不输出账号定位、受众、成功原因或可复制公式。抖音账号链接连接器
 尚未注册或真实入库验收。审计见 `audits/A40-fifth-version-e15-benchmark-snapshot.md`，回执见
 `evidence/benchmark-snapshot-a40-2026-08-16.md`。
+
+2026-08-16 第三切片回执：官方文档复核发现视频搜索已从旧 `v1`/`aweme.dy.video_search`
+迁移到 `v2`/`aweme.dy.video_search_v2`。运行时合同、权限清单和薄适配器已经同步；调用参数新增
+本地 `purpose`，但不会发送给平台。`topic_research` 保持选题证据，`benchmark_discovery` 只生成
+对标账号候选证据。当前第六版本地尚未配置 Client Key/Secret，真实探测在发出网络请求前以
+`auth_not_configured` 失败，因此代码状态为 `implemented`，不冒充 `verified`。详见
+`audits/A41-douyin-official-first-evidence-routing.md` 与
+`evidence/douyin-video-search-v2-a41-2026-08-16.md`。
 
 ### W03 孵化与单条内容产物谱系
 

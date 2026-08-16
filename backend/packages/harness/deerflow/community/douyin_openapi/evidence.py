@@ -35,7 +35,7 @@ class _VideoSearchItem(IncubationContract):
 class _VideoSearchData(IncubationContract):
     query: NonEmptyStr = Field(max_length=500)
     provider: Literal["douyin_open_platform"]
-    evidence_role: Literal["topic_evidence"]
+    evidence_role: Literal["topic_evidence", "benchmark_account_candidate"]
     total_results: int = Field(ge=0)
     cursor: int = Field(ge=0)
     has_more: bool
@@ -102,6 +102,22 @@ def build_video_search_evidence_snapshot(
     if receipt.data.search_id is not None:
         route_receipt["search_id"] = receipt.data.search_id
 
+    if receipt.data.evidence_role == "benchmark_account_candidate":
+        population_scope = "public_video_search_account_candidates"
+        limitations = (
+            "Actor labels returned by public search are candidate labels, not stable account identities.",
+            "This is benchmark-account discovery evidence, not a BenchmarkSnapshot.",
+            "Search results cannot establish an account's positioning, audience, performance, or reproducible pattern.",
+            "Observed counts are point-in-time platform values, not causal explanations.",
+        )
+    else:
+        population_scope = "public_video_search_results"
+        limitations = (
+            "This snapshot is topic evidence, not a benchmark-account analysis.",
+            "A single result cannot establish an account's positioning, audience, performance, or reproducible pattern.",
+            "Observed counts are point-in-time platform values, not causal explanations.",
+        )
+
     return EvidenceSnapshot(
         provider=receipt.data.provider,
         collection_method="official_openapi",
@@ -111,7 +127,7 @@ def build_video_search_evidence_snapshot(
         query=receipt.data.query,
         items=items,
         coverage=EvidenceCoverageReceipt(
-            population_scope="public_video_search_results",
+            population_scope=population_scope,
             requested_count=requested_count,
             returned_count=len(items),
             has_more=receipt.data.has_more,
@@ -120,11 +136,7 @@ def build_video_search_evidence_snapshot(
         ),
         route_receipt=route_receipt,
         warnings=receipt.warnings,
-        limitations=(
-            "This snapshot is topic evidence, not a benchmark-account analysis.",
-            "A single result cannot establish an account's positioning, audience, performance, or reproducible pattern.",
-            "Observed counts are point-in-time platform values, not causal explanations.",
-        ),
+        limitations=limitations,
     )
 
 

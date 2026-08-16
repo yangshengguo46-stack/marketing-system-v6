@@ -1172,3 +1172,27 @@ Playwright 选择器、本地 JSON 缓存或“大能”案例结论。详细来
 三个 `set this to true or false` 占位值。失败测试固定后，共享运行器强制
 `PNPM_CONFIG_PM_ON_FAIL=download`，真实调用恢复为 `10.26.2`；三项构建权限迁移为明确布尔 `false`。
 `backend/tests/test_pnpm_script.py` 为 `9 passed`，不再允许占位字符串进入工作区。
+
+## A41 W02 抖音官方优先证据路由
+
+2026-08-16 复核当前抖音开放平台文档时发现，第六版仍在调用旧
+`/dy_open_api/v1/search/video/` 和旧 Scope `aweme.dy.video_search`。先写失败测试后，运行时
+合同、Domain Manifest 和薄适配器统一迁移至官方 v2 endpoint 与
+`aweme.dy.video_search_v2`。
+
+同一搜索能力新增两个本地目的：`topic_research` 保持 `topic_evidence`；
+`benchmark_discovery` 生成 `benchmark_account_candidate`。该目的不会发送给抖音。候选快照明确
+声明搜索作者名不是稳定账号身份，也不能证明定位、受众、成绩或可复制模式；只有后续官方账号路径
+取得稳定账号 ID、作者一致多作品和覆盖回执，才可封存 A40 的 `BenchmarkSnapshot`。
+
+本轮也正式冻结官方优先原则：第五版 E15 的身份一致和覆盖合同保留，Playwright 采集器不作为默认
+路径迁移；自有/已授权账号走官方 API，第三方对标优先走官方搜索及星图/精选联盟等官方页面连接器。
+聚焦测试从 `11 failed, 15 passed` 修复至 `26 passed`。真实查询在网络请求前返回
+`DOUYIN_CLIENT_KEY and DOUYIN_CLIENT_SECRET are not configured`，说明第六版本地配置尚未迁入；
+没有输出密钥，也不把本轮标记为 live verified。完整审计与回执见
+`audits/A41-douyin-official-first-evidence-routing.md` 和
+`evidence/douyin-video-search-v2-a41-2026-08-16.md`。
+
+最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 运行完整后端离线套件，结果为
+`11713 passed, 76 skipped, 17 warnings in 466.09s`；Ruff、格式检查、AGENTS 文档约束和
+`git diff --check` 均通过。

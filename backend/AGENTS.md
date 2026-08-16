@@ -191,13 +191,14 @@ lazy and import lightweight concrete modules to avoid ORM/graph import cycles.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed
-Douyin video-search adapter produces only `topic_evidence`. Third-party account reads use
-`BenchmarkSnapshot`: one stable external account ID, author-consistent unique posts,
-at most 24 requested posts, explicit exclusions, and role `benchmark_evidence` without a
-customer `PlatformAccountRef`. Its bounded projection is observation only; positioning,
-audience, causality, and transferability require later child artifacts. Connector-local
-credentials and raw pages never enter either snapshot. The contract is implemented;
-Douyin live connector acceptance remains pending.
+Douyin v2 video-search adapter produces `topic_evidence` for research or
+`benchmark_account_candidate` for discovery; a candidate is not a stable account read.
+Third-party account reads use `BenchmarkSnapshot`: one stable external account ID,
+author-consistent unique posts, at most 24 requested posts, explicit exclusions, and role
+`benchmark_evidence` without a customer `PlatformAccountRef`. Its bounded projection is
+observation only; positioning, audience, causality, and transferability require later child
+artifacts. Connector-local credentials and raw pages never enter either snapshot. The
+contract is implemented; Douyin live connector acceptance remains pending.
 
 ## Development Workflow
 

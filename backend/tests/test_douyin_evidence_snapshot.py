@@ -71,6 +71,20 @@ def test_official_video_search_becomes_bounded_topic_evidence() -> None:
     assert any("not a benchmark-account analysis" in item for item in snapshot.limitations)
 
 
+def test_official_video_search_can_become_bounded_benchmark_candidate_evidence() -> None:
+    snapshot = build_video_search_evidence_snapshot(
+        _domain_result(evidence_role="benchmark_account_candidate"),
+        requested_count=10,
+        captured_at=NOW,
+    )
+
+    assert snapshot.evidence_role == "benchmark_account_candidate"
+    assert snapshot.coverage.population_scope == "public_video_search_account_candidates"
+    assert snapshot.items[0].actor_label == "礼物研究所"
+    assert any("candidate label" in item for item in snapshot.limitations)
+    assert any("not a BenchmarkSnapshot" in item for item in snapshot.limitations)
+
+
 def test_topic_evidence_artifact_keeps_route_receipt_without_raw_credentials() -> None:
     artifact = seal_video_search_evidence(
         project=ProjectRef(owner_user_id="user-1", project_id="project-1"),
