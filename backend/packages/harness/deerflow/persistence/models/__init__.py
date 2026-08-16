@@ -22,6 +22,11 @@ from deerflow.persistence.channel_connections.model import (
     ChannelOAuthStateRow,
 )
 from deerflow.persistence.feedback.model import FeedbackRow
+from deerflow.persistence.incubation_ledger.model import (
+    IncubationArtifactRow,
+    IncubationPlatformAccountRow,
+    IncubationProjectRow,
+)
 from deerflow.persistence.mcp_tasks.model import McpTaskRow
 from deerflow.persistence.models.run_event import RunEventRow
 from deerflow.persistence.run.model import RunRow
@@ -38,6 +43,9 @@ __all__ = [
     "ChannelCredentialRow",
     "ChannelOAuthStateRow",
     "FeedbackRow",
+    "IncubationArtifactRow",
+    "IncubationPlatformAccountRow",
+    "IncubationProjectRow",
     "McpTaskRow",
     "RunEventRow",
     "RunRow",

@@ -29,6 +29,34 @@
       },
       "description": "Official OpenViking tools for explicit memory and resource operations"
     },
+    "douyin_openapi": {
+      "enabled": false,
+      "type": "stdio",
+      "command": "douyin-openapi-mcp",
+      "args": [],
+      "env": {
+        "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
+        "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
+        "DOUYIN_DEVICE_ID": "$DOUYIN_DEVICE_ID",
+        "DOUYIN_APPROVED_SCOPES": "$DOUYIN_APPROVED_SCOPES"
+      },
+      "tool_name_prefix": false,
+      "session_init_timeout": 30,
+      "tool_call_timeout": 60,
+      "description": "Manifest-driven official Douyin OpenAPI domains; enable only after adding douyin-openapi-mcp to DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST",
+      "routing": {
+        "mode": "prefer",
+        "priority": 80,
+        "keywords": [
+          "抖音",
+          "Douyin",
+          "粉丝画像",
+          "素材库",
+          "搜索视频",
+          "生活服务"
+        ]
+      }
+    },
     "postgres": {
       "enabled": false,
       "type": "stdio",

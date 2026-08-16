@@ -1,0 +1,245 @@
+# 第六版孵化运营系统实施计划
+
+## 文档状态
+
+- 日期：2026-08-16
+- 状态：`active implementation plan`
+- 第六版开发分支：`codex/v6-comprehension-core`
+- 第六版当前提交：`018ca4308c74800b613f97c43f018bd2aa8f9ad6`
+- 第五版只读来源：`/Users/yangyucheng/Documents/ChatGPT/第五版营销系统@3ee135f7`
+- 第四版只读来源：`/Users/yangyucheng/Documents/第四版营销系统@58f4e0c9`
+- 架构决策：`decisions/ADR-018-artifact-graph-orchestration.md`
+
+这份文档是实施顺序和验收基线；`LEDGER.md` 只记录已经发生的事实。计划变更时必须记录原因，
+不得倒改旧验收结论。
+
+## 目标与非目标
+
+目标是把已有的孵化判断、账号证据、内容创作、MediaKit 制作、抖音观察与发布、预演、
+回执、指标与复盘能力组装成一个可追溯的运营闭环。
+
+首轮非目标：
+
+- 不同时开发六个平台的发布写路径；先用抖音真实测试账号打通一条。
+- 不将抖音 119 个目录项一次性全部启用；按领域和风险逐项验收。
+- 不迁移第四版的固定流程、SOUL、语义硬门、Writer Brain 单体和旧中间件。
+- 不开发电影化 IP 或导演工作台。
+- TikTok 达人签约只保留为延期业务模块，不进入当前主线。
+
+## 状态语义
+
+| 状态 | 含义 |
+| --- | --- |
+| `discovered` | 发现代码、文档或能力线索 |
+| `traced` | 已追到来源仓库、分支、提交和未提交快照 |
+| `reviewed` | 已理解输入、输出、失败史和权限边界 |
+| `adopted` | 已决定在第六版以新合同实现 |
+| `rejected` | 已明确不迁移，只保留证据 |
+| `implemented` | 第六版已有代码与自动测试 |
+| `verified` | 已在真实模型、真实素材或真实平台回执上通过指定验收 |
+| `production` | 所有权、密钥、恢复、可观测性和真实账号验收全部通过 |
+
+## 模块迁移矩阵
+
+| 模块 | 当前来源 | 真实状态 | 第六版决定 | 下一验收 |
+| --- | --- | --- | --- | --- |
+| DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
+| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; runtime integration pending` | 保留最小产物图合同与 SQL 持久化 | Lead/API 项目选择、重水化与真实多账号验收 |
+| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented` | 保留现有运行时，接入项目版本 | 地图持久化、用户确认与版本切换 |
+| 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
+| 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
+| 抖音公开视频/体验搜索 | 第六版 | `search verified; video evidence adapter implemented` | 作为 `topic_evidence` | 生产 Tool 写入项目台账并做真实回执复核 |
+| 对标账号采集 | 第五版 E15 | `reviewed; Douyin sample verified` | 薄迁移账号身份、多作品与覆盖回执 | 链接到有界 `BenchmarkSnapshot` |
+| 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
+| 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
+| MediaKit 感知 | 第五版 E15 | `reviewed; isolated live receipts` | 迁移动态 Schema、回执、哈希和恢复边界 | 一个授权账号的单视频与跨视频人工核对 |
+| `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
+| 表现形式选择 | 第四版方法审计 | `adopted; unimplemented` | 新增薄 `FormatDecision`，不改写选题 | 口播、图文、纯素材、访谈与短剧的资源匹配 |
+| 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
+| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `discovered/reviewed by capability` | 经统一路由执行已批准制作任务 | 本地/云端、费用、恢复、输入输出质检 |
+| 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
+| 审批与发布状态机 | 第四版发布可靠性代码 | `reviewed` | 薄迁移幂等、恢复和未知对账 | 错账号、审批过期、内容变更、崩溃与重放 |
+| 发布回执 | 第四版 repository/API | `reviewed; old implementation exists` | 重写最小不可变回执，不迁旧领域包 | 第一方作品 ID、公开链接和未知结果 |
+| 指标快照 | 第四版 `platform_metrics` | `reviewed` | 确定性采集和聚合 | 时间窗口、来源、覆盖和缺失值 |
+| 复盘与学习 | 第四版旧表、Skill 与全局方法 | `reviewed; old schema retired` | 重写为 `LearningClaim` 候选，禁止自动改 Skill | 预演对实绩、反例与修改原因 |
+| 商业路径与变现 | 第四版方法审计 | `reviewed; deferred` | 项目级独立判断，不进语义或内容地图 | 内容信任、行动触发、承接与实际业务结果 |
+| 调度与恢复 | DeerFlow 宿主运行时 | `implemented by host` | 复用正常 run lifecycle 与 scheduler | 非交互任务、重启与租约冲突 |
+
+## DeerFlow 原生能力利用矩阵
+
+| DeerFlow 能力 | 在孵化系统中的职责 | 接入时点 | 不应承担 |
+| --- | --- | --- | --- |
+| Lead Agent | 理解用户当前目标、选择高层能力、最终收敛并对用户负责 | 已使用 | 自己记住全部业务事实或绕过审批 |
+| LangGraph/checkpoint | 交互运行、中断恢复、状态转移与重放 | W01 起 | 代替项目、回执和指标数据库 |
+| 受控内部工作者 | 语义、证据阅读、候选与收敛等紧耹合结构化分工 | 已使用 | 变成可修改状态的自由 Agent |
+| `task` 子 Agent | 可并行的大样本对标研究、独立反证和长报告 | W02/W06 | 固定每次启动的子 Agent 阵容 |
+| MCP 持久会话 | 抖音、浏览器和后续平台连接器 | W02/W05 | 将低层 API 平铺给 Lead |
+| `tool_search` | 延迟装载 MCP Schema，只提升当前需要的领域能力 | W02 启用验收 | 概率猜测权限或未审阅 Child |
+| Skills 延迟发现 | 按需加载对标、表现形式、成稿和复盘方法 | W02/W03/W06 | 孵化总脑、固定流程或自动改写自身 |
+| Memory | 用户偏好、显式纠错与长期交互习惯 | W01 分类策略 | 项目事实、账号令牌、审批、回执、指标或跨用户案例库 |
+| Summarization | 长对话压缩和 Skill 引用持久提醒 | 已使用，W01 加项目重水化测试 | 在压缩摘要中维护唯一业务真相 |
+| Sandbox/uploads | 用户素材隔离、广义文档读取、MediaKit 输入输出和中间工件 | W02/W04 | 无所有权的跨用户文件路径 |
+| Vision | 关键帧、素材和成片人机质检 | W02/W04 | 将整账号视频原文全部塞入 Lead 上下文 |
+| Tool output budget | 大账号包、MediaKit 回执和平台原始结果外部化，只投影摘要 | W02 扩展 | 无限截断导致来源、哈希或限制丢失 |
+| Durable MCP tasks | 长耗时平台或云媒体任务的租约、轮询、重启恢复与快照 | W04/W05 | 在 Agent 循环内持续轮询远程任务 |
+| Scheduler | 定时发布、指标回收、未知对账和定期复盘 | W05/W06 | 另建一套背景 Agent 运行时 |
+| Run events/SSE/StreamBridge | 子任务、媒体、发布和复盘的可见进度、恢复与成本观测 | W02 起 | 将大原始工件作为 SSE 消息传输 |
+| Authorization/guardrails | 账号、路由、工具和不可逆操作授权 | W01/W05 | 基于内容评分拦截创作 |
+| Tool progress/loop detection | 发现重复搜索、无新信息调用和不可恢复配置问题 | W02 起 | 将正常多路取证误判为死循环 |
+| Circuit breaker/LLM concurrency | 供应商故障降级、并发和 Token/成本保护 | W02 压测后配置 | 用重试风暴填补证据缺失 |
+| Plan/Todo | 长任务的用户可见执行计划与进度 | W02 起按需 | 固化所有用户的业务阶段 |
+
+矩阵的原则是“把 DeerFlow 原生能力用到它擅长的边界”，不是追求一次请求同时触发所有功能。
+
+## 实施工作包
+
+### W01 共享产物脊柱
+
+状态：`implemented; runtime project selection and hydration pending`
+
+目标：在不修改 Lead 核心提示词的前提下，建立项目、账号、产物包装、父子谱系、内容哈希和
+证据角色的最小合同。
+
+先写的失败测试：
+
+- 两个用户的同名项目和同平台账号不能串联。
+- 父产物不存在、属于另一用户或哈希不匹配时不能建立谱系。
+- `topic_evidence`、`benchmark_evidence`、`owned_account_observation` 和 `published_outcome`
+  不能互换。
+- 用户可以从任意业务产物进入，不被上游空值硬拦截。
+
+退出条件：合同、内存仓储验证和数据库迁移都通过；未向 Lead 暴露低层表和密钥。
+
+### W02 读取与证据中心
+
+状态：`in progress; official video-search evidence slice implemented`
+
+目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
+`EvidenceSnapshot`，但保持采集路径和权限语义不同。
+
+实施顺序：
+
+1. 抖音公开视频搜索回执进入 `topic_evidence`。
+2. 迁移 E15 的账号身份、作者一致多作品清单和覆盖回执。
+3. 迁移 MediaKit 感知回执，再接窄语义提取与确定性跨视频聚合。
+4. 最后接自有账号授权数据和受众快照。
+
+退出条件：Lead 只看见有界证据包；原始页面、Cookie、Token、临时 URL 和本地路径不越界。
+
+2026-08-16 第一切片回执：新增通用 `EvidenceSnapshot`、覆盖回执、观察来源类型和固定字节预算
+Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单适配后可封存为
+`topic_evidence`。投影只含快照/路由哈希、覆盖、限制和预算内代表项，并显示省略数量；完整证据留在
+业务台账。当前适配器尚未由生产 Tool 自动写入选中项目，W02 继续进行。证据见
+`evidence/douyin-topic-evidence-a39-2026-08-16.md`。
+
+### W03 孵化与单条内容产物谱系
+
+目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
+地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
+
+退出条件：
+
+- 内容地图不因热点、表现形式、发布或复盘被静默改写。
+- 同一 `TopicBrief` 可以产生不同表现形式，但事情、观点和证据边界保持一致。
+- 非叙事选题不调用编剧方法。
+- 成稿不擅自补造素材、客户案例、数量、周期、成功率或预算。
+
+### W04 MediaKit 制作路由
+
+目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的
+`MediaArtifact`。
+
+首批验收：
+
+- 本地剪辑、字幕、裁剪、拼接、混音、合成和元信息。
+- 云端 ASR、OCR、场景切分和增强能力的授权、费用、幂等与恢复。
+- Schema 漂移、上传中断、异步任务重启、输出缺失、输出哈希和错误脱敏。
+
+退出条件：MediaKit 不读孵化方法，不重选选题，不直接发布。
+
+### W05 预演、审批与抖音发布
+
+目标：对精确 `DraftVersion + MediaArtifact + PlatformAccount` 封存预演和审批，再通过抖音
+OpenAPI 或受控浏览器发布，产生不可变 `PublicationReceipt`。
+
+发布状态：
+
+```text
+draft -> prepared -> approved -> executing
+-> succeeded / failed / unknown -> reconciled
+```
+
+退出条件：
+
+- 内容、媒体、账号或审批有一项改变就必须重新确认。
+- 页面跳转不等于发布成功；没有第一方作品 ID 或公开链接时进入 `unknown`。
+- `unknown` 不自动重发，先对账。
+- 幂等重放不产生第二条作品。
+
+### W06 指标、受众与复盘学习
+
+目标：从 `PublicationReceipt` 出发，按平台适用时间窗口采集 `MetricSnapshot` 和
+`AudienceSnapshot`，对比预演形成 `Retrospective` 与 `LearningClaim`。
+
+退出条件：
+
+- 缺失指标不变成零，不同人群口径不混合。
+- 观测相关性不写成平台或用户心理因果。
+- 一次复盘不自动更新通用规则。
+- `LearningClaim` 支持 `active / contested / superseded / retired`，且检索时同时显示支持样本与反例。
+
+### W07 产品化与多平台扩展
+
+在抖音闭环通过后，再实现项目、账号、证据、内容、素材、日历发布与增长复盘工作区，
+并将平台合同扩展到小红书、视频号、快手、Bilibili 和 TikTok。
+
+多平台枚举覆盖不等于平台支持。每个平台必须完成真实测试账号的“登录或授权、观察、准备、
+用户确认、发布、第一方回执、指标回收”才可进入 `production`。
+
+## 端到端验收场景
+
+| ID | 场景 | 必须证明 |
+| --- | --- | --- |
+| E2E-01 | 用户说“我是做黄金礼品的” | 语义可进入“礼、人与人相处”的长期地图，不被发布或商品目录倒灌 |
+| E2E-02 | 用户给一个抖音对标链接 | 账号身份、多作品、MediaKit 证据、覆盖和反例进入 `BenchmarkSnapshot` |
+| E2E-03 | 从账号地图生成当日内容 | 热点或取证路径不改写内容根，输出具体可拍 `TopicBrief` 与 `MessagePlan` |
+| E2E-04 | 将已批准成稿制作为视频 | MediaKit 回执、费用授权、恢复和输出哈希完整，并通过质检 |
+| E2E-05 | 在抖音真实测试账号发布 | 审批绑定、幂等、崩溃恢复、第一方回执与 `unknown` 对账 |
+| E2E-06 | 到指定观察窗口后复盘 | 实绩与预演精确绑定，缺失与反例保留，学习不自动改写规则 |
+| E2E-07 | 两用户各自连接抖音账号 | 项目、令牌、素材、审批、回执、指标和学习结论全部隔离 |
+
+## 横切测试矩阵
+
+- 架构：禁止内容、媒体、平台或复盘模块修改 Lead 核心提示词、强制工具选择或覆盖模型结果。
+- 所有权：两用户、多项目、同平台多账号、错账号、越权父产物与越权回执。
+- 证据：角色不可互换、引用必须解析、大工件有界投影、原页面文本作为不可信证据。
+- 模型：测试最终业务结果与证据边界，不要求固定工具轨迹、子 Agent 数量、提问轮数或脚本路线。
+- MediaKit：Schema 漂移、本地/云端路由、云处理同意、费用、幂等、中断恢复、哈希、质检与错误脱敏。
+- 平台：Manifest 漂移、权限、登录失效、租约冲突、幂等重放、执行崩溃、未知结果和人工对账。
+- 学习：盲预演不可修改、指标时间窗口、反例、过时经验、候选规则状态和跨用户学习默认关闭。
+- 密钥：本地未跟踪配置外不出现真值；文档、数据库、日志、截图、工具回执和测试夹具全部使用占位符。
+
+## 首个开发切片
+
+首个代码切片是 W01，不是继续改内容脑提示词。原因是后续每个模块都需要共享的所有权、产物谱系、
+哈希和证据角色；没有这根脊柱，直接迁 MediaKit、发布或复盘只会再形成三套各自的真相。
+
+W01 实施步骤：
+
+1. 阅读 `backend/AGENTS.md` 中持久化与迁移约定，先写合同失败测试。
+2. 新增小型 `deerflow.incubation` 领域包，只保存业务产物包装、所有权和谱系，不包含 Agent 提示词。
+3. 实现内容寻址 ID 和父产物校验，用隔离 SQLite 运行同一 SQL 仓储完成快速合同测试。
+4. 按第六版现有数据库规范增加最小持久化和迁移测试。
+5. 只为现有 `ContentWorldView` 增加可选项目谱系适配；不同时改语义、选题或 Lead 路由。
+
+W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和显式纠错可以进入 Memory，所有权、
+内容版本、审批、回执、指标和学习状态必须从业务台账重建。对话压缩或线程切换不得改变这些状态。
+
+2026-08-16 实施回执：已新增不可变合同、项目/账号/产物三表、`0012_incubation_ledger` 迁移、
+所有权/敏感字段/证据角色/血缘/幂等校验，以及 `ContentWorldView` 的可选长期地图适配器。封存后
+篡改 payload 会在事务前重新验签并拒绝。DeerFlow Memory 指南已明确排除项目版本、审批、发布回执、
+指标和学习状态。计划中的独立内存仓储被同一 SQL 仓储的临时 SQLite 测试替代，避免维护第二套真相
+实现。Lead/API 尚未获得项目选择和重水化入口，因此 W01 代码脊柱已实现但产品运行时接线仍待完成。
+证据见 `evidence/incubation-ledger-a38-2026-08-16.md`。
+
+W01 完成后，再开始 W02 的抖音只读证据和 MediaKit 感知迁移。

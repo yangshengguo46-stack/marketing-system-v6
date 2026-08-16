@@ -14,6 +14,7 @@ from deerflow.content_intelligence import (
     ResearchBudget,
     ResearchDiscoveryDraft,
     ResearchSearchResult,
+    SemanticFamilyExpansionDraft,
     SharedWorldReviewDraft,
     SharedWorldSynthesisDraft,
     TopicEditorialDecisionDraft,
@@ -83,6 +84,7 @@ def _shared_world_payload() -> dict[str, Any]:
         "common_action_or_relation": "sharing a meal",
         "participant_relationship": "people eating together",
         "world_label": "shared meals",
+        "semantic_path": ["meal base", "eating together", "shared meals"],
         "covered_frames": ["communal dining"],
         "limitations": [],
     }
@@ -91,7 +93,7 @@ def _shared_world_payload() -> dict[str, Any]:
 def _shared_world_review_payload() -> dict[str, Any]:
     return {
         "reviewed_world_label": "shared meals",
-        "subject_is_constitutive": False,
+        "entry_path_is_explanatory": False,
         "substitution_counterfactual": "People can share many unrelated meals without this particular served object.",
         "rationale": "The social setting is adjacent to the object rather than constitutive of it.",
     }
@@ -108,6 +110,9 @@ def _root_decision_payload() -> dict[str, Any]:
 
 def _map_payload() -> dict[str, Any]:
     return {
+        "editorial_promise": "Use shared meals to understand people, places, customs, and change over time.",
+        "recurring_lens": "Enter through one documented person, place, practice, or change and explain its connection to shared meals.",
+        "drift_boundaries": ["A popular event without a rooted path to shared meals stays outside the map."],
         "map_directions": [
             {
                 "dimension": "emotion and relationships",
@@ -127,6 +132,11 @@ async def _content_world_bundle():
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
+            SemanticFamilyExpansionDraft: {
+                "components": [],
+                "branches": [],
+                "limitations": [],
+            },
             SharedWorldSynthesisDraft: _shared_world_payload(),
             SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
@@ -354,6 +364,8 @@ async def test_latent_recall_route_cannot_launder_a_different_selected_entity() 
 @pytest.mark.asyncio
 async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     bundle = await _content_world_bundle()
+    assert bundle.content_world is not None
+    frozen_map_version = bundle.content_world.content_map_version_id()
     research_model = SequencedStructuredFakeModel(
         {
             ResearchDiscoveryDraft: _discovery_payload(),
@@ -393,6 +405,9 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     assert "shared meal documented changes in the shared meal over time" in {query for query, _ in seen_queries}
     discovery_input = research_model.message_batches[0][1].content
     assert '"content_root": "shared meal"' in discovery_input
+    assert f'"content_map_version_id": "{frozen_map_version}"' in discovery_input
+    assert '"editorial_promise"' in discovery_input
+    assert '"recurring_lens"' in discovery_input
     assert '"map_dimensions"' in discovery_input
     assert "regional meal base" not in discovery_input
     assert "business_semantics" not in discovery_input
@@ -413,7 +428,9 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
 
     assert enriched.content_world is not None
     assert enriched.content_world.content_root == "shared meal"
+    assert enriched.content_world.content_map_version_id() == frozen_map_version
     assert enriched.topic_brief is not None
+    assert enriched.topic_brief.content_map_version_id == frozen_map_version
     assert enriched.topic_brief.question.startswith("How did one public event")
     assert enriched.topic_brief.path.steps[0].from_label == "shared meal"
     assert enriched.topic_brief.path.steps[0].to_label == "a documented public event"

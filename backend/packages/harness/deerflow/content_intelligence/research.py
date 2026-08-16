@@ -204,9 +204,10 @@ class _SearchAttempt:
 
 
 RESEARCH_DISCOVERY_SYSTEM_PROMPT = """<content_intelligence_research>
-你是内容地图之后的命名召回子智能体。输入只有已经冻结的内容根和地图，不含商业对象；不得猜测、恢复或索取商业对象。
+你是账号内容地图之后的命名召回子智能体。输入只有已经冻结的内容根、长期编辑定位和地图，不含商业对象；不得猜测、恢复或索取商业对象。
 
 - 保持内容根不变，从地图方向中寻找值得进一步阅读的具体命名人物、事件、作品、制度、习俗、地点或日期。
+- 具体候选要同时服从账号的长期承诺与稳定观察方法。实时热点只是可能的证据入口；没有地图路径的热点不得因热度进入账号选题。
 - 优先寻找能显化人的行为、关系、情绪、选择、变化或共同记忆的候选，让具体对象帮助观众理解内容根。除非冻结地图明确以行业经营为主题，不要让卖方经营案例、企业扩张或设备方案压过人的世界。
 - 候选只是检索入口，不是事实。为每个候选说明它与内容根的关系，并给出可以在公开资料中核验的搜索词。
 - candidate.entity 必须是可核验的专名对象或明确记录，不得把地图里的泛化教程词、普通技法类别或宽泛需求换个说法当成命名候选。搜索词应优先指向原始作品、当事人记录、公共机构或可靠报道。
@@ -237,8 +238,9 @@ EVIDENCE_READING_SYSTEM_PROMPT = """<content_intelligence_research>
 
 
 TOPIC_EDITOR_SYSTEM_PROMPT = """<content_intelligence_research>
-你是证据阅读之后的创意收敛器。输入是已经冻结的内容根、一条已取证路径和证据阅读记录；不得重新选择内容根，不得恢复商业对象。
+你是证据阅读之后的创意收敛器。输入是已经冻结的账号内容地图版本、一条已取证路径和证据阅读记录；不得重新选择内容根，不得恢复商业对象。
 
+- 这次选题必须兑现账号的长期承诺，并沿稳定观察方法解释已取证的人或事件。热点只能补充当日性，不能替代地图路径或把账号改造成热点搬运号。
 - 先判断当前证据能否支撑一个值得表达的具体问题、中心判断、机制和反面边界。若不能，返回明确 abstention_reason，不要为了交付感强行立题。
 - 不得更换证据阅读已经选定的路线或实体。若该实体不值得立题，应当弃权，而不是换回另一条召回猜测。
 - 召回理由和搜索词只是检索假设，不是选题合同，也不会作为证据输入。只按已读证据判断；不要求证据兑现召回理由的每个细节。
@@ -349,6 +351,9 @@ def _render_discovery_input(bundle: ContentIntelligenceBundle) -> str:
     assert world is not None and world.content_root is not None
     payload = {
         "content_root": world.content_root,
+        "content_map_version_id": world.content_map_version_id(),
+        "editorial_promise": world.editorial_promise,
+        "recurring_lens": world.recurring_lens,
         "map_dimensions": [
             {
                 "name": dimension.name,
@@ -645,6 +650,9 @@ def _render_reading_input(
     evidenced_candidate_ids = {candidate_id for item in evidence_payload for candidate_id in item["candidate_ids"]}
     payload = {
         "content_root": world.content_root,
+        "content_map_version_id": world.content_map_version_id(),
+        "editorial_promise": world.editorial_promise,
+        "recurring_lens": world.recurring_lens,
         "candidate_paths": [
             {
                 key: value
@@ -748,6 +756,9 @@ def _render_topic_editor_input(
     referenced_source_ids = {source_ref for observation in reading.observations for source_ref in observation.source_refs}
     payload = {
         "content_root": world.content_root,
+        "content_map_version_id": world.content_map_version_id(),
+        "editorial_promise": world.editorial_promise,
+        "recurring_lens": world.recurring_lens,
         "selected_candidate": {
             "candidate_id": selected.candidate_id,
             "discovery_mode": selected.discovery_mode,
@@ -923,6 +934,7 @@ def _bind_evidence_reading(
         )
     topic = TopicBrief(
         record_id=bundle.record.record_id,
+        content_map_version_id=world.content_map_version_id(),
         question=topic_draft.question,
         central_claim=topic_draft.central_claim,
         mechanism=topic_draft.mechanism,

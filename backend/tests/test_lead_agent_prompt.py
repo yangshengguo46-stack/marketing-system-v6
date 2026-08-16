@@ -136,6 +136,8 @@ def test_apply_prompt_template_includes_memory_tool_guidance_only_in_tool_mode(m
     assert "memory_add" in tool_prompt
     assert "agent facts are not injected automatically" in tool_prompt
     assert "When present, the injected <memory> block contains only global user and history summaries" in tool_prompt
+    assert "project versions, approvals, publication receipts, metrics, or learning state" in tool_prompt
+    assert "durable project context" not in tool_prompt
     assert "<memory_tool_system>" not in middleware_prompt
 
 

@@ -435,6 +435,16 @@ explicit, model-selected MCP tool path can run alongside the separate automatic
 OpenViking memory backend; it does not replace automatic turn capture or recall. See the
 [OpenViking MCP tools configuration](backend/docs/MCP_SERVER.md#openviking-mcp-tools).
 
+This repository also includes a disabled-by-default, first-party Douyin OpenAPI
+MCP gateway. It snapshots all 119 rows in the official mobile/website-app
+catalog but exposes only a bounded set of mutually exclusive domain tools.
+Calling one domain with an empty request returns the currently authorized Child
+manifest and `manifest_version`; an exact Child call then revalidates capability
+state plus its input and output schemas. Catalog presence is not treated as
+runtime availability. The initial adopted Children are official public video
+search and image-text/experience search. See the
+[Douyin gateway setup](backend/docs/MCP_SERVER.md#douyin-openapi-gateway).
+
 The Gateway also includes a disabled-by-default, protocol-neutral foundation for durable long-running MCP tasks. It stores remote task handles outside model context, polls them under cross-worker leases, rejects results returned after their lease expires, schedules the next attempt from the time a remote status call finishes, isolates unexpected failures between claimed tasks, cancels in-flight polling during Gateway shutdown, and makes expired claims recoverable after restart. If remote submission succeeds but the handle cannot be persisted, the runtime makes a best-effort cancellation so an untracked task is not silently left running. The exact scoped duplicate-handle conflict is surfaced without cancellation because an existing durable row already owns that remote task. Durable recovery requires a SQL database backend (`sqlite` or `postgres`); the in-memory backend does not initialize this task repository. This foundation does not make existing MCP tools asynchronous by itself: `mcp_tasks.enabled` should remain `false` until a compatible task driver is configured. Ordinary `submit/status/cancel` tools and the future MCP Tasks extension can share the same runtime without making the model remember remote task IDs.
 See the [MCP Server Guide](backend/docs/MCP_SERVER.md) for detailed instructions.
 
@@ -748,17 +758,28 @@ This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
 the direct `explore_content_world` path: isolated semantic reading, a product-blind
-shared-world proposal and independent counterfactual review, deterministic typed
+lexical-semantic worker, a product-blind shared-world proposal and independent counterfactual review, deterministic typed
 candidate assembly, candidate-only root adjudication, frozen-root expansion,
 parallel map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
 Root selection compares the largest effective content world rather than giving a
 complete product or service automatic priority.
-Before candidate assembly, a narrow cross-frame reader sees only the unmodified lexical
-subject, participant activities, and concrete contexts. It identifies a shared human
-practice or relationship without seeing the full product name or product-value
-functions. An independent reviewer rejects generic use or consumption contexts that do
-not require the subject. Code then assembles exact upstream candidates and labels narrow
+The frozen map is account-level editorial positioning rather than a daily topic list:
+it records the durable audience promise, recurring interpretive lens, drift boundaries,
+and long-term territories. It has a content-addressed version; every downstream
+`TopicBrief` binds that version and starts its path at the frozen root. Trends may supply
+fresh evidence only after this boundary and cannot rewrite the positioning.
+Before candidate assembly, the literal reader separates the verbatim business object,
+lexical head, modifiers, offering role, and the smallest complete objects served by an
+intermediate or operating container. A separate lexical-semantic worker sees only that
+lexical head. It may identify a strict meaning-bearing component and expand a bounded
+semantic family, but it cannot see the product, industry, activities, or user request.
+Natural sources, materials, ordinary objects, and sensory qualities do not qualify as
+social or cultural nuclei. The shared-world worker then receives exactly one of two
+mutually exclusive projections: the isolated semantic family, or the unmodified direct
+activities and contexts. An independent reviewer rejects generic use or consumption
+contexts and semantic-family proposals that collapse back to one narrow activity. Code
+then assembles exact upstream candidates and labels narrow
 contexts as non-selectable example branches;
 the final adjudicator can only choose among frozen root candidates. Each specialist sees
 only the input it owns. Search begins only after the content root
@@ -771,8 +792,20 @@ forcing a factual-sounding topic. The map does not own screenwriting conflict. A
 evidence reading, the creative-convergence step may emit an optional narrative frame
 only when protagonist, goal,
 obstacle, action, stakes, and outcome are all evidence-bound; explanatory topics remain
-non-narrative. This is not a separate screenwriting agent. Actual scriptwriting belongs
-to later presentation adaptation when a narrative format is selected. The completed prose is delivered through the native return-direct exit
+non-narrative. This is not a separate screenwriting agent. An evidence-bound topic may
+then enter a format-neutral `MessagePlan` that exposes who or what the content is about,
+the concrete event or question, the user's verbatim-supported position, and a clear
+point of view. It also binds one entry point, a coherent telling lens, an honest audience
+question, the reveal order, and the promised payoff. Different treatments of the same
+topic receive different plan identities. Source metadata is not story context, the
+user's occupation does not require business insertion, and attention packaging cannot
+replace evidence-backed payoff. Time, place, or situation remains nullable when it is not constitutive.
+Code joins the reviewed opening, message beats, and closing into a `BaseDraft` without a
+second model rewrite. Broad account-start runs lead with the account positioning and
+then one map-bound "shoot today" example; the
+map prose is a fail-open response when no topic exists or delivery validation fails.
+Actual format adaptation and screenwriting still belong to later routing when a
+narrative format is selected. The completed prose is delivered through the native return-direct exit
 and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
 it back into a product catalogue.
 
@@ -786,6 +819,25 @@ The content-world contract contains no product anchor or commercial return path.
 does not choose presentation format, platform, sales, experiments, or publishing.
 Commercial conversion, when implemented, belongs to a later independent projection and
 must not rewrite the semantic reading or content map.
+
+The isolated lexical worker can optionally consume a local CC-CEDICT evidence index.
+This adds exact whole-word senses, strict meaning-component candidates, and bounded typed
+lexical-family relations without exposing a local file path to the model. It remains a
+fallible evidence source: a missing or invalid index falls back to the model-only path,
+and neither dictionary presence nor text similarity can select the content root. Build
+the gitignored index from an official CC-CEDICT release with:
+
+```bash
+cd backend
+uv run python ../scripts/build_lexical_evidence_index.py \
+  --source /path/to/cedict.txt.gz
+```
+
+The default output is `backend/.deer-flow/lexicons/cc-cedict.sqlite3`, which local
+development discovers automatically. Set `CONTENT_INTELLIGENCE_CEDICT_INDEX` only for a
+different location. CC-CEDICT is licensed under CC BY-SA 4.0; preserve its source,
+version, digest, and license receipt. Commercial dictionaries are not bundled or copied,
+and this feature does not add a dense vector-database dependency.
 
 The contracts and decision records are documented in
 [`docs/content-intelligence-v6/`](docs/content-intelligence-v6/).

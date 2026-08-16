@@ -80,6 +80,41 @@ For Docker, point `url` at the OpenViking address reachable from the Gateway
 container, such as `http://openviking:1933/mcp` for a shared Compose network or
 `http://host.docker.internal:1933/mcp` for a host-installed server.
 
+## Douyin OpenAPI Gateway
+
+The first-party `douyin-openapi-mcp` stdio server follows progressive domain
+disclosure. Its checked-in catalog snapshot contains all 119 rows from the
+official mobile/website-app OpenAPI index, including OAuth flows, outbound APIs,
+inbound webhooks, provider-implemented endpoints, and a local encryption
+contract. Only reviewed outbound contracts with an implemented adapter and the
+current app's declared Scope become callable Children.
+
+1. Set `DOUYIN_CLIENT_KEY` and `DOUYIN_CLIENT_SECRET` in local environment
+   configuration. Never put literal values in the checked-in JSON or YAML.
+2. Set `DOUYIN_APPROVED_SCOPES` to the exact comma-separated Scopes approved for
+   this app. The initial adapters use `aweme.dy.video_search` and
+   `aweme.experience.search`.
+3. Add `douyin-openapi-mcp` to
+   `DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST`; it is a first-party installed console
+   script but is not added to the generic API-registration allowlist by default.
+4. Copy the disabled `douyin_openapi` example from
+   `extensions_config.example.json`, enable it, and restart or reset the MCP
+   cache.
+
+The server exposes 16 mutually exclusive top-level domains rather than one tool
+per catalog row. Call one best-matching domain with no arguments, then call one
+returned Child with `arguments` and the exact `manifest_version`. Opening every
+domain speculatively defeats the context-budget design. A Scope change, auth
+change, policy generation change, contract change, or adapter change invalidates
+the prior manifest. Input and output JSON Schemas are both validated, and
+credential values never appear in manifests or receipts.
+
+The official catalog currently contains stale or moved documentation pages.
+Those rows remain in the evidence snapshot so their history is not lost, but
+they are not promoted to callable tools until the active contract is traced and
+reviewed. The generated matrix is at
+`docs/content-intelligence-v6/evidence/douyin-openapi-catalog-2026-08-16.md`.
+
 ## Routing Hints
 
 Use `routing` when an MCP server should be preferred for specific requests, such

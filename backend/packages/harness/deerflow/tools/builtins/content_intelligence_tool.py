@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from enum import StrEnum
 from typing import Annotated, Any
 from urllib.parse import urljoin
@@ -15,6 +16,7 @@ from langgraph.types import Command
 from pydantic import BaseModel, Field, ValidationError
 
 from deerflow.community.url_safety import validate_public_http_url
+from deerflow.config.runtime_paths import runtime_home
 from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceBundle,
@@ -24,8 +26,11 @@ from deerflow.content_intelligence import (
     analyze_content_intelligence,
     enrich_content_world_with_research,
     render_content_world_narration,
+    render_shooting_delivery,
     synthesize_content_world_narration,
+    synthesize_shooting_delivery,
 )
+from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
 from deerflow.models import create_chat_model
 from deerflow.utils.readability import ReadabilityExtractor
 
@@ -86,6 +91,21 @@ def _create_content_intelligence_model(config: RunnableConfig):
     )
 
 
+def _create_lexical_evidence_provider() -> CedictLexicalEvidenceProvider | None:
+    configured_path = os.getenv("CONTENT_INTELLIGENCE_CEDICT_INDEX", "").strip()
+    index_path = configured_path or str(runtime_home() / "lexicons" / "cc-cedict.sqlite3")
+    if not configured_path and not os.path.isfile(index_path):
+        return None
+    try:
+        return CedictLexicalEvidenceProvider(index_path)
+    except (OSError, ValueError, KeyError) as exc:
+        logger.warning(
+            "Configured lexical evidence index was unavailable; preserving the model-only path: %s",
+            type(exc).__name__,
+        )
+        return None
+
+
 async def _analyze_content_intelligence(
     user_request: str,
     subject_expression: str,
@@ -128,6 +148,7 @@ async def _explore_content_world(
     config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> Command:
     model = _create_content_intelligence_model(config)
+    lexical_evidence_provider = _create_lexical_evidence_provider()
     request = ContentIntelligenceRequest(
         user_request=user_request,
         subject_expression=user_request,
@@ -139,6 +160,7 @@ async def _explore_content_world(
             request,
             model=model,
             runnable_config=config,
+            lexical_evidence_provider=lexical_evidence_provider,
         )
         try:
             bundle = await enrich_content_world_with_research(
@@ -152,6 +174,24 @@ async def _explore_content_world(
             logger.warning(
                 "Post-map research was unavailable; preserving the rooted map: %s",
                 type(exc).__name__,
+            )
+        try:
+            shooting_delivery = await synthesize_shooting_delivery(
+                bundle,
+                user_request=user_request,
+                model=model,
+                runnable_config=config,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Evidence topic delivery was unavailable; preserving the rooted map: %s",
+                type(exc).__name__,
+            )
+            shooting_delivery = None
+        if shooting_delivery is not None:
+            return _terminal_content_world_command(
+                render_shooting_delivery(bundle, shooting_delivery),
+                tool_call_id=tool_call_id,
             )
         narration = await synthesize_content_world_narration(
             bundle,
@@ -177,19 +217,38 @@ async def _search_content_world_evidence(
     query: str,
     max_results: int,
 ) -> tuple[ResearchSearchResult, ...]:
-    """Run the configured local web-search tool and expose only its public receipt."""
+    """Run configured public search providers and expose only bounded receipts."""
 
     from deerflow.config import get_app_config
     from deerflow.reflection import resolve_variable
 
-    search_config = get_app_config().get_tool_config("web_search")
-    if search_config is None:
+    app_config = get_app_config()
+    search_configs = tuple(config for name in ("web_search", "douyin_video_search") if (config := app_config.get_tool_config(name)) is not None)
+    if not search_configs:
         return ()
-    search_tool = resolve_variable(search_config.use, BaseTool)
-    tool_input: dict[str, Any] = {"query": query}
-    if "max_results" in search_tool.args:
-        tool_input["max_results"] = max_results
-    raw = await search_tool.ainvoke(tool_input)
+
+    async def invoke_provider(search_config: Any) -> tuple[ResearchSearchResult, ...]:
+        search_tool = resolve_variable(search_config.use, BaseTool)
+        tool_input: dict[str, Any] = {"query": query}
+        if "max_results" in search_tool.args:
+            tool_input["max_results"] = max_results
+        raw = await search_tool.ainvoke(tool_input)
+        return _normalize_search_results(raw, max_results=max_results)
+
+    provider_results = await asyncio.gather(
+        *(invoke_provider(search_config) for search_config in search_configs),
+        return_exceptions=True,
+    )
+    successful_results: list[tuple[ResearchSearchResult, ...]] = []
+    for result in provider_results:
+        if isinstance(result, BaseException):
+            logger.warning("Configured content research search failed: %s", type(result).__name__)
+            continue
+        successful_results.append(result)
+    return _interleave_search_results(successful_results, max_results=max_results)
+
+
+def _normalize_search_results(raw: Any, *, max_results: int) -> tuple[ResearchSearchResult, ...]:
     if not isinstance(raw, str):
         return ()
     try:
@@ -222,6 +281,28 @@ async def _search_content_world_evidence(
         except ValidationError:
             continue
     return tuple(normalized)
+
+
+def _interleave_search_results(
+    provider_results: list[tuple[ResearchSearchResult, ...]],
+    *,
+    max_results: int,
+) -> tuple[ResearchSearchResult, ...]:
+    interleaved: list[ResearchSearchResult] = []
+    seen_urls: set[str] = set()
+    max_provider_length = max((len(results) for results in provider_results), default=0)
+    for index in range(max_provider_length):
+        for results in provider_results:
+            if index >= len(results):
+                continue
+            result = results[index]
+            if result.url in seen_urls:
+                continue
+            seen_urls.add(result.url)
+            interleaved.append(result)
+            if len(interleaved) >= max_results:
+                return tuple(interleaved)
+    return tuple(interleaved)
 
 
 def _search_result_items(payload: Any) -> list[Any]:
@@ -403,6 +484,10 @@ def _lead_projection(
             "content_world": {
                 "audience_territory": world.audience_territory.text if world.audience_territory else None,
                 "content_root": world.content_root,
+                "content_map_version_id": world.content_map_version_id() if world.content_root else None,
+                "editorial_promise": world.editorial_promise,
+                "recurring_lens": world.recurring_lens,
+                "drift_boundaries": list(world.drift_boundaries),
                 "map_directions": [
                     {
                         "dimension": dimension.name,
@@ -476,6 +561,10 @@ def _lead_projection(
                 "source_object": world.source_object,
                 "audience_territory": world.audience_territory.text if world.audience_territory else None,
                 "content_root": world.content_root,
+                "content_map_version_id": world.content_map_version_id() if world.content_root else None,
+                "editorial_promise": world.editorial_promise,
+                "recurring_lens": world.recurring_lens,
+                "drift_boundaries": list(world.drift_boundaries),
                 "root_rationale": world.root_rationale,
                 "root_candidates": [
                     {
@@ -509,6 +598,7 @@ def _lead_projection(
         ),
         "topic_brief": (
             {
+                "content_map_version_id": topic.content_map_version_id,
                 "question": topic.question,
                 "central_claim": topic.central_claim,
                 "mechanism": topic.mechanism,

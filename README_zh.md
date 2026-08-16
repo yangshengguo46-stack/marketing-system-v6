@@ -298,6 +298,13 @@ Docker 开发时，服务启动行为会遵循 `config.yaml` 里的 sandbox 模�
 
 DeerFlow 支持可配置的 MCP Server 和 skills，用来扩展能力。
 对于 HTTP/SSE MCP Server，还支持 OAuth token 流程（`client_credentials`、`refresh_token`）。
+
+本仓库还内置了一个默认关闭的抖音 OpenAPI MCP 网关。它对官方移动/网站应用目录的
+119 条记录做了可追溯快照，但只向 Agent 暴露少量边界互斥的领域工具。空请求用于发现当前身份已授权的
+Child Manifest 和 `manifest_version`；精确 Child 调用会再次校验能力状态及输入/输出 Schema。
+“官方目录里有”不等于“当前应用能调”；首批已采用 Child 为官方公开视频搜索和图文/经验搜索。
+配置方法见 [抖音网关指南](backend/docs/MCP_SERVER.md#douyin-openapi-gateway)。
+
 详细说明见 [MCP Server 指南](backend/docs/MCP_SERVER.md)。
 
 #### IM 渠道
@@ -540,6 +547,37 @@ DeerFlow 2.0 不再是一个需要你自己拼装的 framework。它是一个开
 你可以直接拿来用，也可以拆开重组，改成你自己的样子。
 
 ## 核心特性
+
+### 内容孵化理解内核（第六版候选）
+
+宽泛的起号与长期内容请求可以调用 `explore_content_world`。它依次完成逐字语义阅读、
+隔离词义、共同世界审查、冻结候选裁决、内容地图、根后证据研究与创意收敛。内容地图是账号级
+长期编辑定位：它记录长期讲什么、观众为何持续关注、账号用什么稳定方法观察具体的人与事件，
+以及哪些热点会造成漂移；它不负责卖货、平台、表现形式或发布，也不会让商品离得最近的词自动成为内容根。
+地图拥有稳定版本，后续选题必须绑定该版本并从冻结内容根起步；热点只能成为地图路径上的新证据，
+不能改写定位。
+已取证选题会进入一个下游 `MessagePlan`，显示“谁、什么情境、发生什么、用户站在什么位置、核心观点”，
+并明确一个主切入口、讲述视角、诚实的观众问题、信息揭示顺序和最终回报；同一选题的不同讲法
+拥有不同计划身份。标题包装不能替代证据推进与兑现，用户职业也不会自动把店铺或商品写入正文。
+代码再将开头、内容推进和收束组合为形式无关的基础文案。有合格交付时，终端先显示账号内容定位，
+再显示一个地图内的“今日建议拍摄”；
+内部地图只在没有足够证据或交付合同失败时作为开放回执。这一层尚不选口播、短剧、图文或纯素材，编剧方法只能在后续选中叙事形式时按需调用。
+
+隔离词义工作者可选读取本地 CC-CEDICT 结构化索引，用整词义项、严格真子成分和有界词族
+关系补充模型记忆。词典只提供可检查的证据：缺失或损坏时自动保留原有纯模型路径，词典命中
+和文本相似度都无权选择内容根，本地索引路径也不会进入模型上下文。使用官方 CC-CEDICT
+发布包构建未跟踪索引：
+
+```bash
+cd backend
+uv run python ../scripts/build_lexical_evidence_index.py \
+  --source /path/to/cedict.txt.gz
+```
+
+默认输出为 `backend/.deer-flow/lexicons/cc-cedict.sqlite3`，本地开发会自动发现；放在其他
+位置时再设置 `CONTENT_INTELLIGENCE_CEDICT_INDEX`。CC-CEDICT 采用 CC BY-SA 4.0，必须保留
+来源、版本、摘要和许可证回执。本仓库不复制商业词典，也没有为该能力增加稠密向量数据库。
+架构与历次评测见 [`docs/content-intelligence-v6/`](docs/content-intelligence-v6/)。
 
 ### Skills 与 Tools
 

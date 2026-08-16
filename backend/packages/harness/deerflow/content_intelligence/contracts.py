@@ -232,6 +232,27 @@ class ModifierReading(ContractModel):
     modifies: NonEmptyStr
     semantic_role: NonEmptyStr
     removal_counterfactual: NonEmptyStr
+    world_scope_effect: Literal[
+        "branch_specificity",
+        "constitutive_context",
+        "uncertain",
+    ] = "uncertain"
+    basis_refs: BasisRefs
+
+
+class MeaningBearingComponent(ContractModel):
+    term: NonEmptyStr
+    component_of: NonEmptyStr
+    semantic_role: NonEmptyStr
+    relation_to_subject: NonEmptyStr
+    basis_refs: BasisRefs
+
+
+class SemanticFamilyBranch(ContractModel):
+    component: NonEmptyStr
+    expression: NonEmptyStr
+    semantic_domain: NonEmptyStr
+    continuity: NonEmptyStr
     basis_refs: BasisRefs
 
 
@@ -240,6 +261,8 @@ class BusinessSemanticView(ContractModel):
     commercial_object: GroundedStatement | None = None
     lexical_head: GroundedStatement | None = None
     modifiers: tuple[ModifierReading, ...] = ()
+    meaning_bearing_components: tuple[MeaningBearingComponent, ...] = ()
+    semantic_family_branches: tuple[SemanticFamilyBranch, ...] = ()
     subject_actions: tuple[GroundedStatement, ...] = ()
     offering_role: OfferingRole | None = None
     role_rationale: NonEmptyStr | None = None
@@ -320,10 +343,29 @@ class ContentWorldView(ContractModel):
     audience_territory: GroundedStatement | None = None
     content_root: NonEmptyStr | None = None
     root_rationale: NonEmptyStr | None = None
+    editorial_promise: NonEmptyStr | None = None
+    recurring_lens: NonEmptyStr | None = None
+    drift_boundaries: tuple[NonEmptyStr, ...] = ()
     root_candidates: tuple[ContentRootCandidate, ...] = ()
     dimensions: tuple[ContentDimension, ...] = ()
     named_candidates: tuple[NamedCandidate, ...] = ()
     unknown_refs: tuple[NonEmptyStr, ...] = ()
+
+    def content_map_version_id(self) -> str:
+        """Identify the durable editorial map, excluding mutable research results."""
+
+        if self.content_root is None:
+            raise ValueError("content map version requires a frozen content root")
+        payload = {
+            "content_root": self.content_root,
+            "audience_territory": self.audience_territory.text if self.audience_territory else None,
+            "editorial_promise": self.editorial_promise,
+            "recurring_lens": self.recurring_lens,
+            "drift_boundaries": self.drift_boundaries,
+            "dimensions": [dimension.model_dump(mode="json") for dimension in self.dimensions],
+        }
+        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        return f"content-map-{hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:16]}"
 
 
 class NarrativeFrame(ContractModel):
@@ -341,6 +383,7 @@ class NarrativeFrame(ContractModel):
 
 class TopicBrief(ContractModel):
     record_id: NonEmptyStr
+    content_map_version_id: NonEmptyStr
     question: NonEmptyStr
     central_claim: NonEmptyStr
     mechanism: NonEmptyStr
@@ -374,6 +417,15 @@ class ContentIntelligenceBundle(ContractModel):
                 actual_kind = reference_index.get(unknown_ref)
                 if actual_kind != "unknown":
                     raise ValueError(f"projection unknown_ref {unknown_ref!r} does not resolve to a record unknown")
+
+        if self.topic_brief is not None:
+            if self.content_world is None or self.content_world.content_root is None:
+                raise ValueError("topic brief requires a frozen content map")
+            expected_version = self.content_world.content_map_version_id()
+            if self.topic_brief.content_map_version_id != expected_version:
+                raise ValueError("topic brief content map version does not match the frozen content map")
+            if self.topic_brief.path.steps[0].from_label != self.content_world.content_root:
+                raise ValueError("topic path must start from the frozen content root")
         return self
 
 
@@ -434,6 +486,7 @@ def _projection_basis_refs(
                 *projection.served_objects,
                 *projection.served_activities,
                 *projection.defining_functions_or_uses,
+                *projection.recurring_human_worlds,
                 *projection.social_or_cultural_frames,
             )
             if statement is not None
@@ -441,6 +494,8 @@ def _projection_basis_refs(
         return (
             *tuple(ref for statement in statements for ref in statement.basis_refs),
             *tuple(ref for modifier in projection.modifiers for ref in modifier.basis_refs),
+            *tuple(ref for component in projection.meaning_bearing_components for ref in component.basis_refs),
+            *tuple(ref for branch in projection.semantic_family_branches for ref in branch.basis_refs),
         )
     if isinstance(projection, ContentWorldView):
         statements = tuple(statement for statement in (projection.audience_territory,) if statement is not None)

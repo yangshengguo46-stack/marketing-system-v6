@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-- 台账日期：2026-08-15
+- 台账日期：2026-08-16
 - 第五版冻结提交：`3ee135f7`
 - 第五版归档分支：`codex/archive-v5-final`
 - 第五版归档标签：`marketing-v5-final-20260814`
@@ -682,6 +682,459 @@ A22 的三次短探针通过后，一次完整真实运行又选出“贵重赠�
 ```text
 content intelligence + search focused: 68 passed
 repository guidance budgets: 12 passed
-backend full non-live: 11,620 passed, 76 skipped, 17 warnings in 420.54s
+backend full non-live: 11,626 passed, 76 skipped, 17 warnings in 473.75s
 ruff check / format check / git diff --check: passed
 ```
+
+## A25 抖音 OpenAPI 全能力审计与 MCP 路由决策
+
+2026-08-16 用户在抖音开放平台完成相关能力开通后，重新以当前官方移动/网站应用文档为准审计。结构化解析目录页面得到 13 张 API 表、119 个目录条目，主要覆盖个人资料、关系与粉丝画像、内容、搜索、私信群聊、数据开放、生活服务、素材工具、服务市场、小程序推广计划、分身技能数据和汽水音乐。此前按同站链接口径得到的 118 不是目录行数，现由结构化表格解析结果更正。119 也不代表 119 个可由 Agent 主动调用的 API：目录包含 OAuth、平台向商家发送的回调和要求接入方实现的接口，后续必须逐项标注交互方向。此前 A24 将“豆包 Chat 的视频结果”与普通 Web Search 区分是正确的，但“当前尚不能通过 OpenAPI 使用抖音视频搜索”的环境结论已经过时，由本条覆盖。
+
+当前视频搜索正式合同为：
+
+```text
+GET https://open.douyin.com/dy_open_api/v1/search/video/
+scope: aweme.dy.video_search
+auth: application stable_client_token
+required query: keyword, count, device_id
+pagination: cursor + search_id + has_more
+```
+
+官方说明非字节内部租户的 `device_id` 可传随机数。稳定应用令牌有效期为 2 小时，有效期内重复获取返回同一令牌。官方 SDK 页面支持 Java、NodeJS 和 Go，Token 仍由调用方注入，并明确提示多实例若各自取 Token 会互刷。
+
+第一条代码纵向切片已经按测试先行实现：新增官方视频搜索薄适配器，使用稳定令牌缓存，遇到无效或过期令牌最多刷新重试一次；返回仅保留视频 ID、标题、公开视频链接、高质量文本、作者昵称、发布时间和点赞观察值，不返回 Client Secret、Token、设备 ID、临时封面或头像 URL。现有内容研究同时调用网页搜索和可选抖音视频搜索，按来源交错占用同一证据预算；两者仍统一属于 `topic_evidence`，不能自动升级为对标账号。
+
+聚焦红绿测试：
+
+```text
+red: ModuleNotFoundError: deerflow.community.douyin_search
+green: 20 passed in 3.16s
+```
+
+全量能力不按 119 个 Lead 工具实现。采用版本化 Catalog/Manifest、鉴权代理、风险分级和领域 Child 调度器组成的独立 `douyin-openapi-mcp`；所有目录条目进入 Catalog，只有完成合同审阅、属于主动调用、当前应用已获 Scope、当前用户具备账号授权且符合任务风险的能力才成为可调用 Child。自有账号粉丝画像仍只用于该账号复盘，不能回答竞品粉丝画像。完整决策见 `ADR-010`。
+
+## A26 Apache Doris MCP Server 1.0 升级复核
+
+2026-08-16 按用户提示重新审阅 Apache 官方仓库当前 `master`、1.0.0 发布记录、架构、请求生命周期、能力可用性、安全、可靠性与核心实现。1.0.0 于 2026-08-01 发布，正式将旧版平铺工具替换为 8 个稳定只读领域和 55 个渐进披露 Child；发布快照记录 `1772 passed, 83 skipped`，另有 26 个真实 Doris 集群测试。当前 `master` 比 1.0.0 多 16 个提交，最新已到 2026-08-13 的 `#218`；其中 `#199` 专门修复推测性多领域发现：要求 Host 先选一个领域，领域说明明确职责和排除项，避免每轮携带多份 Manifest；`#204` 继续加固只读与 HTTP 安全边界。该版本不是概念图，仓库已包含 `domain_catalog.py`、`domain_manifest.py`、`domain_dispatcher.py`、`capability_detector.py`、Schema 校验、目录生成和对应测试。
+
+与抖音 OpenAPI 网关直接相关的已验证设计如下：
+
+```text
+tools/list -> 稳定领域工具
+domain {} -> 授权 Child + 精确 Schema + Availability + manifest_version
+domain {child_tool, arguments, manifest_version}
+  -> 重新鉴权
+  -> 重新探测当前能力代际
+  -> 拒绝过期 Manifest
+  -> 输入 Schema 校验
+  -> 精确 Handler
+  -> 输出 Schema 校验
+  -> data / warnings / metadata 或确定性错误
+```
+
+Doris 明确区分“公共目录能表示什么”和“当前身份、路由现在能安全调用什么”：未授权 Child 不披露，授权但不可用的 Child 以 `callable=false` 和稳定原因码保留；不使用概率式意图分类器猜工具。Manifest 版本是领域合同、Child 合同和能力代际的 SHA-256 派生值；代码还固定顶层 `tools/list` 24 KiB、Child 描述 800 字符、单个输入/输出 Schema 4 KiB、枚举 32 项等硬预算，并由同一能力目录生成文档、在 CI 检查漂移。
+
+发布后经验进一步说明：渐进披露不是让 Agent 先把所有领域都打开一遍。顶层描述必须足够互斥，Host 只展开一个最匹配领域；用户下一轮改变问题时再切换。这是确定性编排纪律，不是 Server 端概率分类器，也不是把用户锁进固定工作流。
+
+采用结论：更新 ADR-010，使抖音网关对齐这套分层发现和精确执行合同；借鉴协议与测试方法，不复制 Doris 专属探测器和数据库 Runtime。Doris 1.0 内置能力全部只读，不能覆盖抖音写操作的内容绑定审批、幂等、费用、未知状态对账和禁止盲重试，这部分继续由抖音网关独立承担。
+
+官方证据：
+
+- `https://github.com/apache/doris-mcp-server/releases/tag/1.0.0`
+- `https://github.com/apache/doris-mcp-server/issues/189`
+- `https://github.com/apache/doris-mcp-server/blob/master/docs/architecture/request-lifecycle.md`
+- `https://github.com/apache/doris-mcp-server/blob/master/doris_mcp_server/tools/domain_manifest.py`
+- `https://github.com/apache/doris-mcp-server/blob/master/doris_mcp_server/tools/domain_dispatcher.py`
+- `https://github.com/apache/doris-mcp-server/commit/b7b66f5f80becdab7080d8b92a3bce17032752ca`
+
+## A27 抖音 OpenAPI 目录快照、领域网关与真实 MCP 协议验收
+
+2026-08-16 按 `ADR-010` 测试先行实现第一个可运行网关版本。失败基线为
+`ModuleNotFoundError: deerflow.community.douyin_openapi`；随后建立内容寻址的官方目录快照、
+16 个互斥领域、授权感知 Manifest、SHA-256 `manifest_version`、精确 Child 调度、
+Draft 2020-12 输入/输出 Schema 校验和硬字节预算。顶层 `tools/list` 只暴露 16 个
+`douyin_*` 领域，明确不存在与所有领域重叠的 `douyin_capabilities`。
+
+结构化快照将 119 条分为：106 条 `outbound`、6 条 `provider_implemented`、5 条
+`auth`、1 条 `inbound_webhook` 和 1 条 `local_utility`。文档追踪只在 45 条页面取到
+可识别 HTTP 合同；68 条目录链接当前只返回空壳或迁移页，其余为回调、加密或无端点说明。
+这些空壳记录保留在谱系和能力矩阵里，但没有根据名称反推 URL、参数或可用性。
+
+首批采用两个同鉴权、公开只读的搜索 Child：
+
+- `video_search` / `aweme.dy.video_search`：复用 A25 已验收的稳定令牌和视频证据投影。
+- `experience_search` / `aweme.experience.search`：新增图文/经验搜索，最多 10 条，只保留稳定内容 ID、标题、作者、体裁和时长，丢弃临时封面 URL。
+
+真实 MCP stdio 客户端已启动安装后的 `douyin-openapi-mcp` 子进程，完成
+`initialize -> tools/list -> tools/call douyin_search {}`。回执为 16 个领域、无全局能力工具、
+2 个搜索 Child 和 64 位 Manifest 版本。本机未配置抖音 Client Key/Secret，因此两个 Child
+均正确显示 `callable=false / auth_not_configured`，未向平台发请求。这证明本地 MCP
+协议链和失败边界通过，不代表真实抖音 Scope 验收。
+
+快照与全量矩阵见
+`evidence/douyin-openapi-catalog-2026-08-16.md`。授权账号令牌代理、粉丝画像、素材写入、发布、交易、
+幂等、审批与未知结果对账仍未实现，不得标记为生产可用。
+
+本轮最终验收如下：
+
+```text
+Douyin gateway + search focused: 34 passed in 3.14s
+catalog report drift check: passed
+ruff check / format check / git diff --check: passed
+real MCP stdio: 16 domain tools; 2 scoped search Children; missing credentials -> auth_not_configured
+wheel inspection: catalog_snapshot.json, server.py and search adapter present
+backend full non-live: 11,640 passed, 76 skipped, 17 warnings in 397.01s
+```
+
+## A28 当前黄金起号链路真实端到端回执
+
+2026-08-16 在全新聊天、无历史消息、`GLM-5.2 / Incubation candidate` 下运行用户原话
+“我是做黄金礼品的，我要怎么起号？”。本次不是短探针，也没有隐藏标准答案；它从 Lead
+真实调用现役 `explore_content_world`，依次经过语义阅读、内容根选择、冻结地图、资料发现、
+证据阅读和选题编辑，再由 Lead 输出最终回答。
+
+运行回执：
+
+```text
+thread: 114ac37d-0893-457b-90d9-e97ab7bd3ff5
+run: 5f7d751f-53f4-4d7a-8fa3-24908bb1161c
+status: success
+elapsed: 6m04s
+LLM calls: 7
+input tokens: 32,827
+output tokens: 10,026
+total tokens: 42,853
+```
+
+语义与地图部分通过了这一个案例的核心检查：最终内容根为“以黄金礼品为媒介的馈赠关系与
+人情往来”，明确把黄金当特异性锚点，把长期内容世界放在人们如何传心意、定关系、完成
+仪式上；婚嫁只保留为人生节点之一。地图覆盖礼物选择、人情规则、人生节点、参与者、历史
+地域、再流通、经济环境和禁忌边界，没有退回单纯讲材质、工艺和产品陈列。
+
+但本次不能标记为完整起号通过：
+
+- 用户问的是“怎么起号”，最终交付主要是一份约一万输出 Token 的百科式内容地图，没有
+  收敛成可直接理解的账号主张、受众入口、表现形式选择及少量代表性栏目。
+- 研究阶段按“公开证据最强”选择了金钱礼物社会学，而不是按账号长期价值与普通观众兴趣
+  选择内容分支；最终具体选题因此过度学术化。
+- 大地图中的地域差异、消费趋势、城乡差异、数字黄金等许多陈述没有逐项绑定本轮证据，
+  只能视为待核验联想，不能和已取证事实混写。
+- 七次模型调用、六分钟和 42,853 Token 对一次普通起号咨询不可接受。搜索与证据阅读应当
+  服务选中的具体分支，不能迫使每次内容地图都完成论文级取证。
+- 本轮 Gateway 日志显示 `MCP tools: 0`。它验证的是当前内容智能链，不是 A27 抖音
+  OpenAPI MCP 的真实凭证、Scope 或平台回执闭环。
+
+当前结论为 `reviewed -> partial pass`：内容根与地图方向通过，起号交付、事实边界、延迟与
+成本未通过。制作板块继续暂停；下一步应先把“世界发现”和“面向用户的起号收敛”分开计费
+与触发，保留宽地图，默认只输出短判断和代表性路径，联网取证仅在用户选择具体题目或明确
+要求调研时启动。本条只冻结观测与诊断，不修改现役提示词或工作流。
+
+> 2026-08-16 用户复核覆盖：A28 的“内容根与地图方向通过”判定不成立。
+> “以黄金礼品为媒介的馈赠关系与人情往来”仍被黄金、礼品与馈赠锁定，
+> 没有继续走到“礼”及人与人如何相处。A28 改判为 `reviewed -> failed`，
+> 并由 A29 取代；技术运行成功不等于业务语义通过。
+
+## A29 词法主词、语义核与内容根隔离验收
+
+2026-08-16 根据用户对 A28 的纠错，先冻结失败条件：黄金礼品的最终地图不能继续是黄金、礼品、送礼、回礼与婚庆场景的展开；必须允许语义从词法主词“礼品”继续读取真子成分“礼”，再沿其实际语义家族进入人际规范、仪式、制度、秩序和历史变化。反例同时冻结：海鲜不能机械拆成“海”的哲学，火锅底料不能因“火锅”可联想多人共食就转成团圆饭或夜市，水果店不能被店务运营压过水果。
+
+三次黄金真实无搜索运行将失败点逐步定位：
+
+1. 第一次中，商业语义工作者没有输出意义核，共同世界回到“以物为媒介的人际馈赠与关系再生产”，地图全部是送礼和回礼，失败。
+2. 第二次将语义家族隔离后，正确得到“礼”及礼尚往来、先礼后兵、克己复礼、礼崩乐坏、分庭抗礼和非礼勿视；但共同世界被命名为学术化的“礼治秩序下的人际规训与社会建构”，根裁决转而选择“赠予他人”，仍失败。
+3. 第三次要求共同世界覆盖多个实质不同的语义分支，并用普通人可理解的生活问题命名。最终内容根为“人们如何用礼来组织人与人的相处”，根裁决明确将馈赠、礼物交换和心意表达降为该世界的平行分支。地图进入互惠回报、尊敬招纳、先协商后强制、秩序崩塌、自我约束、跨文化礼制、人际关系类型、历史文本和当代礼节，通过。
+
+隔离词义工作者的真实对照探针表明：只给“礼品”时可以识别“礼”为社会关系或文化制度语义核；只给“海鲜”时，“海”只是来源对象，“鲜”只是品质；只给“火锅”时，“火”与“锅”分别是自然元素与器具，均不触发人文语义家族。真实并发反测曾暴露模型把“海”误标为文化制度、把“火锅”误标为人类活动并联想团圆饭的问题；最终边界因此排除自然来源与词内活动的跨域展开。
+
+最终冻结真实回归为：
+
+```text
+黄金礼品 -> 礼 -> 人们如何组织人与人的相处
+海鲜 -> 海鲜
+水果店 -> 水果
+重庆火锅底料 -> 火锅
+```
+
+重要限制：这是语义核与冻结地图的无搜索验收，不是完整起号交付。自由女神、国礼、埃文·凯尔、周公制礼作乐等具体题目需要在冻结根之后进入搜索、正文阅读与事实边界；本轮没有使用搜索，不得宣称这些选题已被系统取证。架构决策见 `ADR-011`。
+
+本轮最终验证：
+
+```text
+content-intelligence focused: 55 passed
+repository guidance budget: passed
+backend full non-live: 11,645 passed, 76 skipped, 17 warnings in 466.91s
+ruff check / format check / git diff --check: passed
+```
+
+第一次全量测试曾出现 37 个认证、CSRF 和渠道连锁失败。复核发现根目录本地 `.env` 为右侧开发页面配置了 `DEER_FLOW_AUTH_DISABLED=1`，而 `uv run` 会自动载入该文件；因此测试进程实际处于免登录模式。失败组在显式 `DEER_FLOW_AUTH_DISABLED=0` 后为 `479 passed`，完整套件也全部通过。该回执是测试环境边界，不修改本地产品运行配置，也不把配置误差记作语义架构回归。
+
+## A30 词典、词义图与向量召回可行性审计
+
+2026-08-16 根据用户提出的“为语义和内容根建立向量库并装入《现代汉语词典》”设想，审计结论为 `reviewed -> offline comparison required`：词汇知识可以补强 A29 的词义证据，但不应直接采用“整本词典切块 + 相似度检索”，也不应让词典或向量分数裁决内容根。
+
+当前问题包含三个不同任务：复合词内部是否存在仍然承载含义的语素、该语素在当前上下文采用哪个义项、多个义项与固定表达是否能连续进入更大的内容世界。普通向量检索主要回答“哪些文本相似”；查询“礼品”时很可能继续召回礼物、赠品、礼盒等相邻表达，反而加强已经失败的馈赠世界。它也无法单独证明“礼品”可读取“礼”，同时“海鲜”不能据此机械拆为“海”和“鲜”。汉语复合词研究区分透明与不透明组合，词义不是语素义的简单相加；词义消歧研究也把上下文义项和词义库存作为独立问题。向量可用于发现候选关系，但不能代替可检查的构词关系和义项连续性。
+
+建议候选是可插拔的 `LexicalEvidenceProvider`：
+
+```text
+词法主词
+-> 整词精确查询
+-> 真子成分/语素精确查询
+-> 义项、词性、构词关系和固定表达图
+-> 上下文义项审查与支持/反例
+-> 现有隔离词义工作者
+-> 现有共同世界与内容根裁决
+```
+
+首版以 SQLite 结构化索引和精确/前后缀/关系查询为主，记录 `lexeme / sense_id / pos / gloss / morpheme / typed_relation / example / source / license / version`。向量检索只作为可关闭的二级召回，用于在已经确认的义项附近寻找遗漏表达；不得直接选语义核、改写冻结内容根或把高余弦相似度当意义连续性的证据。现有根裁决继续比较最大有效内容世界，词典只提供词义证据。
+
+数据许可边界：商务印书馆将《现代汉语词典》第 7 版 APP 标为官方正版并提供全量 69,000 字词内容，整本数字化内容不能在没有明确数据授权时抓取、复制或嵌入；中国著作权法也保护具有独创性选择或编排的汇编作品。OpenHowNet 提供义原、义项、词性和例句查询，方向比普通词典切块更贴近本任务，但代码与核心数据许可仍须分别形成 SBOM 记录。Chinese Wordnet 官方条款仅限学术研究、禁止商业使用，排除直接采用。CC-CEDICT 当前下载页采用 CC BY-SA 4.0，允许商业使用但要求署名和对数据改进遵守相同许可，可作为离线原型候选，不等于最终中文释义质量已经验收。
+
+下一步只做新保留集上的四臂离线比较：现役 A29 基线、精确词典、精确词典加关系图、关系图加向量召回。比较语义核准确率、机械拆词误报、最终内容根、地图可用性、延迟和 Token；黄金礼品、海鲜、水果店、重庆火锅底料只作为开发回归，不再充当新架构的隐藏测试。比较通过前不增加运行时向量数据库、不导入《现代汉语词典》、不修改根裁决权。
+
+主要证据：
+
+- `https://www.cp.com.cn/Content/2020/11-20/1505014314.html`
+- `https://www.npc.gov.cn/c2/c30834/202011/t20201119_308796.html`
+- `https://github.com/thunlp/OpenHowNet/blob/master/README.md`
+- `https://lope.linguistics.ntu.edu.tw/cwn2/licence/`
+- `https://cc-cedict.org/editor/editor.php?handler=Download`
+- `https://lope.linguistics.ntu.edu.tw/projects/chinese-wordnet/`
+- `https://direct.mit.edu/coli/article/47/2/387/98520/Analysis-and-Evaluation-of-Language-Models-for`
+
+### A30 实施结果：结构化词义证据采用，稠密向量暂缓
+
+2026-08-16 完成测试先行的可插拔 `LexicalEvidenceProvider`。本地 CC-CEDICT 索引支持整词
+精确义项、严格子成分、借词/音译提示、有类型前后缀与词内关系、义项均衡选择、专名过滤、
+输入输出预算、来源摘要和只读查询。`explore_content_world` 在
+`CONTENT_INTELLIGENCE_CEDICT_INDEX` 存在时启用；未配置时自动查找
+`backend/.deer-flow/lexicons/cc-cedict.sqlite3`，缺失、损坏或查询失败均保留纯模型路径。
+本地路径、整库内容和商业词典均不进入模型、前端、日志或 Git；只有有界词义投影进入隔离
+词义工作者。
+
+官方 2026-08-15 CC-CEDICT 发布包建立 124,751 条本地记录，99 条被有界解析器跳过；解压
+内容摘要为 `ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb`。
+冻结八词三臂严格自动结果为 `4/8 -> 5/8 -> 6/8`；允许“婚礼”同时以“婚”作为有效真
+子成分后的人工复核为 `5/8 -> 6/8 -> 7/8`，两套分数分开保存。新的完整链案例“婚戒”
+最终进入“婚的社会关系如何缔结、确认、重复与被安排”，没有回到珠宝工艺或宗教戒律。
+
+真实运行同时定位到两个非检索问题：共同世界名称会擦掉已接受的“礼”，以及根裁决会让
+“送礼、伴手赠送”因离商品更近而压过其所属的大世界。因此本轮用通用合同补充“保留意义
+核”和“显式比较候选包含关系”，没有加入黄金、礼品、海鲜、火锅等行业关键词。
+
+稠密向量臂没有伪造完成。当前没有经许可且冻结的嵌入运行时，而近邻相似度会优先加强
+礼物、礼盒、赠品等已知错误方向。决定为 `reviewed -> structured evidence adopted for local
+canary; dense vector deferred`。详细决策见 `ADR-012`，逐项运行回执见
+`evidence/lexical-evidence-a30-2026-08-16.md`。
+
+## A31 构成语境所有权与词内已选义项
+
+2026-08-16 在 A30 的陌生案例 canary 中发现两个下游信息损失。`宠物殡葬` 的语义阅读已
+将“宠物”判为构成语境，共同世界却二次推翻并泛化为人类死亡；`老年旅行团` 的词典整词
+义项正确，共同世界却只看到“团”而被“团拜”分支带到节庆问候。两者都不是增加向量召回
+能解决的问题。
+
+本轮冻结职责：语义阅读拥有 `world_scope_effect`，共同世界只能消费
+`required_constitutive_contexts`；若下游漏掉已冻结语境，该泛化候选被代码撤下。隔离词义
+工作者同时向下传递去除原词后的 `selected_meaning_in_head`，词族例子不得覆盖这个锚点。
+集合、组织或群体名称也不再仅因包含多人就自动算社会关系。
+
+黄金礼品和重庆火锅底料真实回归通过；婴儿辅食、云南咖啡豆首跑通过。宠物殡葬的首次
+失败、两次开发修正均单独保留。亲子研学团首跑没有复现团拜漂移，最终地图可用，但“亲子”
+仍被上游误标为分支限定，故结论为 `reviewed -> local canary adopted with modifier residual`，
+不是生产验收。决策见 `ADR-013`，证据见
+`evidence/constitutive-context-a31-2026-08-16.md`。
+
+最终验证为：内容智能聚焦测试 `73 passed`，开发守则 `12 passed`，Ruff 与格式检查通过，
+后端完整非 live 测试 `11,665 passed, 76 skipped, 17 warnings in 451.18s`。17 条 warning 为
+现有依赖弃用和测试用短密钥提醒，本轮无失败。
+
+## A32 词义选定后的稠密向量召回
+
+2026-08-16 应用户要求恢复 A30 暂缓的真实向量实验。首个失败测试证明，在词义消歧之前把
+“礼”的 gift、rite、etiquette 等全部释义拼成向量查询，会优先强化礼物邻近词，重演商品
+世界错误。因此候选顺序冻结为：结构化词义先选定 `selected_meaning`，稠密向量随后只补该
+义项附近的表达，再进入共同世界阅读；它不回流改写词义，也不拥有内容根裁决权。
+
+本地真实底座为 FastEmbed 0.8.0、`BAAI/bge-small-zh-v1.5`、512 维与 sqlite-vec 0.1.9。
+模型快照、91 MB 工件、词典源和索引均绑定 SHA-256；100 词条烟雾索引与七项边界测试通过，
+124,751 词条、512 维、约 260 MB 的全量索引已经完成，SQLite 完整性检查为 `ok`。全新七案例四臂比较完成 28 次唯一冻结运行，27 次合同成功。向量真正产生候选的只有家谱修复和婚书定制，结果均比无向量的关系臂更差；其他五案没有向量候选，回答差异不能归因于向量。
+
+结论为 `discovered -> traced -> reviewed -> rejected`：可归因改善 `0/2`、恶化 `2/2`，同时延迟与 Token 都上升。正式分析器已删除实验期间的 `semantic_recall_provider`、模型提示和运行合同。用户最终确认舍弃后，实验代码、脚本、测试、向量索引、模型缓存与原始本地回执均已删除，仅保留本台账、ADR-014 与
+`evidence/dense-vector-a32-2026-08-16.md`。
+
+## A33 从内容地图到可拍交付
+
+2026-08-16 用户明确了一个长期被忽略的产品边界：学术性和百科性展开本身不是错误，它们是模型理解语义和探索内容方向的内部工作；错误是把这份地图直接当成最终交付。最小可拍单元应当显示“谁、在什么情境下、遇到什么具体事情，账号站在用户的真实位置输出什么观点”。
+
+本轮测试先行新增 `MessagePlan` 和 `BaseDraft`。它们位于 `TopicBrief` 之后，不反向修改语义、内容根、地图或证据账本。具体主体、事情、用户立场和观点为必备字段；时间、地点和场景在真正影响这件事时才填写，不为形式完整强行补造。用户立场只来自原话，不冒充专家，也不允许基础文案在未请求时回到销售和成交。
+
+首个嵌套 `MessagePlan + BaseDraft` 真实合同失败：GLM 原始请求与一次修复请求都没有返回可恢复的工具参数。本轮没有追加更多修复轮次或提示层，而是将合同替换为扁平 `MessagePlanDraft`，再由代码确定性组合 `opening + message_beats + closing` 为基础文案。扁平合同真实单调用通过，白酒完整端到端回归也首次直接返回“今日建议拍摄”，没有再生成长地图正文。
+
+结论为 `discovered -> traced -> reviewed -> adopted for local canary`。这一结论只验收了从取证选题到具体交付的结构；白酒回归所依赖的个人文章和商业站点不足以让价位、品牌和礼数判断进入生产发布。编剧脑、口播、图文、纯素材和第四版营销 Skill 均尚未迁移，下一步只能在 `MessagePlan` 之后按需路由。详见 `ADR-015` 和 `evidence/shooting-delivery-a33-2026-08-16.md`。
+
+## A34 第四版营销与编剧能力迁移审计
+
+2026-08-16 对第四版 `codex/ip-agent-v1-final` 分支完成只读追踪。已提交来源固定为
+`58f4e0c900a2dc589fe4a23bdebbe8e3211b67b7`；审计时未提交补丁摘要为
+`b40c03fd97df59f3cda4559eeada9f8cddc8d065c001215b24596e0b757324dc`，共 27 条状态记录。
+未提交 Writer Brain、Lead、SOUL 与合同修改只作为演进和失败证据，不作为迁移候选。
+
+历史显示第四版后期已经连续移除编排硬门、业务语义硬门和旧语义层，并将 97 个公共 Skill
+全部隔离。现有 1137 行 `writer_brain.py` 仍同时承担故事生成、关键词封锁、固定因果标记、
+事实发布闸门、版本、幂等与事务提交；其“必须逐字出现但、转而、只能、代价是”和 Writer 必须
+先绑定 Editorial Program 的结构不能迁移。可保留的是事实/推断/虚构分离，人物目标、阻力、
+行动、反馈、换招、选择与结果的故事机制，以及不可变版本、哈希、幂等和回执经验。
+
+结论为 `discovered -> traced -> reviewed -> selective rewrite approved; runtime migration pending`。
+营销方法将来进入独立项目级孵化判断，只向下游提供有界主体立场和资源约束，不得改写语义、
+内容根或地图；编剧方法只能在 `TopicBrief -> MessagePlan` 之后、表现形式明确选择叙事时按需
+调用。说明、比较、历史梳理、知识答疑、口播、图文和纯素材不会被强制故事化。详细矩阵、目标
+合同与迁移前失败测试见 `audits/A34-fourth-version-marketing-and-screenwriting.md`。
+
+## A35 同题异讲与讲述策划
+
+2026-08-16 用户指出，同样讲古巴雪茄、卡斯特罗和丘吉尔，有的人能让观众津津有味，有的人
+只能讲成冷笑话；差别在于从哪里出发、以什么视角展开。UC 时代的“震惊体”则说明标题和开头
+可以抢注意力，但空壳包装并不能替代内容兑现。
+
+本轮先写失败测试，再在现有扁平 `MessagePlanDraft` 中增加 `entry_point`、`telling_lens`、
+`audience_question`、`information_order` 和 `payoff`，没有增加新 Agent 或必经阶段。稳定计划身份
+现在绑定完整讲述策划；同一 TopicBrief 和标题只要切入口或视角不同，就形成不同
+`message_plan_id`。失败基线为 `5 failed, 1 passed`，实现后交付测试 `6 passed`、全部内容智能
+回归 `93 passed`，Ruff 和 `git diff --check` 通过。
+
+两次真实 `glm-5-2-260617` 雪茄探针均使用帝国战争博物馆和美国国会图书馆的有界证据。第一
+次选中了“同一个视觉符号、不同人物意义”的有效视角，但把来源年代写成场景、正文偏资料汇报，
+并将雪茄馆擅自塞进收束。通用边界修正后，第二次只从丘吉尔反复出现的雪茄切入，沿“视觉道具
+如何变成人物标志”比较两人，场景保持空值，店铺不再进入正文，事实限制仍被保留。
+
+结论为 `reviewed -> adopted for local canary; quality acceptance pending`。第二次成稿仍偏研究说明，
+还没有达到“津津有味”；当前只验收讲述策划可检查且能转移模型注意力。下一候选是先冻结讲述
+角度，再针对该角度补充真实场景、动作和语言证据后写稿，并与直接写稿做新保留集对照。详见
+`ADR-016` 与 `evidence/telling-treatment-a35-2026-08-16.md`。
+
+## A36 内容地图回归账号级编辑定位
+
+2026-08-16 用户重新划清“做视频”和“做 IP”的边界：内容地图属于前期账号定位，负责长期
+讲什么、用什么稳定方式观察世界；每天的具体选题与实时热点只能从地图上长出。原运行链虽然
+口头称地图为长期内容世界，工程行为却是每次重建地图后立即搜题并优先返回“今日建议拍摄”，
+因此一次搜索结果事实上可能抢走定位权。
+
+本轮测试先行给 `ContentWorldView` 增加 `editorial_promise`、`recurring_lens` 与
+`drift_boundaries`，不增加新 Agent 或新模型调用。地图以长期字段和疆域内容寻址；后续研究新增
+命名候选不会改变版本。`TopicBrief` 必须绑定该版本，且路径第一步必须从冻结内容根出发。
+宽泛起号请求现在先显示账号内容定位，再显示一个地图内的当日样例题。
+
+“泰国老百姓为什么改稻为榴”被登记为优秀地图方向、未完全取证标题。现有研究只直接支持泰国
+一个具体地区的受访果园从一般大田作物改种榴莲，不能推出全国性的水稻转换。上线题名前必须
+继续核具体地区和原作物；在此之前使用“为什么泰国一些农民把传统大田作物改种榴莲”更严谨。
+
+第一次真实端到端探针又暴露一个上游问题：根裁决把“顾客选购水果”当成了比“水果”更大的长期世界。
+这不是地图丰富度问题，而是把“获得对象的交易步骤”误当成了“构成品类的完整参与活动”。新失败测试先锁定
+这个区分，然后只改根裁决边界，没有增加水果关键词或新 Agent。
+
+同一 `glm-5-2-260617`、同一干净问题在修正后选择“水果”，并明确生成果农选种与种植变化、产区演化、流通价格、
+食用风味和历史文化等长期疆域。因此“为什么某地果农改种某种水果”已是地图内的自然路径。
+
+结论为 `reviewed -> adopted for local canary; persistence pending`。五个内容智能聚焦文件共 `97 passed`。账号级持久化、用户确认、
+版本切换和独立热点来源合同尚未实现。详见 `ADR-017` 与
+`evidence/account-editorial-map-a36-2026-08-16.md`。
+
+## A37 孵化运营全模块编排基线
+
+2026-08-16 对第六版当前运行时、第五版 `3ee135f7` 隔离实验与第四版
+`58f4e0c9` 生命周期代码完成重新对账。用户指出预演、发布回执、分析复盘、对标体系、
+MediaKit 和抖音 OpenAPI 已分别存在，新问题不是继续造模块，而是建立共享业务谱系并重新接线。
+
+本轮确认的事实：
+
+- 第六版已有语义、账号级内容地图、联网取证、`TopicBrief`、`MessagePlan` 和基础文案纵切，
+  但项目与账号持久化尚未实现。
+- 第六版抖音 OpenAPI Catalog 收录 119 条目录记录并分入 16 个领域；当前采用的 Child 只有
+  `video_search` 和 `experience_search`，目录存在不等于生产可用。
+- 第五版 E15 保存账号链接采集、多平台搜索、受众证据、有界 Lead 投影和 MediaKit 任务回执。
+  抖音“大能”和“田永成”案例通过过隔离真实采集与分析，但 E15 从未注册为第六版 Tool/MCP。
+- 第五版 MediaKit 已真实运行元信息、ASR、OCR 和场景切分；OCR 误检也证明它只能作为
+  机器观察，不能作为营销事实或孵化判断。
+- 第四版有发布回执 repository/API、浏览器发布恢复、平台指标代码和预演/复盘历史表。
+  预演与复盘表后来随旧语义层退役；因此只采用不可变、幂等、恢复、未知对账和预测对实绩方法，
+  拒绝整个 `personal_ip` 包、旧 SOUL、必填阶段和硬门。
+
+架构冻结为“一个总脑、三条循环、两个执行底座、一套事实台账”。每个业务模块产生一个内容寻址、
+可追溯的产物；Lead 按用户当前目标补齐所需产物，不强制每个请求走完全流程。只有所有权、密钥、费用、
+不可逆审批、幂等并发、未知结果对账和有来源的禁止规则可以硬拦截。
+
+用户进一步确认，编排不能将 DeerFlow 退化为一个普通聊天壳。本轮因此对现有运行时再做一次能力对位：
+LangGraph checkpoint 与 run ownership 承担恢复，受控工作者与 `task` 子 Agent 分别承担紧耹合和可并行认知工作，
+MCP 与 `tool_search` 承担平台能力渐进发现，Skill 承担按需方法，Memory 只保存偏好和显式纠错，Sandbox 与
+uploads 隔离媒体，Scheduler 复用正常 run lifecycle 执行定时发布和复盘，长耗时任务使用数据库租约恢复，
+SSE/StreamBridge 和工具输出外部化承担可观测性与上下文保护。完整利用矩阵已加入实施计划。
+
+分阶段工作包冻结为：
+
+```text
+W01 共享产物脊柱
+-> W02 读取与证据中心
+-> W03 孵化与单条内容谱系
+-> W04 MediaKit 制作路由
+-> W05 预演、审批与抖音发布
+-> W06 指标、受众与复盘学习
+-> W07 产品化与多平台扩展
+```
+
+这是实施依赖顺序，不是 Lead 面向用户的必经工作流。首个代码切片确定为 W01：只建项目、账号、
+产物包装、父子谱系、内容哈希和证据角色的最小合同，不在同一切片继续修改内容脑提示词。
+
+结论为 `reviewed -> orchestration baseline adopted; implementation starts at W01`。详见
+`decisions/ADR-018-artifact-graph-orchestration.md` 与 `IMPLEMENTATION_PLAN.md`。
+
+## A38 W01 共享产物脊柱实施
+
+2026-08-16 按 A37 编排基线先写失败测试，再实现第六版首个共享业务边界。新增
+`deerflow.incubation` 领域合同、`deerflow.persistence.incubation_ledger` SQL 仓储和
+`0012_incubation_ledger` 迁移。三张表分别保存用户项目、项目内平台账号和内容寻址产物；
+LangGraph checkpoint、聊天摘要和 Memory 均不替代这些表。
+
+已验证的边界包括：两个用户可拥有同名项目且无法互读；账号必须与用户和项目一致；父产物必须
+存在且类型、哈希、用户、项目全部匹配；证据角色参与产物身份，`topic_evidence` 与
+`benchmark_evidence` 不会混查；相同产物重放幂等；API key、Token、Cookie、StorageState、
+临时地址和本地路径类字段不得进入业务 payload。由于 Pydantic 冻结模型不会深冻结内部字典，
+仓储会在事务前重新校验内容哈希，封存后篡改不能留下脏记录。
+
+现有 `ContentWorldView` 新增的是可选适配器，而不是新的必经阶段。它只封存
+`content_map_version_id` 所代表的长期内容根、受众疆域、编辑承诺、稳定观察方法、漂移边界和地图维度；
+一次运行的 `record_id`、商业对象、候选根、命名搜索候选和未知项不会因每次取证变化而制造账号定位
+新版本。Memory 工具说明同步移除“durable project context”，明确项目版本、审批、回执、指标与学习
+状态必须从所有者隔离的业务台账重建。
+
+计划原写“用内存仓储完成快速合同测试”。实际改为每个测试使用临时 SQLite 驱动同一 SQL 仓储，
+原因是独立内存仓储会形成第二套持久化语义，与“业务数据库是唯一真相源”冲突。该偏差没有改变
+验收目标，并增加了真实 Alembic 启动、旧库升级、并发引导和 ORM/迁移一致性覆盖。
+
+结果为 `adopted -> implemented; Lead/API project hydration pending`。本轮相关测试共 102 项通过，
+随后新增的长期地图适配与内层 payload 防篡改测试共 40 项聚焦回归通过；Ruff、Alembic autogen
+一致性和 `git diff --check` 通过。完整命令与文件回执见
+`evidence/incubation-ledger-a38-2026-08-16.md`。
+
+## A39 W02 抖音选题证据第一切片
+
+2026-08-16 开始将现有读取能力接入 A38 共享脊柱。先选择已经具备官方 Catalog、Manifest、
+Schema 和权限上下文的抖音 `search.video_search`，没有先迁账号抓取或 MediaKit。新增通用
+`EvidenceSnapshot`，显式区分 provider、collection method、evidence role、capture time、rights basis、
+population scope、provenance、coverage、route receipt、warnings 和 limitations。
+
+抖音平台适配器只接受经过 DomainRouter 的 `search.video_search` 成功回执，并白名单保留公开视频
+ID、标题、公开链接、文本摘录、作者显示名、发布时间与点赞观察值。它固定生成
+`topic_evidence`；错误路由、伪装成 `benchmark_evidence`、结果数量不一致或新增未审阅临时字段都会
+失败。单条视频和一次搜索被明确限制为选题证据，不能证明对标账号定位、受众、成绩或可复制模式。
+
+为控制 Token，完整快照只进入业务台账；`to_lead_projection()` 在 16 KB 默认预算内按完整证据项
+装箱，返回快照哈希、路由回执哈希、覆盖、代表项、纳入数和省略数。它不会把字节流截成看似完整的
+半条证据。4 KB 压力测试使用 20 条长文本，投影保持预算内并显式报告截断。
+
+结论为 `reviewed -> implemented; production project ingestion pending`。适配器聚焦测试 `5 passed`；
+与账本、内容地图、抖音 Router、视频搜索、体验搜索和 Lead Memory 边界的联合回归 `64 passed`。
+本轮没有重新调用真实抖音 API，因此沿用旧搜索能力的 `verified` 结论，不把新项目入库链标成
+`verified`。加入迁移、并发启动、Alembic autogen 和持久化脚手架后的最终相关套件为
+`156 passed`。详见 `evidence/douyin-topic-evidence-a39-2026-08-16.md`。

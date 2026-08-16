@@ -22,6 +22,9 @@ dependencies = [
     "langchain-anthropic>=1.4.1",
     "langchain-deepseek>=1.0.1",
     "langchain-mcp-adapters>=0.2.2",
+    # First-party Douyin OpenAPI gateway uses FastMCP directly rather than
+    # relying on the adapter's transitive dependency as an undeclared API.
+    "mcp>=1.28.1",
     "langchain-openviking==0.1.0",
     "langchain-openai>=1.2.1",
     "langfuse>=3.4.1",
@@ -33,6 +36,8 @@ dependencies = [
     "markitdown[all,xlsx]>=0.0.1a2",
     "packaging>=24.2",
     "pydantic>=2.12.5",
+    # Manifest-disclosed child contracts are validated on both input and output.
+    "jsonschema>=4.26.0",
     "pyyaml>=6.0.3",
     "readabilipy>=0.3.0",
     "tavily-python>=0.7.17",
@@ -52,6 +57,7 @@ dependencies = [
 
 [project.scripts]
 deerflow = "deerflow.tui.cli:main"
+douyin-openapi-mcp = "deerflow.community.douyin_openapi.server:main"
 
 [project.optional-dependencies]
 # Terminal workbench (TUI). Kept optional so the core harness install stays lean;

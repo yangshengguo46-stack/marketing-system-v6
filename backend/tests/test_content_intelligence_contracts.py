@@ -16,6 +16,7 @@ from deerflow.content_intelligence import (
     GroundedStatement,
     Interpretation,
     ModifierReading,
+    NamedCandidate,
     NarrativeFrame,
     Observation,
     SourceItem,
@@ -197,22 +198,26 @@ def _bundle(record_id: str = "record-1") -> ContentIntelligenceBundle:
         path_id="path-1",
         steps=(
             ContentPathStep(
-                from_label="重庆火锅底料",
-                relation="用于",
-                to_label="火锅",
+                from_label="火锅",
+                relation="可以沿地域习惯研究",
+                to_label="不同地方的人为什么形成不同火锅习惯",
                 basis_refs=(BasisRef(kind="interpretation", ref_id="interpretation-1"),),
             ),
         ),
-        rationale="这是具体选题的理解路径，不属于内容地图。",
+        rationale="这是从冻结内容根进入具体选题的地图路径。",
     )
     content_world = ContentWorldView(
         record_id=record_id,
         source_object="重庆火锅底料",
         content_root="火锅",
         root_rationale="火锅是待展开的内容世界，不是销售方案。",
+        editorial_promise="借火锅理解各地共同饮食及其背后的人与生活。",
+        recurring_lens="从具体地方、人物、事件和习惯进入，再解释它们与火锅的关系。",
+        drift_boundaries=("与火锅没有可解释路径的热点不进入地图。",),
     )
     topic_brief = TopicBrief(
         record_id=record_id,
+        content_map_version_id=content_world.content_map_version_id(),
         question="一条内容路径真正值得回答什么？",
         central_claim="选题必须从已理解的关系中长出来。",
         mechanism="使用记录中的观察和解释来限定命题。",
@@ -238,6 +243,40 @@ def test_three_projections_share_one_record_without_becoming_one_stage() -> None
     assert bundle.content_world.content_root == "火锅"
     assert bundle.topic_brief is not None
     assert bundle.topic_brief.path.path_id == "path-1"
+    assert bundle.topic_brief.content_map_version_id == bundle.content_world.content_map_version_id()
+
+
+def test_topic_cannot_bind_to_a_different_content_map_version() -> None:
+    bundle = _bundle()
+    assert bundle.topic_brief is not None
+    payload = bundle.model_dump(mode="json")
+    payload["topic_brief"]["content_map_version_id"] = "content-map-wrong"
+
+    with pytest.raises(ValueError, match="content map version"):
+        ContentIntelligenceBundle.model_validate(payload)
+
+
+def test_content_map_version_ignores_research_candidates_but_changes_with_positioning() -> None:
+    bundle = _bundle()
+    world = bundle.content_world
+    assert world is not None
+
+    research_enriched = world.model_copy(
+        update={
+            "named_candidates": (
+                NamedCandidate(
+                    name="一个后来核验的人物",
+                    connection="它只是地图上的一个已取证入口。",
+                    kind="grounded",
+                    basis_refs=(BasisRef(kind="observation", ref_id="observation-1"),),
+                ),
+            )
+        }
+    )
+    changed_lens = world.model_copy(update={"recurring_lens": "只介绍火锅产品和制作步骤。"})
+
+    assert research_enriched.content_map_version_id() == world.content_map_version_id()
+    assert changed_lens.content_map_version_id() != world.content_map_version_id()
 
 
 def test_narrative_frame_must_resolve_every_claim_to_the_shared_record() -> None:

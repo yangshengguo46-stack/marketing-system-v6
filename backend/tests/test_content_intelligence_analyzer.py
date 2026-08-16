@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 from typing import Any
 
@@ -14,6 +15,7 @@ from deerflow.content_intelligence import (
     ContentRootDecisionDraft,
     ContentRootSelectionDraft,
     FrozenContentMapDraft,
+    SemanticFamilyExpansionDraft,
     SemanticReadingDraft,
     SharedWorldReviewDraft,
     SharedWorldSynthesisDraft,
@@ -23,9 +25,24 @@ from deerflow.content_intelligence import (
     synthesize_content_world_narration,
 )
 from deerflow.content_intelligence.analyzer import (
+    CONTENT_ROOT_DECISION_SYSTEM_PROMPT,
     CONTENT_WORLD_NARRATION_SYSTEM_PROMPT,
     FROZEN_CONTENT_MAP_SYSTEM_PROMPT,
+    SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT,
+    SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT,
+    SemanticModifierDraft,
+    _normalize_semantic_family,
+    _normalize_shared_world_contexts,
     _parse_structured_result,
+    _render_shared_world_input,
+)
+from deerflow.content_intelligence.lexical_evidence import (
+    LexicalComponentEvidence,
+    LexicalEntryEvidence,
+    LexicalEvidence,
+    LexicalEvidenceMode,
+    LexicalEvidenceSource,
+    LexicalRelatedExpression,
 )
 
 
@@ -92,6 +109,24 @@ class SequencedStructuredFakeModel:
     async def ainvoke(self, messages, config=None):
         self.calls += 1
         self.message_batches.append(tuple(messages))
+        return self.current_schema.model_validate(self.payloads[self.current_schema])
+
+
+class UnavailableSharedWorldFakeModel(SequencedStructuredFakeModel):
+    def __init__(self, payloads: dict[type, dict[str, Any]]) -> None:
+        super().__init__(payloads)
+        self.shared_world_attempts = 0
+
+    async def ainvoke(self, messages, config=None):
+        self.calls += 1
+        self.message_batches.append(tuple(messages))
+        if self.current_schema is SharedWorldSynthesisDraft:
+            self.shared_world_attempts += 1
+            return {
+                "raw": AIMessage(content=""),
+                "parsed": None,
+                "parsing_error": ValueError("provider returned no structured output"),
+            }
         return self.current_schema.model_validate(self.payloads[self.current_schema])
 
 
@@ -207,6 +242,56 @@ def test_structured_parser_rejects_multiple_tool_calls_instead_of_silently_using
         )
 
 
+def test_shared_world_schema_normalizes_provider_null_strings() -> None:
+    draft = SharedWorldSynthesisDraft.model_validate(
+        {
+            "common_action_or_relation": "null",
+            "participant_relationship": "None",
+            "world_label": "  ",
+            "semantic_path": [],
+            "covered_frames": [],
+            "limitations": [],
+        }
+    )
+
+    assert draft.common_action_or_relation is None
+    assert draft.participant_relationship is None
+    assert draft.world_label is None
+
+
+def test_lexical_roles_do_not_promote_places_goods_or_consumables_to_human_worlds() -> None:
+    prompt = SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT
+
+    assert "建筑、商店、场馆" in prompt
+    assert "食物、饮品、器物" in prompt
+    assert "不因具有社会用途或文化联想" in prompt
+
+
+def test_shared_world_prompt_preserves_the_accepted_meaning_core_in_the_world_label() -> None:
+    prompt = SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT
+
+    assert "保留该意义核原词" in prompt
+    assert "不得擦除成‘规则’、‘文化’或‘生活’" in prompt
+    assert "示例和枚举放入 semantic_path" in prompt
+
+
+def test_root_decision_compares_candidate_containment_instead_of_product_proximity() -> None:
+    prompt = CONTENT_ROOT_DECISION_SYSTEM_PROMPT
+
+    assert "完整包含于另一候选的一个具体分支" in prompt
+    assert "不能仅因更靠近商品或用途就胜出" in prompt
+    assert "包含关系不是抽象层级优先" in prompt
+
+
+def test_root_decision_distinguishes_acquiring_an_object_from_participating_in_an_activity() -> None:
+    prompt = CONTENT_ROOT_DECISION_SYSTEM_PROMPT
+
+    assert "选择、购买、下单或取得完整对象" in prompt
+    assert "进入对象世界的一次获得步骤" in prompt
+    assert "经营容器本身就是让参与者进入某项完整活动" in prompt
+    assert "交易步骤中出现人物、选择或信任" in prompt
+
+
 def _semantic_payload() -> dict[str, Any]:
     return {
         "source_object": "重庆火锅底料",
@@ -222,6 +307,14 @@ def _semantic_payload() -> dict[str, Any]:
         "social_or_cultural_frames": ["火锅饮食文化"],
         "seller_actions": [],
         "uncertainties": [],
+    }
+
+
+def _lexical_semantic_payload() -> dict[str, Any]:
+    return {
+        "components": [],
+        "branches": [],
+        "limitations": [],
     }
 
 
@@ -247,15 +340,16 @@ def _shared_world_payload() -> dict[str, Any]:
         "common_action_or_relation": "围绕火锅共同进食",
         "participant_relationship": "共同用餐者",
         "world_label": "围绕火锅的共同用餐生活",
+        "semantic_path": ["火锅", "共同进食", "共同用餐生活"],
         "covered_frames": ["火锅饮食文化"],
         "limitations": ["不能扩成与火锅无关的泛餐饮生活"],
     }
 
 
-def _shared_world_review_payload(*, subject_is_constitutive: bool = False) -> dict[str, Any]:
+def _shared_world_review_payload(*, entry_path_is_explanatory: bool = False) -> dict[str, Any]:
     return {
         "reviewed_world_label": "围绕火锅的共同用餐生活",
-        "subject_is_constitutive": subject_is_constitutive,
+        "entry_path_is_explanatory": entry_path_is_explanatory,
         "substitution_counterfactual": "换成其他餐食后，共同用餐仍完整成立。",
         "rationale": "共同用餐是普通使用场景，不是该主词特有的社会实践。",
     }
@@ -279,6 +373,9 @@ def _root_selection_payload() -> dict[str, Any]:
 
 def _frozen_map_payload() -> dict[str, Any]:
     return {
+        "editorial_promise": "持续借火锅理解不同地方的人怎样共同吃饭、形成习惯并表达关系。",
+        "recurring_lens": "每次从一个具体的人、地方或变化进入，再解释它如何改变火锅及共同用餐。",
+        "drift_boundaries": ["与火锅内容根没有可解释路径的热点不能进入账号地图。"],
         "map_directions": [
             {"dimension": "地域饮食", "actual_directions": ["不同地区火锅锅底为什么不同"]},
         ],
@@ -291,10 +388,187 @@ def _focused_model() -> SequencedStructuredFakeModel:
     return SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
+            SemanticFamilyExpansionDraft: _lexical_semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
             SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _frozen_map_payload(),
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_optional_shared_world_failure_preserves_other_root_candidates() -> None:
+    model = UnavailableSharedWorldFakeModel(
+        {
+            SemanticReadingDraft: _semantic_payload(),
+            SemanticFamilyExpansionDraft: _lexical_semantic_payload(),
+            ContentRootDecisionDraft: _root_decision_payload(),
+            FrozenContentMapDraft: _frozen_map_payload(),
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做重庆火锅底料的，我要怎么起号？",
+            subject_expression="我是做重庆火锅底料的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+    assert model.shared_world_attempts == 2
+    assert bundle.content_world.content_root == "火锅"
+    assert bundle.business_semantics.recurring_human_worlds == ()
+    assert any("共同世界分析暂时不可用" in item.question for item in bundle.record.unknowns)
+
+
+class StubLexicalEvidenceProvider:
+    def __init__(self, evidence: LexicalEvidence | Exception) -> None:
+        self.evidence = evidence
+        self.calls: list[tuple[str, LexicalEvidenceMode]] = []
+
+    async def lookup(
+        self,
+        lexical_head: str,
+        *,
+        mode: LexicalEvidenceMode = LexicalEvidenceMode.RELATIONS,
+    ) -> LexicalEvidence:
+        self.calls.append((lexical_head, mode))
+        if isinstance(self.evidence, Exception):
+            raise self.evidence
+        return self.evidence
+
+
+def _gift_lexical_evidence() -> LexicalEvidence:
+    return LexicalEvidence(
+        lexical_head="礼品",
+        mode=LexicalEvidenceMode.RELATIONS,
+        source=LexicalEvidenceSource(
+            name="CC-CEDICT",
+            version="1.0+2026-08-15T06:33:03Z",
+            license="CC BY-SA 4.0",
+            source_uri="https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+            content_sha256="a" * 64,
+        ),
+        whole_word_entries=(
+            LexicalEntryEvidence(
+                term="礼品",
+                traditional="禮品",
+                pinyin="li3 pin3",
+                glosses=("gift", "present"),
+            ),
+        ),
+        component_candidates=(
+            LexicalComponentEvidence(
+                term="礼",
+                positions=(0,),
+                entries=(
+                    LexicalEntryEvidence(
+                        term="礼",
+                        traditional="禮",
+                        pinyin="li3",
+                        glosses=("rite", "propriety", "etiquette", "courtesy"),
+                    ),
+                ),
+                related_expressions=(
+                    LexicalRelatedExpression(
+                        term="礼仪",
+                        relation="prefix_extension",
+                        glosses=("etiquette", "ceremony"),
+                        supports_component_glosses=("etiquette", "ceremony"),
+                    ),
+                    LexicalRelatedExpression(
+                        term="礼制",
+                        relation="prefix_extension",
+                        glosses=("system of rites",),
+                        supports_component_glosses=("rite",),
+                    ),
+                ),
+            ),
+        ),
+        limitations=("词典义项只是词义证据，不证明当前语境中的语义连续性。",),
+    )
+
+
+def _gold_evidence_model() -> SequencedStructuredFakeModel:
+    return SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: {
+                "source_object": "黄金礼品",
+                "lexical_head": "礼品",
+                "modifiers": [
+                    {
+                        "term": "黄金",
+                        "relation": "材质",
+                        "modifies": "礼品",
+                        "removal_counterfactual": "去掉黄金后仍是礼品",
+                    }
+                ],
+                "offering_role": "complete_object_or_service",
+                "role_rationale": "黄金是材质，礼品是完整对象。",
+                "served_objects": [],
+                "served_activities": [],
+                "defining_functions_or_uses": [],
+                "social_or_cultural_frames": [],
+                "unmodified_subject_activities": [],
+                "unmodified_subject_functions_or_uses": [],
+                "unmodified_subject_frames": [],
+                "seller_actions": [],
+                "uncertainties": [],
+            },
+            SemanticFamilyExpansionDraft: {
+                "components": [
+                    {
+                        "term": "礼",
+                        "component_of": "礼品",
+                        "role": "cultural_institution",
+                        "relation_to_subject": "礼在整词中仍承载仪式、分寸与人际规范的含义",
+                    }
+                ],
+                "branches": [
+                    {
+                        "component": "礼",
+                        "expression": "礼仪",
+                        "semantic_domain": "人际规范与社会制度",
+                        "continuity": "都保留仪式、分寸和规范的意义",
+                    }
+                ],
+                "limitations": [],
+            },
+            SharedWorldSynthesisDraft: {
+                "common_action_or_relation": "人们用礼来表达尊重、确认关系并协调相处",
+                "participant_relationship": "不同身份、关系和场合中的人",
+                "world_label": "人们如何用礼组织人与人的相处",
+                "semantic_path": ["礼", "礼仪与礼制", "人们如何相处"],
+                "covered_frames": [],
+                "limitations": [],
+            },
+            SharedWorldReviewDraft: {
+                "reviewed_world_label": "人们如何用礼组织人与人的相处",
+                "entry_path_is_explanatory": True,
+                "substitution_counterfactual": "更换具体礼品后，礼所承载的关系与规范仍成立。",
+                "rationale": "该世界覆盖了礼仪、礼制与人际分寸。",
+            },
+            ContentRootDecisionDraft: {
+                "selected_candidate_index": 3,
+                "audience_territory_candidate_index": 3,
+                "root_rationale": "礼进入的人际与制度世界比具体礼品更有长期展开能力。",
+                "unknowns": [],
+            },
+            FrozenContentMapDraft: {
+                "editorial_promise": "持续借礼理解人与人如何表达尊重、确认关系并维持共同秩序。",
+                "recurring_lens": "从一个具体人物、礼节、制度或公共事件进入，解释其中的关系分寸。",
+                "drift_boundaries": ["与礼及人际相处没有可解释路径的热点不进入地图。"],
+                "map_directions": [
+                    {
+                        "dimension": "规范与分寸",
+                        "actual_directions": ["不同关系中的礼貌、礼节与规则如何变化"],
+                    }
+                ],
+                "named_candidates": [],
+                "unknowns": [],
+            },
         }
     )
 
@@ -426,8 +700,15 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "优先保留该对象为最小完整中心" not in system_text
     assert "不得把对一个完整对象的制作、使用或消费动作冒充成更完整的对象" in system_text
     assert "不得停在另一个中间产物" in system_text
-    assert "共同行动或关系是去修饰主词成立的构成性条件" in system_text
-    assert "普通使用、消费、制作或发生场合" in system_text
+    assert "词法主词不等于意义终点" in system_text
+    assert "不得机械按单字拆词" in system_text
+    assert "source_object 和 lexical_head 都必须原样摘录" in system_text
+    assert "自然物、地域、水域、材质或来源" in system_text
+    assert "体验、结果、功能和发生场景不属于 served_objects" in system_text
+    assert "不得把可移除的地域、材质、价格或人群修饰继承给完整对象" in system_text
+    assert "经营容器的进货、陈列、结算和店务流程" in system_text
+    assert "双向解释" in system_text
+    assert "普通使用、消费、制作、交易或发生场合" in system_text
     assert "地图边界只受已冻结内容根约束" in system_text
     assert "商品回桥" not in system_text
     assert "回到商品" not in system_text
@@ -498,7 +779,7 @@ async def test_analyzer_decodes_provider_stringified_projection_objects_without_
         "path_id": "path-1",
         "steps": [
             {
-                "from_label": "咖啡设备故障",
+                "from_label": "咖啡设备故障与出品问题",
                 "relation": "影响",
                 "to_label": "咖啡出品",
                 "basis_refs": [{"kind": "interpretation", "ref_id": "interpretation-1"}],
@@ -548,34 +829,33 @@ async def test_content_world_focus_uses_semantic_attention_before_map_expansion(
 
     assert model.schemas == [
         SemanticReadingDraft,
+        SemanticFamilyExpansionDraft,
         SharedWorldSynthesisDraft,
         SharedWorldReviewDraft,
         ContentRootDecisionDraft,
         FrozenContentMapDraft,
     ]
-    assert model.include_raw_flags == [True, True, True, True, True]
-    assert model.calls == 5
-    assert "怎么起号" not in model.message_batches[0][1].content
-    assert "怎么起号" not in model.message_batches[1][1].content
-    assert "怎么起号" not in model.message_batches[2][1].content
-    assert "怎么起号" not in model.message_batches[3][1].content
-    assert "怎么起号" not in model.message_batches[4][1].content
+    assert model.include_raw_flags == [True, True, True, True, True, True]
+    assert model.calls == 6
+    assert all("怎么起号" not in batch[1].content for batch in model.message_batches)
+    assert model.message_batches[1][1].content.count("底料") == 1
+    assert "重庆" not in model.message_batches[1][1].content
     assert '"unmodified_subject": "底料"' in model.message_batches[2][1].content
-    assert '"world_label": "围绕火锅的共同用餐生活"' in model.message_batches[2][1].content
-    decision_input = model.message_batches[3][1].content
+    assert '"world_label": "围绕火锅的共同用餐生活"' in model.message_batches[3][1].content
+    decision_input = model.message_batches[4][1].content
     assert '"offering_role": "intermediate_enabler"' in decision_input
     assert '"level": "served_object"' in decision_input
     assert '"label": "火锅"' in decision_input
     assert '"level": "subject_activity"' in decision_input
-    assert "普通制作、处理、食用或使用动作" in model.message_batches[3][0].content
-    assert '"primary_content_center": "火锅"' in model.message_batches[4][1].content
-    assert "重庆火锅底料" not in model.message_batches[4][1].content
-    assert "semantic_reading" not in model.message_batches[4][1].content
-    assert "source_object" not in model.message_batches[4][1].content
-    assert "object_anchor" not in model.message_batches[4][1].content
-    assert "bridge_path" not in model.message_batches[4][1].content
-    assert "商品" not in model.message_batches[4][0].content
-    assert "销售" not in model.message_batches[4][0].content
+    assert "普通制作、处理、食用或使用动作" in model.message_batches[4][0].content
+    assert '"primary_content_center": "火锅"' in model.message_batches[5][1].content
+    assert "重庆火锅底料" not in model.message_batches[5][1].content
+    assert "semantic_reading" not in model.message_batches[5][1].content
+    assert "source_object" not in model.message_batches[5][1].content
+    assert "object_anchor" not in model.message_batches[5][1].content
+    assert "bridge_path" not in model.message_batches[5][1].content
+    assert "商品" not in model.message_batches[5][0].content
+    assert "销售" not in model.message_batches[5][0].content
     assert bundle.business_semantics.offering_role == "intermediate_enabler"
     assert bundle.business_semantics.served_objects[0].text == "火锅"
     assert bundle.business_semantics.served_activities[0].text == "制作火锅"
@@ -588,6 +868,7 @@ async def test_analyzer_recovers_provider_json_message_content_without_retry() -
     model = RawContentSequencedFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
+            SemanticFamilyExpansionDraft: _lexical_semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
             SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
@@ -602,7 +883,7 @@ async def test_analyzer_recovers_provider_json_message_content_without_retry() -
 
     bundle = await analyze_content_intelligence(request, model=model)
 
-    assert model.calls == 5
+    assert model.calls == 6
     assert bundle.business_semantics.offering_role == "intermediate_enabler"
     assert bundle.content_world.content_root == "火锅"
 
@@ -612,6 +893,7 @@ async def test_analyzer_recovers_safe_python_literal_in_invalid_tool_arguments()
     model = MalformedToolArgumentsSequencedFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
+            SemanticFamilyExpansionDraft: _lexical_semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
             SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
@@ -628,7 +910,7 @@ async def test_analyzer_recovers_safe_python_literal_in_invalid_tool_arguments()
         model=model,
     )
 
-    assert model.calls == 5
+    assert model.calls == 6
     assert bundle.content_world.content_root == "火锅"
     assert bundle.record.unknowns[-1].question == "待核验"
 
@@ -638,6 +920,7 @@ async def test_analyzer_retries_one_structurally_invalid_specialist_response() -
     model = RetryableMalformedMapFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
+            SemanticFamilyExpansionDraft: _lexical_semantic_payload(),
             SharedWorldSynthesisDraft: _shared_world_payload(),
             SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
@@ -655,7 +938,7 @@ async def test_analyzer_retries_one_structurally_invalid_specialist_response() -
     )
 
     assert model.map_attempts == 2
-    assert model.calls == 6
+    assert model.calls == 7
     assert len(model.message_batches[-1]) == 3
     assert "只重新返回符合结构合同的内容" in model.message_batches[-1][-1].content
     assert bundle.content_world.content_root == "火锅"
@@ -667,6 +950,191 @@ def test_root_selection_requires_the_chosen_root_to_be_an_explicit_candidate() -
 
     with pytest.raises(ValidationError, match="explicit candidate"):
         ContentRootSelectionDraft.model_validate(payload)
+
+
+@pytest.mark.parametrize("term", ["礼品", "黄金"])
+def test_meaning_bearing_component_must_be_a_strict_part_of_the_lexical_head(term: str) -> None:
+    draft = SemanticFamilyExpansionDraft.model_validate(
+        {
+            "components": [
+                {
+                    "term": term,
+                    "component_of": "礼品",
+                    "role": "cultural_institution",
+                    "relation_to_subject": "待审语义成分",
+                }
+            ],
+            "branches": [],
+            "limitations": [],
+        }
+    )
+
+    normalized = _normalize_semantic_family("礼品", draft)
+
+    assert normalized.components == ()
+
+
+def test_lexical_semantic_normalization_keeps_a_true_component_and_its_bound_branches() -> None:
+    draft = SemanticFamilyExpansionDraft.model_validate(
+        {
+            "components": [
+                {
+                    "term": "礼",
+                    "component_of": "礼品",
+                    "role": "cultural_institution",
+                    "relation_to_subject": "礼在复合词中仍承载交往规范的含义",
+                },
+                {
+                    "term": "品",
+                    "component_of": "礼品",
+                    "role": "complete_object",
+                    "relation_to_subject": "品在复合词中表示物品",
+                },
+            ],
+            "branches": [
+                {
+                    "component": "礼",
+                    "expression": "礼节与礼仪",
+                    "semantic_domain": "人际规范",
+                    "continuity": "都保留交往分寸与规范的含义",
+                },
+                {
+                    "component": "品",
+                    "expression": "品评",
+                    "semantic_domain": "评价",
+                    "continuity": "此处已经变义",
+                },
+            ],
+            "limitations": [],
+        }
+    )
+
+    normalized = _normalize_semantic_family("礼品", draft)
+
+    assert [component.term for component in normalized.components] == ["礼", "品"]
+    assert [branch.component for branch in normalized.branches] == ["礼"]
+
+
+def test_lexical_evidence_drops_model_invented_family_terms_but_keeps_bound_terms() -> None:
+    draft = SemanticFamilyExpansionDraft.model_validate(
+        {
+            "components": [
+                {
+                    "term": "礼",
+                    "component_of": "礼品",
+                    "role": "cultural_institution",
+                    "relation_to_subject": "礼在整词中仍承载仪式、分寸与规范",
+                }
+            ],
+            "branches": [
+                {
+                    "component": "礼",
+                    "expression": "礼仪",
+                    "semantic_domain": "仪式与人际规范",
+                    "continuity": "保留仪式与规范含义",
+                },
+                {
+                    "component": "礼",
+                    "expression": "彩礼",
+                    "semantic_domain": "婚嫁馈赠",
+                    "continuity": "模型自行补入的相邻词",
+                },
+            ],
+            "limitations": [],
+        }
+    )
+
+    normalized = _normalize_semantic_family(
+        "礼品",
+        draft,
+        lexical_evidence=_gift_lexical_evidence(),
+    )
+
+    assert [branch.expression for branch in normalized.branches] == ["礼仪"]
+
+
+@pytest.mark.asyncio
+async def test_lexical_worker_receives_optional_bounded_evidence_without_business_context() -> None:
+    provider = StubLexicalEvidenceProvider(_gift_lexical_evidence())
+    model = _gold_evidence_model()
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+        lexical_evidence_provider=provider,
+    )
+
+    assert provider.calls == [("礼品", LexicalEvidenceMode.RELATIONS)]
+    family_input = model.message_batches[1][1].content
+    assert '"lexical_head": "礼品"' in family_input
+    assert '"whole_word_entries"' in family_input
+    assert '"term": "礼"' in family_input
+    assert '"term": "礼仪"' in family_input
+    assert "黄金" not in family_input
+    assert "我是做" not in family_input
+    assert "/Users/" not in family_input
+    assert len(family_input.encode("utf-8")) <= 8_500
+    assert bundle.content_world.content_root == "人们如何用礼组织人与人的相处"
+
+
+def test_rejected_dense_recall_is_not_part_of_the_runtime_contract() -> None:
+    assert "semantic_recall_provider" not in inspect.signature(analyze_content_intelligence).parameters
+    assert "semantic_recall" not in SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT
+
+
+@pytest.mark.asyncio
+async def test_optional_lexical_provider_failure_preserves_the_existing_model_only_path() -> None:
+    provider = StubLexicalEvidenceProvider(RuntimeError("local index unavailable"))
+    model = _gold_evidence_model()
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+        lexical_evidence_provider=provider,
+    )
+
+    family_input = model.message_batches[1][1].content
+    assert provider.calls == [("礼品", LexicalEvidenceMode.RELATIONS)]
+    assert '"lexical_head": "礼品"' in family_input
+    assert "lexical_evidence" not in family_input
+    assert bundle.content_world.content_root == "人们如何用礼组织人与人的相处"
+
+
+def test_lexical_human_activity_does_not_open_an_unrelated_semantic_family() -> None:
+    draft = SemanticFamilyExpansionDraft.model_validate(
+        {
+            "components": [
+                {
+                    "term": "火锅",
+                    "component_of": "火锅底料",
+                    "role": "human_activity",
+                    "relation_to_subject": "火锅底料服务于火锅",
+                }
+            ],
+            "branches": [
+                {
+                    "component": "火锅",
+                    "expression": "团圆饭",
+                    "semantic_domain": "家庭仪式",
+                    "continuity": "都可以多人共餐",
+                }
+            ],
+            "limitations": [],
+        }
+    )
+
+    normalized = _normalize_semantic_family("火锅底料", draft)
+
+    assert [component.term for component in normalized.components] == ["火锅"]
+    assert normalized.branches == ()
 
 
 def test_root_selection_rejects_a_narrow_example_branch_as_the_content_root() -> None:
@@ -701,7 +1169,7 @@ def test_root_selection_rejects_a_narrow_example_branch_as_the_content_root() ->
 
 
 @pytest.mark.asyncio
-async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_branch() -> None:
+async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_map() -> None:
     semantic = {
         "source_object": "黄金礼品",
         "lexical_head": "礼品",
@@ -726,17 +1194,24 @@ async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_bran
         "uncertainties": [],
     }
     decision = {
-        "selected_candidate_index": 6,
-        "audience_territory_candidate_index": 6,
-        "root_rationale": "礼品的长期内容来自反复发生的赠受与人情关系；婚嫁只是其中一个分支。",
+        "selected_candidate_index": 7,
+        "audience_territory_candidate_index": 7,
+        "root_rationale": "礼品中的意义核是礼；礼进一步通向关系分寸、交往规则与社会秩序。",
         "unknowns": [],
     }
     content_map = {
+        "editorial_promise": "持续借礼理解人与人如何相处，以及公共秩序怎样被建立和改变。",
+        "recurring_lens": "从具体人物、关系、礼节、制度或事件进入，解释礼如何组织人的相处。",
+        "drift_boundaries": ["与人与人相处没有可解释路径的热度内容不进入这张地图。"],
         "map_directions": [
             {
-                "dimension": "人生礼仪",
-                "actual_directions": ["婚嫁中的赠礼与回礼", "满月、祝寿与节庆中的礼数"],
-            }
+                "dimension": "人与人相处的规则与秩序",
+                "actual_directions": ["礼貌与礼节如何划定关系分寸", "古代礼乐为何是社会秩序"],
+            },
+            {
+                "dimension": "历史、国家与公共事件",
+                "actual_directions": ["国家之间如何用象征表达关系", "礼崩乐坏究竟意味着什么"],
+            },
         ],
         "named_candidates": [],
         "unknowns": [],
@@ -744,18 +1219,60 @@ async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_bran
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: semantic,
+            SemanticFamilyExpansionDraft: {
+                "components": [
+                    {
+                        "term": "礼",
+                        "component_of": "礼品",
+                        "role": "cultural_institution",
+                        "relation_to_subject": "礼品是以物承载礼意的一种形式，礼还能独立进入礼貌、礼节、礼仪、礼俗与礼制",
+                    }
+                ],
+                "branches": [
+                    {
+                        "component": "礼",
+                        "expression": "礼貌与礼节",
+                        "semantic_domain": "人际行为规范",
+                        "continuity": "礼规定人与人交往时可感知的分寸与尊重",
+                    },
+                    {
+                        "component": "礼",
+                        "expression": "礼仪与礼俗",
+                        "semantic_domain": "群体仪式与生活秩序",
+                        "continuity": "礼把关系规范落实为群体共同遵循的仪式",
+                    },
+                    {
+                        "component": "礼",
+                        "expression": "礼制与礼乐",
+                        "semantic_domain": "政治制度与社会秩序",
+                        "continuity": "礼从个人交往扩展为角色、等级与公共秩序",
+                    },
+                    {
+                        "component": "礼",
+                        "expression": "礼崩乐坏",
+                        "semantic_domain": "历史变化与秩序危机",
+                        "continuity": "礼的失效可用来观察关系规范和社会秩序如何瓦解",
+                    },
+                ],
+                "limitations": [],
+            },
             SharedWorldSynthesisDraft: {
                 "common_action_or_relation": "通过赠送、收受与回礼表达情感和维系关系",
                 "participant_relationship": "赠礼者、收礼者与相关关系人",
-                "world_label": "送礼与人情往来",
+                "world_label": "人与人之间的相处与人情世故",
+                "semantic_path": [
+                    "礼品是送礼、收礼与回礼的媒介",
+                    "礼是表达关系、分寸与秩序的意义核",
+                    "礼之外仍可研究人与人如何相处",
+                ],
                 "covered_frames": ["婚嫁礼俗", "节庆赠礼", "商务馈赠", "人生礼仪"],
-                "limitations": ["不能扩成与礼品无关的泛人际关系"],
+                "limitations": ["泛人生感悟若不能落到具体关系、行为或事件则不进入地图"],
             },
             SharedWorldReviewDraft: {
-                "reviewed_world_label": "送礼与人情往来",
-                "subject_is_constitutive": True,
-                "substitution_counterfactual": "移除礼物的赠送、收受与回礼后，这一具体实践不再成立。",
-                "rationale": "礼物的流动是该人情实践的构成部分。",
+                "reviewed_world_label": "人与人之间的相处与人情世故",
+                "entry_path_is_explanatory": True,
+                "substitution_counterfactual": "换成宴席、语言、制度或公共事件后，礼所揭示的关系、分寸与秩序仍是同一人类问题。",
+                "rationale": "人与人如何相处解释了为何礼会承载情感、体面、义务和关系判断。",
             },
             ContentRootDecisionDraft: decision,
             FrozenContentMapDraft: content_map,
@@ -771,15 +1288,33 @@ async def test_gold_gift_keeps_human_relations_as_root_and_wedding_as_a_map_bran
         model=model,
     )
 
-    assert bundle.content_world.content_root == "送礼与人情往来"
-    assert bundle.content_world.audience_territory.text == "送礼与人情往来"
-    shared_world_input = model.message_batches[1][1].content
-    assert '"unmodified_subject": "礼品"' in shared_world_input
-    assert "黄金" not in shared_world_input
+    assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
+    assert bundle.content_world.audience_territory.text == "人与人之间的相处与人情世故"
+    assert bundle.business_semantics.semantic_family_branches[0].expression == "礼貌与礼节"
+    family_input = model.message_batches[1][1].content
+    assert '"lexical_head": "礼品"' in family_input
+    assert "黄金" not in family_input
+    assert "赠礼" not in family_input
+    shared_world_input = model.message_batches[2][1].content
+    assert '"term": "礼"' in shared_world_input
+    assert '"term": "黄金"' in shared_world_input
+    assert '"relation": "材质"' in shared_world_input
+    assert "黄金材质的礼品" not in shared_world_input
+    assert "礼品" not in shared_world_input
     assert "保值" not in shared_world_input
-    assert '"primary_content_center": "送礼与人情往来"' in model.message_batches[4][1].content
-    assert "婚嫁" not in model.message_batches[4][1].content
-    assert bundle.content_world.dimensions[0].paths[0].steps[0].to_label == "婚嫁中的赠礼与回礼"
+    assert "赠礼" not in shared_world_input
+    assert '"primary_content_center": "人与人之间的相处与人情世故"' in model.message_batches[5][1].content
+    assert "黄金" not in model.message_batches[5][1].content
+    assert "礼品" not in model.message_batches[5][1].content
+    assert "婚嫁" not in model.message_batches[5][1].content
+    assert bundle.content_world.dimensions[0].paths[0].steps[0].to_label == "礼貌与礼节如何划定关系分寸"
+
+    narration_model = PlainNarrationFakeModel("# 人与人之间的相处与人情世故\n\n长期研究具体关系中的分寸、选择、秩序与变化。")
+    await synthesize_content_world_narration(bundle, model=narration_model)
+    narration_input = narration_model.message_batches[0][1].content
+    assert '"semantic_transition"' not in narration_input
+    assert "黄金" not in narration_input
+    assert "礼品" not in narration_input
 
 
 @pytest.mark.asyncio
@@ -793,6 +1328,7 @@ async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_dec
                 "relation": "材质",
                 "modifies": "礼品",
                 "removal_counterfactual": "去掉黄金后仍是用于赠送、收受和回礼的礼品",
+                "world_scope_effect": "branch_specificity",
             }
         ],
         "offering_role": "complete_object_or_service",
@@ -810,30 +1346,59 @@ async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_dec
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: semantic,
+            SemanticFamilyExpansionDraft: {
+                "components": [
+                    {
+                        "term": "礼",
+                        "component_of": "礼品",
+                        "role": "cultural_institution",
+                        "relation_to_subject": "礼品以物承载礼意；礼可继续进入关系规范与社会秩序",
+                    }
+                ],
+                "branches": [
+                    {
+                        "component": "礼",
+                        "expression": "礼貌、礼节与礼仪",
+                        "semantic_domain": "人际规范",
+                        "continuity": "礼规定人与人交往中的分寸、尊重与角色行为",
+                    },
+                    {
+                        "component": "礼",
+                        "expression": "礼制、礼乐与礼崩乐坏",
+                        "semantic_domain": "制度与历史秩序",
+                        "continuity": "礼也组织公共角色、制度正当性及其失效",
+                    },
+                ],
+                "limitations": [],
+            },
             SharedWorldSynthesisDraft: {
                 "common_action_or_relation": "通过赠送、收受与回礼表达和维系关系",
                 "participant_relationship": "赠礼者、收礼者与关系人",
-                "world_label": "送礼、收礼与回礼的人情往来",
+                "world_label": "人与人之间的相处与人情世故",
+                "semantic_path": ["礼品", "礼", "关系分寸与社会秩序", "人与人如何相处"],
                 "covered_frames": ["婚嫁赠礼", "节庆赠礼", "商务馈赠", "人生礼仪"],
                 "limitations": ["不包含依赖黄金材质的投资保值活动"],
             },
             SharedWorldReviewDraft: {
-                "reviewed_world_label": "送礼、收礼与回礼的人情往来",
-                "subject_is_constitutive": True,
-                "substitution_counterfactual": "移除礼物的赠送、收受与回礼后，这一具体实践不再成立。",
-                "rationale": "礼物的流动是该人情实践的构成部分。",
+                "reviewed_world_label": "人与人之间的相处与人情世故",
+                "entry_path_is_explanatory": True,
+                "substitution_counterfactual": "换成其他承载礼意的行为或制度后，关系分寸与社会秩序仍由礼自然通向。",
+                "rationale": "礼不是任意相邻场景，而是礼品中独立承载关系意义的语义核。",
             },
             ContentRootDecisionDraft: {
-                "selected_candidate_index": 6,
-                "audience_territory_candidate_index": 6,
+                "selected_candidate_index": 7,
+                "audience_territory_candidate_index": 7,
                 "root_rationale": "去修饰后的共同人类活动覆盖多个平行场景。",
                 "unknowns": [],
             },
             FrozenContentMapDraft: {
+                "editorial_promise": "持续借礼理解人与人如何相处，以及公共秩序怎样被建立和改变。",
+                "recurring_lens": "从具体人物、关系、礼节、制度或事件进入，解释礼如何组织人的相处。",
+                "drift_boundaries": ["与人与人相处没有可解释路径的热度内容不进入这张地图。"],
                 "map_directions": [
                     {
                         "dimension": "时间、地域、人物与事件",
-                        "actual_directions": ["不同人生节点如何送礼与回礼"],
+                        "actual_directions": ["礼貌、礼节与礼制如何规定人与人的分寸"],
                     }
                 ],
                 "named_candidates": [],
@@ -851,21 +1416,140 @@ async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_dec
         model=model,
     )
 
-    shared_world_input = model.message_batches[1][1].content
-    assert "黄金" not in shared_world_input
+    shared_world_input = model.message_batches[2][1].content
+    assert '"term": "黄金"' in shared_world_input
+    assert '"world_scope_effect": "branch_specificity"' in shared_world_input
     assert "保值" not in shared_world_input
     assert "三金" not in shared_world_input
-    assert "赠礼" in shared_world_input
-    assert "回礼" in shared_world_input
+    assert "赠礼" not in shared_world_input
+    assert "回礼" not in shared_world_input
+    assert '"term": "礼"' in shared_world_input
 
-    decision_input = model.message_batches[3][1].content
+    decision_input = model.message_batches[4][1].content
     assert '"semantic_reading"' not in decision_input
     assert '"shared_world_synthesis"' not in decision_input
     assert '"non_selectable_example_branches"' not in decision_input
     assert '"strength"' not in decision_input
     assert '"overreach_risk"' not in decision_input
     assert "贵重赠予与价值传承" not in decision_input
-    assert bundle.content_world.content_root == "送礼、收礼与回礼的人情往来"
+    assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
+
+
+def test_shared_world_input_exposes_bounded_modifier_candidates_without_full_product() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "烫金毕业纪念册",
+            "lexical_head": "纪念册",
+            "modifiers": [
+                {
+                    "term": "毕业",
+                    "relation": "人生阶段与共同事件",
+                    "modifies": "纪念册",
+                    "removal_counterfactual": "去掉毕业后，会失去同学、师生、校园告别和共同成长这一组人物事件关系。",
+                    "world_scope_effect": "constitutive_context",
+                },
+                {
+                    "term": "烫金",
+                    "relation": "表面工艺",
+                    "modifies": "纪念册",
+                    "removal_counterfactual": "去掉烫金后仍然是同一毕业纪念世界，只改变成品样式。",
+                    "world_scope_effect": "branch_specificity",
+                },
+            ],
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "纪念册是完整对象，毕业限定其共同事件，烫金只限定工艺。",
+        }
+    )
+    semantic_family = SemanticFamilyExpansionDraft.model_validate(
+        {
+            "components": [
+                {
+                    "term": "纪念",
+                    "component_of": "纪念册",
+                    "role": "human_concern",
+                    "relation_to_subject": "纪念册用文字和影像保存值得记住的人与事。",
+                }
+            ],
+            "branches": [
+                {
+                    "component": "纪念",
+                    "expression": "纪念馆",
+                    "semantic_domain": "公共记忆",
+                    "continuity": "都通过保存材料让人和事件在当下继续被记住。",
+                }
+            ],
+        }
+    )
+
+    rendered = _render_shared_world_input(semantic, semantic_family)
+
+    assert '"selected_meaning_in_head": "该词法主词用文字和影像保存值得记住的人与事。"' in rendered
+    assert '"term": "毕业"' in rendered
+    assert '"world_scope_effect": "constitutive_context"' in rendered
+    assert '"required_constitutive_contexts": [\n    "毕业"\n  ]' in rendered
+    assert '"term": "烫金"' in rendered
+    assert '"world_scope_effect": "branch_specificity"' in rendered
+    assert "烫金毕业纪念册" not in rendered
+
+
+def test_modifier_contract_exposes_world_scope_effect_for_auditable_context_selection() -> None:
+    properties = SemanticModifierDraft.model_json_schema()["properties"]
+
+    assert set(properties["world_scope_effect"]["enum"]) == {
+        "branch_specificity",
+        "constitutive_context",
+        "uncertain",
+    }
+
+
+def test_shared_world_contract_records_its_independent_constitutive_context_choice() -> None:
+    properties = SharedWorldSynthesisDraft.model_json_schema()["properties"]
+
+    assert properties["constitutive_contexts"]["type"] == "array"
+
+
+def test_shared_world_cannot_accept_a_constitutive_context_then_erase_it_from_the_label() -> None:
+    with pytest.raises(ValidationError, match="constitutive context"):
+        SharedWorldSynthesisDraft.model_validate(
+            {
+                "world_label": "影像记录",
+                "constitutive_contexts": ["儿童"],
+                "semantic_path": ["儿童", "家庭成长记录", "影像记录"],
+            }
+        )
+
+
+def test_shared_world_is_withheld_when_workers_disagree_on_constitutive_context() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "宠物殡葬",
+            "lexical_head": "殡葬",
+            "modifiers": [
+                {
+                    "term": "宠物",
+                    "relation": "参与对象与关系限定",
+                    "modifies": "殡葬",
+                    "removal_counterfactual": "去掉宠物后，告别对象以及人与其建立的依恋关系都会改变。",
+                    "world_scope_effect": "constitutive_context",
+                }
+            ],
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "宠物限定了告别对象和关系类型。",
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "world_label": "人与死亡之间的告别、遗体处理与哀悼",
+            "constitutive_contexts": [],
+            "semantic_path": ["殡葬", "死亡", "告别与哀悼"],
+        }
+    )
+
+    reconciled = _normalize_shared_world_contexts(semantic, shared_world)
+
+    assert reconciled.world_label is None
+    assert reconciled.semantic_path == ()
+    assert any("宠物" in limitation for limitation in reconciled.limitations)
 
 
 def test_root_selection_schema_does_not_own_commercial_return_design() -> None:
@@ -877,10 +1561,28 @@ def test_root_selection_schema_does_not_own_commercial_return_design() -> None:
 
 def test_frozen_map_schema_cannot_reselect_the_content_root() -> None:
     properties = FrozenContentMapDraft.model_json_schema()["properties"]
+    required = set(FrozenContentMapDraft.model_json_schema()["required"])
 
     assert "primary_content_center" not in properties
     assert "object_anchor" not in properties
     assert "audience_territory" not in properties
+    assert {"editorial_promise", "recurring_lens"}.issubset(required)
+    assert "drift_boundaries" in properties
+    assert "topic_title" not in properties
+    assert "presentation_format" not in properties
+
+
+def test_frozen_map_prompt_defines_account_positioning_before_daily_topics() -> None:
+    assert "账号级长期编辑定位" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "editorial_promise" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "recurring_lens" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "热点" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "不能改写内容根" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "口播" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "表现形式" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "参与者在资源、环境、价格、规则或技术变化下做出的具体选择" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "经济、贸易、政策、健康或技术因素" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "把冻结根替换成大量无关对象" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
 
 
 @pytest.mark.asyncio
@@ -893,7 +1595,7 @@ async def test_content_world_narrator_only_converges_the_frozen_map() -> None:
         ),
         model=_focused_model(),
     )
-    narration = "# 火锅\n\n底料是完成火锅的中间载体，内容世界应进入火锅本身。\n\n## 地域与饮食习惯\n\n从“为什么这里吃这种火锅”理解地域环境和生活。\n\n- 不同地区火锅锅底为什么不同"
+    narration = "# 火锅\n\n这个内容世界长期理解火锅本身及其参与者、地域与生活。\n\n## 地域与饮食习惯\n\n从“为什么这里吃这种火锅”理解地域环境和生活。\n\n- 不同地区火锅锅底为什么不同"
     narrator = PlainNarrationFakeModel(narration)
 
     draft = await synthesize_content_world_narration(
@@ -907,10 +1609,11 @@ async def test_content_world_narrator_only_converges_the_frozen_map() -> None:
     assert narrator.configs == [{"callbacks": []}]
     narration_input = narrator.message_batches[0][1].content
     assert '"content_root": "火锅"' in narration_input
-    assert '"offering_role": "intermediate_enabler"' in narration_input
-    assert '"served_objects"' in narration_input
-    assert '"served_activities"' in narration_input
-    assert '"root_rationale": "底料是中间实现物，火锅是完整对象世界。"' in narration_input
+    assert '"semantic_transition"' not in narration_input
+    assert '"offering_role"' not in narration_input
+    assert '"served_objects"' not in narration_input
+    assert '"served_activities"' not in narration_input
+    assert '"root_rationale"' not in narration_input
     assert "root_candidates" not in narration_input
     assert "unknowns" not in narration_input
     assert "bridge" not in narration_input.lower()

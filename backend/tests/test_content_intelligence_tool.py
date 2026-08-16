@@ -53,12 +53,47 @@ def test_content_intelligence_tool_is_available_to_the_lead_by_default() -> None
     assert explore_content_world_tool.return_direct is True
 
 
+def test_lexical_evidence_provider_is_disabled_without_a_local_index_env(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    monkeypatch.delenv("CONTENT_INTELLIGENCE_CEDICT_INDEX", raising=False)
+    monkeypatch.setattr(content_intelligence_tool_module, "runtime_home", lambda: tmp_path)
+
+    assert content_intelligence_tool_module._create_lexical_evidence_provider() is None
+
+
+def test_lexical_evidence_provider_is_created_from_the_untracked_local_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    index_path = "/tmp/local-cc-cedict.sqlite3"
+    provider = object()
+    provider_factory = Mock(return_value=provider)
+    monkeypatch.setenv("CONTENT_INTELLIGENCE_CEDICT_INDEX", index_path)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "CedictLexicalEvidenceProvider",
+        provider_factory,
+    )
+
+    actual = content_intelligence_tool_module._create_lexical_evidence_provider()
+
+    assert actual is provider
+    provider_factory.assert_called_once_with(index_path)
+
+
 @pytest.mark.asyncio
 async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monkeypatch: pytest.MonkeyPatch) -> None:
     bundle = object()
     enriched_bundle = object()
     narration = object()
+    lexical_provider = object()
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_create_lexical_evidence_provider",
+        lambda: lexical_provider,
+    )
     analysis = AsyncMock(return_value=bundle)
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -70,6 +105,12 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
         content_intelligence_tool_module,
         "enrich_content_world_with_research",
         research,
+    )
+    delivery = AsyncMock(return_value=None)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_shooting_delivery",
+        delivery,
     )
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -109,10 +150,58 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
     research.assert_awaited_once()
     assert analysis.await_args.args[0].subject_expression == "我是卖重庆火锅底料的，该怎么起号？"
     assert analysis.await_args.args[0].source_materials == ()
+    assert analysis.await_args.kwargs["lexical_evidence_provider"] is lexical_provider
     assert research.await_args.args[0] is bundle
     assert research.await_args.kwargs["search"] is content_intelligence_tool_module._search_content_world_evidence
     assert research.await_args.kwargs["fetch"] is content_intelligence_tool_module._fetch_content_world_evidence
+    assert delivery.await_args.args[0] is enriched_bundle
+    assert delivery.await_args.kwargs["user_request"] == "我是卖重庆火锅底料的，该怎么起号？"
     assert content_intelligence_tool_module.synthesize_content_world_narration.await_args.args[0] is enriched_bundle
+
+
+@pytest.mark.asyncio
+async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_map_narration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    enriched_bundle = object()
+    shooting_delivery = object()
+    user_request = "我是卖白酒的，该怎么起号？"
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "analyze_content_intelligence",
+        AsyncMock(return_value=bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        AsyncMock(return_value=enriched_bundle),
+    )
+    delivery = AsyncMock(return_value=shooting_delivery)
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
+    render = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 饮酒与人际礼俗\n\n# 今日建议拍摄\n\n## 为什么当地的酒桌礼数这么重？")
+    monkeypatch.setattr(content_intelligence_tool_module, "render_shooting_delivery", render)
+    narration = AsyncMock(return_value="# 饮酒与人际礼俗\n\n一份内部地图。")
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_content_world_narration", narration)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {"user_request": user_request},
+            "id": "content-world-call-shooting-delivery",
+            "type": "tool_call",
+        }
+    )
+
+    assert result.update["messages"][0].content.startswith("# 账号内容定位")
+    assert "# 今日建议拍摄" in result.update["messages"][0].content
+    delivery.assert_awaited_once()
+    assert delivery.await_args.args[0] is enriched_bundle
+    assert delivery.await_args.kwargs["user_request"] == user_request
+    render.assert_called_once_with(enriched_bundle, shooting_delivery)
+    narration.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -244,6 +333,86 @@ async def test_content_world_search_passes_supported_limit_and_normalizes_byted_
     assert len(results) == 1
     assert results[0].title == "Official-style result"
     assert results[0].content == "Provider summary."
+
+
+@pytest.mark.asyncio
+async def test_content_world_search_interleaves_web_and_douyin_topic_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, str, int]] = []
+
+    @tool("web_search")
+    async def configured_web_search(query: str, max_results: int = 5) -> str:
+        """Search public web evidence."""
+        calls.append(("web", query, max_results))
+        return json.dumps(
+            {
+                "results": [
+                    {
+                        "title": "Public article one",
+                        "url": "https://example.com/article-one",
+                        "content": "Public evidence one.",
+                    },
+                    {
+                        "title": "Public article two",
+                        "url": "https://example.com/article-two",
+                        "content": "Public evidence two.",
+                    },
+                ]
+            }
+        )
+
+    @tool("douyin_video_search")
+    async def configured_douyin_search(query: str, max_results: int = 5) -> str:
+        """Search official Douyin video evidence."""
+        calls.append(("douyin", query, max_results))
+        return json.dumps(
+            {
+                "provider": "douyin_open_platform",
+                "evidence_role": "topic_evidence",
+                "results": [
+                    {
+                        "title": "Douyin video",
+                        "url": "https://www.douyin.com/video/123",
+                        "content": "A bounded official video-search receipt.",
+                        "source_type": "douyin_video",
+                    }
+                ],
+            }
+        )
+
+    configs = {
+        "web_search": SimpleNamespace(use="tests.fake:configured_web_search"),
+        "douyin_video_search": SimpleNamespace(use="tests.fake:configured_douyin_search"),
+    }
+    tools_by_use = {
+        "tests.fake:configured_web_search": configured_web_search,
+        "tests.fake:configured_douyin_search": configured_douyin_search,
+    }
+    monkeypatch.setattr(
+        "deerflow.config.get_app_config",
+        lambda: SimpleNamespace(get_tool_config=configs.get),
+    )
+    monkeypatch.setattr(
+        "deerflow.reflection.resolve_variable",
+        lambda use, expected: tools_by_use[use],
+    )
+
+    results = await content_intelligence_tool_module._search_content_world_evidence(
+        "人情往来 送礼",
+        3,
+    )
+
+    assert sorted(calls) == [
+        ("douyin", "人情往来 送礼", 3),
+        ("web", "人情往来 送礼", 3),
+    ]
+    assert [result.title for result in results] == [
+        "Public article one",
+        "Douyin video",
+        "Public article two",
+    ]
+    assert all(type(result) is content_intelligence_tool_module.ResearchSearchResult for result in results)
 
 
 @pytest.mark.asyncio
