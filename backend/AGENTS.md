@@ -198,6 +198,11 @@ Unicode-normalized actor display name, deduplicates public video IDs, and can se
 24 observations into the ledger. Optional `open_id` is authorized-viewer context, never
 the target competitor identity, and is not persisted. Xingtu and Buyin stay deferred until
 the official public sample has a specific field gap.
+Expose that collector to Lead only through `collect_douyin_benchmark_candidate`. Its
+model-facing schema contains the query, exact actor label, and sample cap only. Runtime
+user/thread/run/project identity stays server-injected; a selected project is ownership-
+checked before collection. No project is a valid read-only path, and a ledger write failure
+must retain the collected projection while returning a fixed redacted persistence status.
 Third-party account reads use `BenchmarkSnapshot`: one stable external account ID,
 author-consistent unique posts, at most 24 requested posts, explicit exclusions, and role
 `benchmark_evidence` without a customer `PlatformAccountRef`. Its bounded projection is

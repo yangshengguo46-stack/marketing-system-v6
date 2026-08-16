@@ -186,7 +186,9 @@ These apply repo-wide; module guides own the module-specific detail.
   Topics bind the content-addressed account map instead of rewriting it. Third-party
   accounts use project-scoped, author-consistent `BenchmarkSnapshot` observations capped
   at 24 posts, never audience or success claims. Douyin v2 author-label samples remain
-  candidates until stable identity is proven; Xingtu and Buyin are deferred gap sources. Dense recall
-  remains rejected. See `docs/content-intelligence-v6/`.
+  candidates until stable identity is proven; one Lead tool returns a bounded
+  read-only projection and persists only after server-authenticated project ownership.
+  Xingtu and Buyin are deferred gap sources. Dense recall remains rejected. See
+  `docs/content-intelligence-v6/`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

@@ -1,5 +1,6 @@
 from .clarification_tool import ask_clarification_tool
 from .content_intelligence_tool import content_intelligence_tool, explore_content_world_tool
+from .douyin_benchmark_tool import douyin_benchmark_candidate_tool
 from .list_uploaded_files_tool import list_uploaded_files
 from .present_file_tool import present_file_tool
 from .review_skill_package_tool import review_skill_package
@@ -16,6 +17,7 @@ __all__ = [
     "ask_clarification_tool",
     "content_intelligence_tool",
     "explore_content_world_tool",
+    "douyin_benchmark_candidate_tool",
     "view_image_tool",
     "task_tool",
     "list_uploaded_files",

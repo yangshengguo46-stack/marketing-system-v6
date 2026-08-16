@@ -155,6 +155,14 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 `audits/A42-douyin-public-benchmark-candidate-aggregation.md` 与
 `evidence/douyin-benchmark-candidate-a42-2026-08-17.md`。
 
+2026-08-17 第五切片回执：将 A42 聚合器注册为单个高层 Lead 工具
+`collect_douyin_benchmark_candidate`。模型只提供搜索语、目标作者显示名和最大作品数；
+认证用户、会话、运行和可选孵化项目由服务端注入。无项目不阻断只读证据；
+有项目时先校验认证所有权，再请求平台和封存证据。写入失败不丢弃已取得证据，
+且所有异常都以固定脱敏消息返回。本机真实抖音凭据和前端项目选择器仍待验收。
+详见 `audits/A43-douyin-benchmark-lead-tool.md` 与
+`evidence/douyin-benchmark-lead-tool-a43-2026-08-17.md`。
+
 ### W03 孵化与单条内容产物谱系
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与

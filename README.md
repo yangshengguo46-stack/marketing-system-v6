@@ -825,6 +825,14 @@ until an official account route supplies author-consistent posts and a coverage 
 Xingtu and Buyin are deferred field-gap sources rather than prerequisites for this public
 content sample.
 
+The Lead can call one high-level `collect_douyin_benchmark_candidate` tool for this
+sample; it does not see the low-level domain tools, credentials, owner identity, cursors,
+or search receipts. Without a selected incubation project, the result remains usable
+read-only evidence. With a server-injected project ID, ownership is verified before the
+platform call and the full snapshot is attributed to the current thread and run. A ledger
+write failure is reported separately without discarding the already collected evidence.
+Local live credentials and the product-facing project selector are still pending acceptance.
+
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps
 actual coverage and exclusions explicit, seals the result as project-scoped

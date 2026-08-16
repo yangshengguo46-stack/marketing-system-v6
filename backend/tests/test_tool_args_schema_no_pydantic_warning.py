@@ -28,6 +28,7 @@ from deerflow.sandbox.tools import (
     str_replace_tool,
     write_file_tool,
 )
+from deerflow.tools.builtins.douyin_benchmark_tool import douyin_benchmark_candidate_tool
 from deerflow.tools.builtins.list_uploaded_files_tool import list_uploaded_files
 from deerflow.tools.builtins.present_file_tool import present_file_tool
 from deerflow.tools.builtins.setup_agent_tool import setup_agent
@@ -60,6 +61,10 @@ _TOOL_CASES = [
     (list_uploaded_files, {"include_outline": False, "max_results": 20}),
     (present_file_tool, {"filepaths": ["/tmp/x"], "tool_call_id": "call-1"}),
     (view_image_tool, {"image_path": "/tmp/img.png", "tool_call_id": "call-1"}),
+    (
+        douyin_benchmark_candidate_tool,
+        {"query": "大能 腕表", "actor_label": "大能", "max_posts": 12},
+    ),
     (task_tool, {"description": "do", "prompt": "go", "subagent_type": "general-purpose", "tool_call_id": "call-1"}),
     (skill_manage_tool, {"action": "list", "name": "demo"}),
     (setup_agent, {"soul": "s", "description": "d"}),

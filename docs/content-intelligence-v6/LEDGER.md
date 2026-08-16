@@ -1223,3 +1223,26 @@ Client Key/Secret，本轮没有生成真实平台回执，因此状态为
 最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 复跑完整后端离线套件，结果为
 `11721 passed, 76 skipped, 17 warnings in 424.47s`；Ruff、格式检查和
 `git diff --check` 均通过。
+
+## A43 W02 抖音对标候选接入 Lead
+
+2026-08-17 在 A42 已完成官方搜索聚合后，继续以测试先行接入真实 DeerFlow
+工具清单。失败基线为新工具模块 `ModuleNotFoundError`。实现后，Lead 只能看到
+`query`、`actor_label` 和 `max_posts`；用户、会话、运行和项目身份都不在
+模型 Schema 中。
+
+未选项目时，工具直接返回 16 KB 以内的只读候选证据，不把项目或问卷变成硬门。
+选中项目时，Gateway 只转发 `incubation_project_id`，不接受客户端 owner；工具用
+服务端认证用户在平台请求前校验所有权，再用 `thread_id + run_id` 封存。
+如果证据已收到但台账写入失败，Lead 仍收到证据和脱敏的 `persistence=failed`，
+底层数据库内容不返回。
+
+工具/Gateway 套件 `7 passed`，抖音路由、证据、台账与 Gateway 关联回归
+`178 passed`，通用工具 Schema/运行时序列化回归 `38 passed`。本机仍缺抖音
+Client Key/Secret，且前端尚无项目选择器，因此状态为
+`reviewed -> implemented; live credential and product project selection acceptance pending`。
+详见 `audits/A43-douyin-benchmark-lead-tool.md` 和
+`evidence/douyin-benchmark-lead-tool-a43-2026-08-17.md`。
+
+最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 复跑完整后端离线套件，结果为
+`11730 passed, 76 skipped, 17 warnings in 465.97s`。

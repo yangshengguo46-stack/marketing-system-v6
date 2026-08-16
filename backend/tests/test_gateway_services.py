@@ -1435,6 +1435,24 @@ def test_merge_run_context_overrides_forwards_subagent_total_limit():
     assert config["context"]["max_total_subagents"] == 8
 
 
+def test_merge_run_context_overrides_forwards_selected_incubation_project_without_owner_identity():
+    from app.gateway.services import build_run_config, merge_run_context_overrides
+
+    config = build_run_config("thread-1", None, None)
+    merge_run_context_overrides(
+        config,
+        {
+            "incubation_project_id": "project-1",
+            "incubation_owner_user_id": "spoofed-owner",
+        },
+    )
+
+    assert config["configurable"]["incubation_project_id"] == "project-1"
+    assert config["context"]["incubation_project_id"] == "project-1"
+    assert "incubation_owner_user_id" not in config["configurable"]
+    assert "incubation_owner_user_id" not in config["context"]
+
+
 def test_merge_run_context_overrides_noop_for_empty_context():
     from app.gateway.services import build_run_config, merge_run_context_overrides
 
