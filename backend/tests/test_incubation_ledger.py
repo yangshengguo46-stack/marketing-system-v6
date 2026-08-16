@@ -144,6 +144,19 @@ async def test_projects_and_accounts_are_owner_scoped(tmp_path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_project_listing_is_owner_scoped_and_newest_first(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    await repo.create_project(_project(owner="alice", project_id="older"), display_name="Older")
+    await repo.create_project(_project(owner="bob", project_id="private"), display_name="Private")
+    await repo.create_project(_project(owner="alice", project_id="newer"), display_name="Newer")
+
+    projects = await repo.list_projects("alice")
+
+    assert [record.project.project_id for record in projects] == ["newer", "older"]
+    assert all(record.project.owner_user_id == "alice" for record in projects)
+
+
+@pytest.mark.asyncio
 async def test_artifact_write_requires_bound_account_and_existing_parent(tmp_path) -> None:
     repo = await _make_repo(tmp_path)
     project = _project()

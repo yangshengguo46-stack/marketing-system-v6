@@ -1290,3 +1290,23 @@ Lead 高层工具；不得把运行配置缺失误判为功能未实现，也不
 未取得回执前仍不得标记 `live verified`。详见
 `audits/A45-douyin-mcp-runtime-recovery.md` 与
 `evidence/douyin-mcp-runtime-recovery-a45-2026-08-17.md`。
+
+## A46 W01 项目绑定与运行时重水化
+
+2026-08-17 沿 A38 和 ADR-018 的未完成项继续测试先行接线。失败基线首先证明项目 API
+不存在；进一步测试冻结了两个安全与连续性问题：普通线程 metadata 和 run context 均不能
+写入 `incubation_project_id`，而已绑定线程每次 `start_run` 必须从服务端台账重水化同一项目。
+
+实现新增 owner-scoped 项目创建、列表和读取，以及线程绑定、读取和解绑 API。绑定同时校验
+线程与项目属于认证用户；响应不暴露 owner 身份。`incubation_project_id` 成为服务端保留元数据，
+运行时会先清除请求中伪造的值，再验证线程绑定项目仍存在，最后同时注入
+`ToolRuntime.context` 和兼容 `configurable`。失效绑定在 Agent 启动前返回 `409`。
+
+聚焦回归为 `223 passed`；补充连续性边界后，分支线程继承项目绑定，失效绑定会在 Agent 执行前
+返回 `409`。完整离线后端套件为 `11750 passed, 76 skipped`。运行中的本机 Gateway 经 `8001`
+和 nginx `2026` 均返回新接口；
+真实 SQLite 回执完成项目创建 `201`、线程创建 `200`、绑定 `200` 和重新读取 `200`。本轮没有
+调用模型或抖音，也没有把前端选择器伪装成已完成。W01 服务端运行接线完成，前端交互归入 W07；
+下一断点回到 W02 的内容/证据产物封存。详见
+`audits/A46-incubation-project-runtime.md` 与
+`evidence/incubation-project-runtime-a46-2026-08-17.md`。

@@ -432,15 +432,18 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         sf = get_session_factory()
         if sf is not None:
             from deerflow.persistence.feedback import FeedbackRepository
+            from deerflow.persistence.incubation_ledger import IncubationLedgerRepository
             from deerflow.persistence.run import RunRepository
 
             app.state.run_store = RunRepository(sf)
             app.state.feedback_repo = FeedbackRepository(sf)
+            app.state.incubation_ledger_repo = IncubationLedgerRepository(sf)
         else:
             from deerflow.runtime.runs.store.memory import MemoryRunStore
 
             app.state.run_store = MemoryRunStore()
             app.state.feedback_repo = None
+            app.state.incubation_ledger_repo = None
 
         # Services are app-scoped. Capture this app's immutable extension set
         # once and close over the same object for teardown; the process-wide
@@ -614,6 +617,14 @@ def get_thread_store(request: Request) -> ThreadMetaStore:
     val = getattr(request.app.state, "thread_store", None)
     if val is None:
         raise HTTPException(status_code=503, detail="Thread metadata store not available")
+    return val
+
+
+def get_incubation_ledger_repo(request: Request):
+    """Return the SQL-backed incubation business truth ledger."""
+    val = getattr(request.app.state, "incubation_ledger_repo", None)
+    if val is None:
+        raise HTTPException(status_code=503, detail="Incubation ledger not available")
     return val
 
 

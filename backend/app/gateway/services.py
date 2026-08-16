@@ -35,6 +35,7 @@ from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONT
 from deerflow.agents.middlewares.view_image_middleware import _IMAGE_CONTEXT_MESSAGE_MARKER_KEY
 from deerflow.config.app_config import get_app_config
 from deerflow.config.database_config import resolve_checkpoint_graph_cache_max
+from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ProjectRef
 from deerflow.runtime import (
     END_SENTINEL,
     HEARTBEAT_SENTINEL,
@@ -300,7 +301,6 @@ _CONTEXT_CONFIGURABLE_KEYS: frozenset[str] = frozenset(
         "max_total_subagents",
         "agent_name",
         "is_bootstrap",
-        "incubation_project_id",
     }
 )
 
@@ -483,6 +483,45 @@ def inject_authenticated_user_context(
         runtime_context["user_role"] = getattr(user, "system_role", None)
         runtime_context["oauth_provider"] = getattr(user, "oauth_provider", None)
         runtime_context["oauth_id"] = getattr(user, "oauth_id", None)
+
+
+def inject_bound_incubation_project_context(
+    config: dict[str, Any],
+    project_id: str | None,
+) -> None:
+    """Replace caller-supplied project context with the server binding."""
+    for section in ("configurable", "context"):
+        values = config.setdefault(section, {})
+        if not isinstance(values, dict):
+            raise TypeError(f"run {section} must be a mapping")
+        values.pop(INCUBATION_PROJECT_ID_KEY, None)
+        if project_id is not None:
+            values[INCUBATION_PROJECT_ID_KEY] = project_id
+
+
+async def resolve_bound_incubation_project_id(
+    request: Request,
+    *,
+    thread_store: Any,
+    thread_id: str,
+    owner_user_id: str | None,
+) -> str | None:
+    """Resolve and validate the owner-scoped project selected for a thread."""
+    if owner_user_id is None:
+        return None
+    thread = await thread_store.get(thread_id, user_id=owner_user_id)
+    metadata = thread.get("metadata") if thread is not None else None
+    project_id = metadata.get(INCUBATION_PROJECT_ID_KEY) if isinstance(metadata, dict) else None
+    if not isinstance(project_id, str) or not project_id:
+        return None
+
+    ledger = getattr(request.app.state, "incubation_ledger_repo", None)
+    if ledger is None:
+        raise HTTPException(status_code=503, detail="Incubation ledger not available")
+    project = await ledger.get_project(ProjectRef(owner_user_id=owner_user_id, project_id=project_id))
+    if project is None:
+        raise HTTPException(status_code=409, detail="Thread project binding is stale")
+    return project_id
 
 
 def resolve_agent_factory(assistant_id: str | None):
@@ -1152,6 +1191,16 @@ async def start_run(
             internal_owner_user=internal_owner_user,
             request_context=getattr(body, "context", None),
         )
+        project_owner_user_id: str | None = owner_user_id
+        if project_owner_user_id is None and user is not None and getattr(user, "system_role", None) != INTERNAL_SYSTEM_ROLE:
+            project_owner_user_id = str(user.id)
+        bound_project_id = await resolve_bound_incubation_project_id(
+            request,
+            thread_store=run_ctx.thread_store,
+            thread_id=thread_id,
+            owner_user_id=project_owner_user_id,
+        )
+        inject_bound_incubation_project_context(config, bound_project_id)
 
         async def run_after_metadata(record: RunRecord) -> None:
             metadata_task = asyncio.create_task(

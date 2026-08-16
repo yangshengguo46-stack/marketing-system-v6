@@ -831,7 +831,10 @@ or search receipts. Without a selected incubation project, the result remains us
 read-only evidence. With a server-injected project ID, ownership is verified before the
 platform call and the full snapshot is attributed to the current thread and run. A ledger
 write failure is reported separately without discarding the already collected evidence.
-Local live credentials and the product-facing project selector are still pending acceptance.
+The Gateway now exposes owner-scoped incubation project APIs and a dedicated thread binding
+endpoint. Run requests cannot inject or replace `incubation_project_id`; `start_run`
+rehydrates only the stored, owner-validated binding into runtime context. The product-facing
+frontend selector and local live Douyin credential acceptance are still pending.
 
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps

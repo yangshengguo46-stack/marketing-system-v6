@@ -24,6 +24,7 @@ from app.gateway.routers import (
     features,
     feedback,
     github_webhooks,
+    incubation_projects,
     input_polish,
     integrations,
     mcp,
@@ -678,6 +679,9 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
 
     # Thread cleanup API is mounted at /api/threads/{thread_id}
     app.include_router(threads.router)
+
+    # Incubation projects and owner-checked thread bindings.
+    app.include_router(incubation_projects.router)
 
     # Scheduled tasks API is mounted at /api/scheduled-tasks
     app.include_router(scheduled_tasks.router)

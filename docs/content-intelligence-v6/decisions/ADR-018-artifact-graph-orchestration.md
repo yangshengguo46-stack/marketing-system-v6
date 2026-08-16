@@ -2,7 +2,7 @@
 
 ## 状态
 
-`reviewed -> adopted; W01 artifact spine implemented; runtime product integration pending`
+`reviewed -> adopted; W01 server artifact spine and runtime hydration implemented; frontend selection pending`
 
 ## 背景
 
@@ -224,8 +224,8 @@ discovered -> traced -> reviewed -> adopted/rejected
 
 ## 当前诚实状态
 
-- 第六版内容脑已进入本地候选运行时；W01 项目、账号和产物 SQL 台账已实现，Lead/API 的项目选择与
-  重水化尚未接线。
+- 第六版内容脑已进入本地候选运行时；W01 项目、账号和产物 SQL 台账、owner-scoped Gateway API、
+  线程绑定与 `start_run` 重水化均已实现。前端项目选择器仍待 W07 产品化。
 - 抖音 OpenAPI Catalog 和 MCP 路由已实现，当前采用的 Child 只有 `video_search` 和
   `experience_search`。`video_search` 的 `topic_evidence` 白名单适配和有界 Lead 投影已实现，生产
   Tool 自动写入项目尚未完成。

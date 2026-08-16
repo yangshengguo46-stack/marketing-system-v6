@@ -22,6 +22,11 @@ EvidenceRole = Literal[
     "platform_rule",
 ]
 
+# Server-controlled thread metadata and runtime-context key. Clients may read
+# the selected project but can only change it through the owner-checked
+# incubation binding API.
+INCUBATION_PROJECT_ID_KEY = "incubation_project_id"
+
 _SENSITIVE_FIELD_NAMES = frozenset(
     {
         "apikey",

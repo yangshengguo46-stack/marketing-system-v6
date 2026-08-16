@@ -493,7 +493,13 @@ def test_delete_thread_data_returns_generic_500_error(tmp_path):
 
 def test_strip_reserved_metadata_removes_user_id():
     """Client-supplied user_id is dropped to prevent reflection attacks."""
-    out = threads._strip_reserved_metadata({"user_id": "victim-id", "title": "ok"})
+    out = threads._strip_reserved_metadata(
+        {
+            "user_id": "victim-id",
+            "incubation_project_id": "forged-project",
+            "title": "ok",
+        }
+    )
     assert out == {"title": "ok"}
 
 
@@ -1625,7 +1631,7 @@ def test_branch_thread_from_older_assistant_turn_creates_truncated_thread() -> N
                     "created_at": "2026-07-05T00:00:00Z",
                     "updated_at": "2026-07-05T00:00:00Z",
                     "display_name": "Original chat",
-                    "metadata": {},
+                    "metadata": {"incubation_project_id": "project-1"},
                 },
             )
         )
@@ -1652,6 +1658,9 @@ def test_branch_thread_from_older_assistant_turn_creates_truncated_thread() -> N
     assert search_response.status_code == 200, search_response.text
     branch_entry = next(item for item in search_response.json() if item["thread_id"] == new_thread_id)
     assert branch_entry["values"]["title"] == "Original chat"
+    branch_record = asyncio.run(store.aget(THREADS_NS, new_thread_id))
+    assert branch_record is not None
+    assert branch_record.value["metadata"]["incubation_project_id"] == "project-1"
 
 
 def test_branch_thread_uses_materialized_history_and_overwrites_fresh_seed(monkeypatch) -> None:

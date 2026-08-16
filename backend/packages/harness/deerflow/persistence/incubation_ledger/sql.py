@@ -94,6 +94,31 @@ class IncubationLedgerRepository:
             )
             return self._project_record(row) if row is not None else None
 
+    async def list_projects(
+        self,
+        owner_user_id: str,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[ProjectRecord]:
+        if not owner_user_id.strip():
+            raise ValueError("owner_user_id cannot be empty")
+        if limit < 1 or limit > 1000 or offset < 0:
+            raise ValueError("project pagination is out of range")
+        stmt = (
+            select(IncubationProjectRow)
+            .where(IncubationProjectRow.owner_user_id == owner_user_id)
+            .order_by(
+                IncubationProjectRow.updated_at.desc(),
+                IncubationProjectRow.project_id.desc(),
+            )
+            .limit(limit)
+            .offset(offset)
+        )
+        async with self._sf() as session:
+            result = await session.execute(stmt)
+            return [self._project_record(row) for row in result.scalars()]
+
     async def connect_account(
         self,
         account: PlatformAccountRef,

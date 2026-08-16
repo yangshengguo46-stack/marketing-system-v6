@@ -183,11 +183,10 @@ artifacts and platform receipts are truth; thread state and Memory get bounded
 projections only. Cognitive workers cannot directly write approvals, publications,
 metrics, or adopted learning rules. See `../docs/content-intelligence-v6/` and ADR-018.
 
-W01 lives in `deerflow.incubation`, `deerflow.persistence.incubation_ledger`, and schema
-`0012_incubation_ledger`. `ArtifactEnvelope` is owner/project scoped, content-addressed,
-parent-bound, and revalidated before writes. Payloads exclude secrets, browser state,
-temporary URLs, and local paths. Persist only durable map fields. Keep persistence exports
-lazy and import lightweight concrete modules to avoid ORM/graph import cycles.
+W01 uses `deerflow.incubation`, its SQL ledger, and schema `0012_incubation_ledger`.
+Artifacts are owner/project scoped, content-addressed, parent-checked, and reject secrets,
+browser state, temporary URLs, and local paths. `/api/incubation` owns project/thread binding;
+`start_run` ignores caller project IDs, owner-validates the stored binding, and rejects staleness.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed

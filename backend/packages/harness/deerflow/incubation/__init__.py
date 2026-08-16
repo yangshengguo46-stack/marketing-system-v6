@@ -8,6 +8,7 @@ from deerflow.incubation.benchmark import (
     seal_benchmark_snapshot,
 )
 from deerflow.incubation.contracts import (
+    INCUBATION_PROJECT_ID_KEY,
     ArtifactEnvelope,
     ArtifactParentRef,
     EvidenceRole,
@@ -71,6 +72,7 @@ __all__ = [
     "EvidenceCoverageReceipt",
     "EvidenceItem",
     "EvidenceSnapshot",
+    "INCUBATION_PROJECT_ID_KEY",
     "EphemeralMediaSource",
     "IncubationLedgerError",
     "IncubationLedgerRepository",

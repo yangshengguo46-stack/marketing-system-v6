@@ -1435,7 +1435,7 @@ def test_merge_run_context_overrides_forwards_subagent_total_limit():
     assert config["context"]["max_total_subagents"] == 8
 
 
-def test_merge_run_context_overrides_forwards_selected_incubation_project_without_owner_identity():
+def test_merge_run_context_overrides_does_not_trust_client_incubation_project():
     from app.gateway.services import build_run_config, merge_run_context_overrides
 
     config = build_run_config("thread-1", None, None)
@@ -1447,10 +1447,141 @@ def test_merge_run_context_overrides_forwards_selected_incubation_project_withou
         },
     )
 
-    assert config["configurable"]["incubation_project_id"] == "project-1"
-    assert config["context"]["incubation_project_id"] == "project-1"
+    assert "incubation_project_id" not in config["configurable"]
+    assert "incubation_project_id" not in config["context"]
     assert "incubation_owner_user_id" not in config["configurable"]
     assert "incubation_owner_user_id" not in config["context"]
+
+
+def test_inject_bound_incubation_project_context_replaces_all_client_values():
+    from app.gateway.services import inject_bound_incubation_project_context
+
+    config = {
+        "configurable": {"thread_id": "thread-1", "incubation_project_id": "forged-a"},
+        "context": {"thread_id": "thread-1", "incubation_project_id": "forged-b"},
+    }
+
+    inject_bound_incubation_project_context(config, "bound-project")
+
+    assert config["configurable"]["incubation_project_id"] == "bound-project"
+    assert config["context"]["incubation_project_id"] == "bound-project"
+
+
+def test_inject_bound_incubation_project_context_clears_unbound_client_values():
+    from app.gateway.services import inject_bound_incubation_project_context
+
+    config = {
+        "configurable": {"thread_id": "thread-1", "incubation_project_id": "forged-a"},
+        "context": {"thread_id": "thread-1", "incubation_project_id": "forged-b"},
+    }
+
+    inject_bound_incubation_project_context(config, None)
+
+    assert "incubation_project_id" not in config["configurable"]
+    assert "incubation_project_id" not in config["context"]
+
+
+@pytest.mark.asyncio
+async def test_start_run_rehydrates_thread_project_and_overrides_client_forgery(
+    _stub_app_config,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, patch
+
+    from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
+    from app.gateway.services import start_run
+    from deerflow.incubation import ProjectRef
+
+    request, _run_store, thread_store = _make_start_run_persistence_context()
+    request.state.user = SimpleNamespace(
+        id="user-1",
+        system_role="user",
+        oauth_provider=None,
+        oauth_id=None,
+    )
+    request.state.auth_source = AUTH_SOURCE_SESSION
+    await thread_store.create(
+        "thread-project-bound",
+        user_id="user-1",
+        metadata={"incubation_project_id": "bound-project"},
+    )
+    ledger = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    request.app.state.incubation_ledger_repo = ledger
+    captured = {}
+
+    async def fake_run_agent(*_args, **kwargs):
+        captured["config"] = kwargs["config"]
+
+    with (
+        patch("app.gateway.services.resolve_agent_factory", return_value=object()),
+        patch("app.gateway.services._ensure_thread_metadata", new=AsyncMock()),
+        patch("app.gateway.services.run_agent", side_effect=fake_run_agent),
+    ):
+        record = await start_run(
+            _run_create_request(
+                config={
+                    "context": {
+                        "incubation_project_id": "forged-config-project",
+                    }
+                },
+                context={"incubation_project_id": "forged-body-project"},
+            ),
+            "thread-project-bound",
+            request,
+        )
+        assert record.task is not None
+        await record.task
+
+    assert captured["config"]["context"]["incubation_project_id"] == "bound-project"
+    assert captured["config"]["configurable"]["incubation_project_id"] == "bound-project"
+    ledger.get_project.assert_awaited_once_with(ProjectRef(owner_user_id="user-1", project_id="bound-project"))
+
+
+@pytest.mark.asyncio
+async def test_start_run_rejects_stale_thread_project_before_agent_execution(
+    _stub_app_config,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, patch
+
+    from fastapi import HTTPException
+
+    from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
+    from app.gateway.services import start_run
+    from deerflow.incubation import ProjectRef
+
+    request, _run_store, thread_store = _make_start_run_persistence_context()
+    request.state.user = SimpleNamespace(
+        id="user-1",
+        system_role="user",
+        oauth_provider=None,
+        oauth_id=None,
+    )
+    request.state.auth_source = AUTH_SOURCE_SESSION
+    await thread_store.create(
+        "thread-stale-project",
+        user_id="user-1",
+        metadata={"incubation_project_id": "deleted-project"},
+    )
+    ledger = SimpleNamespace(get_project=AsyncMock(return_value=None))
+    request.app.state.incubation_ledger_repo = ledger
+    run_agent = AsyncMock()
+
+    with (
+        patch("app.gateway.services.resolve_agent_factory", return_value=object()),
+        patch("app.gateway.services.run_agent", run_agent),
+        pytest.raises(HTTPException) as exc_info,
+    ):
+        await start_run(
+            _run_create_request(),
+            "thread-stale-project",
+            request,
+        )
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Thread project binding is stale"
+    run_agent.assert_not_awaited()
+    ledger.get_project.assert_awaited_once_with(ProjectRef(owner_user_id="user-1", project_id="deleted-project"))
 
 
 def test_merge_run_context_overrides_noop_for_empty_context():

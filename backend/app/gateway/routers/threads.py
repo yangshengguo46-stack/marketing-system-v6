@@ -45,6 +45,7 @@ from app.gateway.utils import sanitize_log_param
 from deerflow.agents.thread_state import THREAD_STATE_REDUCER_FIELDS
 from deerflow.config.paths import Paths, get_paths
 from deerflow.config.summarization_config import ContextSize
+from deerflow.incubation.contracts import INCUBATION_PROJECT_ID_KEY
 from deerflow.persistence.thread_meta import THREAD_PINNED_METADATA_KEY
 from deerflow.runtime import serialize_channel_values_for_api
 from deerflow.runtime.checkpoint_mode import CheckpointModeMismatchError, CheckpointModeReconfigurationError
@@ -97,7 +98,7 @@ def _checkpoint_mode_http_error(exc: Exception, thread_id: str) -> HTTPException
 # owner identity through the API surface. Defense-in-depth — the
 # row-level invariant is still ``threads_meta.user_id`` populated from
 # the auth contextvar; this list closes the metadata-blob echo gap.
-_SERVER_RESERVED_METADATA_KEYS: frozenset[str] = frozenset({"owner_id", "user_id"})
+_SERVER_RESERVED_METADATA_KEYS: frozenset[str] = frozenset({"owner_id", "user_id", INCUBATION_PROJECT_ID_KEY})
 _SIDECAR_METADATA_KEY = "deerflow_sidecar"
 _BRANCH_METADATA_KEY = "deerflow_branch"
 # Thread-scoped runtime channels a branch must NOT inherit from its parent:
@@ -836,6 +837,9 @@ async def branch_thread(thread_id: ThreadId, body: ThreadBranchRequest, request:
         "branch_parent_message_id": body.message_id,
         "branch_created_at": now,
     }
+    source_project_id = source_metadata.get(INCUBATION_PROJECT_ID_KEY)
+    if isinstance(source_project_id, str) and source_project_id:
+        branch_metadata[INCUBATION_PROJECT_ID_KEY] = source_project_id
 
     display_name = body.title or _default_branch_display_name(
         source_record.get("display_name"),

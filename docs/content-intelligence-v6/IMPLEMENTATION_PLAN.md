@@ -44,7 +44,7 @@
 | 模块 | 当前来源 | 真实状态 | 第六版决定 | 下一验收 |
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
-| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; runtime integration pending` | 保留最小产物图合同与 SQL 持久化 | Lead/API 项目选择、重水化与真实多账号验收 |
+| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物自动封存与真实多账号验收 |
 | 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented` | 保留现有运行时，接入项目版本 | 地图持久化、用户确认与版本切换 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
@@ -77,7 +77,7 @@
 | `tool_search` | 延迟装载 MCP Schema，只提升当前需要的领域能力 | W02 启用验收 | 概率猜测权限或未审阅 Child |
 | Skills 延迟发现 | 按需加载对标、表现形式、成稿和复盘方法 | W02/W03/W06 | 孵化总脑、固定流程或自动改写自身 |
 | Memory | 用户偏好、显式纠错与长期交互习惯 | W01 分类策略 | 项目事实、账号令牌、审批、回执、指标或跨用户案例库 |
-| Summarization | 长对话压缩和 Skill 引用持久提醒 | 已使用，W01 加项目重水化测试 | 在压缩摘要中维护唯一业务真相 |
+| Summarization | 长对话压缩和 Skill 引用持久提醒 | 已使用；W01 项目重水化已接线 | 在压缩摘要中维护唯一业务真相 |
 | Sandbox/uploads | 用户素材隔离、广义文档读取、MediaKit 输入输出和中间工件 | W02/W04 | 无所有权的跨用户文件路径 |
 | Vision | 关键帧、素材和成片人机质检 | W02/W04 | 将整账号视频原文全部塞入 Lead 上下文 |
 | Tool output budget | 大账号包、MediaKit 回执和平台原始结果外部化，只投影摘要 | W02 扩展 | 无限截断导致来源、哈希或限制丢失 |
@@ -95,7 +95,7 @@
 
 ### W01 共享产物脊柱
 
-状态：`implemented; runtime project selection and hydration pending`
+状态：`implemented; server project selection and hydration verified; frontend selector deferred to W07`
 
 目标：在不修改 Lead 核心提示词的前提下，建立项目、账号、产物包装、父子谱系、内容哈希和
 证据角色的最小合同。
@@ -284,7 +284,10 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 所有权/敏感字段/证据角色/血缘/幂等校验，以及 `ContentWorldView` 的可选长期地图适配器。封存后
 篡改 payload 会在事务前重新验签并拒绝。DeerFlow Memory 指南已明确排除项目版本、审批、发布回执、
 指标和学习状态。计划中的独立内存仓储被同一 SQL 仓储的临时 SQLite 测试替代，避免维护第二套真相
-实现。Lead/API 尚未获得项目选择和重水化入口，因此 W01 代码脊柱已实现但产品运行时接线仍待完成。
-证据见 `evidence/incubation-ledger-a38-2026-08-16.md`。
+实现。2026-08-17 又补齐 owner-scoped 项目 API、线程绑定和 `start_run` 服务端重水化：普通运行请求不能
+直接注入项目 ID，绑定只能经所有权校验后的专用接口修改，重开线程时由台账重新注入。W01 服务端接线
+至此完成；前端项目选择器归入 W07 产品化，不再阻塞 W02-W06。证据见
+`evidence/incubation-ledger-a38-2026-08-16.md` 与
+`evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-W01 完成后，再开始 W02 的抖音只读证据和 MediaKit 感知迁移。
+下一实施断点回到 W02：让内容纵切产物和抖音/MediaKit 证据真正写入同一项目谱系。
