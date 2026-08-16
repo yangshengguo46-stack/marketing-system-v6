@@ -862,8 +862,10 @@ hashed before and after execution, the current CLI output is checked against bot
 schema and a narrow capability-specific observation contract, and the resulting artifact
 inherits its source evidence role without persisting the command, URL, or local path. The task
 runtime now durably records an idempotent submission intent before any remote call and binds the
-remote handle under a lease afterward. Cloud ASR/OCR/scene drivers remain disabled until their
-authorization, status adaptation, output download, and quality checks pass mocked acceptance.
+remote handle under a lease afterward. An isolated MediaKit cloud driver now passes mocked,
+no-fee submission, restart recovery, status normalization, redaction, and artifact-materialization
+tests. It remains unregistered until concrete authorization, ephemeral source resolution, output
+download/quality checks, and one explicitly approved live capability pass acceptance.
 
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps

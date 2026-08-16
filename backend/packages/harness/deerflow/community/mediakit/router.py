@@ -16,6 +16,8 @@ from .contracts import (
     CommandResult,
     ExecutionMode,
     MediaKitCapability,
+    MediaKitCloudQueryResult,
+    MediaKitCloudSubmissionResult,
     MediaKitExecutionResult,
     PreparedMediaKitCall,
 )
@@ -80,8 +82,13 @@ def _require_command_token(value: str, *, name: str) -> str:
     return value
 
 
-def _json_payload(result: CommandResult, *, operation: str) -> dict[str, Any]:
-    if result.returncode != 0:
+def _json_payload(
+    result: CommandResult,
+    *,
+    operation: str,
+    allow_structured_failure: bool = False,
+) -> dict[str, Any]:
+    if result.returncode != 0 and not allow_structured_failure:
         raise MediaKitCommandError(f"MediaKit {operation} failed")
     if result.stdout_truncated or len(result.stdout.encode("utf-8")) > _MAX_PROCESS_OUTPUT_BYTES:
         raise MediaKitCommandError(f"MediaKit {operation} exceeded its output budget")
@@ -91,6 +98,8 @@ def _json_payload(result: CommandResult, *, operation: str) -> dict[str, Any]:
         raise MediaKitCommandError(f"MediaKit {operation} returned invalid JSON") from exc
     if not isinstance(payload, dict):
         raise MediaKitCommandError(f"MediaKit {operation} returned an invalid payload")
+    if result.returncode != 0 and payload.get("success") is not False:
+        raise MediaKitCommandError(f"MediaKit {operation} failed")
     return payload
 
 
@@ -310,6 +319,93 @@ class MediaKitCapabilityRouter:
             output_sha256=_canonical_sha256(payload),
             source_content_sha256=source_content_sha256,
             executed_at=datetime.now(UTC),
+            notices=notices,
+        )
+
+    async def submit_cloud(
+        self,
+        prepared: PreparedMediaKitCall,
+        *,
+        timeout_seconds: float = 180,
+    ) -> MediaKitCloudSubmissionResult:
+        """Submit once and return only the durable handle projection."""
+        if prepared.mode != "cloud":
+            raise ValueError("cloud submission requires cloud mode")
+        if timeout_seconds <= 0:
+            raise ValueError("MediaKit submission timeout must be positive")
+        if prepared.source.expires_at is not None and prepared.source.expires_at <= datetime.now(UTC):
+            raise ValueError("resolved media source has expired")
+
+        result = await self._runner(prepared.command, timeout_seconds)
+        raw_payload = _json_payload(result, operation="cloud submission")
+        notices = _notice_messages(raw_payload.get("_notice"))
+        payload = {key: value for key, value in raw_payload.items() if key != "_notice"}
+        errors = sorted(
+            Draft202012Validator(prepared.capability.output_schema).iter_errors(payload),
+            key=lambda error: list(error.absolute_path),
+        )
+        if errors or payload.get("success") is False or payload.get("error"):
+            raise MediaKitCommandError("MediaKit cloud submission returned an invalid result")
+        remote_task_id = payload.get("task_id")
+        if not isinstance(remote_task_id, str) or not remote_task_id.strip():
+            raise MediaKitCommandError("MediaKit cloud submission did not return task_id")
+        request_id = payload.get("request_id")
+        request_id_sha256 = None
+        if isinstance(request_id, str) and request_id.strip():
+            request_id_sha256 = hashlib.sha256(request_id.strip().encode("utf-8")).hexdigest()
+        return MediaKitCloudSubmissionResult(
+            remote_task_id=remote_task_id,
+            request_id_sha256=request_id_sha256,
+            submitted_at=datetime.now(UTC),
+            notices=notices,
+        )
+
+    async def query_cloud_task(
+        self,
+        remote_task_id: str,
+        *,
+        expected_schema_sha256: str,
+        timeout_seconds: float = 60,
+    ) -> MediaKitCloudQueryResult:
+        """Query exactly once; the durable worker owns repetition and leases."""
+        task_id = remote_task_id.strip()
+        if not task_id or len(task_id) > 255:
+            raise ValueError("MediaKit remote task id must contain 1-255 characters")
+        if timeout_seconds <= 0:
+            raise ValueError("MediaKit query timeout must be positive")
+        query_capability = await self.discover_capability("shared", "query-task")
+        if query_capability.schema_sha256 != expected_schema_sha256:
+            raise MediaKitCommandError("MediaKit query-task schema changed")
+
+        result = await self._runner(
+            (self._cli_path, "shared", "query-task", "--task-id", task_id),
+            timeout_seconds,
+        )
+        raw_payload = _json_payload(
+            result,
+            operation="cloud task query",
+            allow_structured_failure=True,
+        )
+        notices = _notice_messages(raw_payload.get("_notice"))
+        payload = {key: value for key, value in raw_payload.items() if key != "_notice"}
+        errors = sorted(
+            Draft202012Validator(query_capability.output_schema).iter_errors(payload),
+            key=lambda error: list(error.absolute_path),
+        )
+        if errors:
+            raise MediaKitCommandError("MediaKit cloud task query returned an invalid result")
+        returned_task_id = payload.get("task_id")
+        if not isinstance(returned_task_id, str) or returned_task_id.strip() != task_id:
+            raise MediaKitCommandError("MediaKit cloud task identity mismatch")
+        provider_status = payload.get("status")
+        if not isinstance(provider_status, str) or not provider_status.strip():
+            raise MediaKitCommandError("MediaKit cloud task query omitted status")
+        return MediaKitCloudQueryResult(
+            remote_task_id=task_id,
+            provider_status=provider_status,
+            provider_output=payload,
+            provider_output_sha256=_canonical_sha256(payload),
+            query_schema_sha256=query_capability.schema_sha256,
             notices=notices,
         )
 

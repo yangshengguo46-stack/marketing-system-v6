@@ -212,8 +212,8 @@ contract is implemented; Douyin live connector acceptance remains pending.
 Content-world research owns only `user_material` and `topic_evidence`; providers drop other
 roles, and Douyin also drops missing roles. MediaKit inputs use `deerflow.incubation.media`:
 platform pages are not `video_url`; paths and signed URLs remain execution-only. Local execution
-double-hashes inputs and persists typed, role-inheriting snapshots. Cloud drivers require
-credential-free durable intents and remain disabled pending mocked acceptance; see A49-A50.
+double-hashes inputs and persists typed snapshots. The A51 cloud driver uses durable intents and
+fixed errors, but stays unregistered pending approved live acceptance; see A49-A51.
 
 ## Development Workflow
 

@@ -1404,3 +1404,23 @@ Schema 之后再进入窄视频元信息合同。持久回执记录 CLI 版本�
 `11778 passed, 76 skipped, 17 warnings in 426.42s`。详见
 `audits/A50-durable-task-submission-intent.md` 与
 `evidence/durable-task-submission-intent-a50-2026-08-17.md`。
+
+## A51 W04 MediaKit 云驱动无费用模拟验收
+
+2026-08-17 在 A50 的持久提交意图之上新增隔离 `MediaKitCloudDriver`。失败测试先要求尚不存在的
+云合同；首轮实现后安全复核又暴露授权异常原文、稳定引用夹带签名 URL、物化异常泄露临时输出地址和
+外部 URL 冒充持久产物四个缺口。修复后，提交参数只接受稳定引用、能力名、Schema 哈希、授权引用
+和非敏感选项，三个受信回调边界都只向任务运行时返回固定错误信封。
+
+本机 `mediakit-cli 0.2.0` 的 `query-task --schema` 把状态描述为
+`processing/success/failed`，同版本只读归档源码则使用
+`queued/running/completed/failed/canceled/cancelled`。驱动兼容两组输入并归一为 DeerFlow 状态；
+每次租约只查询一次，禁止 `--poll-complete`。本地任务 ID 固定作为 `client_token`，短命输入和输出
+URL 只存在执行内存；完成任务必须物化为内部 `artifact://` 引用、内容哈希、MIME 和大小。
+
+定向云驱动测试为 `14 passed`，MediaKit、持久任务和孵化谱系联合回归为
+`78 passed, 1 warning`。第一次全量只因 `backend/AGENTS.md` 超指导文件软预算而失败；压缩规则并
+单测后，最终完整离线后端为 `11792 passed, 76 skipped, 17 warnings in 417.45s`。本轮未注册驱动、
+未调用云服务、未上传用户素材、未产生费用，也不代表 ASR/OCR/场景切分已经真实可用。详见
+`audits/A51-mediakit-cloud-driver-mocked-acceptance.md` 与
+`evidence/mediakit-cloud-driver-a51-2026-08-17.md`。
