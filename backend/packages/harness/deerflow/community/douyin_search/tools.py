@@ -252,6 +252,7 @@ async def douyin_video_search_tool(
     publish_time: int = 0,
     sort_type: int = 0,
     search_id: str | None = None,
+    open_id: str | None = None,
 ) -> str:
     """Search public Douyin videos through the official Douyin Open Platform.
 
@@ -267,6 +268,7 @@ async def douyin_video_search_tool(
         publish_time: Publish window: 0 any time, 1 one day, 7 seven days, 180 half-year.
         sort_type: Sort order: 0 relevance, 1 most liked, 2 newest.
         search_id: Search session ID returned by the first page when loading more results.
+        open_id: Optional authorized viewer open_id. This does not identify or filter the target creator.
     """
     query = query.strip()
     if not query:
@@ -296,6 +298,8 @@ async def douyin_video_search_tool(
         }
         if isinstance(search_id, str) and search_id.strip():
             params["search_id"] = search_id.strip()
+        if isinstance(open_id, str) and open_id.strip():
+            params["open_id"] = open_id.strip()
 
         access_token = await _get_client_token(client_key, client_secret)
         payload = await _request_video_search(access_token, params)

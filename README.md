@@ -818,8 +818,12 @@ identity-bound, multi-post collection receipt.
 Official Douyin video search uses the current v2 contract. The same bounded adapter can
 return `topic_evidence` for subject research or `benchmark_account_candidate` for account
 discovery. The purpose flag is local and is never forwarded to Douyin. A candidate author
-label is not a stable account identity and cannot become a `BenchmarkSnapshot` until an
-official account route supplies author-consistent posts and a coverage receipt.
+label can now be matched across bounded search pages, deduplicated by public video ID, and
+sealed in the project ledger with explicit exclusions and pagination coverage. It remains
+candidate evidence, not a stable account identity, and cannot become a `BenchmarkSnapshot`
+until an official account route supplies author-consistent posts and a coverage receipt.
+Xingtu and Buyin are deferred field-gap sources rather than prerequisites for this public
+content sample.
 
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps

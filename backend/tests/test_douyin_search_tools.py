@@ -226,6 +226,49 @@ async def test_douyin_video_search_marks_benchmark_discovery_without_sending_pur
 
 
 @pytest.mark.asyncio
+async def test_douyin_video_search_forwards_optional_viewer_open_id_without_returning_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        tools,
+        "get_app_config",
+        lambda: SimpleNamespace(
+            get_tool_config=lambda name: _config(
+                client_key="douyin-client-key",
+                client_secret="douyin-client-secret",
+                device_id=123456789,
+            )
+        ),
+    )
+    search_params: list[dict[str, object]] = []
+
+    async def request_token(client_key: str, client_secret: str) -> tuple[str, int]:
+        return "clt.private-token", 7200
+
+    async def request_search(access_token: str, params: dict[str, object]) -> dict[str, object]:
+        search_params.append(params)
+        return {
+            "err_no": 0,
+            "err_msg": "success",
+            "data": {"data": {"cursor": 0, "has_more": False, "video_list": []}},
+        }
+
+    monkeypatch.setattr(tools, "_request_stable_client_token", request_token)
+    monkeypatch.setattr(tools, "_request_video_search", request_search)
+
+    raw = await tools.douyin_video_search_tool.ainvoke(
+        {
+            "query": "大能 腕表",
+            "purpose": "benchmark_discovery",
+            "open_id": "authorized-viewer-open-id",
+        }
+    )
+
+    assert search_params[0]["open_id"] == "authorized-viewer-open-id"
+    assert "authorized-viewer-open-id" not in raw
+
+
+@pytest.mark.asyncio
 async def test_douyin_video_search_requires_local_credentials_without_leaking_other_keys(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

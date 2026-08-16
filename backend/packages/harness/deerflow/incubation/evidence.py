@@ -51,6 +51,8 @@ class EvidenceCoverageReceipt(IncubationContract):
     population_scope: NonEmptyStr = Field(max_length=128)
     requested_count: int | None = Field(default=None, ge=1)
     returned_count: int = Field(ge=0)
+    excluded_count: int = Field(default=0, ge=0)
+    duplicate_count: int = Field(default=0, ge=0)
     has_more: bool | None = None
     cursor: int | str | None = None
     limitations: tuple[NonEmptyStr, ...] = ()

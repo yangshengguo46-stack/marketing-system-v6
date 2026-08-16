@@ -1196,3 +1196,30 @@ Playwright 选择器、本地 JSON 缓存或“大能”案例结论。详细来
 最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 运行完整后端离线套件，结果为
 `11713 passed, 76 skipped, 17 warnings in 466.09s`；Ruff、格式检查、AGENTS 文档约束和
 `git diff --check` 均通过。
+
+## A42 W02 抖音对标候选跨页聚合
+
+2026-08-17 用户明确纠正路由：既然抖音开放平台已有公开视频搜索，先用官方 API
+完成第三方对标内容样本，星图与百应往后排。本轮复核官方参数后进一步确认，
+`open_id` 是授权用户唯一标识，不是目标竞品账号 ID；因此它只能作为查看者上下文，
+不能用来伪造稳定竞品身份。
+
+先写失败测试后，新增薄的 `BenchmarkCandidateRequest` 和官方搜索聚合层。它复用现有
+DomainRouter、Manifest、v2 Schema 与 Token 路由，按 Unicode 归一后的作者显示名跨页精确筛选，
+公开作品 ID 去重，并分别记录请求页、成功页、排除、重复、剩余页和停止原因。
+后续页失败时保留已观察项并显式警告；首页失败不伪造空样本。
+
+最多 24 条的完整候选快照可幂等写入现有项目台账，证据角色仍是
+`benchmark_account_candidate`；Lead 仅接收固定字节预算投影。这已满足“官方 API
+先看别人的公开内容样本”，但不宣称完整账号数据、粉丝画像或成功归因。只在出现稳定身份、
+受众或商业字段缺口时，再启用星图或百应。
+
+失败基线为新模块 `ModuleNotFoundError`；实现后聚焦套件 `34 passed`。本地仍缺抖音
+Client Key/Secret，本轮没有生成真实平台回执，因此状态为
+`reviewed -> implemented; live credential verification pending`。详见
+`audits/A42-douyin-public-benchmark-candidate-aggregation.md` 与
+`evidence/douyin-benchmark-candidate-a42-2026-08-17.md`。
+
+最终以 `DEER_FLOW_AUTH_DISABLED=false make test` 复跑完整后端离线套件，结果为
+`11721 passed, 76 skipped, 17 warnings in 424.47s`；Ruff、格式检查和
+`git diff --check` 均通过。

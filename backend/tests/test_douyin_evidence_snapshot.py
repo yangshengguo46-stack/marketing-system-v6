@@ -85,6 +85,17 @@ def test_official_video_search_can_become_bounded_benchmark_candidate_evidence()
     assert any("not a BenchmarkSnapshot" in item for item in snapshot.limitations)
 
 
+def test_evidence_coverage_can_report_filtered_and_duplicate_results() -> None:
+    snapshot = build_video_search_evidence_snapshot(
+        _domain_result(evidence_role="benchmark_account_candidate"),
+        requested_count=10,
+        captured_at=NOW,
+    )
+
+    assert snapshot.coverage.excluded_count == 0
+    assert snapshot.coverage.duplicate_count == 0
+
+
 def test_topic_evidence_artifact_keeps_route_receipt_without_raw_credentials() -> None:
     artifact = seal_video_search_evidence(
         project=ProjectRef(owner_user_id="user-1", project_id="project-1"),

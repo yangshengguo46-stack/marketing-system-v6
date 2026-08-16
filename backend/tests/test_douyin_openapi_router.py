@@ -230,6 +230,37 @@ async def test_video_search_dispatch_accepts_benchmark_discovery_as_candidate_ev
 
 
 @pytest.mark.asyncio
+async def test_video_search_contract_accepts_optional_authorized_viewer_open_id() -> None:
+    received: list[dict[str, Any]] = []
+
+    async def handler(arguments: dict[str, Any], context: CapabilityContext) -> dict[str, Any]:
+        received.append(arguments)
+        return await _valid_video_handler(arguments, context)
+
+    router = _router(handler)
+    context = _context(
+        scopes={"aweme.dy.video_search_v2"},
+        auth_modes={"client_token"},
+    )
+    manifest = router.discover("search", context)
+
+    result = await router.dispatch(
+        domain_id="search",
+        child_tool="video_search",
+        arguments={
+            "query": "大能 腕表",
+            "purpose": "benchmark_discovery",
+            "open_id": "authorized-viewer-open-id",
+        },
+        manifest_version=manifest["manifest_version"],
+        context=context,
+    )
+
+    assert "error" not in result
+    assert received[0]["open_id"] == "authorized-viewer-open-id"
+
+
+@pytest.mark.asyncio
 async def test_stale_manifest_is_rejected_before_handler_runs() -> None:
     calls = 0
 

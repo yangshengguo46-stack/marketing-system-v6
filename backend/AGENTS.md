@@ -193,6 +193,11 @@ W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route 
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed
 Douyin v2 video-search adapter produces `topic_evidence` for research or
 `benchmark_account_candidate` for discovery; a candidate is not a stable account read.
+The bounded candidate collector reuses one Domain Manifest across pages, exact-matches a
+Unicode-normalized actor display name, deduplicates public video IDs, and can seal at most
+24 observations into the ledger. Optional `open_id` is authorized-viewer context, never
+the target competitor identity, and is not persisted. Xingtu and Buyin stay deferred until
+the official public sample has a specific field gap.
 Third-party account reads use `BenchmarkSnapshot`: one stable external account ID,
 author-consistent unique posts, at most 24 requested posts, explicit exclusions, and role
 `benchmark_evidence` without a customer `PlatformAccountRef`. Its bounded projection is

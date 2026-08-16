@@ -37,6 +37,7 @@ _VIDEO_SEARCH_INPUT_SCHEMA: dict[str, Any] = {
         "publish_time": {"type": "integer", "enum": [0, 1, 7, 180], "default": 0},
         "sort_type": {"type": "integer", "enum": [0, 1, 2], "default": 0},
         "search_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "open_id": {"type": "string", "minLength": 1, "maxLength": 255},
     },
 }
 

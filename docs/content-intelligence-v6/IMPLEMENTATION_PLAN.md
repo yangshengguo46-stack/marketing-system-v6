@@ -48,8 +48,8 @@
 | 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented` | 保留现有运行时，接入项目版本 | 地图持久化、用户确认与版本切换 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
-| 抖音公开视频/体验搜索 | 第六版 | `v2 contract implemented; live credentials pending` | 选题为 `topic_evidence`，对标发现为候选证据 | 配置本地凭据后做 v2 真实回执与项目入库复核 |
-| 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `candidate discovery implemented; stable identity connector pending` | 官方搜索先发现候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 官方账号/星图路径逐项验收；第五版采集器不默认迁移 |
+| 抖音公开视频/体验搜索 | 第六版 | `v2 contract and multi-page candidate aggregation implemented; live credentials pending` | 选题为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 配置本地凭据后做 v2 真实回执与项目入库复核 |
+| 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
 | MediaKit 感知 | 第五版 E15 | `reviewed; isolated live receipts` | 迁移动态 Schema、回执、哈希和恢复边界 | 一个授权账号的单视频与跨视频人工核对 |
@@ -112,7 +112,7 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; official v2 search routing and benchmark snapshot contract slices implemented`
+状态：`in progress; official v2 search routing, multi-page benchmark candidates, and benchmark snapshot contract slices implemented`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
@@ -146,6 +146,14 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 `auth_not_configured` 失败，因此代码状态为 `implemented`，不冒充 `verified`。详见
 `audits/A41-douyin-official-first-evidence-routing.md` 与
 `evidence/douyin-video-search-v2-a41-2026-08-16.md`。
+
+2026-08-17 第四切片回执：现有 DomainRouter 之上新增薄的对标候选聚合层。它使用
+同一 Manifest 跨页调用官方视频搜索，按 Unicode 归一后的作者显示名精确筛选、作品 ID
+去重，并记录排除、重复、跨页和停止回执。最多 24 条的完整候选快照可幂等封存到
+现有项目台账，Lead 仍只看固定字节预算投影。`open_id` 只作为授权查看者上下文，
+不写入产物，也不冒充目标账号身份。星图与百应延期到出现明确字段缺口之后。详见
+`audits/A42-douyin-public-benchmark-candidate-aggregation.md` 与
+`evidence/douyin-benchmark-candidate-a42-2026-08-17.md`。
 
 ### W03 孵化与单条内容产物谱系
 

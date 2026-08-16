@@ -185,9 +185,8 @@ These apply repo-wide; module guides own the module-specific detail.
 - **V6 content core** — isolate lexical, shared-world, root, map, and evidence roles.
   Topics bind the content-addressed account map instead of rewriting it. Third-party
   accounts use project-scoped, author-consistent `BenchmarkSnapshot` observations capped
-  at 24 posts, never audience or success claims. Official Douyin v2 video search may
-  discover a `benchmark_account_candidate`, but search labels cannot be promoted to a
-  `BenchmarkSnapshot` without stable identity and author-consistent posts. Dense recall
+  at 24 posts, never audience or success claims. Douyin v2 author-label samples remain
+  candidates until stable identity is proven; Xingtu and Buyin are deferred gap sources. Dense recall
   remains rejected. See `docs/content-intelligence-v6/`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.
