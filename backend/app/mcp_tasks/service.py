@@ -7,7 +7,7 @@ import uuid
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
-from deerflow.mcp.tasks import McpTaskDriverRegistry, TaskReference, TaskSnapshot, TaskSubmitRequest
+from deerflow.mcp.tasks import McpTaskDriverRegistry, TaskReference, TaskSnapshot, TaskStatus, TaskSubmitRequest
 from deerflow.persistence.mcp_tasks import DuplicateMcpRemoteTaskError
 
 logger = logging.getLogger(__name__)
@@ -101,6 +101,32 @@ class McpTaskService:
                 )
             raise
 
+    async def enqueue(
+        self,
+        *,
+        driver_name: str,
+        request: TaskSubmitRequest,
+        now: datetime | None = None,
+    ) -> dict:
+        """Persist a recoverable submission intent without calling the remote driver."""
+        if self._drivers.get(driver_name) is None:
+            raise LookupError(f"No MCP task driver registered as {driver_name!r}")
+        queued_at = now or datetime.now(UTC)
+        local_task_id = request.local_task_id or f"mcp-task-{uuid.uuid4().hex}"
+        return await self._repository.create_submission_intent(
+            task_id=local_task_id,
+            user_id=request.user_id,
+            thread_id=request.thread_id,
+            run_id=request.run_id,
+            tool_call_id=request.tool_call_id,
+            server_name=request.server_name,
+            driver_name=driver_name,
+            task_name=request.task_name,
+            submit_arguments=dict(request.arguments),
+            next_poll_at=queued_at,
+            driver_data=dict(request.driver_data),
+        )
+
     async def run_once(self, *, now: datetime) -> None:
         claimed = await self._repository.claim_due_tasks(
             now=now,
@@ -111,16 +137,95 @@ class McpTaskService:
         if not claimed:
             return
         results = await asyncio.gather(
-            *(self._poll_one(task, now=now) for task in claimed),
+            *(self._process_one(task, now=now) for task in claimed),
             return_exceptions=True,
         )
         for record, result in zip(claimed, results, strict=True):
             if isinstance(result, BaseException):
                 logger.error(
-                    "Unexpected MCP task poll failure (task_id=%s); the lease will expire for recovery",
+                    "Unexpected MCP task processing failure (task_id=%s); the lease will expire for recovery",
                     record.get("id"),
                     exc_info=(type(result), result, result.__traceback__),
                 )
+
+    async def _process_one(self, record: dict, *, now: datetime) -> None:
+        if record.get("status") == TaskStatus.SUBMISSION_PENDING.value:
+            await self._submit_one(record, now=now)
+            return
+        await self._poll_one(record, now=now)
+
+    async def _submit_one(self, record: dict, *, now: datetime) -> None:
+        driver_name = str(record.get("driver_name") or "")
+        driver = self._drivers.get(driver_name)
+        if driver is None:
+            await self._release_after_error(
+                record,
+                now=now,
+                error=f"No MCP task driver registered as {driver_name!r}",
+            )
+            return
+
+        submit_arguments = record.get("submit_arguments")
+        if not isinstance(submit_arguments, dict):
+            await self._release_after_error(
+                record,
+                now=now,
+                error="Durable MCP task is missing submission arguments",
+            )
+            return
+        request = TaskSubmitRequest(
+            user_id=record["user_id"],
+            thread_id=record["thread_id"],
+            run_id=record.get("run_id"),
+            tool_call_id=record.get("tool_call_id"),
+            server_name=record["server_name"],
+            task_name=record["task_name"],
+            arguments=dict(submit_arguments),
+            driver_data=dict(record.get("driver_data") or {}),
+            local_task_id=record["id"],
+        )
+        try:
+            submission = await driver.submit(request)
+        except Exception as exc:  # noqa: BLE001 - retry idempotent submission later
+            submitted_at = datetime.now(UTC)
+            logger.warning(
+                "MCP task submission failed (task_id=%s, driver=%s); retrying",
+                record.get("id"),
+                driver_name,
+                exc_info=True,
+            )
+            await self._release_after_error(
+                record,
+                now=submitted_at,
+                error=str(exc) or type(exc).__name__,
+            )
+            return
+
+        submitted_at = datetime.now(UTC)
+        snapshot = submission.snapshot
+        if snapshot.status is TaskStatus.SUBMISSION_PENDING:
+            raise ValueError("task driver cannot return submission_pending")
+        driver_data = {
+            **dict(record.get("driver_data") or {}),
+            **submission.driver_data,
+        }
+        applied = await self._repository.bind_submission(
+            record["id"],
+            lease_owner=self._lease_owner,
+            remote_task_id=submission.remote_task_id,
+            status=snapshot.status.value,
+            result=snapshot.result,
+            error=snapshot.error,
+            input_required=snapshot.input_required,
+            next_poll_at=self._next_poll_at(snapshot, now=submitted_at),
+            submitted_at=submitted_at,
+            driver_data=driver_data,
+        )
+        if not applied:
+            logger.info(
+                "Discarded MCP task submission binding after lease ownership changed or expired (task_id=%s)",
+                record.get("id"),
+            )
 
     async def _poll_one(self, record: dict, *, now: datetime) -> None:
         driver_name = str(record.get("driver_name") or "")

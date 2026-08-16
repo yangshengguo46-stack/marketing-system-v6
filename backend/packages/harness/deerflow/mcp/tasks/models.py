@@ -8,6 +8,7 @@ from typing import Any
 class TaskStatus(StrEnum):
     """Protocol-neutral lifecycle states for long-running MCP work."""
 
+    SUBMISSION_PENDING = "submission_pending"
     SUBMITTED = "submitted"
     WORKING = "working"
     INPUT_REQUIRED = "input_required"
@@ -20,6 +21,12 @@ POLLABLE_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
     {
         TaskStatus.SUBMITTED,
         TaskStatus.WORKING,
+    }
+)
+CLAIMABLE_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
+    {
+        TaskStatus.SUBMISSION_PENDING,
+        *POLLABLE_TASK_STATUSES,
     }
 )
 TERMINAL_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
@@ -77,12 +84,15 @@ class TaskReference:
 
     @classmethod
     def from_record(cls, record: dict[str, Any]) -> TaskReference:
+        remote_task_id = record.get("remote_task_id")
+        if not isinstance(remote_task_id, str) or not remote_task_id.strip():
+            raise ValueError("pollable task requires a remote_task_id")
         return cls(
             local_task_id=record["id"],
             user_id=record["user_id"],
             thread_id=record["thread_id"],
             server_name=record["server_name"],
-            remote_task_id=record["remote_task_id"],
+            remote_task_id=remote_task_id,
             driver_data=dict(record.get("driver_data") or {}),
         )
 

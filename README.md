@@ -860,10 +860,10 @@ Git, logs, artifacts, or model context.
 MediaKit local execution now runs through the same V6 provenance boundary. A local video is
 hashed before and after execution, the current CLI output is checked against both its dynamic
 schema and a narrow capability-specific observation contract, and the resulting artifact
-inherits its source evidence role without persisting the command, URL, or local path. Cloud
-ASR/OCR/scene tasks remain disabled until a durable submit intent closes the submit-before-
-persistence failure window; they will reuse DeerFlow's lease poller rather than occupying the
-agent loop.
+inherits its source evidence role without persisting the command, URL, or local path. The task
+runtime now durably records an idempotent submission intent before any remote call and binds the
+remote handle under a lease afterward. Cloud ASR/OCR/scene drivers remain disabled until their
+authorization, status adaptation, output download, and quality checks pass mocked acceptance.
 
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps

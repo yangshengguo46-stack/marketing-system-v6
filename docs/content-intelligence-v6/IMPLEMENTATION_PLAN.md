@@ -52,7 +52,7 @@
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
-| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata execution and role-inheriting receipt implemented; cloud tasks pending` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云任务先补持久提交意图再接租约恢复 | 授权媒体 ASR/OCR/场景切分与人工核对 |
+| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata and durable submit intent implemented; cloud driver pending` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图与租约恢复 | 授权媒体 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
 | 表现形式选择 | 第四版方法审计 | `adopted; unimplemented` | 新增薄 `FormatDecision`，不改写选题 | 口播、图文、纯素材、访谈与短剧的资源匹配 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
@@ -219,6 +219,12 @@ Gateway 环境中的 Key、Secret 和 Device ID
 可以复用，但 MediaKit 没有取消能力，不能照搬“先提交后落库”的 MCP 提交流程；云任务必须先补
 持久提交意图。详见 `audits/A49-mediakit-local-execution-and-cloud-recovery.md`。
 
+2026-08-17 第二执行切片：通用长任务运行时已增加 `submission_pending` 和 `enqueue()`。
+提交意图先落库，后台租约工作进程再以稳定本地任务 ID 调用远端并原子绑定句柄；绑定失败不取消
+远端，而是在租约过期后使用同一幂等键恢复。`0013_mcp_task_submission_intent` 已覆盖旧数据库升级。
+本切片没有注册 MediaKit 云驱动；下一步先用模拟 CLI 验证提交、查询、恢复、授权和输出质检，再决定
+是否执行真实付费验收。详见 `audits/A50-durable-task-submission-intent.md`。
+
 首批验收：
 
 - 本地剪辑、字幕、裁剪、拼接、混音、合成和元信息。
@@ -315,6 +321,6 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-ledger-a38-2026-08-16.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；W04 下一切片先建立
-MediaKit 云端持久提交意图，再接 ASR/OCR/场景切分的租约轮询与结果质检。不得用网页视觉采集
+下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；W04 已建立云端持久
+提交意图，下一切片接 MediaKit 模拟云驱动、ASR/OCR/场景切分状态适配和结果质检。不得用网页视觉采集
 伪装 W02 已通过，也不得在 Agent 循环内长轮询云任务。

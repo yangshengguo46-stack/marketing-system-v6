@@ -1384,3 +1384,23 @@ Schema 之后再进入窄视频元信息合同。持久回执记录 CLI 版本�
 `11771 passed, 76 skipped, 17 warnings in 420.58s`。详见
 `audits/A49-mediakit-local-execution-and-cloud-recovery.md` 与
 `evidence/mediakit-local-execution-a49-2026-08-17.md`。
+
+## A50 W04 持久任务提交意图
+
+2026-08-17 继续解决 A49 发现的“远端先提交、数据库后落库”恢复缺口。测试先要求一个可领取但不可
+轮询的 `submission_pending` 状态，并固定三条性质：入队不能调用远端、后台提交后原子绑定句柄、
+绑定失败后必须使用同一本地任务 ID 重试且不得取消远端。失败基线因
+`CLAIMABLE_TASK_STATUSES` 尚不存在而在测试收集期失败。
+
+实现新增 `enqueue()`、持久提交参数、提交意图租约领取和 `bind_submission()`。只有后台工作进程
+持有有效租约时才能绑定远端句柄；绑定成功后提交参数清除。驱动异常会释放租约并延时重试，远端成功
+但绑定落库异常则保留租约到期恢复窗口。原有同步 `submit()` 保持兼容，不把新路径强加给已有驱动。
+迁移 `0013_mcp_task_submission_intent` 将 `remote_task_id` 改为可空并加入提交参数；真实旧
+`0012` SQLite 表升级回归确认已有记录保持不变。
+
+提交参数只允许稳定来源引用、能力名、Schema/授权引用和非敏感选项，禁止凭据、Cookie、临时 URL
+和本机路径。MediaKit 云驱动尚未注册，本轮没有上传、供应商请求或费用。聚焦状态机测试为
+`29 passed`，任务运行时与迁移启动回归为 `65 passed`；完整后端为
+`11778 passed, 76 skipped, 17 warnings in 426.42s`。详见
+`audits/A50-durable-task-submission-intent.md` 与
+`evidence/durable-task-submission-intent-a50-2026-08-17.md`。

@@ -79,6 +79,99 @@ async def test_remote_task_id_is_unique_per_user_and_server(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_submission_intent_is_claimed_then_atomically_bound_to_remote_handle(tmp_path):
+    repo = await _make_repo(tmp_path)
+    now = datetime.now(UTC)
+    intent = await repo.create_submission_intent(
+        task_id="task-intent-1",
+        user_id="user-1",
+        thread_id="thread-1",
+        run_id="run-1",
+        tool_call_id="call-1",
+        server_name="mediakit",
+        driver_name="mediakit",
+        task_name="ASR",
+        submit_arguments={"source_ref": "media-1", "capability": "asr-subtitles"},
+        next_poll_at=now,
+        driver_data={"client_token_sha256": "a" * 64},
+    )
+
+    assert intent["status"] == "submission_pending"
+    assert intent["remote_task_id"] is None
+    claimed = await repo.claim_due_tasks(
+        now=now,
+        lease_owner="worker-1",
+        lease_seconds=60,
+        limit=10,
+    )
+    assert [row["id"] for row in claimed] == ["task-intent-1"]
+
+    bound = await repo.bind_submission(
+        "task-intent-1",
+        lease_owner="worker-1",
+        remote_task_id="remote-1",
+        status="submitted",
+        result=None,
+        error=None,
+        input_required=None,
+        next_poll_at=now + timedelta(seconds=5),
+        submitted_at=now,
+        driver_data={"client_token_sha256": "a" * 64, "status_tool": "query-task"},
+    )
+
+    assert bound is True
+    stored = await repo.get("task-intent-1", user_id="user-1")
+    assert stored is not None
+    assert stored["remote_task_id"] == "remote-1"
+    assert stored["status"] == "submitted"
+    assert stored["submit_arguments"] is None
+    assert stored["lease_owner"] is None
+
+
+@pytest.mark.asyncio
+async def test_submission_binding_rejects_stale_lease_and_leaves_intent_recoverable(tmp_path):
+    repo = await _make_repo(tmp_path)
+    now = datetime.now(UTC)
+    await repo.create_submission_intent(
+        task_id="task-intent-stale",
+        user_id="user-1",
+        thread_id="thread-1",
+        run_id=None,
+        tool_call_id=None,
+        server_name="mediakit",
+        driver_name="mediakit",
+        task_name="OCR",
+        submit_arguments={"source_ref": "media-1"},
+        next_poll_at=now,
+    )
+    await repo.claim_due_tasks(
+        now=now,
+        lease_owner="worker-1",
+        lease_seconds=60,
+        limit=10,
+    )
+
+    bound = await repo.bind_submission(
+        "task-intent-stale",
+        lease_owner="worker-1",
+        remote_task_id="remote-stale",
+        status="submitted",
+        result=None,
+        error=None,
+        input_required=None,
+        next_poll_at=now + timedelta(seconds=65),
+        submitted_at=now + timedelta(seconds=61),
+        driver_data={},
+    )
+
+    assert bound is False
+    stored = await repo.get("task-intent-stale", user_id="user-1")
+    assert stored is not None
+    assert stored["status"] == "submission_pending"
+    assert stored["remote_task_id"] is None
+
+
+@pytest.mark.asyncio
 async def test_other_integrity_errors_are_not_duplicate_remote_tasks(tmp_path):
     repo = await _make_repo(tmp_path)
     now = datetime.now(UTC)

@@ -7,11 +7,16 @@ from sqlalchemy import or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from deerflow.mcp.tasks import ATTENTION_TASK_STATUSES, POLLABLE_TASK_STATUSES, TERMINAL_TASK_STATUSES
+from deerflow.mcp.tasks import (
+    ATTENTION_TASK_STATUSES,
+    CLAIMABLE_TASK_STATUSES,
+    TERMINAL_TASK_STATUSES,
+    TaskStatus,
+)
 from deerflow.persistence.mcp_tasks.model import McpTaskRow
 from deerflow.utils.time import coerce_iso
 
-_POLLABLE_STATUS_VALUES = tuple(status.value for status in POLLABLE_TASK_STATUSES)
+_CLAIMABLE_STATUS_VALUES = tuple(status.value for status in CLAIMABLE_TASK_STATUSES)
 _ATTENTION_STATUS_VALUES = frozenset(status.value for status in ATTENTION_TASK_STATUSES)
 _TERMINAL_STATUS_VALUES = frozenset(status.value for status in TERMINAL_TASK_STATUSES)
 _TIMESTAMP_FIELDS = (
@@ -84,6 +89,7 @@ class McpTaskRepository:
             remote_task_id=remote_task_id,
             task_name=task_name,
             status=status,
+            submit_arguments=None,
             result=result,
             error=error,
             input_required=input_required,
@@ -103,6 +109,49 @@ class McpTaskRepository:
                 if _is_remote_task_unique_conflict(exc):
                     raise DuplicateMcpRemoteTaskError(f"Remote MCP task {remote_task_id!r} is already tracked for server {server_name!r} by this user") from exc
                 raise
+            await session.refresh(row)
+            return self._row_to_dict(row)
+
+    async def create_submission_intent(
+        self,
+        *,
+        task_id: str,
+        user_id: str,
+        thread_id: str,
+        run_id: str | None,
+        tool_call_id: str | None,
+        server_name: str,
+        driver_name: str,
+        task_name: str,
+        submit_arguments: dict[str, Any],
+        next_poll_at: datetime,
+        driver_data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        now = datetime.now(UTC)
+        row = McpTaskRow(
+            id=task_id,
+            user_id=user_id,
+            thread_id=thread_id,
+            run_id=run_id,
+            tool_call_id=tool_call_id,
+            server_name=server_name,
+            driver_name=driver_name,
+            remote_task_id=None,
+            task_name=task_name,
+            status=TaskStatus.SUBMISSION_PENDING.value,
+            submit_arguments=dict(submit_arguments),
+            result=None,
+            error=None,
+            input_required=None,
+            driver_data=dict(driver_data or {}),
+            notification_status="none",
+            next_poll_at=next_poll_at,
+            created_at=now,
+            updated_at=now,
+        )
+        async with self._sf() as session:
+            session.add(row)
+            await session.commit()
             await session.refresh(row)
             return self._row_to_dict(row)
 
@@ -126,7 +175,7 @@ class McpTaskRepository:
             McpTaskRow.user_id == user_id,
         )
         if active_only:
-            stmt = stmt.where(McpTaskRow.status.in_(_POLLABLE_STATUS_VALUES))
+            stmt = stmt.where(McpTaskRow.status.in_(_CLAIMABLE_STATUS_VALUES))
         stmt = stmt.order_by(McpTaskRow.created_at.desc(), McpTaskRow.id.desc()).limit(limit)
         async with self._sf() as session:
             result = await session.execute(stmt)
@@ -144,7 +193,7 @@ class McpTaskRepository:
         stmt = (
             select(McpTaskRow)
             .where(
-                McpTaskRow.status.in_(_POLLABLE_STATUS_VALUES),
+                McpTaskRow.status.in_(_CLAIMABLE_STATUS_VALUES),
                 McpTaskRow.next_poll_at.is_not(None),
                 McpTaskRow.next_poll_at <= now,
                 or_(
@@ -166,6 +215,61 @@ class McpTaskRepository:
                 row.updated_at = now
             await session.commit()
             return [self._row_to_dict(row) for row in rows]
+
+    async def bind_submission(
+        self,
+        task_id: str,
+        *,
+        lease_owner: str,
+        remote_task_id: str,
+        status: str,
+        result: Any | None,
+        error: str | None,
+        input_required: dict[str, Any] | None,
+        next_poll_at: datetime | None,
+        submitted_at: datetime,
+        driver_data: dict[str, Any],
+    ) -> bool:
+        values: dict[str, Any] = {
+            "remote_task_id": remote_task_id,
+            "status": status,
+            "submit_arguments": None,
+            "result": result,
+            "error": error,
+            "input_required": input_required,
+            "driver_data": dict(driver_data),
+            "next_poll_at": next_poll_at,
+            "last_poll_error": None,
+            "consecutive_poll_error_count": 0,
+            "lease_owner": None,
+            "lease_expires_at": None,
+            "updated_at": submitted_at,
+        }
+        if status in _ATTENTION_STATUS_VALUES:
+            values["notification_status"] = "pending"
+        if status in _TERMINAL_STATUS_VALUES:
+            values["completed_at"] = submitted_at
+
+        stmt = (
+            update(McpTaskRow)
+            .where(
+                McpTaskRow.id == task_id,
+                McpTaskRow.status == TaskStatus.SUBMISSION_PENDING.value,
+                McpTaskRow.lease_owner == lease_owner,
+                McpTaskRow.lease_expires_at >= submitted_at,
+            )
+            .values(**values)
+        )
+        async with self._sf() as session:
+            try:
+                result_proxy = await session.execute(stmt)
+                await session.commit()
+            except IntegrityError as exc:
+                await session.rollback()
+                if _is_remote_task_unique_conflict(exc):
+                    raise DuplicateMcpRemoteTaskError(f"Remote MCP task {remote_task_id!r} is already tracked") from exc
+                raise
+            return bool(result_proxy.rowcount)
 
     async def apply_snapshot(
         self,

@@ -209,12 +209,11 @@ observation only; positioning, audience, causality, and transferability require 
 artifacts. Connector-local credentials and raw pages never enter either snapshot. The
 contract is implemented; Douyin live connector acceptance remains pending.
 
-Content-world research owns only `user_material` and `topic_evidence`; every search
-provider drops explicit non-topic roles, and Douyin also drops missing roles. MediaKit inputs
-use `deerflow.incubation.media`: a platform page is not a `video_url`, raw signed URLs
-and local paths remain execution-only, and durable receipts retain hashes and provenance.
-MediaKit local execution uses before/after hashes and persists only typed, role-inheriting
-snapshots. Cloud work requires durable submit intent; see A49.
+Content-world research owns only `user_material` and `topic_evidence`; providers drop other
+roles, and Douyin also drops missing roles. MediaKit inputs use `deerflow.incubation.media`:
+platform pages are not `video_url`; paths and signed URLs remain execution-only. Local execution
+double-hashes inputs and persists typed, role-inheriting snapshots. Cloud drivers require
+credential-free durable intents and remain disabled pending mocked acceptance; see A49-A50.
 
 ## Development Workflow
 

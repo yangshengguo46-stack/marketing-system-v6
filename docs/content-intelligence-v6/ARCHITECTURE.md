@@ -80,8 +80,12 @@ MediaKit 能直接接受 `video_url`，但这里的 URL 是可直接访问的视
 解析器、哈希和时间。`MediaKitCapabilityRouter` 按当前 CLI 动态发现 Schema，并已通过
 本机 `0.2.0` 的本地元信息真实执行。源文件在命令前后核对内容哈希；CLI 原始输出还必须进入
 能力专属的窄结果合同，因为当前元信息 Output Schema 只描述云端提交，不能单独证明本地返回有效。
-`MediaObservationSnapshot` 自动继承来源产物的证据角色。真实平台解析仍未验收；云任务复用
-DeerFlow 租约轮询前必须先持久化幂等提交意图，不能在 MediaKit 无取消能力时采用先提交后落库。
+`MediaObservationSnapshot` 自动继承来源产物的证据角色。真实平台解析仍未验收。云任务将复用
+DeerFlow 租约轮询；运行时现已支持 `submission_pending`：先持久化幂等提交意图，后台领取租约后
+才调用远端并绑定
+任务句柄。MediaKit 无取消能力，后续云驱动必须使用这条路径，并把本地任务 ID 映射为
+`client_token`；旧的先提交后落库路径不能用于 MediaKit。提交意图不得包含凭据、临时 URL 或
+本机路径，详见 A50。
 
 ## 内容理解纵切
 
