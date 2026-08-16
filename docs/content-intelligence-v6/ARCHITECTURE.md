@@ -77,8 +77,11 @@ MediaKit 能直接接受 `video_url`，但这里的 URL 是可直接访问的视
 不是抖音分享页或作品 HTML 页。平台连接先作为可持久证据进入平台解析器；
 解析器只有在响应已确认为 `video/*` 时才可生成 `EphemeralMediaSource`。
 签名直链或本地路径只在调用内存中存在；`MediaSourceReceipt` 仅保留来源、权利、
-解析器、哈希和时间。`MediaKitCapabilityRouter` 按当前 CLI 动态发现 Schema，
-已通过本机 `0.2.0` 的预备调用烟测；真实平台解析、云任务和恢复尚未验收。
+解析器、哈希和时间。`MediaKitCapabilityRouter` 按当前 CLI 动态发现 Schema，并已通过
+本机 `0.2.0` 的本地元信息真实执行。源文件在命令前后核对内容哈希；CLI 原始输出还必须进入
+能力专属的窄结果合同，因为当前元信息 Output Schema 只描述云端提交，不能单独证明本地返回有效。
+`MediaObservationSnapshot` 自动继承来源产物的证据角色。真实平台解析仍未验收；云任务复用
+DeerFlow 租约轮询前必须先持久化幂等提交意图，不能在 MediaKit 无取消能力时采用先提交后落库。
 
 ## 内容理解纵切
 

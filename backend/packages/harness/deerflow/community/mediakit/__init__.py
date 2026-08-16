@@ -2,6 +2,7 @@ from deerflow.community.mediakit.contracts import (
     CommandResult,
     ExecutionMode,
     MediaKitCapability,
+    MediaKitExecutionResult,
     PreparedMediaKitCall,
 )
 from deerflow.community.mediakit.router import (
@@ -17,5 +18,6 @@ __all__ = [
     "MediaKitCapability",
     "MediaKitCapabilityRouter",
     "MediaKitCommandError",
+    "MediaKitExecutionResult",
     "PreparedMediaKitCall",
 ]

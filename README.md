@@ -857,6 +857,14 @@ The route and persistence are offline verified. Live v2 acceptance still require
 their references remain in the ignored extensions config and credential values never enter
 Git, logs, artifacts, or model context.
 
+MediaKit local execution now runs through the same V6 provenance boundary. A local video is
+hashed before and after execution, the current CLI output is checked against both its dynamic
+schema and a narrow capability-specific observation contract, and the resulting artifact
+inherits its source evidence role without persisting the command, URL, or local path. Cloud
+ASR/OCR/scene tasks remain disabled until a durable submit intent closes the submit-before-
+persistence failure window; they will reuse DeerFlow's lease poller rather than occupying the
+agent loop.
+
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps
 actual coverage and exclusions explicit, seals the result as project-scoped

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Literal
 
 from deerflow.incubation.media import EphemeralMediaSource
@@ -13,6 +14,8 @@ class CommandResult:
     returncode: int
     stdout: str
     stderr: str
+    stdout_truncated: bool = False
+    stderr_truncated: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,9 +44,26 @@ class PreparedMediaKitCall:
         return f"PreparedMediaKitCall(domain={self.capability.domain!r}, tool={self.capability.tool!r}, mode={self.mode!r}, source_ref={self.source.source_ref!r}, input_sha256={self.input_sha256!r}, command='<redacted>')"
 
 
+@dataclass(frozen=True, slots=True, repr=False)
+class MediaKitExecutionResult:
+    """Execution-only result; callers must project it before persistence."""
+
+    prepared: PreparedMediaKitCall = field(repr=False)
+    output: dict[str, Any] = field(repr=False)
+    output_sha256: str
+    source_content_sha256: str
+    executed_at: datetime
+    notices: tuple[str, ...] = ()
+
+    def __repr__(self) -> str:
+        capability = self.prepared.capability
+        return f"MediaKitExecutionResult(domain={capability.domain!r}, tool={capability.tool!r}, mode={self.prepared.mode!r}, source_ref={self.prepared.source.source_ref!r}, output_sha256={self.output_sha256!r}, output='<redacted>')"
+
+
 __all__ = [
     "CommandResult",
     "ExecutionMode",
     "MediaKitCapability",
+    "MediaKitExecutionResult",
     "PreparedMediaKitCall",
 ]

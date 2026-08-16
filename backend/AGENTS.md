@@ -213,7 +213,8 @@ Content-world research owns only `user_material` and `topic_evidence`; every sea
 provider drops explicit non-topic roles, and Douyin also drops missing roles. MediaKit inputs
 use `deerflow.incubation.media`: a platform page is not a `video_url`, raw signed URLs
 and local paths remain execution-only, and durable receipts retain hashes and provenance.
-The router discovers CLI `--schema`; it does not yet submit, poll, or register a Lead tool.
+MediaKit local execution uses before/after hashes and persists only typed, role-inheriting
+snapshots. Cloud work requires durable submit intent; see A49.
 
 ## Development Workflow
 

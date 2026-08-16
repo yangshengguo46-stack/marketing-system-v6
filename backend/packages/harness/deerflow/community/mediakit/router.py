@@ -16,6 +16,7 @@ from .contracts import (
     CommandResult,
     ExecutionMode,
     MediaKitCapability,
+    MediaKitExecutionResult,
     PreparedMediaKitCall,
 )
 
@@ -51,10 +52,14 @@ async def _default_runner(
         process.kill()
         await process.communicate()
         raise MediaKitCommandError("MediaKit CLI timed out") from exc
+    stdout_truncated = len(stdout) > _MAX_PROCESS_OUTPUT_BYTES
+    stderr_truncated = len(stderr) > _MAX_PROCESS_OUTPUT_BYTES
     return CommandResult(
         returncode=process.returncode or 0,
         stdout=stdout[:_MAX_PROCESS_OUTPUT_BYTES].decode("utf-8", errors="replace"),
         stderr=stderr[:_MAX_PROCESS_OUTPUT_BYTES].decode("utf-8", errors="replace"),
+        stdout_truncated=stdout_truncated,
+        stderr_truncated=stderr_truncated,
     )
 
 
@@ -78,7 +83,7 @@ def _require_command_token(value: str, *, name: str) -> str:
 def _json_payload(result: CommandResult, *, operation: str) -> dict[str, Any]:
     if result.returncode != 0:
         raise MediaKitCommandError(f"MediaKit {operation} failed")
-    if len(result.stdout.encode("utf-8")) > _MAX_PROCESS_OUTPUT_BYTES:
+    if result.stdout_truncated or len(result.stdout.encode("utf-8")) > _MAX_PROCESS_OUTPUT_BYTES:
         raise MediaKitCommandError(f"MediaKit {operation} exceeded its output budget")
     try:
         payload = json.loads(result.stdout)
@@ -111,6 +116,17 @@ def _validate_client_token(value: str) -> str:
     if not 1 <= len(value) <= 64 or any(ord(character) < 33 or ord(character) > 126 for character in value):
         raise ValueError("MediaKit client_token must contain 1-64 visible ASCII characters")
     return value
+
+
+def _file_sha256(path: str) -> str:
+    digest = hashlib.sha256()
+    try:
+        with open(path, "rb") as source_file:  # noqa: PTH123 - execution-only absolute media path
+            while chunk := source_file.read(1024 * 1024):
+                digest.update(chunk)
+    except OSError as exc:
+        raise MediaKitCommandError("MediaKit source content could not be hashed") from exc
+    return digest.hexdigest()
 
 
 def _flag_arguments(name: str, value: Any) -> tuple[str, ...]:
@@ -249,6 +265,52 @@ class MediaKitCapabilityRouter:
             command=tuple(command),
             input_sha256=_canonical_sha256(input_payload),
             client_token_sha256=(hashlib.sha256(client_token.encode("utf-8")).hexdigest() if client_token is not None else None),
+        )
+
+    async def execute_local(
+        self,
+        prepared: PreparedMediaKitCall,
+        *,
+        timeout_seconds: float = 300,
+    ) -> MediaKitExecutionResult:
+        """Execute one local-file call without persisting its locator or raw output."""
+        if prepared.mode != "local":
+            raise ValueError("local execution requires local mode")
+        if prepared.source.transport != "local_file":
+            raise ValueError("local execution requires a local file source")
+        if timeout_seconds <= 0:
+            raise ValueError("MediaKit execution timeout must be positive")
+        if prepared.source.expires_at is not None and prepared.source.expires_at <= datetime.now(UTC):
+            raise ValueError("resolved media source has expired")
+
+        source_content_sha256 = await asyncio.to_thread(
+            _file_sha256,
+            prepared.source.locator,
+        )
+        result = await self._runner(prepared.command, timeout_seconds)
+        raw_payload = _json_payload(result, operation="local execution")
+        notices = _notice_messages(raw_payload.get("_notice"))
+        payload = {key: value for key, value in raw_payload.items() if key != "_notice"}
+        errors = sorted(
+            Draft202012Validator(prepared.capability.output_schema).iter_errors(payload),
+            key=lambda error: list(error.absolute_path),
+        )
+        if errors:
+            raise MediaKitCommandError("MediaKit local execution returned an invalid result")
+
+        completed_source_sha256 = await asyncio.to_thread(
+            _file_sha256,
+            prepared.source.locator,
+        )
+        if completed_source_sha256 != source_content_sha256:
+            raise MediaKitCommandError("MediaKit source content changed during execution")
+        return MediaKitExecutionResult(
+            prepared=prepared,
+            output=payload,
+            output_sha256=_canonical_sha256(payload),
+            source_content_sha256=source_content_sha256,
+            executed_at=datetime.now(UTC),
+            notices=notices,
         )
 
 

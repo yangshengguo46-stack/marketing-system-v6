@@ -1365,3 +1365,22 @@ SQLite 同时确认五类产物各一条，父级和哈希匹配。聚焦测试 
 `implemented offline; live credential acceptance blocked`，不能记成抖音真实验收。详见
 `audits/A48-douyin-mcp-topic-evidence-lineage.md` 与
 `evidence/douyin-mcp-topic-evidence-a48-2026-08-17.md`。
+
+## A49 W04 MediaKit 本地执行与云恢复边界
+
+2026-08-17 沿 A44 继续接 MediaKit，先对照第五版 E15、本机 CLI 与 DeerFlow
+`McpTaskService`。真实烟测发现 `mediakit-cli 0.2.0` 的元信息 Output Schema 描述云端
+`task_id/request_id`，而本地模式实际返回容器、视频流和音频流元信息；只做 JSON Schema 校验会让
+空对象也通过。第五版的云任务又把提交和 `--poll-complete` 绑在一个进程内，不能提供重启恢复。
+
+本轮测试先行实现本地文件执行：命令前后双哈希固定输入内容，CLI 输出受 1 MB 预算约束，动态
+Schema 之后再进入窄视频元信息合同。持久回执记录 CLI 版本、Schema、请求、源内容和输出哈希，
+不记录命令、原始输出或路径；`media_observation` 自动继承 `media_source_receipt` 的证据角色。
+本机生成的 1 秒、320×240 测试视频已通过真实 `--local probe-video-metadata` 执行，没有调用云端。
+
+审计确认 DeerFlow 的租约轮询可复用，但现有提交顺序依赖远端取消来补偿落库失败，MediaKit CLI
+没有已审计取消能力。云端 ASR/OCR/场景切分因此保持关闭，下一步先实现持久幂等提交意图，再绑定
+原始任务句柄和后台轮询，不能回到 Agent 内长轮询。聚焦测试为 `11 passed`；完整回归最终为
+`11771 passed, 76 skipped, 17 warnings in 420.58s`。详见
+`audits/A49-mediakit-local-execution-and-cloud-recovery.md` 与
+`evidence/mediakit-local-execution-a49-2026-08-17.md`。

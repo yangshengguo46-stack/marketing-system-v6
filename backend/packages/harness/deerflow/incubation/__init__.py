@@ -25,7 +25,11 @@ from deerflow.incubation.evidence import (
 )
 from deerflow.incubation.media import (
     EphemeralMediaSource,
+    MediaKitExecutionReceipt,
+    MediaObservationSnapshot,
     MediaSourceReceipt,
+    VideoMetadataObservation,
+    seal_media_observation_snapshot,
     seal_media_source_receipt,
 )
 
@@ -91,16 +95,20 @@ __all__ = [
     "MissingAccountError",
     "MissingParentArtifactError",
     "MissingProjectError",
+    "MediaKitExecutionReceipt",
+    "MediaObservationSnapshot",
     "MediaSourceReceipt",
     "PlatformAccountRecord",
     "PlatformAccountRef",
     "ProjectConflictError",
     "ProjectRecord",
     "ProjectRef",
+    "VideoMetadataObservation",
     "seal_content_world_version",
     "seal_content_run_artifacts",
     "select_used_topic_evidence_snapshots",
     "seal_benchmark_snapshot",
     "seal_evidence_snapshot",
+    "seal_media_observation_snapshot",
     "seal_media_source_receipt",
 ]

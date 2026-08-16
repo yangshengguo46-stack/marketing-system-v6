@@ -52,11 +52,11 @@
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
-| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `dynamic schema and ephemeral input boundary implemented; execution pending` | 保留动态 Schema、脱敏回执和哈希；继续接任务、恢复与证据角色继承 | 一个授权账号的单视频与跨视频人工核对 |
+| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata execution and role-inheriting receipt implemented; cloud tasks pending` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云任务先补持久提交意图再接租约恢复 | 授权媒体 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
 | 表现形式选择 | 第四版方法审计 | `adopted; unimplemented` | 新增薄 `FormatDecision`，不改写选题 | 口播、图文、纯素材、访谈与短剧的资源匹配 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
-| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `discovered/reviewed by capability` | 经统一路由执行已批准制作任务 | 本地/云端、费用、恢复、输入输出质检 |
+| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `local execution foundation implemented; production capabilities pending` | 经统一路由执行已批准制作任务 | 本地编辑产物、云端费用与恢复、输入输出质检 |
 | 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
 | 审批与发布状态机 | 第四版发布可靠性代码 | `reviewed` | 薄迁移幂等、恢复和未知对账 | 错账号、审批过期、内容变更、崩溃与重放 |
 | 发布回执 | 第四版 repository/API | `reviewed; old implementation exists` | 重写最小不可变回执，不迁旧领域包 | 第一方作品 ID、公开链接和未知结果 |
@@ -112,7 +112,7 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; Douyin MCP topic lineage implemented offline; live credentials and MediaKit execution pending`
+状态：`in progress; Douyin MCP topic lineage and MediaKit local metadata lineage implemented; live platform and cloud media acceptance pending`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
@@ -212,6 +212,13 @@ Gateway 环境中的 Key、Secret 和 Device ID
 `EphemeralMediaSource` 与 `MediaSourceReceipt` 分离执行定位符和持久回执。
 这不等于 W04 已开始制作执行；费用、提交、轮询、重启恢复和输出质检仍是后续验收。
 
+2026-08-17 第一执行切片：本地文件现可通过动态能力路由真实执行
+`probe-video-metadata`。执行前后双哈希防止输入替换，CLI 原始 JSON 先经 Output Schema 再经
+窄视频元信息合同，最终封存只含版本、Schema、请求、源内容和输出哈希。媒体观察自动继承
+`MediaSourceReceipt` 的证据角色，路径与临时 URL 不入账。审计同时确认现有 DeerFlow 租约轮询
+可以复用，但 MediaKit 没有取消能力，不能照搬“先提交后落库”的 MCP 提交流程；云任务必须先补
+持久提交意图。详见 `audits/A49-mediakit-local-execution-and-cloud-recovery.md`。
+
 首批验收：
 
 - 本地剪辑、字幕、裁剪、拼接、混音、合成和元信息。
@@ -308,5 +315,6 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-ledger-a38-2026-08-16.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；代码主线可并行进入
-W04 MediaKit 感知执行接线。不得用网页视觉采集伪装 W02 已通过。
+下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；W04 下一切片先建立
+MediaKit 云端持久提交意图，再接 ASR/OCR/场景切分的租约轮询与结果质检。不得用网页视觉采集
+伪装 W02 已通过，也不得在 Agent 循环内长轮询云任务。
