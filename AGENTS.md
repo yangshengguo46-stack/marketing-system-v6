@@ -157,7 +157,9 @@ cd frontend && pnpm test      # Unit tests
 Rule of thumb: **root `make` = the full application**; **`backend/Makefile` and `frontend/`
 (`pnpm`) = per-module work.**
 
-Host-side pnpm consumers, including the root/frontend Makefiles and local diagnostic scripts, must run through `scripts/pnpm.py`. Diagnostic scripts resolve the runner and frontend directory to absolute paths before changing the child process working directory, so they remain independent of the caller's current directory. The runner preserves direct `pnpm`/`pnpm.cmd` priority, falls back to `corepack pnpm`, and is invoked from `frontend/` so Corepack honors the package-manager version pinned by that project.
+Host pnpm callers must use `scripts/pnpm.py`. It runs in `frontend/`, prefers direct pnpm,
+falls back to Corepack, and forces the version pinned by `packageManager`. Build permissions
+must be booleans; never commit pnpm's generated placeholder values.
 
 ## Where to Go Next
 
@@ -181,9 +183,9 @@ These apply repo-wide; module guides own the module-specific detail.
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
 - **V6 content core** — isolate lexical, shared-world, root, map, and evidence roles.
-  The content map is an account-level, content-addressed editorial positioning object;
-  daily topics and trends must bind to its frozen root and version rather than rewrite it.
-  ADR-014 rejected A32 dense recall; production retains no vector-recall seam or code.
-  See `docs/content-intelligence-v6/`.
+  Topics bind the content-addressed account map instead of rewriting it. Third-party
+  accounts use project-scoped, author-consistent `BenchmarkSnapshot` observations capped
+  at 24 posts, never audience or success claims. Dense recall remains rejected. See
+  `docs/content-intelligence-v6/`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

@@ -5,7 +5,7 @@
 - 日期：2026-08-16
 - 状态：`active implementation plan`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 第六版当前提交：`018ca4308c74800b613f97c43f018bd2aa8f9ad6`
+- 第六版当前基线检查点：`f752d3a1`（后续实施事实以 `LEDGER.md` 和独立提交为准）
 - 第五版只读来源：`/Users/yangyucheng/Documents/ChatGPT/第五版营销系统@3ee135f7`
 - 第四版只读来源：`/Users/yangyucheng/Documents/第四版营销系统@58f4e0c9`
 - 架构决策：`decisions/ADR-018-artifact-graph-orchestration.md`
@@ -49,7 +49,7 @@
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `search verified; video evidence adapter implemented` | 作为 `topic_evidence` | 生产 Tool 写入项目台账并做真实回执复核 |
-| 对标账号采集 | 第五版 E15 | `reviewed; Douyin sample verified` | 薄迁移账号身份、多作品与覆盖回执 | 链接到有界 `BenchmarkSnapshot` |
+| 对标账号采集 | 第五版 E15 + 第六版 `BenchmarkSnapshot` | `contract implemented; Douyin connector pending` | 已重写账号身份、作者一致多作品、覆盖回执与有界投影 | 抖音链接连接器与真实账号入库验收 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
 | MediaKit 感知 | 第五版 E15 | `reviewed; isolated live receipts` | 迁移动态 Schema、回执、哈希和恢复边界 | 一个授权账号的单视频与跨视频人工核对 |
@@ -112,7 +112,7 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; official video-search evidence slice implemented`
+状态：`in progress; official video-search and benchmark snapshot contract slices implemented`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
@@ -131,6 +131,13 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 `topic_evidence`。投影只含快照/路由哈希、覆盖、限制和预算内代表项，并显示省略数量；完整证据留在
 业务台账。当前适配器尚未由生产 Tool 自动写入选中项目，W02 继续进行。证据见
 `evidence/douyin-topic-evidence-a39-2026-08-16.md`。
+
+2026-08-16 第二切片回执：完成第五版 E15 逐文件审计，在第六版重写平台无关
+`BenchmarkSnapshot`。快照将稳定外部账号 ID 与最多 `24` 条作者一致作品绑定，保留请求、
+返回、排除、`has_more` 和采样限制，并封存为项目级 `benchmark_evidence`。Lead 投影只含有界
+主页/作品观察和哈希，不输出账号定位、受众、成功原因或可复制公式。抖音账号链接连接器
+尚未注册或真实入库验收。审计见 `audits/A40-fifth-version-e15-benchmark-snapshot.md`，回执见
+`evidence/benchmark-snapshot-a40-2026-08-16.md`。
 
 ### W03 孵化与单条内容产物谱系
 

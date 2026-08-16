@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 COREPACK_NOTICE = "Using pnpm via Corepack."
+PINNED_PACKAGE_MANAGER_ENV = "PNPM_CONFIG_PM_ON_FAIL"
 
 
 def find_pnpm_command() -> list[str] | None:
@@ -49,11 +51,14 @@ def run_pnpm(arguments: Sequence[str]) -> int:
         print(COREPACK_NOTICE, file=sys.stderr)
 
     try:
+        env = os.environ.copy()
+        env[PINNED_PACKAGE_MANAGER_ENV] = "download"
         result = subprocess.run(
             [*command, *arguments],
             check=False,
             shell=False,
             cwd=FRONTEND_DIR,
+            env=env,
         )
     except OSError as exc:
         print(f"Error: Failed to run pnpm via {command[0]}: {exc}", file=sys.stderr)

@@ -1138,3 +1138,37 @@ ID、标题、公开链接、文本摘录、作者显示名、发布时间与点
 本轮没有重新调用真实抖音 API，因此沿用旧搜索能力的 `verified` 结论，不把新项目入库链标成
 `verified`。加入迁移、并发启动、Alembic autogen 和持久化脚手架后的最终相关套件为
 `156 passed`。详见 `evidence/douyin-topic-evidence-a39-2026-08-16.md`。
+
+## A40 W02 对标账号快照合同
+
+2026-08-16 对第五版 `3ee135f7` 中 E15 的账号快照、链接采集、作者一致性和
+Lead 投影完成逐文件审计。本轮确认可迁移的是工程合同，而不是第五版的采集运行时、
+Playwright 选择器、本地 JSON 缓存或“大能”案例结论。详细来源、失败史和拒绝项已记入
+`audits/A40-fifth-version-e15-benchmark-snapshot.md`。
+
+第六版新增平台无关 `BenchmarkSnapshot`：主页与每条作品必须绑定同一稳定外部账号 ID；
+作品 ID 必须唯一；单次请求最多 `24` 条；请求、返回、排除、`has_more`、采样依据和限制
+分开保留。混入另一作者、虚假覆盖数、重复作品、负数/非有限公开指标和晚于快照的观察均
+确定性拒绝。
+
+快照封存为项目级 `benchmark_evidence`，不绑定用户自有的 `PlatformAccountRef`。完整快照留在
+业务台账；Lead 投影默认上限 `16 KB`，超限时只能整条省略并显示数量，不将文案截成伪完整证据。
+投影固定声明主页文本、文案和公开指标只是有界观察，不是账号定位、受众画像、成功原因或可复制公式。
+
+本轮失败基线先在导入阶段失败，实现后 `BenchmarkSnapshot` 聚焦测试 `10 passed`，与产物台账、
+抖音选题证据和 pnpm 工程回归的联合套件 `35 passed`。当前状态为
+`reviewed -> implemented; production Douyin connector and live ledger ingestion pending`。
+
+最终使用 `DEER_FLOW_AUTH_DISABLED=false make test` 运行完整后端离线套件，结果为
+`11709 passed, 76 skipped`。首次按本地 `.env` 直接运行出现的认证、CSRF、渠道归属与扩展失败，
+均由开发机设置 `DEER_FLOW_AUTH_DISABLED=true` 改变测试默认语义导致；显式恢复鉴权后只剩既有
+`content_intelligence_delivery` 内部标签未进入用户输入防伪造名单。该缺口已加入 denylist，
+对应输入清洗套件 `157 passed`，受影响的七组联合回归 `636 passed`。
+
+## 工程环境：pnpm 版本锁定修复
+
+2026-08-16 发现宿主全局 pnpm `11.19.0` 的 `pmOnFail=ignore` 绕过了
+`frontend/package.json` 中的 `pnpm@10.26.2`。pnpm 11 因而将旧 `ignoredBuiltDependencies` 自动改成
+三个 `set this to true or false` 占位值。失败测试固定后，共享运行器强制
+`PNPM_CONFIG_PM_ON_FAIL=download`，真实调用恢复为 `10.26.2`；三项构建权限迁移为明确布尔 `false`。
+`backend/tests/test_pnpm_script.py` 为 `9 passed`，不再允许占位字符串进入工作区。

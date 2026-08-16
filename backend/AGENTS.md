@@ -152,99 +152,52 @@ from deerflow.config import get_app_config
 
 ### V6 Content Incubation Core
 
-`packages/harness/deerflow/content_intelligence/` defines one inspectable
-`ComprehensionRecord` plus three optional projections: `BusinessSemanticView`,
-`ContentWorldView`, and `TopicBrief`. `analyze_content_intelligence` is optional;
-broad account-starting requests use the `return_direct` `explore_content_world` tool.
-Bounded workers isolate literal/lexical reading, shared-world review, root adjudication,
-mapping, research, and convergence. The lexical worker sees only `lexical_head`; code
-freezes typed root candidates, and example branches cannot be selected. The mapper sees
-only the chosen largest effective world, which later research cannot change.
+`content_intelligence/` owns the optional chain
+`ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft`.
+Bounded workers isolate literal/lexical reading, root adjudication, mapping, research,
+and convergence; they are not `task` subagents or a mandatory workflow. The lexical
+worker sees only `lexical_head`. Code freezes typed candidates, selects the largest
+effective world, and prevents later evidence, trends, or example branches from changing
+the root. Dense lexical recall was rejected and has no production interface.
 
-`ContentWorldView` is the account-level editorial map, not a daily topic list. It owns
-the frozen root, audience promise, recurring interpretive lens, drift boundaries, and
-long-term territories. Its content-addressed version excludes later researched named
-candidates. Every `TopicBrief` binds that version and its path starts at the frozen
-root. Trend evidence may enter only after the map and cannot rewrite it. Broad account
-starts render the positioning before one map-bound daily example.
+`ContentWorldView` is a content-addressed account map, not a daily topic list. Every
+topic starts at and binds its frozen map version. The map owns neither commercial return
+paths nor screenwriting conflict. `MessagePlan` and `BaseDraft` remain format-neutral;
+they must not invent context, sales bridges, experiments, quantities, or publishing
+decisions. Narrative structure is optional and evidence-bound. Broad account starts use
+the `return_direct` `explore_content_world` tool, whose only model-visible input is the
+verbatim request; return one hidden tagged `ToolMessage`, never an appended `AIMessage`.
 
-The map owns neither screenwriting conflict nor topics. Creative
-convergence may add `NarrativeFrame` only when protagonist, goal, obstacle, action,
-stakes, and outcome all resolve to observations. An evidence-bound `TopicBrief` may
-enter format-neutral `MessagePlan`: subject, event/question, verbatim-supported user
-position, viewpoint, one entry point and telling lens, an honest audience question,
-reveal order, and payoff. Context is nullable; source metadata is not context. Different
-treatments get different plan IDs. User occupation does not require business insertion,
-and attention packaging cannot replace payoff. Code joins opening, beats, and closing
-into `BaseDraft`. Missing topic or invalid delivery fails open to the frozen map.
+Root-frozen map search and named recall run together. Read only bounded public text,
+revalidate redirects, and use configured `web_fetch` as fallback. Losing-route facts,
+retrieval rationales, and unsupported model knowledge cannot become grounded claims.
+Generic search is `topic_evidence`, never competitor-account evidence. ByteDance Web
+Search uses `WEB_SEARCH_API_KEY`, not an Ark model key. Deterministic code validates
+IDs, references, provenance, and projection binding; it must not contain industry
+examples or choose roots.
 
-Return one hidden tagged `ToolMessage`; native `return_direct` exits before
-`TerminalResponseMiddleware` promotes it. Never append `AIMessage` inside the tool or
-forward parent streaming callbacks. These workers are not `task` subagents, and this
-optional tool must not become a fixed workflow stage.
+The wider V6 system reuses DeerFlow checkpoints, bounded subagents, deferred MCP/tools
+and Skills, Memory, Sandbox/uploads, durable MCP tasks, Scheduler, SSE, authorization,
+and output budgets. Do not build a second runtime or fixed business pipeline. Database
+artifacts and platform receipts are truth; thread state and Memory get bounded
+projections only. Cognitive workers cannot directly write approvals, publications,
+metrics, or adopted learning rules. See `../docs/content-intelligence-v6/` and ADR-018.
 
-The model-visible `explore_content_world` schema exposes only verbatim `user_request`.
-Do not pair it with Lead-level `web_search` or `web_fetch`. After root selection, map
-search starts alongside named recall and merges before reading. Do not append generic
-token lists. Direction routes may discover entities; recall routes cannot rename guesses.
-Search failure preserves the map. Revalidate every redirect, admit bounded text/HTML,
-and use configured `web_fetch` only as fallback. Workers keep provider thinking off.
+W01 lives in `deerflow.incubation`, `deerflow.persistence.incubation_ledger`, and schema
+`0012_incubation_ledger`. `ArtifactEnvelope` is owner/project scoped, content-addressed,
+parent-bound, and revalidated before writes. Payloads exclude secrets, browser state,
+temporary URLs, and local paths. Persist only durable map fields. Keep persistence exports
+lazy and import lightweight concrete modules to avoid ORM/graph import cycles.
 
-Lexical evidence is bounded, fail-open, and never scores roots. ADR-014 rejected dense
-recall; production has no vector-recall interface or retained implementation. Configured
-`web_search` owns retrieval. Generic results are `topic_evidence`, never benchmark-account
-evidence; account analysis needs a separate identity-bound multi-post receipt. ByteDance
-Web Search uses `WEB_SEARCH_API_KEY`, not an Ark model key.
-
-Entities and observations cite sources owned by their selected route. Losing-route facts
-cannot support or invalidate the winner. Reject unknown sources, cross-route grounding,
-and multiple structured calls for one contract. Research errors preserve the map.
-
-Deterministic code validates IDs, references, provenance, and projection binding; it
-must not contain industry examples or choose roots. Unsupported model knowledge stays a
-hypothesis or verification query. Retrieval rationales never become grounded claims.
-`ContentWorldView` must not gain product anchors, return paths, placement, or conversion.
-`delivery.py` owns only format-neutral `MessagePlan` and `BaseDraft`, never platform,
-sales, experiments, publishing, fixed quantities, or an unrequested commercial bridge.
-Tests live in
-`tests/test_content_intelligence_*.py`; architecture and decisions live in
-`../docs/content-intelligence-v6/`.
-
-The broader V6 incubation operating system is governed by
-`../docs/content-intelligence-v6/decisions/ADR-018-artifact-graph-orchestration.md`
-and `../docs/content-intelligence-v6/IMPLEMENTATION_PLAN.md`. It reuses DeerFlow's
-native run/checkpoint ownership, bounded subagents, deferred MCP/tool discovery,
-deferred Skills, Memory, Sandbox/uploads, durable MCP tasks, Scheduler, SSE/StreamBridge,
-authorization, and output budgeting at their existing ownership boundaries. Do not build
-a second agent runtime or a mandatory business workflow. Business artifacts and platform
-receipts remain database truth; thread state, summaries, and Memory receive bounded
-projections only. Cognitive workers may propose artifacts but cannot write approvals,
-publication receipts, metrics, or adopted learning rules directly.
-
-The W01 truth-ledger implementation lives in `deerflow.incubation` and
-`deerflow.persistence.incubation_ledger`, with schema revision
-`0012_incubation_ledger`. `ArtifactEnvelope` is owner/project scoped,
-content-addressed, parent-bound, and revalidated immediately before every write.
-Do not put API keys, tokens, cookies, storage state, temporary URLs, or local paths
-in its payload. `seal_content_world_version` persists only the durable editorial-map
-fields; per-run records, commercial source objects, named search candidates, and
-unknowns remain evidence/run projections. Import persistence exports from
-`deerflow.incubation` lazily so ORM model registration stays cycle-free.
-
-W02 evidence uses `EvidenceSnapshot`: keep collection method, evidence role,
-population scope, provenance, coverage, limitations, and route hashes explicit.
-The full snapshot belongs in the ledger; `to_lead_projection()` is the bounded
-model-facing view and must report included/omitted counts. The Douyin
-`search.video_search` adapter lives in
-`deerflow.community.douyin_openapi.evidence`; it accepts only the reviewed
-DomainRouter receipt and always produces `topic_evidence`, never benchmark or
-audience claims. Do not pass raw provider responses through this adapter.
-
-Package import hygiene: the `deerflow.agents` and `deerflow.subagents` package
-roots expose heavyweight graph/executor entrypoints lazily. Internal modules
-that only need lightweight types, config, or registries should import the
-concrete submodule instead of adding eager package-root imports that pull in the
-tool graph or subagent executor during state/schema imports.
+W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
+its full form stays in the ledger and its Lead projection reports omissions. The reviewed
+Douyin video-search adapter produces only `topic_evidence`. Third-party account reads use
+`BenchmarkSnapshot`: one stable external account ID, author-consistent unique posts,
+at most 24 requested posts, explicit exclusions, and role `benchmark_evidence` without a
+customer `PlatformAccountRef`. Its bounded projection is observation only; positioning,
+audience, causality, and transferability require later child artifacts. Connector-local
+credentials and raw pages never enter either snapshot. The contract is implemented;
+Douyin live connector acceptance remains pending.
 
 ## Development Workflow
 

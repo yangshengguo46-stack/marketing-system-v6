@@ -326,7 +326,7 @@ On Windows, run the local development flow from Git Bash. Native `cmd.exe` and P
    make check  # Verifies Node.js 22+, pnpm, uv, nginx
    ```
 
-   The local `make check`, `make install`, `make dev`, and `make start` entry points use a direct `pnpm`/`pnpm.cmd` executable when available and otherwise fall back to `corepack pnpm`. The shared runner and diagnostics resolve repository paths absolutely, so these checks work regardless of the caller's current directory. Corepack runs from `frontend/`, so it honors the `packageManager` version pinned in `frontend/package.json`; enabling a global pnpm shim is not required.
+   The local `make check`, `make install`, `make dev`, and `make start` entry points use a direct `pnpm`/`pnpm.cmd` executable when available and otherwise fall back to `corepack pnpm`. The shared runner and diagnostics resolve repository paths absolutely, run from `frontend/`, and enforce the `packageManager` version pinned in `frontend/package.json` even when a global pnpm configuration would otherwise ignore it. Enabling a global pnpm shim is not required.
 
 2. **Install dependencies**:
    ```bash
@@ -814,6 +814,14 @@ ByteDance/Volcengine provider requires a separate `WEB_SEARCH_API_KEY`; an Ark m
 is not reused. Generic search receipts are topic evidence only. A video or account page
 returned by search is never treated as competitor-account analysis without a separate
 identity-bound, multi-post collection receipt.
+
+The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
+It binds one stable external account identity to at most 24 author-qualified posts, keeps
+actual coverage and exclusions explicit, seals the result as project-scoped
+`benchmark_evidence`, and gives the Lead only a fixed-byte projection. This snapshot is
+not an audience profile, positioning verdict, virality explanation, or reusable success
+formula. The contract is implemented; production Douyin account-link collection remains
+pending separate connector and live-account acceptance.
 
 The content-world contract contains no product anchor or commercial return path. It
 does not choose presentation format, platform, sales, experiments, or publishing.

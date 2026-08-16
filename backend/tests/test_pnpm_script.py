@@ -59,6 +59,29 @@ def test_runner_prefers_direct_pnpm_and_forwards_arguments(tmp_path: Path):
     assert "via Corepack" not in result.stderr
 
 
+def test_runner_enforces_the_project_package_manager_pin(tmp_path: Path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    if os.name == "nt":
+        pnpm = bin_dir / "pnpm.cmd"
+        pnpm.write_text(
+            "@echo off\r\necho %PNPM_CONFIG_PM_ON_FAIL%\r\n",
+            encoding="utf-8",
+        )
+    else:
+        pnpm = bin_dir / "pnpm"
+        pnpm.write_text(
+            "#!/bin/sh\nprintf '%s\\n' \"${PNPM_CONFIG_PM_ON_FAIL-}\"\n",
+            encoding="utf-8",
+        )
+        pnpm.chmod(0o755)
+
+    result = _run_pnpm(bin_dir, "--version")
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == "download"
+
+
 def test_runner_uses_corepack_pnpm_from_frontend_directory(tmp_path: Path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -72,6 +95,14 @@ def test_runner_uses_corepack_pnpm_from_frontend_directory(tmp_path: Path):
 
     package_json = json.loads((FRONTEND_DIR / "package.json").read_text(encoding="utf-8"))
     assert package_json["packageManager"] == "pnpm@10.26.2"
+
+
+def test_workspace_build_permissions_are_explicit_booleans():
+    workspace_config = (FRONTEND_DIR / "pnpm-workspace.yaml").read_text(encoding="utf-8")
+
+    assert "set this to true or false" not in workspace_config
+    assert "ignoredBuiltDependencies" not in workspace_config
+    assert "allowBuilds:\n  esbuild: false\n  sharp: false\n  unrs-resolver: false\n" in workspace_config
 
 
 def test_runner_uses_frontend_directory_when_called_from_repo_root(tmp_path: Path):

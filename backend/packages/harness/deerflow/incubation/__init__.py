@@ -1,3 +1,12 @@
+from deerflow.incubation.benchmark import (
+    BENCHMARK_EPISTEMIC_NOTICE,
+    BenchmarkCoverageReceipt,
+    BenchmarkPostObservation,
+    BenchmarkProfileObservation,
+    BenchmarkRouteReceipt,
+    BenchmarkSnapshot,
+    seal_benchmark_snapshot,
+)
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
@@ -47,6 +56,12 @@ __all__ = [
     "ArtifactConflictError",
     "ArtifactEnvelope",
     "ArtifactParentRef",
+    "BENCHMARK_EPISTEMIC_NOTICE",
+    "BenchmarkCoverageReceipt",
+    "BenchmarkPostObservation",
+    "BenchmarkProfileObservation",
+    "BenchmarkRouteReceipt",
+    "BenchmarkSnapshot",
     "EvidenceRole",
     "EvidenceCoverageReceipt",
     "EvidenceItem",
@@ -62,5 +77,6 @@ __all__ = [
     "ProjectRecord",
     "ProjectRef",
     "seal_content_world_version",
+    "seal_benchmark_snapshot",
     "seal_evidence_snapshot",
 ]

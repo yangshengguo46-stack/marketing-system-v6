@@ -31,6 +31,11 @@ flowchart LR
 [`ADR-018`](decisions/ADR-018-artifact-graph-orchestration.md)；工作包与验收顺序见
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)。
 
+共享台账当前有两类读取产物：通用 `EvidenceSnapshot` 保留选题、平台规则等单次证据集；
+`BenchmarkSnapshot` 保留第三方对标账号的稳定身份、作者一致作品和真实覆盖回执。
+两者都内容寻址且只向 Lead 给出有界投影，但证据角色不能互换。对标快照只是观察；定位、受众、
+获客期/当前迁移和不可复制条件属于引用快照的后续分析产物。
+
 ## 内容理解纵切
 
 ```mermaid

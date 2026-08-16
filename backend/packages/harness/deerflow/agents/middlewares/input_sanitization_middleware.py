@@ -80,6 +80,7 @@ _BLOCKED_TAG_NAMES: frozenset[str] = frozenset(
         "response_style",
         "citations",
         "content_intelligence",
+        "content_intelligence_delivery",
         "content_intelligence_method",
         "content_intelligence_research",
         "uploaded_files",  # old uploads tag — still processed by deermem for backward-compat
