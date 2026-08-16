@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
+from langchain.tools import ToolRuntime
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.types import Command
@@ -16,6 +17,24 @@ from deerflow.tools.builtins.content_intelligence_tool import content_intelligen
 from deerflow.tools.tools import BUILTIN_TOOLS
 
 content_intelligence_tool_module = importlib.import_module("deerflow.tools.builtins.content_intelligence_tool")
+
+
+def _tool_runtime(tool_call_id: str, *, context: dict[str, str] | None = None) -> ToolRuntime:
+    runtime_context = {
+        "thread_id": "thread-1",
+        "run_id": "run-1",
+        "user_id": "user-1",
+        **(context or {}),
+    }
+    return ToolRuntime(
+        state={},
+        context=runtime_context,
+        config={"configurable": {"thread_id": runtime_context["thread_id"]}},
+        stream_writer=lambda _: None,
+        tools=[],
+        tool_call_id=tool_call_id,
+        store=None,
+    )
 
 
 def test_content_intelligence_workers_do_not_inherit_lead_thinking_mode(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -128,6 +147,7 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
             "name": "explore_content_world",
             "args": {
                 "user_request": "我是卖重庆火锅底料的，该怎么起号？",
+                "runtime": _tool_runtime("content-world-call-1"),
             },
             "id": "content-world-call-1",
             "type": "tool_call",
@@ -189,7 +209,10 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
     result = await explore_content_world_tool.ainvoke(
         {
             "name": "explore_content_world",
-            "args": {"user_request": user_request},
+            "args": {
+                "user_request": user_request,
+                "runtime": _tool_runtime("content-world-call-shooting-delivery"),
+            },
             "id": "content-world-call-shooting-delivery",
             "type": "tool_call",
         }
@@ -235,7 +258,10 @@ async def test_content_world_tool_preserves_the_rooted_map_when_optional_researc
     result = await explore_content_world_tool.ainvoke(
         {
             "name": "explore_content_world",
-            "args": {"user_request": "我是卖重庆火锅底料的，该怎么起号？"},
+            "args": {
+                "user_request": "我是卖重庆火锅底料的，该怎么起号？",
+                "runtime": _tool_runtime("content-world-call-research-failure"),
+            },
             "id": "content-world-call-research-failure",
             "type": "tool_call",
         }
@@ -615,6 +641,143 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
     assert set(schema["properties"]) == {
         "user_request",
     }
+
+
+@pytest.mark.asyncio
+async def test_content_run_persistence_uses_only_the_runtime_bound_project(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from deerflow.incubation import ProjectRef
+
+    artifacts = tuple(
+        SimpleNamespace(
+            artifact_type=artifact_type,
+            artifact_id=f"artifact-{artifact_type}",
+            content_sha256=f"sha-{artifact_type}",
+        )
+        for artifact_type in (
+            "content_reading",
+            "content_world",
+            "topic_brief",
+            "message_plan",
+            "draft_version",
+        )
+    )
+    sealed = SimpleNamespace(storage_order=lambda: artifacts)
+    seal = Mock(return_value=sealed)
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(side_effect=lambda artifact: artifact),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "seal_content_run_artifacts", seal)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_get_incubation_repository",
+        Mock(return_value=repository),
+    )
+
+    receipt = await content_intelligence_tool_module._persist_content_run(
+        bundle=object(),
+        delivery=object(),
+        runtime=SimpleNamespace(
+            context={
+                "incubation_project_id": "golden-gift",
+                "user_id": "user-1",
+                "thread_id": "thread-1",
+                "run_id": "run-1",
+            },
+            config={"configurable": {"thread_id": "thread-1"}},
+        ),
+    )
+
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    repository.get_project.assert_awaited_once_with(project)
+    assert repository.put_artifact.await_count == 5
+    assert seal.call_args.kwargs["project"] == project
+    assert seal.call_args.kwargs["source_thread_id"] == "thread-1"
+    assert seal.call_args.kwargs["source_run_id"] == "run-1"
+    assert receipt["status"] == "stored"
+    assert receipt["project_id"] == "golden-gift"
+    assert [item["artifact_type"] for item in receipt["artifacts"]] == [artifact.artifact_type for artifact in artifacts]
+    assert "user-1" not in json.dumps(receipt)
+
+
+@pytest.mark.asyncio
+async def test_content_run_persistence_is_optional_without_a_selected_project(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository_factory = Mock()
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_get_incubation_repository",
+        repository_factory,
+    )
+
+    receipt = await content_intelligence_tool_module._persist_content_run(
+        bundle=object(),
+        delivery=None,
+        runtime=_tool_runtime("content-world-call-no-project"),
+    )
+
+    assert receipt == {"status": "not_selected"}
+    repository_factory.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_content_world_tool_keeps_the_answer_when_project_persistence_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    shooting_delivery = object()
+    persistence = {
+        "status": "failed",
+        "project_id": "golden-gift",
+        "message": "The generated content could not be stored in the selected project.",
+    }
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "analyze_content_intelligence",
+        AsyncMock(return_value=bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        AsyncMock(return_value=bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_shooting_delivery",
+        AsyncMock(return_value=shooting_delivery),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 今日建议拍摄\n\n## 古代的礼为什么不只是礼貌？"),
+    )
+    persist = AsyncMock(return_value=persistence)
+    monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persist)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是做黄金礼品的，我要怎么起号？",
+                "runtime": _tool_runtime("content-world-call-persistence-failed"),
+            },
+            "id": "content-world-call-persistence-failed",
+            "type": "tool_call",
+        }
+    )
+
+    tool_message = result.update["messages"][0]
+    assert tool_message.content.startswith("# 今日建议拍摄")
+    assert tool_message.additional_kwargs["incubation_persistence"] == persistence
+    persist.assert_awaited_once()
+    assert persist.await_args.kwargs["bundle"] is bundle
+    assert persist.await_args.kwargs["delivery"] is shooting_delivery
+    assert "incubation_project_id" not in persist.await_args.kwargs["runtime"].context
 
 
 def test_tool_schema_exposes_one_optional_shared_analysis_request() -> None:

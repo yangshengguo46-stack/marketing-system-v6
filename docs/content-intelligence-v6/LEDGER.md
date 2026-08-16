@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-- 台账日期：2026-08-16
+- 台账日期：2026-08-17
 - 第五版冻结提交：`3ee135f7`
 - 第五版归档分支：`codex/archive-v5-final`
 - 第五版归档标签：`marketing-v5-final-20260814`
@@ -1310,3 +1310,33 @@ Lead 高层工具；不得把运行配置缺失误判为功能未实现，也不
 下一断点回到 W02 的内容/证据产物封存。详见
 `audits/A46-incubation-project-runtime.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
+
+## A47 内容纵切写入项目谱系
+
+2026-08-17 继续完成 A46 留下的内容产物封存。新增确定性适配器，将同一次内容运行中的
+`ComprehensionRecord`、长期 `ContentWorldView`、可选 `TopicBrief`、`MessagePlan` 和
+`BaseDraft` 封存为项目级内容寻址产物。选题同时引用阅读记录与冻结地图，讲述策划引用选题，
+基础成稿引用讲述策划；运行中的命名候选和搜索结果不会改变长期地图身份。
+
+第一次真实黄金礼品运行虽然已经从黄金材质迁移到礼与关系秩序，但隐藏回执为
+`persistence=not_selected`，数据库没有产物。项目绑定实际存在，根因是内容工具读取
+`RunnableConfig.context`，而不是 DeerFlow 工具节点注入的 `ToolRuntime.context`。
+失败测试固定后，工具改为与抖音证据工具相同的标准 `@tool + ToolRuntime` 接线，模型 Schema
+仍只有用户原话，项目、用户、线程和运行身份均由服务端注入。
+
+全新线程用同一句“我是做黄金礼品的，我要怎么起号？”复跑，长期内容根为：
+
+```text
+以礼待人：人们如何用礼节、礼物和礼制来维系彼此的关系与社会秩序
+```
+
+并收敛出“村里人随份子，为什么不是在‘送钱’而是在‘织网’”的具体选题。隐藏工具回执与
+SQLite 同时确认五类产物各一条，父级和哈希匹配。聚焦测试 `25 passed`，内容、台账与 Gateway
+关联回归 `175 passed`。完整离线后端套件最终为
+`11757 passed, 76 skipped, 17 warnings in 436.86s`。
+
+本轮不能记为全通过：运行耗时约 6 分 44 秒、13 次模型调用、70,323 Token；资料以二手来源为主，
+成稿个别具体化说法仍需更强证据。结论为
+`implemented; E2E-01 semantic migration and lineage passed; fact-boundary and performance follow-up required`。
+详见 `audits/A47-content-run-artifact-lineage.md` 与
+`evidence/content-run-artifact-lineage-a47-2026-08-17.md`。

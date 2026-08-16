@@ -44,8 +44,8 @@
 | 模块 | 当前来源 | 真实状态 | 第六版决定 | 下一验收 |
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
-| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物自动封存与真实多账号验收 |
-| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented` | 保留现有运行时，接入项目版本 | 地图持久化、用户确认与版本切换 |
+| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
+| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented; golden-gift project persistence verified` | 保留现有运行时和项目版本谱系 | 用户确认、版本切换、事实边界与性能优化 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2 contract and multi-page candidate aggregation implemented; live credentials pending` | 选题为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 配置本地凭据后做 v2 真实回执与项目入库复核 |
@@ -95,7 +95,7 @@
 
 ### W01 共享产物脊柱
 
-状态：`implemented; server project selection and hydration verified; frontend selector deferred to W07`
+状态：`implemented; server project selection, hydration, and content-run lineage verified; frontend selector deferred to W07`
 
 目标：在不修改 Lead 核心提示词的前提下，建立项目、账号、产物包装、父子谱系、内容哈希和
 证据角色的最小合同。
@@ -175,6 +175,8 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 
 ### W03 孵化与单条内容产物谱系
 
+状态：`in progress; content reading through base draft is project-bound; format decision pending`
+
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
 地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
 
@@ -184,6 +186,13 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 - 同一 `TopicBrief` 可以产生不同表现形式，但事情、观点和证据边界保持一致。
 - 非叙事选题不调用编剧方法。
 - 成稿不擅自补造素材、客户案例、数量、周期、成功率或预算。
+
+2026-08-17 第一切片回执：一次内容纵切现在可自动封存
+`content_reading + content_world -> topic_brief -> message_plan -> draft_version`。身份只从线程绑定后
+注入的 `ToolRuntime.context` 取得；没有项目时回答仍可用，落盘失败也不会吞掉内容。黄金礼品真实
+运行已经迁移到“礼与关系秩序”并留下五类 SQLite 产物，但单次耗时约 6 分 44 秒、70,323 Token，
+且二手资料支撑的草稿仍有具体化风险。W03 因此没有完成，下一切片需做确认版本复用、事实边界和
+`FormatDecision`，详见 `audits/A47-content-run-artifact-lineage.md`。
 
 ### W04 MediaKit 制作路由
 
@@ -290,4 +299,5 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-ledger-a38-2026-08-16.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-下一实施断点回到 W02：让内容纵切产物和抖音/MediaKit 证据真正写入同一项目谱系。
+下一实施断点回到 W02：内容纵切已经写入项目谱系，先取得抖音官方 v2 搜索的真实 MCP 回执并
+封存为明确角色的证据，再接 MediaKit 的真实感知执行；不得退回网页视觉采集。

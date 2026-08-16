@@ -28,6 +28,7 @@ from deerflow.sandbox.tools import (
     str_replace_tool,
     write_file_tool,
 )
+from deerflow.tools.builtins.content_intelligence_tool import explore_content_world_tool
 from deerflow.tools.builtins.douyin_benchmark_tool import douyin_benchmark_candidate_tool
 from deerflow.tools.builtins.list_uploaded_files_tool import list_uploaded_files
 from deerflow.tools.builtins.present_file_tool import present_file_tool
@@ -65,6 +66,7 @@ _TOOL_CASES = [
         douyin_benchmark_candidate_tool,
         {"query": "大能 腕表", "actor_label": "大能", "max_posts": 12},
     ),
+    (explore_content_world_tool, {"user_request": "我是做黄金礼品的，我要怎么起号？"}),
     (task_tool, {"description": "do", "prompt": "go", "subagent_type": "general-purpose", "tool_call_id": "call-1"}),
     (skill_manage_tool, {"action": "list", "name": "demo"}),
     (setup_agent, {"soul": "s", "description": "d"}),

@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Any
 from urllib.parse import urljoin
@@ -11,7 +12,7 @@ from urllib.parse import urljoin
 import httpx
 from langchain_core.messages import ToolMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import BaseTool, InjectedToolArg, InjectedToolCallId, StructuredTool
+from langchain_core.tools import BaseTool, InjectedToolArg, StructuredTool, tool
 from langgraph.types import Command
 from pydantic import BaseModel, Field, ValidationError
 
@@ -22,6 +23,7 @@ from deerflow.content_intelligence import (
     ContentIntelligenceBundle,
     ContentIntelligenceRequest,
     ResearchSearchResult,
+    ShootingDelivery,
     SourceMaterial,
     analyze_content_intelligence,
     enrich_content_world_with_research,
@@ -31,7 +33,9 @@ from deerflow.content_intelligence import (
     synthesize_shooting_delivery,
 )
 from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
+from deerflow.incubation import ProjectRef, seal_content_run_artifacts
 from deerflow.models import create_chat_model
+from deerflow.tools.types import Runtime
 from deerflow.utils.readability import ReadabilityExtractor
 
 logger = logging.getLogger(__name__)
@@ -58,11 +62,6 @@ class _ContentIntelligenceToolInput(BaseModel):
         default_factory=list,
         description="Optional source excerpts already obtained from the user or evidence tools. Do not pass unsupported model claims as source material.",
     )
-
-
-class _ExploreContentWorldToolInput(BaseModel):
-    user_request: str = Field(description="The current broad account-starting or long-term-content request, copied without adding requirements.")
-    tool_call_id: Annotated[str, InjectedToolCallId]
 
 
 def _create_content_intelligence_model(config: RunnableConfig):
@@ -106,6 +105,86 @@ def _create_lexical_evidence_provider() -> CedictLexicalEvidenceProvider | None:
         return None
 
 
+def _get_incubation_repository():
+    from deerflow.persistence.engine import get_session_factory
+    from deerflow.persistence.incubation_ledger import IncubationLedgerRepository
+
+    session_factory = get_session_factory()
+    if session_factory is None:
+        return None
+    return IncubationLedgerRepository(session_factory)
+
+
+def _runtime_context_text(runtime: Runtime, name: str) -> str | None:
+    context = runtime.context or {}
+    if not isinstance(context, dict):
+        return None
+    value = context.get(name)
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return value.strip()
+
+
+async def _persist_content_run(
+    *,
+    bundle: ContentIntelligenceBundle,
+    delivery: ShootingDelivery | None,
+    runtime: Runtime,
+) -> dict[str, Any]:
+    project_id = _runtime_context_text(runtime, "incubation_project_id")
+    if project_id is None:
+        return {"status": "not_selected"}
+
+    owner_user_id = _runtime_context_text(runtime, "user_id")
+    thread_id = _runtime_context_text(runtime, "thread_id")
+    run_id = _runtime_context_text(runtime, "run_id")
+    failure = {
+        "status": "failed",
+        "project_id": project_id,
+        "message": "The generated content could not be stored in the selected project.",
+    }
+    if owner_user_id is None or thread_id is None or run_id is None:
+        return failure
+
+    try:
+        project = ProjectRef(
+            owner_user_id=owner_user_id,
+            project_id=project_id,
+        )
+        repository = _get_incubation_repository()
+        if repository is None or await repository.get_project(project) is None:
+            return failure
+        sealed = seal_content_run_artifacts(
+            project=project,
+            bundle=bundle,
+            delivery=delivery,
+            created_at=datetime.now(UTC),
+            source_thread_id=thread_id,
+            source_run_id=run_id,
+        )
+        stored_receipts: list[dict[str, str]] = []
+        for artifact in sealed.storage_order():
+            stored = await repository.put_artifact(artifact)
+            stored_receipts.append(
+                {
+                    "artifact_type": stored.artifact_type,
+                    "artifact_id": stored.artifact_id,
+                    "content_sha256": stored.content_sha256,
+                }
+            )
+        return {
+            "status": "stored",
+            "project_id": project_id,
+            "artifacts": stored_receipts,
+        }
+    except Exception as exc:
+        logger.warning(
+            "Content-run persistence failed: %s",
+            type(exc).__name__,
+        )
+        return failure
+
+
 async def _analyze_content_intelligence(
     user_request: str,
     subject_expression: str,
@@ -142,11 +221,23 @@ async def _analyze_content_intelligence(
     return json.dumps(_lead_projection(bundle, focus=request.focus), ensure_ascii=False, separators=(",", ":"))
 
 
-async def _explore_content_world(
+@tool("explore_content_world", parse_docstring=True, return_direct=True)
+async def explore_content_world_tool(
+    runtime: Runtime,
     user_request: str,
-    tool_call_id: Annotated[str, InjectedToolCallId],
-    config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> Command:
+    """Build the long-term content world for a broad account-starting request.
+
+    This directly answers what human or object world the account can keep
+    talking about after bounded semantic reading, root selection, pure map
+    expansion, research, and editorial convergence. It stops before platform,
+    presentation format, cadence, sales, experiments, or questionnaires.
+
+    Args:
+        user_request: The current broad account-starting or long-term-content request, copied without adding requirements.
+    """
+    config = runtime.config
+    tool_call_id = runtime.tool_call_id
     model = _create_content_intelligence_model(config)
     lexical_evidence_provider = _create_lexical_evidence_provider()
     request = ContentIntelligenceRequest(
@@ -188,10 +279,16 @@ async def _explore_content_world(
                 type(exc).__name__,
             )
             shooting_delivery = None
+        persistence = await _persist_content_run(
+            bundle=bundle,
+            delivery=shooting_delivery,
+            runtime=runtime,
+        )
         if shooting_delivery is not None:
             return _terminal_content_world_command(
                 render_shooting_delivery(bundle, shooting_delivery),
                 tool_call_id=tool_call_id,
+                persistence=persistence,
             )
         narration = await synthesize_content_world_narration(
             bundle,
@@ -201,6 +298,7 @@ async def _explore_content_world(
         return _terminal_content_world_command(
             render_content_world_narration(bundle, narration),
             tool_call_id=tool_call_id,
+            persistence=persistence,
         )
     except (ValidationError, ValueError) as exc:
         if isinstance(exc, ValidationError):
@@ -450,7 +548,18 @@ async def _fetch_public_page_direct(url: str) -> str | None:
     return None
 
 
-def _terminal_content_world_command(content: str, *, tool_call_id: str) -> Command:
+def _terminal_content_world_command(
+    content: str,
+    *,
+    tool_call_id: str,
+    persistence: dict[str, Any] | None = None,
+) -> Command:
+    additional_kwargs: dict[str, Any] = {
+        "hide_from_ui": True,
+        "deerflow_direct_response": True,
+    }
+    if persistence is not None:
+        additional_kwargs["incubation_persistence"] = persistence
     return Command(
         update={
             "messages": [
@@ -459,10 +568,7 @@ def _terminal_content_world_command(content: str, *, tool_call_id: str) -> Comma
                     content=content,
                     tool_call_id=tool_call_id,
                     name="explore_content_world",
-                    additional_kwargs={
-                        "hide_from_ui": True,
-                        "deerflow_direct_response": True,
-                    },
+                    additional_kwargs=additional_kwargs,
                 ),
             ]
         },
@@ -669,18 +775,4 @@ content_intelligence_tool: BaseTool = StructuredTool.from_function(
     ),
     coroutine=_analyze_content_intelligence,
     args_schema=_ContentIntelligenceToolInput,
-)
-
-
-explore_content_world_tool: BaseTool = StructuredTool.from_function(
-    name="explore_content_world",
-    description=(
-        "Direct content-world answer for a broad account-starting, positioning, or long-term-content request. "
-        "It delegates semantic reading, content-root selection, pure map expansion, and bounded editorial convergence to isolated specialists. "
-        "Use it when the current answer should decide what human or object world the account can keep talking about. "
-        "It stops at the content-world judgment and does not continue into downstream operations such as platform, presentation format, posting cadence, sales, experiments, or questionnaires."
-    ),
-    coroutine=_explore_content_world,
-    args_schema=_ExploreContentWorldToolInput,
-    return_direct=True,
 )

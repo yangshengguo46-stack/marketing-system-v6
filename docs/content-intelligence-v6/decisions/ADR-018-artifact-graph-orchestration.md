@@ -2,7 +2,7 @@
 
 ## 状态
 
-`reviewed -> adopted; W01 server artifact spine and runtime hydration implemented; frontend selection pending`
+`reviewed -> adopted; W01 server spine/runtime hydration and first content lineage implemented; frontend selection pending`
 
 ## 背景
 
@@ -135,6 +135,20 @@ IPProject
 
 用户可以只请求对标分析、只请求一条选题，也可以提供完整成片直接要求发布。Lead 只读取
 当前任务所需的有界投影，并按需产生缺失产物，不为显得完整而自动跑全流程。
+
+首个真实内容纵切已按以下父级关系落入同一项目：
+
+```text
+content_reading + content_world
+                -> topic_brief
+                -> message_plan
+                -> draft_version
+```
+
+线程只保存服务端控制的项目引用。`start_run` 从台账校验并重水化绑定，内容工具再从
+`ToolRuntime.context` 读取项目、用户、线程和运行身份；这些字段不进入模型工具 Schema。
+未选项目仍可生成回答，写入失败只产生脱敏状态，不把台账变成语义硬门。A47 的黄金礼品真实回执
+已经证明五类产物和哈希谱系可恢复；用户确认、地图版本切换、事实边界优化和前端读取仍未完成。
 
 ## Agent 与确定性代码的分工
 

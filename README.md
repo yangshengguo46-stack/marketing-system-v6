@@ -836,6 +836,16 @@ endpoint. Run requests cannot inject or replace `incubation_project_id`; `start_
 rehydrates only the stored, owner-validated binding into runtime context. The product-facing
 frontend selector and local live Douyin credential acceptance are still pending.
 
+When a thread has a selected project, a successful content-world run now seals the exact
+`content_reading + content_world -> topic_brief -> message_plan -> draft_version`
+lineage into the incubation ledger. Runtime project, user, thread, and run identity are
+injected through `ToolRuntime` and stay out of the model-facing tool schema. The durable
+content world excludes run-specific named candidates, so later research does not silently
+rewrite account positioning. Running without a selected project remains valid, and a
+redacted ledger failure does not discard the generated answer. Project history UI,
+confirmation/version switching, format adaptation, and production fact review remain
+later V6 work.
+
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps
 actual coverage and exclusions explicit, seals the result as project-scoped

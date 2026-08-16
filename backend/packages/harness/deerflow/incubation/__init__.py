@@ -43,6 +43,12 @@ _PERSISTENCE_EXPORTS = frozenset(
 )
 
 _CONTENT_EXPORTS = frozenset({"seal_content_world_version"})
+_CONTENT_RUN_EXPORTS = frozenset(
+    {
+        "ContentRunArtifactSet",
+        "seal_content_run_artifacts",
+    }
+)
 
 
 def __getattr__(name: str):
@@ -54,6 +60,10 @@ def __getattr__(name: str):
         from deerflow.incubation import content_world
 
         return getattr(content_world, name)
+    if name in _CONTENT_RUN_EXPORTS:
+        from deerflow.incubation import content_run
+
+        return getattr(content_run, name)
     raise AttributeError(name)
 
 
@@ -68,6 +78,7 @@ __all__ = [
     "BenchmarkProfileObservation",
     "BenchmarkRouteReceipt",
     "BenchmarkSnapshot",
+    "ContentRunArtifactSet",
     "EvidenceRole",
     "EvidenceCoverageReceipt",
     "EvidenceItem",
@@ -86,6 +97,7 @@ __all__ = [
     "ProjectRecord",
     "ProjectRef",
     "seal_content_world_version",
+    "seal_content_run_artifacts",
     "seal_benchmark_snapshot",
     "seal_evidence_snapshot",
     "seal_media_source_receipt",

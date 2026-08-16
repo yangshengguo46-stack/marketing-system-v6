@@ -15,6 +15,9 @@
 Scheduled-task runtime note:
 - Scheduled background runs set `context.non_interactive=true` and therefore exclude `ask_clarification` from the lead-agent tool list. This keeps scheduler-triggered runs from stalling on human confirmation mid-execution. `non_interactive` is an internal-only context key: it is merged from `body.context` only when the request authenticated as the process-internal user (the scheduler path), never from arbitrary HTTP/IM clients.
 
+V6 content-run note:
+- `explore_content_world` uses the standard `@tool`/`ToolRuntime` contract. With a selected project it seals `content_reading + content_world -> topic_brief -> message_plan -> draft_version`; project, user, thread, and run identity come only from `ToolRuntime.context` and stay outside the model schema. Run-specific research does not change durable map identity. No project remains a valid non-persistent path, and a redacted ledger failure must preserve the generated answer.
+
 **Community tools** (`packages/harness/deerflow/community/`): optional integrations, each in its own subpackage and wired through `config.yaml`. Documented examples:
 - `tavily/` - Web search (5 results default) and web fetch (4KB limit)
 - `jina_ai/` - Web fetch via Jina reader API with readability extraction
