@@ -1568,3 +1568,16 @@ URL。批准凭证身份改为精确操作摘要，使同一操作的重复报�
 可检查性能回执”，先测量再决定 Token 预算；纯定位请求停在地图，需要今日选题时才进入研究，
 有视频或对标账号时才调用抖音 OpenAPI 与 MediaKit。A59 目前为 `reviewed`，尚未实现性能改造，
 不阻塞具体选题主线。详见 `audits/A59-frozen-map-latency-and-duplicate-recall.md`。
+
+## A60 项目事实与孵化判断谱系
+
+2026-08-17 沿 A37 的发布前链路补齐第一个缺失业务对象。新增 `IncubationBrief`，只接收用户明说或
+授权观察得到的事实，分别保存业务、能力、资源、限制、目标、偏好和未知；信息不完整不会成为问卷
+硬门。新增 `IncubationJudgment`，将定位、受众假设、人设、账号级表现形式和变现假设分开保存，
+每项保留理由、置信度、未知和依据。
+
+判断必须绑定同项目的 `incubation_brief + content_world`，并校验精确地图版本；对标和受众证据只能
+作为额外父产物进入。账号级表现形式不代替单条 `FormatDecision`，变现也不回写内容地图或
+TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和内容纵切联合回归 `24 passed`。
+本轮只完成合同和封存谱系，自动构造 Brief、真实模型判断、用户审阅和 TopicBrief 引用仍待接线，
+不能宣称完整孵化脑完成。详见 `audits/A60-incubation-brief-and-judgment-lineage.md`。

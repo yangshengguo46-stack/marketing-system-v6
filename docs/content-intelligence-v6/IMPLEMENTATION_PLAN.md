@@ -205,7 +205,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 ### W03 孵化与单条内容产物谱系
 
-状态：`in progress; content reading through base draft is project-bound; format decision pending`
+状态：`in progress; brief/judgment contract and content reading through base draft are project-bound; runtime judgment and format decision pending`
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
 地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
@@ -223,6 +223,11 @@ Gateway 环境中的 Key、Secret 和 Device ID
 运行已经迁移到“礼与关系秩序”并留下五类 SQLite 产物，但单次耗时约 6 分 44 秒、70,323 Token，
 且二手资料支撑的草稿仍有具体化风险。W03 因此没有完成，下一切片需做确认版本复用、事实边界和
 `FormatDecision`，详见 `audits/A47-content-run-artifact-lineage.md`。
+
+2026-08-17 第二切片回执：新增可不完整的 `IncubationBrief` 与版本化 `IncubationJudgment`。用户事实、
+授权观察和未知与定位、受众、人设、账号级表现形式、变现假设保持分层；判断强制绑定 Brief、冻结地图
+和实际引用证据。当前仅完成领域合同与封存，运行时生成、用户审阅、选题引用和单条
+`FormatDecision` 仍待实现。详见 `audits/A60-incubation-brief-and-judgment-lineage.md`。
 
 ### W04 MediaKit 制作路由
 

@@ -193,6 +193,11 @@ W01 uses `deerflow.incubation`, its SQL ledger, and schema `0012_incubation_ledg
 Artifacts are owner/project scoped, content-addressed, parent-checked, and reject secrets,
 browser state, temporary URLs, and local paths. `/api/incubation` owns project/thread binding;
 `start_run` ignores caller project IDs, owner-validates the stored binding, and rejects staleness.
+`IncubationBrief` contains only user-stated or authorized observed facts plus unknowns.
+`IncubationJudgment` keeps positioning, audience, persona, account-level presentation, and
+monetization hypotheses separate, binds the exact brief and frozen content-world version, and
+may cite benchmark or audience artifacts only as explicit parents. Neither object may rewrite
+semantic recognition or the content map. Account presentation is not a per-topic format decision.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed
