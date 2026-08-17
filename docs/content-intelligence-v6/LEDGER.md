@@ -1671,3 +1671,14 @@ TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和�
 模型输入限制为 24,000 UTF-8 字节，父级、正文哈希、形式或输出合同失败均不封存。联合回归
 `61 passed`。素材与拍摄方案尚需改为消费精确适配稿，内容工具自动编排仍未完成。详见
 `audits/A67-format-adapted-draft.md`。
+
+## A68 项目孵化证据选择
+
+2026-08-18 新增无模型、无网络的正式项目证据选择器。对标只认已通过 `BenchmarkSnapshot` 合同的
+`benchmark_evidence`；受众只认正式 owned/benchmark audience observation。选题资料、用户素材、
+候选账号、浏览器原始内容和普通阅读记录不会混入孵化判断。
+
+输入严格同项目，结果稳定去重、最新优先并限制为对标两份、受众两份；截断、近似但不合格候选与
+缺失均留下限制说明。没有正式证据只标 missing，不阻断判断。选择器测试 `6 passed`，与判断运行时
+联合回归 `14 passed`。内容工具读取与主链接线仍待完成。详见
+`audits/A68-project-judgment-evidence-selection.md`。

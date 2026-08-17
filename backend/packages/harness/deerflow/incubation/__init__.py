@@ -89,6 +89,12 @@ from deerflow.incubation.media import (
     seal_media_observation_snapshot,
     seal_media_source_receipt,
 )
+from deerflow.incubation.project_evidence import (
+    MAX_AUDIENCE_JUDGMENT_EVIDENCE,
+    MAX_BENCHMARK_JUDGMENT_EVIDENCE,
+    ProjectEvidenceSelection,
+    select_project_judgment_evidence,
+)
 
 _PERSISTENCE_EXPORTS = frozenset(
     {
@@ -185,6 +191,8 @@ __all__ = [
     "MediaObservationSnapshot",
     "MediaSourceReceipt",
     "MAX_JUDGMENT_MODEL_INPUT_BYTES",
+    "MAX_AUDIENCE_JUDGMENT_EVIDENCE",
+    "MAX_BENCHMARK_JUDGMENT_EVIDENCE",
     "MessagePlanBinding",
     "MonetizationHypothesis",
     "NarrativeTreatment",
@@ -198,6 +206,7 @@ __all__ = [
     "ProjectConflictError",
     "ProjectRecord",
     "ProjectRef",
+    "ProjectEvidenceSelection",
     "ResourceMatch",
     "StructuredJudgmentModel",
     "StructuredAdaptedDraftModel",
@@ -207,6 +216,7 @@ __all__ = [
     "seal_content_world_version",
     "seal_content_run_artifacts",
     "select_used_topic_evidence_snapshots",
+    "select_project_judgment_evidence",
     "seal_benchmark_snapshot",
     "seal_evidence_snapshot",
     "seal_format_decision",

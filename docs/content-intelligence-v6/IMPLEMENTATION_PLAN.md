@@ -266,6 +266,11 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 联合回归 `61 passed`；下一切片把 ProductionPlan 改为消费适配稿。详见
 `audits/A67-format-adapted-draft.md`。
 
+2026-08-18 第十切片回执：增加正式对标/受众证据选择器，严格同项目并复用既有快照合同；选题证据、
+用户素材、候选账号和原始页面不能冒充孵化证据。缺失只形成限制，不成为硬门。联合回归
+`14 passed`，下一步把它接入内容工具自动孵化链。详见
+`audits/A68-project-judgment-evidence-selection.md`。
+
 ### W04 MediaKit 制作路由
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的
