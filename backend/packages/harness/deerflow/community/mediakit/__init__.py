@@ -1,3 +1,4 @@
+from deerflow.community.mediakit.authorization import MediaKitCloudApprovalAuthorizer
 from deerflow.community.mediakit.contracts import (
     CommandResult,
     ExecutionMode,
@@ -10,7 +11,7 @@ from deerflow.community.mediakit.contracts import (
     MediaKitExecutionResult,
     PreparedMediaKitCall,
 )
-from deerflow.community.mediakit.driver import MediaKitCloudDriver
+from deerflow.community.mediakit.driver import MediaKitCloudDriver, mediakit_cloud_operation_sha256
 from deerflow.community.mediakit.router import (
     MediaKitCapabilityRouter,
     MediaKitCommandError,
@@ -23,6 +24,7 @@ __all__ = [
     "ExecutionMode",
     "MediaKitCapability",
     "MediaKitCapabilityRouter",
+    "MediaKitCloudApprovalAuthorizer",
     "MediaKitCloudAuthorizationContext",
     "MediaKitCloudDriver",
     "MediaKitCloudMaterializationContext",
@@ -32,4 +34,5 @@ __all__ = [
     "MediaKitCommandError",
     "MediaKitExecutionResult",
     "PreparedMediaKitCall",
+    "mediakit_cloud_operation_sha256",
 ]

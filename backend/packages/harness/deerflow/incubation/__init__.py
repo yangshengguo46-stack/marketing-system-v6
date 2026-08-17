@@ -1,3 +1,4 @@
+from deerflow.incubation.approvals import ApprovalGrant, ApprovalKind
 from deerflow.incubation.benchmark import (
     BENCHMARK_EPISTEMIC_NOTICE,
     BenchmarkCoverageReceipt,
@@ -36,6 +37,8 @@ from deerflow.incubation.media import (
 _PERSISTENCE_EXPORTS = frozenset(
     {
         "AccountConflictError",
+        "ApprovalGrantConflictError",
+        "ApprovalGrantRejectedError",
         "ArtifactConflictError",
         "IncubationLedgerError",
         "IncubationLedgerRepository",
@@ -74,6 +77,10 @@ def __getattr__(name: str):
 
 __all__ = [
     "AccountConflictError",
+    "ApprovalGrant",
+    "ApprovalGrantConflictError",
+    "ApprovalGrantRejectedError",
+    "ApprovalKind",
     "ArtifactConflictError",
     "ArtifactEnvelope",
     "ArtifactParentRef",

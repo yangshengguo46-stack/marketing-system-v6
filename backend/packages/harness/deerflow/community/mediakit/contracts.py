@@ -124,30 +124,41 @@ class MediaKitCloudQueryResult:
 @dataclass(frozen=True, slots=True)
 class MediaKitCloudAuthorizationContext:
     user_id: str
+    project_id: str
+    local_task_id: str
     source_ref: str
     rights_ref: str
+    source_content_sha256: str
     capability_domain: str
     capability_tool: str
+    operation_sha256: str
     cloud_processing_approval_ref: str
     fee_authorization_ref: str
+    currency: str
+    maximum_amount_micros: int
 
 
 @dataclass(frozen=True, slots=True, repr=False)
 class MediaKitCloudMaterializationContext:
     local_task_id: str
     user_id: str
+    project_id: str
     thread_id: str
     remote_task_id: str = field(repr=False)
     source_ref: str
     rights_ref: str
+    source_content_sha256: str
     capability_domain: str
     capability_tool: str
     cli_version: str
     capability_schema_sha256: str
     request_sha256: str
+    operation_sha256: str
     client_token_sha256: str
     cloud_processing_approval_ref: str
     fee_authorization_ref: str
+    currency: str
+    maximum_amount_micros: int
     provider_output: Mapping[str, Any] = field(repr=False)
     provider_output_sha256: str
 

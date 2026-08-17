@@ -11,16 +11,25 @@ from deerflow.community.mediakit import (
     CommandResult,
     EphemeralMediaSource,
     MediaKitCapabilityRouter,
+    MediaKitCloudApprovalAuthorizer,
     MediaKitCloudAuthorizationContext,
     MediaKitCloudDriver,
     MediaKitCloudMaterializationContext,
     MediaKitCloudMaterializedOutput,
     MediaKitCommandError,
+    mediakit_cloud_operation_sha256,
 )
 from deerflow.config.database_config import DatabaseConfig
+from deerflow.incubation import ApprovalGrant, IncubationLedgerRepository, ProjectRef
 from deerflow.mcp.tasks import McpTaskDriverRegistry, TaskReference, TaskStatus, TaskSubmitRequest
 from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
 from deerflow.persistence.mcp_tasks import McpTaskRepository
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _close_persistence_engine():
+    yield
+    await close_engine()
 
 
 def _capability_schema() -> dict:
@@ -113,6 +122,15 @@ def _source() -> EphemeralMediaSource:
     )
 
 
+async def _resolve_source(
+    user_id: str,
+    source_ref: str,
+    rights_ref: str,
+) -> EphemeralMediaSource:
+    assert (user_id, source_ref, rights_ref) == ("user-1", "media-source-1", "rights-1")
+    return _source()
+
+
 async def _materialize(
     context: MediaKitCloudMaterializationContext,
 ) -> MediaKitCloudMaterializedOutput:
@@ -134,14 +152,18 @@ def _request(schema_sha256: str, *, local_task_id: str = "task-local-1") -> Task
         server_name="mediakit",
         task_name="ASR",
         arguments={
+            "project_id": "project-1",
             "source_ref": "media-source-1",
             "rights_ref": "rights-1",
+            "source_content_sha256": "b" * 64,
             "capability_domain": "video",
             "capability_tool": "asr-subtitles",
             "capability_arguments": {"enable_confidence": True},
             "expected_schema_sha256": schema_sha256,
             "cloud_processing_approval_ref": "approval-cloud-1",
             "fee_authorization_ref": "approval-fee-1",
+            "currency": "CNY",
+            "maximum_amount_micros": 1_000_000,
         },
         local_task_id=local_task_id,
     )
@@ -156,8 +178,14 @@ async def _driver(
     capability = await router.discover_capability("video", "asr-subtitles")
 
     async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
+        assert context.project_id == "project-1"
+        assert context.local_task_id.startswith("task-")
+        assert context.source_content_sha256 == "b" * 64
+        assert len(context.operation_sha256) == 64
         assert context.cloud_processing_approval_ref == "approval-cloud-1"
         assert context.fee_authorization_ref == "approval-fee-1"
+        assert context.currency == "CNY"
+        assert context.maximum_amount_micros == 1_000_000
         if events is not None:
             events.append("authorize")
 
@@ -230,8 +258,11 @@ async def test_schema_drift_stops_before_source_resolution_or_cloud_submission()
 
 
 @pytest.mark.asyncio
-async def test_authorization_failure_prevents_schema_discovery_and_source_resolution() -> None:
+async def test_authorization_failure_allows_only_local_schema_discovery() -> None:
     runner = FakeMediaKitRunner()
+    router = MediaKitCapabilityRouter(runner=runner)
+    capability = await router.discover_capability("video", "asr-subtitles")
+    runner.commands.clear()
     resolved = False
 
     async def reject(context: MediaKitCloudAuthorizationContext) -> None:
@@ -245,18 +276,100 @@ async def test_authorization_failure_prevents_schema_discovery_and_source_resolu
         return _source()
 
     driver = MediaKitCloudDriver(
-        router=MediaKitCapabilityRouter(runner=runner),
+        router=router,
         authorize=reject,
         resolve_source=resolve_source,
         materialize_result=_materialize,
     )
 
     with pytest.raises(PermissionError, match="MediaKit cloud authorization failed") as caught:
-        await driver.submit(_request("f" * 64))
+        await driver.submit(_request(capability.schema_sha256))
 
     assert "approval expired" not in str(caught.value)
-    assert runner.commands == []
+    assert runner.commands
+    assert not any("--cloud" in command for command in runner.commands)
     assert resolved is False
+
+
+def test_operation_digest_binds_source_schema_arguments_and_fee_limit() -> None:
+    baseline = _request("f" * 64).arguments
+    baseline_digest = mediakit_cloud_operation_sha256(baseline)
+
+    for field, value in (
+        ("source_content_sha256", "c" * 64),
+        ("expected_schema_sha256", "e" * 64),
+        ("maximum_amount_micros", 1_000_001),
+    ):
+        changed = dict(baseline)
+        changed[field] = value
+        assert mediakit_cloud_operation_sha256(changed) != baseline_digest
+
+    changed_arguments = dict(baseline)
+    changed_arguments["capability_arguments"] = {"enable_confidence": False}
+    assert mediakit_cloud_operation_sha256(changed_arguments) != baseline_digest
+
+    changed_approval_refs = dict(baseline)
+    changed_approval_refs["cloud_processing_approval_ref"] = "approval-cloud-2"
+    changed_approval_refs["fee_authorization_ref"] = "approval-fee-2"
+    assert mediakit_cloud_operation_sha256(changed_approval_refs) == baseline_digest
+
+
+@pytest.mark.asyncio
+async def test_ledger_authorizer_binds_exact_operation_to_the_durable_task(tmp_path) -> None:
+    await init_engine_from_config(DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path)))
+    session_factory = get_session_factory()
+    assert session_factory is not None
+    ledger = IncubationLedgerRepository(session_factory)
+    project = ProjectRef(owner_user_id="user-1", project_id="project-1")
+    await ledger.create_project(project, display_name="Media project")
+
+    runner = FakeMediaKitRunner()
+    router = MediaKitCapabilityRouter(runner=runner)
+    capability = await router.discover_capability("video", "asr-subtitles")
+    request = _request(capability.schema_sha256)
+    operation_sha256 = mediakit_cloud_operation_sha256(request.arguments)
+    for grant in (
+        ApprovalGrant.issue(
+            grant_id="approval-cloud-1",
+            project=project,
+            kind="cloud_processing",
+            operation_sha256=operation_sha256,
+            issued_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+            expires_at=datetime(2026, 8, 17, 13, 0, tzinfo=UTC),
+        ),
+        ApprovalGrant.issue(
+            grant_id="approval-fee-1",
+            project=project,
+            kind="fee_authorization",
+            operation_sha256=operation_sha256,
+            issued_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+            expires_at=datetime(2026, 8, 17, 13, 0, tzinfo=UTC),
+            currency="CNY",
+            maximum_amount_micros=1_000_000,
+        ),
+    ):
+        await ledger.issue_approval_grant(grant)
+    driver = MediaKitCloudDriver(
+        router=router,
+        authorize=MediaKitCloudApprovalAuthorizer(
+            ledger,
+            clock=lambda: datetime(2026, 8, 17, 12, 1, tzinfo=UTC),
+        ),
+        resolve_source=_resolve_source,
+        materialize_result=_materialize,
+    )
+
+    await driver.submit(request)
+
+    cloud = await ledger.get_approval_grant("approval-cloud-1", owner_user_id="user-1")
+    fee = await ledger.get_approval_grant("approval-fee-1", owner_user_id="user-1")
+    assert cloud is not None and cloud.bound_local_task_id == "task-local-1"
+    assert fee is not None and fee.bound_local_task_id == "task-local-1"
+
+    changed = _request(capability.schema_sha256, local_task_id="task-local-2")
+    changed.arguments["capability_arguments"] = {"enable_confidence": False}
+    with pytest.raises(PermissionError, match="MediaKit cloud authorization failed"):
+        await driver.submit(changed)
 
 
 @pytest.mark.asyncio

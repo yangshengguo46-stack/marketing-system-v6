@@ -35,7 +35,7 @@ async def test_0011_database_upgrades_to_owner_scoped_incubation_ledger(tmp_path
         account_fks = connection.execute("PRAGMA foreign_key_list(incubation_platform_accounts)").fetchall()
         artifact_fks = connection.execute("PRAGMA foreign_key_list(incubation_artifacts)").fetchall()
 
-    assert version == ("0013_mcp_task_submission_intent",)
+    assert version == ("0014_incubation_approval_grants",)
     assert {
         "incubation_projects",
         "incubation_platform_accounts",

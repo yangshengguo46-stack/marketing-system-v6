@@ -52,11 +52,11 @@
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
-| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata verified; isolated cloud driver passed mocked acceptance; live disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图与租约恢复 | 接入受信授权/来源/物化依赖后，逐项验收 ASR/OCR/场景切分与人工核对 |
+| MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata verified; exact approval + isolated cloud lifecycle mocked; live disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图、精确批准与租约恢复 | 接入受信来源/物化依赖后，逐项验收 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
 | 表现形式选择 | 第四版方法审计 | `adopted; unimplemented` | 新增薄 `FormatDecision`，不改写选题 | 口播、图文、纯素材、访谈与短剧的资源匹配 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
-| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `local foundation implemented; cloud lifecycle mocked; production capabilities pending` | 经统一路由执行已批准制作任务 | 本地编辑产物、真实云费用授权、下载物化与输入输出质检 |
+| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `local foundation + exact approval implemented; cloud lifecycle mocked; production pending` | 经统一路由执行已批准制作任务 | 本地编辑产物、可核验云费用上限、下载物化与输入输出质检 |
 | 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
 | 审批与发布状态机 | 第四版发布可靠性代码 | `reviewed` | 薄迁移幂等、恢复和未知对账 | 错账号、审批过期、内容变更、崩溃与重放 |
 | 发布回执 | 第四版 repository/API | `reviewed; old implementation exists` | 重写最小不可变回执，不迁旧领域包 | 第一方作品 ID、公开链接和未知结果 |
@@ -226,12 +226,18 @@ Gateway 环境中的 Key、Secret 和 Device ID
 本切片没有注册 MediaKit 云驱动；下一步先用模拟 CLI 验证提交、查询、恢复、授权和输出质检，再决定
 是否执行真实付费验收。详见 `audits/A50-durable-task-submission-intent.md`。
 
-2026-08-17 第三执行切片：新增隔离的 `MediaKitCloudDriver`，严格限定无凭据持久参数，先校验云处理
-与费用授权，再解析短命媒体地址，并将持久本地任务 ID 用作 `client_token`。后台每次只调用一次
+2026-08-17 第三执行切片：新增隔离的 `MediaKitCloudDriver`，严格限定无凭据持久参数，先校验本地
+版本和 Schema，再校验云处理与费用授权、解析短命媒体地址，并将持久本地任务 ID 用作 `client_token`。后台每次只调用一次
 `query-task`，兼容并归一 CLI Schema 与归档源码中不一致的状态枚举；完成回执必须经幂等物化器转成
 内部 `artifact://` 引用和内容哈希。授权、来源解析、物化和恢复数据异常均使用固定脱敏错误。
-模拟生命周期已经通过，但驱动未注册，真实授权器、来源解析器、下载质检和云费用验收仍未完成。
+模拟生命周期已经通过，但驱动未注册，来源解析器、下载质检和云费用验收仍未完成。
 详见 `audits/A51-mediakit-cloud-driver-mocked-acceptance.md`。
+
+2026-08-17 第四执行切片：新增两类 `ApprovalGrant` 和 `0014_incubation_approval_grants`。云处理
+同意与费用上限共同绑定 owner、项目、素材内容哈希、能力参数、Schema、币种和金额形成的操作摘要，
+再原子绑定唯一 MCP 本地任务；同任务可恢复，另一任务不能复用。授权器已经接入隔离云驱动，但没有
+批准 API，预期素材哈希尚未与解析后的真实字节复核，供应商费用也没有可核验强制上限，因此仍不注册
+或执行真实云能力。详见 `audits/A52-mediakit-exact-approval-ledger.md`。
 
 首批验收：
 
@@ -330,6 +336,7 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
 下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；W04 的持久提交意图与
-隔离云驱动已通过模拟验收，下一切片只接受信授权、短命来源解析和幂等下载物化，再选择一个明确
+隔离云驱动与精确批准账本已通过模拟验收，下一切片只做受信短命来源解析、素材哈希复核和幂等下载
+物化，再选择一个明确
 MediaKit 云能力做真实费用授权验收。不得用网页视觉采集伪装 W02 已通过，也不得在 Agent 循环内
 长轮询云任务。

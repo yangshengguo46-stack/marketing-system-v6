@@ -209,11 +209,12 @@ observation only; positioning, audience, causality, and transferability require 
 artifacts. Connector-local credentials and raw pages never enter either snapshot. The
 contract is implemented; Douyin live connector acceptance remains pending.
 
-Content-world research owns only `user_material` and `topic_evidence`; providers drop other
-roles, and Douyin also drops missing roles. MediaKit inputs use `deerflow.incubation.media`:
-platform pages are not `video_url`; paths and signed URLs remain execution-only. Local execution
-double-hashes inputs and persists typed snapshots. The A51 cloud driver uses durable intents and
-fixed errors, but stays unregistered pending approved live acceptance; see A49-A51.
+Content-world providers emit only `user_material` or `topic_evidence`. MediaKit inputs use
+`deerflow.incubation.media`: pages are not `video_url`; paths and signed URLs are execution-only.
+Local runs double-hash inputs and persist snapshots. A51 uses cloud intents. A52
+requires separate cloud and fee grants over one exact operation, atomically bound to one task; only
+same-task recovery may reuse them. The cloud driver stays unregistered pending trusted source,
+materialization, and live acceptance (A49-A52).
 
 ## Development Workflow
 

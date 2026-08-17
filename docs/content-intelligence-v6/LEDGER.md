@@ -1424,3 +1424,21 @@ URL 只存在执行内存；完成任务必须物化为内部 `artifact://` 引�
 未调用云服务、未上传用户素材、未产生费用，也不代表 ASR/OCR/场景切分已经真实可用。详见
 `audits/A51-mediakit-cloud-driver-mocked-acceptance.md` 与
 `evidence/mediakit-cloud-driver-a51-2026-08-17.md`。
+
+## A52 W04 MediaKit 精确批准账本
+
+2026-08-17 继续审计 A51 的三个受信依赖时，先发现授权上下文缺少项目、本地任务、素材内容哈希、
+完整操作摘要和费用上限，无法实现真正的一次性批准。对照第四版付费调用台账后，只迁移“服务端冻结
+批准”和“执行任务原子消费”两条可靠性原则，没有迁移旧供应商、SKU 和制作状态机。
+
+新增 `ApprovalGrant` 与迁移 `0014_incubation_approval_grants`。云处理同意和费用上限分别记录，
+共同绑定 owner、项目、来源/权利引用、素材摘要、能力、参数、Schema、币种和金额上限形成的精确操作
+摘要。首次执行用同一 SQL 事务将两条批准绑定到唯一 MCP 本地任务；并发输家、过期、撤销、跨项目、
+换素材、换参数或换费用全部失败且不半绑定。同一任务在不确定提交后可幂等恢复，已绑定批准不能撤销。
+
+驱动顺序同步修正为本地版本/Schema 校验后再消费批准，避免 CLI 漂移白白占用授权。聚焦测试为
+`26 passed`，相关模块联合回归为 `125 passed, 1 warning`。首次全量唯一失败是仓库说明超软预算；
+压缩摘要后，最终完整离线后端为 `11804 passed, 76 skipped, 17 warnings in 425.82s`。本轮仍未提供
+批准 API、真实来源哈希复核或供应商费用封顶，也未注册驱动、上传素材、调用云服务或产生费用。详见
+`audits/A52-mediakit-exact-approval-ledger.md` 与
+`evidence/mediakit-exact-approval-a52-2026-08-17.md`。

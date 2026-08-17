@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, ForeignKeyConstraint, Index, Integer, String
+from sqlalchemy import JSON, BigInteger, CheckConstraint, DateTime, ForeignKeyConstraint, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from deerflow.persistence.base import Base
@@ -115,5 +115,64 @@ class IncubationArtifactRow(Base):
             "owner_user_id",
             "project_id",
             "evidence_role",
+        ),
+    )
+
+
+class IncubationApprovalGrantRow(Base):
+    __tablename__ = "incubation_approval_grants"
+
+    grant_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    owner_user_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    project_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    operation_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    maximum_amount_micros: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    bound_local_task_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    bound_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    stored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utc_now)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_user_id", "project_id"],
+            ["incubation_projects.owner_user_id", "incubation_projects.project_id"],
+            name="fk_incubation_approval_grants_project",
+            ondelete="CASCADE",
+        ),
+        CheckConstraint(
+            "kind IN ('cloud_processing','fee_authorization')",
+            name="ck_incubation_approval_grants_kind",
+        ),
+        CheckConstraint(
+            "(kind = 'cloud_processing' AND currency IS NULL AND maximum_amount_micros IS NULL) OR (kind = 'fee_authorization' AND currency IS NOT NULL AND maximum_amount_micros > 0)",
+            name="ck_incubation_approval_grants_fee_shape",
+        ),
+        CheckConstraint(
+            "(bound_local_task_id IS NULL AND bound_at IS NULL) OR (bound_local_task_id IS NOT NULL AND bound_at IS NOT NULL)",
+            name="ck_incubation_approval_grants_binding",
+        ),
+        CheckConstraint(
+            "NOT (revoked_at IS NOT NULL AND bound_local_task_id IS NOT NULL)",
+            name="ck_incubation_approval_grants_revocation",
+        ),
+        CheckConstraint(
+            "expires_at > issued_at",
+            name="ck_incubation_approval_grants_expiry",
+        ),
+        Index(
+            "ix_incubation_approval_grants_project_issued",
+            "owner_user_id",
+            "project_id",
+            "issued_at",
+        ),
+        Index(
+            "ix_incubation_approval_grants_operation",
+            "owner_user_id",
+            "project_id",
+            "operation_sha256",
         ),
     )
