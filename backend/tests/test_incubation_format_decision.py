@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from deerflow.incubation import (
     ArtifactEnvelope,
+    BaseDraftBinding,
     FormatAlternative,
     FormatChoice,
     FormatDecision,
@@ -24,6 +25,8 @@ def _artifact(
     artifact_type: str,
     payload: dict[str, object],
     project: ProjectRef = PROJECT,
+    parents: tuple = (),
+    evidence_role: str | None = None,
 ) -> ArtifactEnvelope:
     return ArtifactEnvelope.seal(
         project=project,
@@ -33,6 +36,8 @@ def _artifact(
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
+        parents=parents,
+        evidence_role=evidence_role,
     )
 
 
@@ -69,6 +74,23 @@ def _message_plan(
     )
 
 
+def _base_draft(
+    message_plan: ArtifactEnvelope,
+    *,
+    text: str = "今天说一个人有礼，通常只是说他有礼貌。\n\n但在古代，礼还在安排身份、关系和行为。",
+) -> ArtifactEnvelope:
+    return _artifact(
+        artifact_type="draft_version",
+        payload={
+            "draft_id": "base-draft-1",
+            "message_plan_id": message_plan.payload["message_plan_id"],
+            "text": text,
+            "stage": "base",
+        },
+        parents=(message_plan.to_parent_ref(),),
+    )
+
+
 def _draft(**updates: object) -> FormatDecisionDraft:
     values: dict[str, object] = {
         "status": "provisional",
@@ -91,6 +113,7 @@ def _draft(**updates: object) -> FormatDecisionDraft:
 
 def test_format_decision_binds_exact_message_plan_and_optional_supporting_artifacts() -> None:
     message_plan = _message_plan()
+    base_draft = _base_draft(message_plan)
     judgment = _artifact(
         artifact_type="incubation_judgment",
         payload={"content_map_version_id": "map-gift-relations-v1"},
@@ -98,6 +121,7 @@ def test_format_decision_binds_exact_message_plan_and_optional_supporting_artifa
     media = _artifact(
         artifact_type="media_observation",
         payload={"available_material": "一组已授权的礼制博物馆图片"},
+        evidence_role="user_material",
     )
     draft = _draft(
         resource_matches=(
@@ -113,6 +137,7 @@ def test_format_decision_binds_exact_message_plan_and_optional_supporting_artifa
         project=PROJECT,
         draft=draft,
         message_plan_artifact=message_plan,
+        base_draft_artifact=base_draft,
         incubation_judgment_artifact=judgment,
         resource_evidence_artifacts=(media,),
         created_at=NOW,
@@ -123,6 +148,7 @@ def test_format_decision_binds_exact_message_plan_and_optional_supporting_artifa
     assert sealed.artifact_type == "format_decision"
     assert set(sealed.parents) == {
         message_plan.to_parent_ref(),
+        base_draft.to_parent_ref(),
         judgment.to_parent_ref(),
         media.to_parent_ref(),
     }
@@ -140,6 +166,13 @@ def test_format_decision_binds_exact_message_plan_and_optional_supporting_artifa
     }
     assert len(binding["protected_content_sha256"]) == 64
     assert len(binding["evidence_boundary_sha256"]) == 64
+    draft_binding = sealed.payload["base_draft_binding"]
+    assert draft_binding["artifact_id"] == base_draft.artifact_id
+    assert draft_binding["artifact_content_sha256"] == base_draft.content_sha256
+    assert draft_binding["draft_id"] == "base-draft-1"
+    assert draft_binding["message_plan_id"] == "message-plan-1"
+    assert draft_binding["stage"] == "base"
+    assert len(draft_binding["body_sha256"]) == 64
     assert sealed.payload["incubation_judgment_ref"]["artifact_id"] == judgment.artifact_id
     assert sealed.payload["resource_evidence_refs"][0]["artifact_id"] == media.artifact_id
 
@@ -159,20 +192,24 @@ def test_format_decision_draft_cannot_rewrite_upstream_topic_or_evidence_fields(
 
 def test_format_decision_hashes_protected_content_and_evidence_separately() -> None:
     first_plan = _message_plan()
+    first_draft = _base_draft(first_plan)
     changed_content_plan = _message_plan(
         point_of_view="礼的深层作用是让不同角色知道彼此如何相处",
     )
+    changed_content_draft = _base_draft(changed_content_plan)
     changed_evidence_plan = _message_plan(
         evidence_refs=[
             {"kind": "observation", "ref_id": "observation-gift-1"},
             {"kind": "observation", "ref_id": "observation-gift-2"},
         ]
     )
+    changed_evidence_draft = _base_draft(changed_evidence_plan)
 
     first = seal_format_decision(
         project=PROJECT,
         draft=_draft(),
         message_plan_artifact=first_plan,
+        base_draft_artifact=first_draft,
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
@@ -181,6 +218,7 @@ def test_format_decision_hashes_protected_content_and_evidence_separately() -> N
         project=PROJECT,
         draft=_draft(),
         message_plan_artifact=changed_content_plan,
+        base_draft_artifact=changed_content_draft,
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
@@ -189,6 +227,7 @@ def test_format_decision_hashes_protected_content_and_evidence_separately() -> N
         project=PROJECT,
         draft=_draft(),
         message_plan_artifact=changed_evidence_plan,
+        base_draft_artifact=changed_evidence_draft,
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
@@ -210,6 +249,7 @@ def test_format_decision_public_api_is_exported() -> None:
     assert FormatDecisionDraft.__module__ == "deerflow.incubation.format_decision"
     assert FormatDecision.__module__ == "deerflow.incubation.format_decision"
     assert MessagePlanBinding.__module__ == "deerflow.incubation.format_decision"
+    assert BaseDraftBinding.__module__ == "deerflow.incubation.format_decision"
 
 
 @pytest.mark.parametrize(
@@ -226,15 +266,17 @@ def test_seal_validates_protected_content_and_evidence_boundaries(
 ) -> None:
     payload = dict(_message_plan().payload)
     payload[field] = invalid_value
+    message_plan = _artifact(
+        artifact_type="message_plan",
+        payload=payload,
+    )
 
     with pytest.raises(ValueError, match=error):
         seal_format_decision(
             project=PROJECT,
             draft=_draft(),
-            message_plan_artifact=_artifact(
-                artifact_type="message_plan",
-                payload=payload,
-            ),
+            message_plan_artifact=message_plan,
+            base_draft_artifact=_base_draft(message_plan),
             created_at=NOW,
             source_thread_id="thread-1",
             source_run_id="run-1",
@@ -250,6 +292,18 @@ def test_message_plan_binding_rejects_non_sha256_hashes() -> None:
             record_id="record-1",
             protected_content_sha256="0" * 64,
             evidence_boundary_sha256="1" * 64,
+        )
+
+
+def test_base_draft_binding_rejects_non_sha256_hashes() -> None:
+    with pytest.raises(ValidationError, match="lowercase SHA-256"):
+        BaseDraftBinding(
+            artifact_id="artifact-1",
+            artifact_content_sha256="not-a-digest",
+            draft_id="base-draft-1",
+            message_plan_id="message-plan-1",
+            stage="base",
+            body_sha256="0" * 64,
         )
 
 
@@ -316,6 +370,7 @@ def test_narrative_method_is_an_optional_hint_only_for_narrative_forms() -> None
 
 
 def test_provisional_decision_allows_missing_resource_information() -> None:
+    message_plan = _message_plan()
     sealed = seal_format_decision(
         project=PROJECT,
         draft=_draft(
@@ -326,7 +381,8 @@ def test_provisional_decision_allows_missing_resource_information() -> None:
             alternatives=(),
             unknowns=("尚未了解用户的出镜意愿、素材和协作资源。",),
         ),
-        message_plan_artifact=_message_plan(),
+        message_plan_artifact=message_plan,
+        base_draft_artifact=_base_draft(message_plan),
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
@@ -348,11 +404,13 @@ def test_resource_basis_must_be_bound_as_a_parent() -> None:
         )
     )
 
+    message_plan = _message_plan()
     with pytest.raises(ValueError, match="resource basis artifact"):
         seal_format_decision(
             project=PROJECT,
             draft=draft,
-            message_plan_artifact=_message_plan(),
+            message_plan_artifact=message_plan,
+            base_draft_artifact=_base_draft(message_plan),
             created_at=NOW,
             source_thread_id="thread-1",
             source_run_id="run-1",
@@ -360,11 +418,13 @@ def test_resource_basis_must_be_bound_as_a_parent() -> None:
 
 
 def test_format_decision_rejects_wrong_parent_type_or_project() -> None:
+    message_plan = _message_plan()
     with pytest.raises(ValueError, match="expected message_plan parent"):
         seal_format_decision(
             project=PROJECT,
             draft=_draft(),
             message_plan_artifact=_artifact(artifact_type="topic_brief", payload={"question": "一个选题"}),
+            base_draft_artifact=_base_draft(message_plan),
             created_at=NOW,
             source_thread_id="thread-1",
             source_run_id="run-1",
@@ -380,6 +440,47 @@ def test_format_decision_rejects_wrong_parent_type_or_project() -> None:
             project=PROJECT,
             draft=_draft(),
             message_plan_artifact=other_project_plan,
+            base_draft_artifact=_base_draft(message_plan),
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-1",
+        )
+
+
+def test_format_decision_requires_exact_base_draft_lineage() -> None:
+    message_plan = _message_plan()
+    unrelated_plan = _message_plan(point_of_view="另一份消息计划")
+
+    with pytest.raises(ValueError, match="base draft must descend from the exact message plan"):
+        seal_format_decision(
+            project=PROJECT,
+            draft=_draft(),
+            message_plan_artifact=message_plan,
+            base_draft_artifact=_base_draft(unrelated_plan),
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-1",
+        )
+
+
+def test_format_decision_requires_base_stage_and_matching_plan_id() -> None:
+    message_plan = _message_plan()
+    wrong_stage = _artifact(
+        artifact_type="draft_version",
+        payload={
+            "draft_id": "adapted-draft-1",
+            "message_plan_id": "message-plan-1",
+            "text": "已经适配后的稿件",
+            "stage": "adapted",
+        },
+        parents=(message_plan.to_parent_ref(),),
+    )
+    with pytest.raises(ValueError, match="base stage"):
+        seal_format_decision(
+            project=PROJECT,
+            draft=_draft(),
+            message_plan_artifact=message_plan,
+            base_draft_artifact=wrong_stage,
             created_at=NOW,
             source_thread_id="thread-1",
             source_run_id="run-1",

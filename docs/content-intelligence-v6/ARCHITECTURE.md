@@ -181,8 +181,9 @@ flowchart LR
 和最终回报；后者只确定性组合已审议的开头、正文与收束。
 它们既不重新选根，也不预选口播、短剧、图文或纯素材。
 
-单条 `FormatDecision` 读取精确 `MessagePlan`、可选孵化判断和已封存资源证据，只选择这一条内容的
-呈现方式。它分别绑定上游受保护内容哈希与证据边界哈希，不复制或改写标题、主体、事情、观点和证据。
+单条 `FormatDecision` 读取精确 `MessagePlan + BaseDraft`、可选孵化判断和已封存用户素材证据，只选择
+这一条内容的呈现方式。基础稿必须处于 `base` 阶段并由该 MessagePlan 直接派生；决定分别绑定上游
+受保护内容、证据边界和基础稿正文哈希，不复制或改写标题、主体、事情、观点、正文和证据。
 资源未知时允许 provisional；只有选择微短剧或情景剧时才可提示加载叙事方法。
 
 项目层在阅读投影之外保存 `IncubationBrief` 和 `IncubationJudgment`。前者只记录用户事实、授权观察
@@ -202,6 +203,7 @@ content_reading + content_world
                 -> topic_brief
                 -> message_plan
                 -> draft_version
+                -> format_decision
 ```
 
 `content_reading` 保留本次阅读、根选择候选、命名候选和未知；`content_world` 只保留稳定定位，

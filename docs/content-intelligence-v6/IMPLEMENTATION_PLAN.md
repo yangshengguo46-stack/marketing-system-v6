@@ -75,7 +75,7 @@
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
 | MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata + trusted private I/O verified; live cloud disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图、精确批准、私有来源与受控物化 | 逐项登记结果策略并验收 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
-| 表现形式选择 | 第四版方法审计 | `contract implemented; runtime pending` | 薄 `FormatDecision` 绑定精确 MessagePlan，不改写选题 | 真实模型资源匹配、用户确认与素材方案接线 |
+| 表现形式选择 | 第四版方法审计 | `contract + bounded runtime implemented; orchestration pending` | 薄 `FormatDecision` 绑定精确 MessagePlan 与 BaseDraft，不改写选题或正文 | 项目运行接线、真实模型资源匹配与素材方案 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
 | MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `local foundation + exact approval + trusted I/O implemented; production pending` | 经统一路由执行已批准制作任务 | 本地编辑产物、批准入口、可核验云费用上限与首个真实云能力 |
 | 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
@@ -236,7 +236,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 `audits/A61-shootable-topic-goal-and-exact-map-path.md`。
 
 2026-08-17 第四切片回执：新增薄 `FormatDecision`，精确绑定 MessagePlan 的受保护内容与证据边界
-哈希，并可引用同项目孵化判断和资源证据。它只选择本条呈现形式，不能改写选题、加入平台销售发布或
+哈希，并可引用同项目孵化判断和用户素材证据。它只选择本条呈现形式，不能改写选题、加入平台销售发布或
 固定数量；资源未知允许 provisional，非叙事形式不能携带编剧提示。联合回归 `39 passed`。真实模型
 生成、用户确认与素材方案仍待接线。详见 `audits/A62-format-decision-lineage.md`。
 
@@ -244,6 +244,12 @@ Gateway 环境中的 Key、Secret 和 Device ID
 对标/受众父产物。完整证据不进模型，统一使用现有有界投影，整个输入限制为 16,000 UTF-8 字节；
 错误产物类型、角色、项目或模型输出均不产生半份判断。联合回归 `14 passed`。Brief 构造、真实模型、
 项目证据读取与回答接线仍待完成。详见 `audits/A63-incubation-judgment-runtime.md`。
+
+2026-08-17 第六切片回执：修正 A62 与 ADR-018 的父级漂移。`FormatDecision` 现在同时绑定精确
+MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项目、类型、业务 ID、阶段和谱系；薄运行器
+输入限制为 32,000 UTF-8 字节，只允许 `user_material` 媒体观察支撑“已有素材”。聚焦回归
+`41 passed`。项目主链接线、形式适配稿和素材方案仍待完成。详见
+`audits/A64-format-decision-runtime-and-base-draft-binding.md`。
 
 ### W04 MediaKit 制作路由
 

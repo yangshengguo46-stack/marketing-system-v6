@@ -125,6 +125,22 @@ class MessagePlanBinding(IncubationContract):
         return value
 
 
+class BaseDraftBinding(IncubationContract):
+    artifact_id: NonEmptyStr
+    artifact_content_sha256: NonEmptyStr
+    draft_id: NonEmptyStr
+    message_plan_id: NonEmptyStr
+    stage: Literal["base"]
+    body_sha256: NonEmptyStr
+
+    @field_validator("artifact_content_sha256", "body_sha256")
+    @classmethod
+    def validate_sha256(cls, value: str) -> str:
+        if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+            raise ValueError("base draft binding hashes must be lowercase SHA-256")
+        return value
+
+
 class FormatDecisionDraft(IncubationContract):
     """A format-only proposal with no fields that can rewrite the selected topic."""
 
@@ -147,6 +163,7 @@ class FormatDecisionDraft(IncubationContract):
 
 class FormatDecision(FormatDecisionDraft):
     message_plan_binding: MessagePlanBinding
+    base_draft_binding: BaseDraftBinding
     incubation_judgment_ref: ArtifactParentRef | None = None
     resource_evidence_refs: tuple[ArtifactParentRef, ...] = ()
 
@@ -200,23 +217,52 @@ def _message_plan_binding(message_plan_artifact: ArtifactEnvelope) -> MessagePla
     )
 
 
-def seal_format_decision(
+def _base_draft_binding(
+    base_draft_artifact: ArtifactEnvelope,
+    *,
+    message_plan_artifact: ArtifactEnvelope,
+) -> BaseDraftBinding:
+    payload = base_draft_artifact.payload
+    draft_id = _required_text(payload, "draft_id")
+    message_plan_id = _required_text(payload, "message_plan_id")
+    text = _required_text(payload, "text")
+    stage = _required_text(payload, "stage")
+    if stage != "base":
+        raise ValueError("format decision requires a draft_version at base stage")
+    expected_message_plan_id = _required_text(message_plan_artifact.payload, "message_plan_id")
+    if message_plan_id != expected_message_plan_id:
+        raise ValueError("base draft message_plan_id must match the exact message plan")
+    if message_plan_artifact.to_parent_ref() not in base_draft_artifact.parents:
+        raise ValueError("base draft must descend from the exact message plan")
+    return BaseDraftBinding(
+        artifact_id=base_draft_artifact.artifact_id,
+        artifact_content_sha256=base_draft_artifact.content_sha256,
+        draft_id=draft_id,
+        message_plan_id=message_plan_id,
+        stage="base",
+        body_sha256=_canonical_sha256(text),
+    )
+
+
+def validate_format_decision_parents(
     *,
     project: ProjectRef,
-    draft: FormatDecisionDraft,
     message_plan_artifact: ArtifactEnvelope,
-    created_at: datetime,
-    source_thread_id: str,
-    source_run_id: str,
+    base_draft_artifact: ArtifactEnvelope,
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
     resource_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
-) -> ArtifactEnvelope:
-    """Bind one presentation decision below an immutable message plan."""
+) -> tuple[MessagePlanBinding, BaseDraftBinding]:
+    """Validate and bind the immutable inputs before any format model call."""
 
     _require_parent(
         message_plan_artifact,
         project=project,
         artifact_type="message_plan",
+    )
+    _require_parent(
+        base_draft_artifact,
+        project=project,
+        artifact_type="draft_version",
     )
     if incubation_judgment_artifact is not None:
         _require_parent(
@@ -225,7 +271,52 @@ def seal_format_decision(
             artifact_type="incubation_judgment",
         )
     for artifact in resource_evidence_artifacts:
-        _require_parent(artifact, project=project)
+        _require_parent(
+            artifact,
+            project=project,
+            artifact_type="media_observation",
+        )
+        if artifact.evidence_role != "user_material":
+            raise ValueError("format resource evidence requires a user_material media_observation parent")
+
+    parent_artifacts = (
+        message_plan_artifact,
+        base_draft_artifact,
+        *((incubation_judgment_artifact,) if incubation_judgment_artifact is not None else ()),
+        *resource_evidence_artifacts,
+    )
+    if len({artifact.artifact_id for artifact in parent_artifacts}) != len(parent_artifacts):
+        raise ValueError("format decision parent artifacts must be unique")
+    return (
+        _message_plan_binding(message_plan_artifact),
+        _base_draft_binding(
+            base_draft_artifact,
+            message_plan_artifact=message_plan_artifact,
+        ),
+    )
+
+
+def seal_format_decision(
+    *,
+    project: ProjectRef,
+    draft: FormatDecisionDraft,
+    message_plan_artifact: ArtifactEnvelope,
+    base_draft_artifact: ArtifactEnvelope,
+    created_at: datetime,
+    source_thread_id: str,
+    source_run_id: str,
+    incubation_judgment_artifact: ArtifactEnvelope | None = None,
+    resource_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
+) -> ArtifactEnvelope:
+    """Bind one presentation decision below an immutable message plan."""
+
+    message_plan_binding, base_draft_binding = validate_format_decision_parents(
+        project=project,
+        message_plan_artifact=message_plan_artifact,
+        base_draft_artifact=base_draft_artifact,
+        incubation_judgment_artifact=incubation_judgment_artifact,
+        resource_evidence_artifacts=resource_evidence_artifacts,
+    )
 
     resource_ids = {artifact.artifact_id for artifact in resource_evidence_artifacts}
     if len(resource_ids) != len(resource_evidence_artifacts):
@@ -244,12 +335,14 @@ def seal_format_decision(
     judgment_ref = incubation_judgment_artifact.to_parent_ref() if incubation_judgment_artifact is not None else None
     decision = FormatDecision(
         **draft.model_dump(),
-        message_plan_binding=_message_plan_binding(message_plan_artifact),
+        message_plan_binding=message_plan_binding,
+        base_draft_binding=base_draft_binding,
         incubation_judgment_ref=judgment_ref,
         resource_evidence_refs=resource_refs,
     )
     parents = (
         message_plan_artifact.to_parent_ref(),
+        base_draft_artifact.to_parent_ref(),
         *((judgment_ref,) if judgment_ref is not None else ()),
         *resource_refs,
     )
@@ -266,6 +359,7 @@ def seal_format_decision(
 
 
 __all__ = [
+    "BaseDraftBinding",
     "FormatAlternative",
     "FormatChoice",
     "FormatDecision",
@@ -275,4 +369,5 @@ __all__ = [
     "MessagePlanBinding",
     "ResourceMatch",
     "seal_format_decision",
+    "validate_format_decision_parents",
 ]

@@ -203,10 +203,13 @@ browser state, temporary URLs, and local paths. `/api/incubation` owns project/t
 monetization hypotheses separate, binds the exact brief and frozen content-world version, and
 may cite benchmark or audience artifacts only as explicit parents. Neither object may rewrite
 semantic recognition or the content map. Account presentation is not a per-topic format decision.
-Per-topic `FormatDecision` binds the exact `message_plan` artifact plus protected-content and
-evidence-boundary hashes. Its draft has no topic or evidence rewrite fields, may remain provisional
+Per-topic `FormatDecision` binds the exact `message_plan` and its directly derived
+`draft_version(stage=base)`, plus protected-content, evidence-boundary, and base-body hashes. Its draft has no topic,
+body, or evidence rewrite fields, may remain provisional
 when resources are unknown, and may carry a narrative-method hint only for narrative formats. It
 contains no platform, sales, publishing, cadence, duration, shot-count, or quota controls.
+The bounded format runtime validates that lineage before its model call and accepts resource evidence only as
+same-project `user_material` media observations; benchmark evidence cannot impersonate owned production resources.
 The incubation-judgment runtime accepts only sealed Brief/world/evidence parents. Benchmark and
 audience artifacts are validated by type and evidence role, then projected through their existing
 bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete

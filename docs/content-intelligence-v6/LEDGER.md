@@ -1601,7 +1601,8 @@ TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和�
 
 ## A62 单条内容表现形式决定谱系
 
-2026-08-17 沿发布前主链新增薄 `FormatDecision`。它只在精确 `MessagePlan` 之后选择本条内容采用
+2026-08-17 沿发布前主链新增薄 `FormatDecision`。A64 后续已把父级修正为精确
+`MessagePlan -> BaseDraft`，再选择本条内容采用
 口头表达、微短剧、情景剧、图文、纯素材、访谈、纪录观察或自定义形式，并记录资源匹配、缺口、持续
 生产风险、替代形式和未知。账号级长期表现能力仍归 `IncubationJudgment`，历史故事和真实案例仍是
 内容来源，不是表现形式。
@@ -1627,3 +1628,16 @@ TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和�
 联合回归 `14 passed`，Ruff、格式及差异检查通过。当前状态仍是 `implemented`：Brief 构造、真实
 模型、项目证据读取、持久化和起号回答接线待完成。详见
 `audits/A63-incubation-judgment-runtime.md`。
+
+## A64 表现形式运行时与基础稿绑定
+
+2026-08-17 复核完整发布前链时发现 A62 只绑定 MessagePlan，与 ADR-018 的
+`MessagePlan -> BaseDraft -> FormatDecision` 顺序冲突。失败测试先证明不相关基础稿仍会进入模型；修正后
+决定同时锁定精确消息计划与其直接派生的 `draft_version(stage=base)`，保存基础稿身份、产物哈希和正文
+哈希，并在模型调用前验证项目、类型、业务 ID、阶段和父级。
+
+薄运行器输入限制为 32,000 UTF-8 字节，只允许最多八份同项目 `user_material` 媒体观察支撑“已有素材”；
+对标证据不能冒充生产资源。模型失败、合同失败或谱系失败均不封存半份结果。合同与运行时回归
+`41 passed`，Ruff、格式和差异检查通过。项目主链、形式适配稿、素材方案和 MediaArtifact 尚未接通，
+因此仍不能宣称发布前链完成。详见
+`audits/A64-format-decision-runtime-and-base-draft-binding.md`。
