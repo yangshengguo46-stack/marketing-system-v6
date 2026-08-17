@@ -227,7 +227,10 @@ structured-model input is limited to 16,000 UTF-8 bytes. Model or contract failu
 partial judgment. For a selected project, `explore_content_world` now stores the current reading/world,
 builds the minimal Brief, selects formal project evidence, seals the judgment, and passes only its editorial
 projection into MessagePlan generation; monetization remains outside TopicBrief and BaseDraft. A failure in
-this optional preparation must preserve the existing evidence-bound topic answer.
+this optional preparation must preserve the existing evidence-bound topic answer. After the exact BaseDraft is
+stored, the same run may continue through `FormatDecision -> AdaptedDraft`; both results are rendered after the
+format-neutral draft, while internal answer-only fields are removed from the public persistence receipt. Failure in
+this post-draft adaptation cannot erase or relabel the already valid topic and base draft.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed

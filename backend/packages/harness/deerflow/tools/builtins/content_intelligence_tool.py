@@ -33,11 +33,15 @@ from deerflow.content_intelligence import (
 )
 from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
 from deerflow.incubation import (
+    AdaptedDraft,
     ArtifactEnvelope,
     EvidenceSnapshot,
+    FormatDecision,
     IncubationJudgment,
     ProjectRef,
     build_minimal_incubation_brief,
+    generate_adapted_draft,
+    generate_format_decision,
     generate_incubation_judgment,
     seal_content_run_artifacts,
     seal_evidence_snapshot,
@@ -145,6 +149,14 @@ def _runtime_context_text(runtime: Runtime, name: str) -> str | None:
     if not isinstance(value, str) or not value.strip():
         return None
     return value.strip()
+
+
+def _artifact_receipt(artifact: ArtifactEnvelope) -> dict[str, str]:
+    return {
+        "artifact_type": artifact.artifact_type,
+        "artifact_id": artifact.artifact_id,
+        "content_sha256": artifact.content_sha256,
+    }
 
 
 def _structured_model_runner(model: Any, config: RunnableConfig):
@@ -268,6 +280,7 @@ async def _persist_content_run(
     runtime: Runtime,
     topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
+    model: Any | None = None,
 ) -> dict[str, Any]:
     project_id = _runtime_context_text(runtime, "incubation_project_id")
     if project_id is None:
@@ -317,18 +330,21 @@ async def _persist_content_run(
                     "content_sha256": stored.content_sha256,
                 }
             )
+        created_at = datetime.now(UTC)
         sealed = seal_content_run_artifacts(
             project=project,
             bundle=bundle,
             delivery=delivery,
-            created_at=datetime.now(UTC),
+            created_at=created_at,
             source_thread_id=thread_id,
             source_run_id=run_id,
             reading_parents=tuple(evidence_parents),
             incubation_judgment_artifact=incubation_judgment_artifact,
         )
+        stored_content_artifacts: dict[str, ArtifactEnvelope] = {}
         for artifact in sealed.storage_order():
             stored = await repository.put_artifact(artifact)
+            stored_content_artifacts[stored.artifact_type] = stored
             stored_receipts.append(
                 {
                     "artifact_type": stored.artifact_type,
@@ -336,11 +352,58 @@ async def _persist_content_run(
                     "content_sha256": stored.content_sha256,
                 }
             )
-        return {
+        answer_sections: list[str] = []
+        if delivery is not None and model is not None:
+            try:
+                resource_artifacts = await repository.list_artifacts(
+                    project,
+                    artifact_type="media_observation",
+                    evidence_role="user_material",
+                )
+                bounded_resources = tuple(resource_artifacts[-8:])
+                message_plan_artifact = stored_content_artifacts["message_plan"]
+                base_draft_artifact = stored_content_artifacts["draft_version"]
+                format_artifact = await generate_format_decision(
+                    project=project,
+                    message_plan_artifact=message_plan_artifact,
+                    base_draft_artifact=base_draft_artifact,
+                    incubation_judgment_artifact=incubation_judgment_artifact,
+                    resource_evidence_artifacts=bounded_resources,
+                    structured_model=_structured_model_runner(model, runtime.config),
+                    created_at=created_at,
+                    source_thread_id=thread_id,
+                    source_run_id=run_id,
+                )
+                format_artifact = await repository.put_artifact(format_artifact)
+                stored_receipts.append(_artifact_receipt(format_artifact))
+                answer_sections.append(_render_format_decision_artifact(format_artifact))
+
+                adapted_artifact = await generate_adapted_draft(
+                    project=project,
+                    base_draft_artifact=base_draft_artifact,
+                    format_decision_artifact=format_artifact,
+                    structured_model=_structured_model_runner(model, runtime.config),
+                    created_at=created_at,
+                    source_thread_id=thread_id,
+                    source_run_id=run_id,
+                )
+                adapted_artifact = await repository.put_artifact(adapted_artifact)
+                stored_receipts.append(_artifact_receipt(adapted_artifact))
+                answer_sections.append(_render_adapted_draft_artifact(adapted_artifact))
+            except Exception as exc:
+                logger.warning(
+                    "Post-draft format adaptation was unavailable: %s",
+                    type(exc).__name__,
+                )
+
+        result: dict[str, Any] = {
             "status": "stored",
             "project_id": project_id,
             "artifacts": stored_receipts,
         }
+        if answer_sections:
+            result["_answer_appendix"] = "\n\n".join(answer_sections)
+        return result
     except Exception as exc:
         logger.warning(
             "Content-run persistence failed: %s",
@@ -396,8 +459,9 @@ async def explore_content_world_tool(
 
     Both goals freeze business semantics, one content root, and its content map.
     Long-term positioning stops there. A shootable-topic goal continues through
-    research, TopicBrief, MessagePlan, and BaseDraft. It stops before platform,
-    presentation format, cadence, sales, experiments, or questionnaires.
+    research, TopicBrief, MessagePlan, and BaseDraft. With a selected project it
+    may also persist a per-topic FormatDecision and AdaptedDraft. It still stops
+    before platform, cadence, sales, experiments, or questionnaires.
 
     Args:
         user_request: The current account-positioning or concrete-topic request, copied without adding requirements.
@@ -528,6 +592,7 @@ async def explore_content_world_tool(
             runtime=runtime,
             topic_evidence_snapshots=topic_evidence_snapshots,
             incubation_judgment_artifact=(prepared_incubation.judgment_artifact if prepared_incubation is not None and shooting_delivery is not None else None),
+            model=model,
         )
         if shooting_delivery is None:
             return _terminal_content_world_command(
@@ -535,6 +600,9 @@ async def explore_content_world_tool(
                 tool_call_id=tool_call_id,
                 persistence=persistence,
             )
+        answer_appendix = persistence.get("_answer_appendix")
+        if isinstance(answer_appendix, str) and answer_appendix.strip():
+            rendered_delivery += "\n\n" + answer_appendix.strip()
         return _terminal_content_world_command(
             rendered_delivery,
             tool_call_id=tool_call_id,
@@ -701,6 +769,81 @@ def _render_incubation_judgment(judgment: IncubationJudgment) -> str:
             lines.extend(("", "**尚未确认：** " + "；".join(judgment.unknowns)))
         if judgment.alternatives:
             lines.extend(("", "**备选路线：** " + "；".join(judgment.alternatives)))
+    return "\n".join(lines).strip()
+
+
+def _render_format_decision_artifact(artifact: ArtifactEnvelope) -> str:
+    decision = FormatDecision.model_validate(artifact.payload)
+    format_labels = {
+        "spoken_delivery": "口述表达",
+        "micro_drama": "微短剧",
+        "situational_drama": "情景剧",
+        "image_text": "图文",
+        "material_only": "纯素材",
+        "interview": "访谈",
+        "documentary_observation": "纪录观察",
+        "custom": decision.selected_format.custom_name or "自定义形式",
+    }
+    status_label = "已确认" if decision.status == "confirmed" else "暂定"
+    lines = [
+        "# 本条表现形式",
+        "",
+        f"**建议形式：** {format_labels[decision.selected_format.kind]}（{status_label}）",
+        "",
+        f"**为什么：** {decision.selection_rationale}",
+    ]
+    if decision.resource_matches:
+        lines.extend(("", "## 已匹配资源", ""))
+        lines.extend(f"- **{item.resource}：** {item.fit}" for item in decision.resource_matches)
+    if decision.resource_gaps:
+        lines.extend(("", "## 还缺什么", ""))
+        lines.extend(f"- {item}" for item in decision.resource_gaps)
+    if decision.sustainability_risks:
+        lines.extend(("", "## 持续生产风险", ""))
+        lines.extend(f"- {item}" for item in decision.sustainability_risks)
+    if decision.alternatives:
+        lines.extend(("", "## 备选形式", ""))
+        lines.extend(f"- **{format_labels[item.format.kind]}：** {item.rationale}" for item in decision.alternatives)
+    if decision.unknowns:
+        lines.extend(("", "## 仍未知", ""))
+        lines.extend(f"- {item}" for item in decision.unknowns)
+    return "\n".join(lines).strip()
+
+
+def _render_adapted_draft_artifact(artifact: ArtifactEnvelope) -> str:
+    adapted = AdaptedDraft.model_validate(artifact.payload)
+    mode_labels = {
+        "spoken_line": "口述",
+        "voiceover": "旁白",
+        "on_screen_text": "屏幕文字",
+        "visual_only": "纯画面",
+        "interview_prompt": "采访提问",
+        "interview_response": "采访回答",
+        "observed_action": "纪录动作",
+        "dialogue": "对白",
+        "narration": "叙述",
+    }
+    lines = ["# 形式适配稿"]
+    for index, unit in enumerate(adapted.units, start=1):
+        lines.extend(
+            (
+                "",
+                f"## {index}. {mode_labels[unit.mode]}",
+                "",
+                unit.adapted_expression,
+            )
+        )
+        if unit.visual_treatment is not None:
+            lines.extend(("", f"**画面承载：** {unit.visual_treatment}"))
+        if unit.narrative_treatment is not None:
+            lines.extend(
+                (
+                    "",
+                    f"**场面目的：** {unit.narrative_treatment.scene_purpose}",
+                    "",
+                    f"**表演意图：** {unit.narrative_treatment.performance_intent}",
+                )
+            )
     return "\n".join(lines).strip()
 
 
@@ -980,7 +1123,7 @@ def _terminal_content_world_command(
         "deerflow_direct_response": True,
     }
     if persistence is not None:
-        additional_kwargs["incubation_persistence"] = persistence
+        additional_kwargs["incubation_persistence"] = {key: value for key, value in persistence.items() if not key.startswith("_")}
     return Command(
         update={
             "messages": [

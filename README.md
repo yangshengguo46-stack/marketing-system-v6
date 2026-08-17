@@ -805,8 +805,11 @@ Code joins the reviewed opening, message beats, and closing into a `BaseDraft` w
 second model rewrite. Broad account-start runs lead with the account positioning and
 then one map-bound "shoot today" example; the
 map prose is a fail-open response when no topic exists or delivery validation fails.
-Actual format adaptation and screenwriting still belong to later routing when a
-narrative format is selected. The completed prose is delivered through the native return-direct exit
+For a selected project, the completed BaseDraft now enters a separate per-topic
+`FormatDecision` and `AdaptedDraft`. The decision may remain provisional when owned
+resources are unknown; the adaptation must preserve verbatim anchors from the BaseDraft,
+and narrative staging is available only when a narrative form is actually selected.
+The completed prose is delivered through the native return-direct exit
 and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
 it back into a product catalogue.
 
@@ -838,13 +841,13 @@ rehydrates only the stored, owner-validated binding into runtime context. The pr
 frontend selector and local live Douyin credential acceptance are still pending.
 
 When a thread has a selected project, a successful content-world run now seals the exact
-`content_reading + content_world -> topic_brief -> message_plan -> draft_version`
+`content_reading + content_world -> topic_brief -> message_plan -> draft_version -> format_decision -> adapted_draft`
 lineage into the incubation ledger. Runtime project, user, thread, and run identity are
 injected through `ToolRuntime` and stay out of the model-facing tool schema. The durable
 content world excludes run-specific named candidates, so later research does not silently
 rewrite account positioning. Running without a selected project remains valid, and a
-redacted ledger failure does not discard the generated answer. Project history UI,
-confirmation/version switching, format adaptation, and production fact review remain
+redacted ledger or post-draft adaptation failure does not discard the generated answer.
+Project history UI, confirmation/version switching, and production fact review remain
 later V6 work.
 
 Content-world research now reaches official Douyin video search only through the

@@ -248,7 +248,12 @@ async def test_selected_project_prepares_incubation_judgment_before_delivery(
 
     async def persist(**kwargs):
         order.append("persist")
-        return {"status": "stored", "project_id": "project-1", "artifacts": []}
+        return {
+            "status": "stored",
+            "project_id": "project-1",
+            "artifacts": [],
+            "_answer_appendix": "# 本条表现形式\n\n图文",
+        }
 
     monkeypatch.setattr(content_intelligence_tool_module, "_prepare_incubation_judgment", prepare)
     delivery = AsyncMock(side_effect=deliver)
@@ -282,6 +287,8 @@ async def test_selected_project_prepares_incubation_judgment_before_delivery(
     assert delivery.await_args.kwargs["incubation_judgment"] is judgment
     assert persistence.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
     assert "# 孵化判断" in result.update["messages"][0].content
+    assert "# 本条表现形式" in result.update["messages"][0].content
+    assert "_answer_appendix" not in result.update["messages"][0].additional_kwargs["incubation_persistence"]
     render_judgment.assert_called_once_with(judgment)
 
 
@@ -1217,6 +1224,95 @@ async def test_content_run_persistence_stores_used_topic_evidence_before_the_rea
         "message_plan",
         "draft_version",
     ]
+
+
+@pytest.mark.asyncio
+async def test_persistence_continues_from_base_draft_to_format_and_adapted_draft(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    content_artifacts = tuple(
+        SimpleNamespace(
+            artifact_type=artifact_type,
+            artifact_id=f"artifact-{artifact_type}",
+            content_sha256=f"sha-{artifact_type}",
+        )
+        for artifact_type in (
+            "content_reading",
+            "content_world",
+            "topic_brief",
+            "message_plan",
+            "draft_version",
+        )
+    )
+    artifacts_by_type = {item.artifact_type: item for item in content_artifacts}
+    format_artifact = SimpleNamespace(
+        artifact_type="format_decision",
+        artifact_id="artifact-format",
+        content_sha256="sha-format",
+    )
+    adapted_artifact = SimpleNamespace(
+        artifact_type="adapted_draft",
+        artifact_id="artifact-adapted",
+        content_sha256="sha-adapted",
+    )
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(side_effect=lambda artifact: artifact),
+        list_artifacts=AsyncMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_get_incubation_repository",
+        Mock(return_value=repository),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "seal_content_run_artifacts",
+        Mock(return_value=SimpleNamespace(storage_order=lambda: content_artifacts)),
+    )
+    generate_format = AsyncMock(return_value=format_artifact)
+    generate_adapted = AsyncMock(return_value=adapted_artifact)
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_format_decision", generate_format)
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_adapted_draft", generate_adapted)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_format_decision_artifact",
+        Mock(return_value="# 本条表现形式\n\n图文"),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_adapted_draft_artifact",
+        Mock(return_value="# 形式适配稿\n\n适配后的正文"),
+    )
+    judgment_artifact = object()
+
+    receipt = await content_intelligence_tool_module._persist_content_run(
+        bundle=object(),
+        delivery=object(),
+        runtime=_tool_runtime(
+            "content-world-call-preproduction",
+            context={"incubation_project_id": "golden-gift"},
+        ),
+        topic_evidence_snapshots=(),
+        incubation_judgment_artifact=judgment_artifact,
+        model=object(),
+    )
+
+    assert [call.args[0] for call in repository.put_artifact.await_args_list] == [
+        *content_artifacts,
+        format_artifact,
+        adapted_artifact,
+    ]
+    assert generate_format.await_args.kwargs["message_plan_artifact"] is artifacts_by_type["message_plan"]
+    assert generate_format.await_args.kwargs["base_draft_artifact"] is artifacts_by_type["draft_version"]
+    assert generate_format.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
+    assert generate_adapted.await_args.kwargs["base_draft_artifact"] is artifacts_by_type["draft_version"]
+    assert generate_adapted.await_args.kwargs["format_decision_artifact"] is format_artifact
+    assert [item["artifact_type"] for item in receipt["artifacts"]][-2:] == [
+        "format_decision",
+        "adapted_draft",
+    ]
+    assert receipt["_answer_appendix"] == "# 本条表现形式\n\n图文\n\n# 形式适配稿\n\n适配后的正文"
 
 
 @pytest.mark.asyncio

@@ -1704,3 +1704,13 @@ IncubationJudgment，最后让其编辑投影参与 MessagePlan；变现仍不�
 绑定实际使用的判断。未选项目或判断准备失败不吞掉证据选题。联合回归 `79 passed`。单条
 FormatDecision、适配稿、素材方案与 MediaKit 尚待继续接入本运行。详见
 `audits/A70-incubation-runtime-orchestration.md`。
+
+## A71 表现形式与适配稿主链接线
+
+2026-08-18 将 A64 表现形式运行时和 A67 形式适配稿接到选中项目的有效 BaseDraft 之后。形式判断只
+读取精确 MessagePlan、直接派生的 BaseDraft、可选孵化判断和最多八份同项目 `user_material`；适配稿
+继续绑定精确形式决定，并让每个表现单元保留基础稿逐字锚点。
+
+回答现在分栏展示本条表现形式与适配稿。内部 `_answer_appendix` 不进入前端持久化回执；后置模型失败
+只降级这一段，不吞掉已经有效的选题和基础稿。联合回归 `103 passed`。详见
+`audits/A71-format-adaptation-runtime-orchestration.md`。
