@@ -210,6 +210,82 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
 
 
 @pytest.mark.asyncio
+async def test_selected_project_prepares_incubation_judgment_before_delivery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    enriched_bundle = SimpleNamespace(topic_brief=object())
+    judgment = object()
+    judgment_artifact = object()
+    prepared = SimpleNamespace(
+        judgment=judgment,
+        judgment_artifact=judgment_artifact,
+    )
+    shooting_delivery = object()
+    order: list[str] = []
+
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        AsyncMock(return_value=enriched_bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "DouyinMcpTopicEvidenceSearch",
+        Mock(return_value=SimpleNamespace(snapshots=())),
+    )
+
+    async def prepare(**kwargs):
+        order.append("prepare")
+        return prepared
+
+    async def deliver(*args, **kwargs):
+        order.append("deliver")
+        return shooting_delivery
+
+    async def persist(**kwargs):
+        order.append("persist")
+        return {"status": "stored", "project_id": "project-1", "artifacts": []}
+
+    monkeypatch.setattr(content_intelligence_tool_module, "_prepare_incubation_judgment", prepare)
+    delivery = AsyncMock(side_effect=deliver)
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
+    persistence = AsyncMock(side_effect=persist)
+    monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persistence)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 今日建议拍摄\n\n## 一条具体选题"),
+    )
+    render_judgment = Mock(return_value="# 孵化判断\n\n已形成项目级判断")
+    monkeypatch.setattr(content_intelligence_tool_module, "_render_incubation_judgment", render_judgment)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是卖白酒的，该怎么起号？",
+                "runtime": _tool_runtime(
+                    "content-world-call-incubation",
+                    context={"incubation_project_id": "project-1"},
+                ),
+            },
+            "id": "content-world-call-incubation",
+            "type": "tool_call",
+        }
+    )
+
+    assert order == ["prepare", "deliver", "persist"]
+    assert delivery.await_args.kwargs["incubation_judgment"] is judgment
+    assert persistence.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
+    assert "# 孵化判断" in result.update["messages"][0].content
+    render_judgment.assert_called_once_with(judgment)
+
+
+@pytest.mark.asyncio
 async def test_shootable_topic_goal_never_silently_downgrades_to_a_map_when_research_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -474,6 +550,66 @@ def test_tool_layer_renders_positioning_as_basis_and_prioritizes_the_shootable_t
     assert prioritized.startswith("# 今日建议拍摄")
     assert "# 长期定位依据" in prioritized
     assert prioritized.index("# 今日建议拍摄") < prioritized.index("# 长期定位依据")
+
+
+def test_incubation_renderer_keeps_position_audience_persona_form_and_monetization_separate() -> None:
+    from deerflow.incubation import (
+        AccountPresentationPlan,
+        AudienceHypothesis,
+        IncubationJudgment,
+        MonetizationHypothesis,
+        PersonaDecision,
+        PositioningDecision,
+    )
+
+    judgment = IncubationJudgment(
+        content_map_version_id="map-1",
+        positioning=PositioningDecision(
+            decision="从一件具体礼俗理解人与人怎样相处",
+            audience_promise="每次讲清一段具体关系",
+            rationale="与冻结地图一致",
+            confidence="medium",
+        ),
+        audience=AudienceHypothesis(
+            people="对人情与礼俗感兴趣的人",
+            recurring_interest="具体关系如何被安排",
+            why_return="持续得到可以理解现实关系的新视角",
+            rationale="仍需真实反馈校正",
+            confidence="low",
+        ),
+        persona=PersonaDecision(
+            account_role="从礼品生意观察人情的经营者",
+            rationale="只使用用户已声明身份",
+        ),
+        presentation=AccountPresentationPlan(
+            primary_forms=("具体故事讲解", "图文材料解读"),
+            rationale="属于账号级长期方向",
+        ),
+        monetization=(
+            MonetizationHypothesis(
+                path="以长期内容信任承接礼品咨询",
+                trust_required="观众认可账号懂送礼场景",
+                rationale="待真实业务验证",
+            ),
+        ),
+        unknowns=("用户持续产能未知",),
+        alternatives=("也可先从不出镜图文开始",),
+    )
+
+    rendered = content_intelligence_tool_module._render_incubation_judgment(judgment)
+
+    assert rendered.startswith("# 孵化判断")
+    for heading in (
+        "## 定位",
+        "## 受众假设",
+        "## 人设",
+        "## 账号级表现方向",
+        "## 变现假设",
+        "## 未知与备选",
+    ):
+        assert heading in rendered
+    assert "**置信度：** 中" in rendered
+    assert "以长期内容信任承接礼品咨询" in rendered
 
 
 @pytest.mark.asyncio
@@ -824,6 +960,124 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
 
 
 @pytest.mark.asyncio
+async def test_incubation_preparation_persists_brief_world_and_judgment_in_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime
+
+    from deerflow.incubation import ArtifactEnvelope, IncubationBrief, IncubationJudgment, ProjectRef
+
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    now = datetime(2026, 8, 18, 1, 0, tzinfo=UTC)
+
+    def artifact(artifact_type: str, payload: dict[str, object]) -> ArtifactEnvelope:
+        return ArtifactEnvelope.seal(
+            project=project,
+            artifact_type=artifact_type,
+            version=1,
+            payload=payload,
+            created_at=now,
+            source_thread_id="thread-1",
+            source_run_id="run-1",
+        )
+
+    reading = artifact("content_reading", {"record": "bounded"})
+    world_artifact = artifact(
+        "content_world",
+        {
+            "content_map_version_id": "map-1",
+            "content_root": "礼与人与人相处",
+        },
+    )
+    brief = artifact(
+        "incubation_brief",
+        IncubationBrief(subject_expression="我是做黄金礼品的，我要怎么起号？").model_dump(mode="json"),
+    )
+    judgment = artifact(
+        "incubation_judgment",
+        IncubationJudgment(content_map_version_id="map-1").model_dump(mode="json"),
+    )
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(side_effect=lambda item: item),
+        list_artifacts=AsyncMock(return_value=[reading, world_artifact, brief]),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "_get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "seal_content_run_artifacts",
+        Mock(return_value=SimpleNamespace(storage_order=lambda: (reading, world_artifact))),
+    )
+    build_brief = Mock(return_value=brief)
+    monkeypatch.setattr(content_intelligence_tool_module, "build_minimal_incubation_brief", build_brief)
+    generate_judgment = AsyncMock(return_value=judgment)
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_incubation_judgment", generate_judgment)
+
+    prepared = await content_intelligence_tool_module._prepare_incubation_judgment(
+        bundle=SimpleNamespace(
+            content_world=SimpleNamespace(
+                content_root="礼与人与人相处",
+                source_object="黄金礼品",
+            )
+        ),
+        user_request="我是做黄金礼品的，我要怎么起号？",
+        model=object(),
+        runtime=_tool_runtime(
+            "content-world-call-prepare",
+            context={"incubation_project_id": "golden-gift"},
+        ),
+        topic_evidence_snapshots=(),
+    )
+
+    assert prepared is not None
+    assert prepared.judgment_artifact is judgment
+    assert prepared.judgment.content_map_version_id == "map-1"
+    assert [call.args[0].artifact_type for call in repository.put_artifact.await_args_list] == [
+        "content_reading",
+        "content_world",
+        "incubation_brief",
+        "incubation_judgment",
+    ]
+    assert build_brief.call_args.kwargs["source_object"] == "黄金礼品"
+    assert generate_judgment.await_args.kwargs["brief_artifact"] is brief
+    assert generate_judgment.await_args.kwargs["content_world_artifact"] is world_artifact
+    assert generate_judgment.await_args.kwargs["benchmark_evidence_artifacts"] == ()
+    assert generate_judgment.await_args.kwargs["audience_evidence_artifacts"] == ()
+
+
+@pytest.mark.asyncio
+async def test_structured_model_runner_unwraps_parsed_output_and_rejects_parse_errors() -> None:
+    class StructuredRunnable:
+        def __init__(self, result):
+            self.result = result
+
+        async def ainvoke(self, messages, config=None):
+            return self.result
+
+    class Model:
+        def __init__(self, result):
+            self.result = result
+
+        def with_structured_output(self, schema, *, include_raw=False):
+            assert include_raw is True
+            return StructuredRunnable(self.result)
+
+    parsed = object()
+    runner = content_intelligence_tool_module._structured_model_runner(
+        Model({"parsed": parsed, "parsing_error": None}),
+        {},
+    )
+    assert await runner(object, ()) is parsed
+
+    invalid = content_intelligence_tool_module._structured_model_runner(
+        Model({"parsed": None, "parsing_error": ValueError("bad output")}),
+        {},
+    )
+    with pytest.raises(ValueError, match="could not be parsed"):
+        await invalid(object, ())
+
+
+@pytest.mark.asyncio
 async def test_content_run_persistence_uses_only_the_runtime_bound_project(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -856,6 +1110,7 @@ async def test_content_run_persistence_uses_only_the_runtime_bound_project(
         Mock(return_value=repository),
     )
 
+    judgment_artifact = object()
     receipt = await content_intelligence_tool_module._persist_content_run(
         bundle=object(),
         delivery=object(),
@@ -869,6 +1124,7 @@ async def test_content_run_persistence_uses_only_the_runtime_bound_project(
             config={"configurable": {"thread_id": "thread-1"}},
         ),
         topic_evidence_snapshots=(),
+        incubation_judgment_artifact=judgment_artifact,
     )
 
     project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
@@ -877,6 +1133,7 @@ async def test_content_run_persistence_uses_only_the_runtime_bound_project(
     assert seal.call_args.kwargs["project"] == project
     assert seal.call_args.kwargs["source_thread_id"] == "thread-1"
     assert seal.call_args.kwargs["source_run_id"] == "run-1"
+    assert seal.call_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
     assert receipt["status"] == "stored"
     assert receipt["project_id"] == "golden-gift"
     assert [item["artifact_type"] for item in receipt["artifacts"]] == [artifact.artifact_type for artifact in artifacts]

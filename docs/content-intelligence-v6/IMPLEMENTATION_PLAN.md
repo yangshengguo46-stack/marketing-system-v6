@@ -276,6 +276,11 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 `29 passed`。生成运行时、MediaKit 执行和内容工具编排仍待完成。详见
 `audits/A69-production-plan-and-media-artifact-lineage.md`。
 
+2026-08-18 第十二切片回执：选中项目的可拍选题已自动执行并持久化
+`Brief + formal project evidence + IncubationJudgment`，判断的编辑投影进入 MessagePlan，变现单独
+展示且不污染基础稿。联合回归 `79 passed`。下一步接入 FormatDecision、适配稿和制作方案。详见
+`audits/A70-incubation-runtime-orchestration.md`。
+
 ### W04 MediaKit 制作路由
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的

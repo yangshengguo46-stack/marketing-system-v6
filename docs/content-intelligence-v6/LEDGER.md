@@ -1693,3 +1693,14 @@ MediaArtifact 绑定适配正文、精确方案、输入集合、MediaKit 回执
 媒体观察必须由方案批准，中间媒体必须来自同一方案，声明父级缺失时拒绝。合同测试 `29 passed`。
 模型生成 ProductionPlan、动态 Schema 执行与主链接线继续进行。详见
 `audits/A69-production-plan-and-media-artifact-lineage.md`。
+
+## A70 孵化判断主链接线
+
+2026-08-18 将 A65 最小 Brief、A68 正式项目证据和 A63 判断运行时接入可拍选题工具。选中项目后，
+本轮阅读、冻结地图与实际采用的选题证据先落账，再构造 Brief、读取正式对标/受众证据、生成并保存
+IncubationJudgment，最后让其编辑投影参与 MessagePlan；变现仍不进入 TopicBrief 或 BaseDraft。
+
+回答现在分栏展示定位、受众、人设、账号级表现方向、变现假设、未知和备选，且 MessagePlan 精确
+绑定实际使用的判断。未选项目或判断准备失败不吞掉证据选题。联合回归 `79 passed`。单条
+FormatDecision、适配稿、素材方案与 MediaKit 尚待继续接入本运行。详见
+`audits/A70-incubation-runtime-orchestration.md`。

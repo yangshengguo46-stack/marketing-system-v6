@@ -224,7 +224,10 @@ The incubation-judgment runtime accepts only sealed Brief/world/evidence parents
 audience artifacts are validated by type and evidence role, then projected through their existing
 bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete
 structured-model input is limited to 16,000 UTF-8 bytes. Model or contract failure must not seal a
-partial judgment, and this service remains unregistered until project/runtime wiring is tested.
+partial judgment. For a selected project, `explore_content_world` now stores the current reading/world,
+builds the minimal Brief, selects formal project evidence, seals the judgment, and passes only its editorial
+projection into MessagePlan generation; monetization remains outside TopicBrief and BaseDraft. A failure in
+this optional preparation must preserve the existing evidence-bound topic answer.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed
