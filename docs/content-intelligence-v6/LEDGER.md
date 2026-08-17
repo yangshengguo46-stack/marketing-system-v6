@@ -1442,3 +1442,23 @@ URL 只存在执行内存；完成任务必须物化为内部 `artifact://` 引�
 批准 API、真实来源哈希复核或供应商费用封顶，也未注册驱动、上传素材、调用云服务或产生费用。详见
 `audits/A52-mediakit-exact-approval-ledger.md` 与
 `evidence/mediakit-exact-approval-a52-2026-08-17.md`。
+
+## A53 W04 MediaKit 可信输入与结果物化
+
+2026-08-17 继续补齐 A52 不能证明“云端实际读了哪些字节”的缺口。对照 MediaKit CLI `0.2.0`
+和源码后确认：云能力可直接接收本地文件并由 CLI 上传，但其缓存身份只含路径、大小和修改时间，
+不能替代内容哈希。第五版向 `query-task` 传 `--output-path` 的封装也不被当前 Schema 或实现消费，未形成可复用的
+下载器。
+
+失败测试先要求尚不存在的输出策略合同；安全复核又暴露两个真实问题：供应商返回任务号后再抛校验错会
+丢失可对账句柄；只检查 `video/` 前缀会允许异常 MIME 进入回执。修正后，素材先进 owner/project 隔离的私有
+内容寻址库，在批准前和提交后校验真实 SHA-256；后校验失败以固定错误和远端句柄入库。下载器对 HTTPS、
+主机白名单、重定向、SSRF、大小和哈希逐层校验；只有能力登记的结果才可经专属质检原子封存为
+`artifact://`，并发竞争只保留首份回执。
+
+聚焦测试为 `36 passed`，MediaKit、长任务、批准与迁移联合回归为 `102 passed`，异步阻塞回归为
+`71 passed, 2 warnings`；完整离线后端为 `11824 passed, 76 skipped, 17 warnings in 422.15s`。真实本机视频已通过
+私有暂存、字节复核和 MediaKit 本地探测。本轮仍未注册云驱动、
+上传素材、调用云能力或产生费用；费用供应商侧硬上限和逐能力真实回执仍未验收。详见
+`audits/A53-mediakit-trusted-io.md` 与
+`evidence/mediakit-trusted-io-a53-2026-08-17.md`。

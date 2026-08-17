@@ -16,7 +16,9 @@ from deerflow.community.mediakit import (
     MediaKitCloudDriver,
     MediaKitCloudMaterializationContext,
     MediaKitCloudMaterializedOutput,
+    MediaKitCloudSourceContext,
     MediaKitCommandError,
+    MediaKitTrustedSourceStore,
     mediakit_cloud_operation_sha256,
 )
 from deerflow.config.database_config import DatabaseConfig
@@ -122,13 +124,23 @@ def _source() -> EphemeralMediaSource:
     )
 
 
-async def _resolve_source(
-    user_id: str,
-    source_ref: str,
-    rights_ref: str,
-) -> EphemeralMediaSource:
-    assert (user_id, source_ref, rights_ref) == ("user-1", "media-source-1", "rights-1")
+async def _resolve_source(context: MediaKitCloudSourceContext) -> EphemeralMediaSource:
+    assert (context.user_id, context.project_id, context.source_ref, context.rights_ref) == (
+        "user-1",
+        "project-1",
+        "media-source-1",
+        "rights-1",
+    )
     return _source()
+
+
+async def _verify_source(
+    context: MediaKitCloudSourceContext,
+    source: EphemeralMediaSource,
+) -> None:
+    assert context.source_content_sha256 == "b" * 64
+    assert source.source_ref == context.source_ref
+    assert source.rights_ref == context.rights_ref
 
 
 async def _materialize(
@@ -189,17 +201,31 @@ async def _driver(
         if events is not None:
             events.append("authorize")
 
-    async def resolve_source(user_id: str, source_ref: str, rights_ref: str) -> EphemeralMediaSource:
-        assert (user_id, source_ref, rights_ref) == ("user-1", "media-source-1", "rights-1")
+    async def resolve_source(context: MediaKitCloudSourceContext) -> EphemeralMediaSource:
+        assert (context.user_id, context.project_id, context.source_ref, context.rights_ref) == (
+            "user-1",
+            "project-1",
+            "media-source-1",
+            "rights-1",
+        )
         if events is not None:
             events.append("resolve")
         return _source()
+
+    async def verify_source(
+        context: MediaKitCloudSourceContext,
+        source: EphemeralMediaSource,
+    ) -> None:
+        await _verify_source(context, source)
+        if events is not None:
+            events.append("verify")
 
     return (
         MediaKitCloudDriver(
             router=router,
             authorize=authorize,
             resolve_source=resolve_source,
+            verify_source=verify_source,
             materialize_result=_materialize,
             poll_after_seconds=1,
         ),
@@ -208,7 +234,7 @@ async def _driver(
 
 
 @pytest.mark.asyncio
-async def test_cloud_submit_authorizes_then_resolves_source_and_uses_local_id_as_client_token() -> None:
+async def test_cloud_submit_verifies_source_around_authorized_submission_and_uses_local_id_as_client_token() -> None:
     runner = FakeMediaKitRunner()
     events: list[str] = []
     driver, schema_sha256 = await _driver(runner, events=events)
@@ -216,7 +242,7 @@ async def test_cloud_submit_authorizes_then_resolves_source_and_uses_local_id_as
 
     submission = await driver.submit(_request(schema_sha256))
 
-    assert events == ["authorize", "resolve"]
+    assert events == ["resolve", "verify", "authorize", "verify"]
     assert submission.remote_task_id == "remote-task-1"
     assert submission.snapshot.status is TaskStatus.SUBMITTED
     cloud_command = next(command for command in runner.commands if "--cloud" in command)
@@ -230,6 +256,47 @@ async def test_cloud_submit_authorizes_then_resolves_source_and_uses_local_id_as
 
 
 @pytest.mark.asyncio
+async def test_cloud_driver_uses_private_content_store_without_persisting_its_path(tmp_path) -> None:
+    input_path = tmp_path / "input.mp4"
+    input_path.write_bytes(b"private-stable-video")
+    store = MediaKitTrustedSourceStore(tmp_path / "private-media")
+    staged = await store.stage_local_video(
+        user_id="user-1",
+        project_id="project-1",
+        source_path=input_path,
+        rights_ref="rights-1",
+    )
+    runner = FakeMediaKitRunner()
+    router = MediaKitCapabilityRouter(runner=runner)
+    capability = await router.discover_capability("video", "asr-subtitles")
+    request = _request(capability.schema_sha256)
+    request.arguments["source_ref"] = staged.source_ref
+    request.arguments["source_content_sha256"] = staged.content_sha256
+
+    async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
+        assert context.source_ref == staged.source_ref
+        assert context.source_content_sha256 == staged.content_sha256
+
+    driver = MediaKitCloudDriver(
+        router=router,
+        authorize=authorize,
+        resolve_source=store.resolve,
+        verify_source=store.verify,
+        materialize_result=_materialize,
+    )
+    runner.commands.clear()
+
+    submission = await driver.submit(request)
+
+    cloud_command = next(command for command in runner.commands if "--cloud" in command)
+    command_text = " ".join(cloud_command)
+    assert str(tmp_path / "private-media") in command_text
+    durable_text = json.dumps(submission.driver_data, sort_keys=True)
+    assert str(tmp_path) not in durable_text
+    assert "private-stable-video" not in durable_text
+
+
+@pytest.mark.asyncio
 async def test_schema_drift_stops_before_source_resolution_or_cloud_submission() -> None:
     runner = FakeMediaKitRunner()
     resolved = False
@@ -237,9 +304,9 @@ async def test_schema_drift_stops_before_source_resolution_or_cloud_submission()
     async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
         del context
 
-    async def resolve_source(user_id: str, source_ref: str, rights_ref: str) -> EphemeralMediaSource:
+    async def resolve_source(context: MediaKitCloudSourceContext) -> EphemeralMediaSource:
         nonlocal resolved
-        del user_id, source_ref, rights_ref
+        del context
         resolved = True
         return _source()
 
@@ -247,6 +314,7 @@ async def test_schema_drift_stops_before_source_resolution_or_cloud_submission()
         router=MediaKitCapabilityRouter(runner=runner),
         authorize=authorize,
         resolve_source=resolve_source,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
 
@@ -258,7 +326,7 @@ async def test_schema_drift_stops_before_source_resolution_or_cloud_submission()
 
 
 @pytest.mark.asyncio
-async def test_authorization_failure_allows_only_local_schema_discovery() -> None:
+async def test_authorization_failure_allows_only_local_schema_and_source_verification() -> None:
     runner = FakeMediaKitRunner()
     router = MediaKitCapabilityRouter(runner=runner)
     capability = await router.discover_capability("video", "asr-subtitles")
@@ -269,9 +337,9 @@ async def test_authorization_failure_allows_only_local_schema_discovery() -> Non
         del context
         raise PermissionError("approval expired")
 
-    async def resolve_source(user_id: str, source_ref: str, rights_ref: str) -> EphemeralMediaSource:
+    async def resolve_source(context: MediaKitCloudSourceContext) -> EphemeralMediaSource:
         nonlocal resolved
-        del user_id, source_ref, rights_ref
+        del context
         resolved = True
         return _source()
 
@@ -279,6 +347,7 @@ async def test_authorization_failure_allows_only_local_schema_discovery() -> Non
         router=router,
         authorize=reject,
         resolve_source=resolve_source,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
 
@@ -288,7 +357,7 @@ async def test_authorization_failure_allows_only_local_schema_discovery() -> Non
     assert "approval expired" not in str(caught.value)
     assert runner.commands
     assert not any("--cloud" in command for command in runner.commands)
-    assert resolved is False
+    assert resolved is True
 
 
 def test_operation_digest_binds_source_schema_arguments_and_fee_limit() -> None:
@@ -356,6 +425,7 @@ async def test_ledger_authorizer_binds_exact_operation_to_the_durable_task(tmp_p
             clock=lambda: datetime(2026, 8, 17, 12, 1, tzinfo=UTC),
         ),
         resolve_source=_resolve_source,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
 
@@ -385,7 +455,8 @@ async def test_durable_arguments_reject_urls_paths_and_credentials_before_author
     driver = MediaKitCloudDriver(
         router=MediaKitCapabilityRouter(runner=runner),
         authorize=authorize,
-        resolve_source=lambda *_args: _source(),
+        resolve_source=_resolve_source,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
     request = _request("f" * 64)
@@ -415,7 +486,8 @@ async def test_durable_reference_cannot_smuggle_a_signed_url() -> None:
     driver = MediaKitCloudDriver(
         router=MediaKitCapabilityRouter(runner=runner),
         authorize=authorize,
-        resolve_source=lambda *_args: _source(),
+        resolve_source=_resolve_source,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
     request = _request("f" * 64)
@@ -438,17 +510,16 @@ async def test_source_resolution_failure_does_not_expose_ephemeral_locator() -> 
         del context
 
     async def fail_source_resolution(
-        user_id: str,
-        source_ref: str,
-        rights_ref: str,
+        context: MediaKitCloudSourceContext,
     ) -> EphemeralMediaSource:
-        del user_id, source_ref, rights_ref
+        del context
         raise RuntimeError("source failed: https://cdn.example.com/input.mp4?signature=temporary-secret")
 
     driver = MediaKitCloudDriver(
         router=router,
         authorize=authorize,
         resolve_source=fail_source_resolution,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
     runner.commands.clear()
@@ -459,6 +530,82 @@ async def test_source_resolution_failure_does_not_expose_ephemeral_locator() -> 
     assert "cdn.example.com" not in str(caught.value)
     assert "temporary-secret" not in str(caught.value)
     assert not any("--cloud" in command for command in runner.commands)
+
+
+@pytest.mark.asyncio
+async def test_source_verification_failure_stops_before_approval_and_submission() -> None:
+    runner = FakeMediaKitRunner()
+    router = MediaKitCapabilityRouter(runner=runner)
+    capability = await router.discover_capability("video", "asr-subtitles")
+    authorized = False
+
+    async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
+        nonlocal authorized
+        del context
+        authorized = True
+
+    async def reject_verification(
+        context: MediaKitCloudSourceContext,
+        source: EphemeralMediaSource,
+    ) -> None:
+        del context, source
+        raise RuntimeError("wrong bytes at /private/source-with-secret.mp4")
+
+    driver = MediaKitCloudDriver(
+        router=router,
+        authorize=authorize,
+        resolve_source=_resolve_source,
+        verify_source=reject_verification,
+        materialize_result=_materialize,
+    )
+    runner.commands.clear()
+
+    with pytest.raises(MediaKitCommandError, match="source content verification failed") as caught:
+        await driver.submit(_request(capability.schema_sha256))
+
+    assert "private" not in str(caught.value)
+    assert authorized is False
+    assert not any("--cloud" in command for command in runner.commands)
+
+
+@pytest.mark.asyncio
+async def test_source_change_after_remote_submission_preserves_handle_for_reconciliation() -> None:
+    runner = FakeMediaKitRunner()
+    calls = 0
+
+    async def verify_then_change(
+        context: MediaKitCloudSourceContext,
+        source: EphemeralMediaSource,
+    ) -> None:
+        nonlocal calls
+        del context, source
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("changed source at https://signed.example/secret")
+
+    async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
+        del context
+
+    router = MediaKitCapabilityRouter(runner=runner)
+    capability = await router.discover_capability("video", "asr-subtitles")
+    driver = MediaKitCloudDriver(
+        router=router,
+        authorize=authorize,
+        resolve_source=_resolve_source,
+        verify_source=verify_then_change,
+        materialize_result=_materialize,
+    )
+    runner.commands.clear()
+
+    submission = await driver.submit(_request(capability.schema_sha256))
+
+    assert calls == 2
+    assert submission.remote_task_id == "remote-task-1"
+    assert submission.snapshot.status is TaskStatus.FAILED
+    assert submission.snapshot.error == "MediaKit source content changed during cloud submission"
+    assert submission.driver_data["source_verification_state"] == "changed_after_submission"
+    assert "signed.example" not in json.dumps(submission.driver_data, sort_keys=True)
+    assert any("--cloud" in command for command in runner.commands)
 
 
 @pytest.mark.asyncio
@@ -552,8 +699,8 @@ async def test_materializer_failure_does_not_expose_provider_output() -> None:
     async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
         del context
 
-    async def resolve_source(user_id: str, source_ref: str, rights_ref: str) -> EphemeralMediaSource:
-        del user_id, source_ref, rights_ref
+    async def resolve_source(context: MediaKitCloudSourceContext) -> EphemeralMediaSource:
+        del context
         return _source()
 
     async def fail_materialization(
@@ -565,6 +712,7 @@ async def test_materializer_failure_does_not_expose_provider_output() -> None:
         router=router,
         authorize=authorize,
         resolve_source=resolve_source,
+        verify_source=_verify_source,
         materialize_result=fail_materialization,
     )
     submission = await driver.submit(_request(capability.schema_sha256))
@@ -646,7 +794,8 @@ async def test_recovery_rejects_query_schema_drift_after_restart() -> None:
     recovering_driver = MediaKitCloudDriver(
         router=MediaKitCapabilityRouter(runner=recovery_runner),
         authorize=lambda _context: None,
-        resolve_source=lambda *_args: _source(),
+        resolve_source=_resolve_source,
+        verify_source=_verify_source,
         materialize_result=_materialize,
     )
 

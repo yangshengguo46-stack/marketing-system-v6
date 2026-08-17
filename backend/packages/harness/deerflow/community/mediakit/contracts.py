@@ -138,6 +138,40 @@ class MediaKitCloudAuthorizationContext:
     maximum_amount_micros: int
 
 
+@dataclass(frozen=True, slots=True)
+class MediaKitCloudSourceContext:
+    user_id: str
+    project_id: str
+    local_task_id: str
+    source_ref: str
+    rights_ref: str
+    source_content_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class MediaKitCloudOutputPolicy:
+    capability_domain: str
+    capability_tool: str
+    url_field: Literal["video_url", "audio_url"]
+    media_kind: Literal["video", "audio"]
+    maximum_bytes: int
+
+    def __post_init__(self) -> None:
+        for name in ("capability_domain", "capability_tool"):
+            object.__setattr__(
+                self,
+                name,
+                _bounded_text(getattr(self, name), name=name, maximum=64),
+            )
+        if self.url_field not in {"video_url", "audio_url"}:
+            raise ValueError("url_field must be video_url or audio_url")
+        expected_kind = self.url_field.removesuffix("_url")
+        if self.media_kind != expected_kind:
+            raise ValueError("url_field and media_kind must agree")
+        if not isinstance(self.maximum_bytes, int) or isinstance(self.maximum_bytes, bool) or self.maximum_bytes <= 0:
+            raise ValueError("maximum_bytes must be a positive integer")
+
+
 @dataclass(frozen=True, slots=True, repr=False)
 class MediaKitCloudMaterializationContext:
     local_task_id: str
@@ -212,7 +246,9 @@ __all__ = [
     "MediaKitCloudAuthorizationContext",
     "MediaKitCloudMaterializationContext",
     "MediaKitCloudMaterializedOutput",
+    "MediaKitCloudOutputPolicy",
     "MediaKitCloudQueryResult",
+    "MediaKitCloudSourceContext",
     "MediaKitCloudSubmissionResult",
     "MediaKitExecutionResult",
     "PreparedMediaKitCall",

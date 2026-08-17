@@ -14,11 +14,13 @@ from .contracts import (
     MediaKitCloudAuthorizationContext,
     MediaKitCloudMaterializationContext,
     MediaKitCloudMaterializedOutput,
+    MediaKitCloudSourceContext,
 )
 from .router import MediaKitCapabilityRouter, MediaKitCommandError
 
 CloudAuthorizer = Callable[[MediaKitCloudAuthorizationContext], Awaitable[None]]
-CloudSourceResolver = Callable[[str, str, str], Awaitable[EphemeralMediaSource]]
+CloudSourceResolver = Callable[[MediaKitCloudSourceContext], Awaitable[EphemeralMediaSource]]
+CloudSourceVerifier = Callable[[MediaKitCloudSourceContext, EphemeralMediaSource], Awaitable[None]]
 CloudResultMaterializer = Callable[
     [MediaKitCloudMaterializationContext],
     Awaitable[MediaKitCloudMaterializedOutput],
@@ -322,6 +324,7 @@ class MediaKitCloudDriver:
         router: MediaKitCapabilityRouter,
         authorize: CloudAuthorizer,
         resolve_source: CloudSourceResolver,
+        verify_source: CloudSourceVerifier,
         materialize_result: CloudResultMaterializer,
         poll_after_seconds: float = 5,
         submission_timeout_seconds: float = 180,
@@ -334,6 +337,7 @@ class MediaKitCloudDriver:
         self._router = router
         self._authorize = authorize
         self._resolve_source = resolve_source
+        self._verify_source = verify_source
         self._materialize_result = materialize_result
         self._poll_after_seconds = poll_after_seconds
         self._submission_timeout_seconds = submission_timeout_seconds
@@ -354,6 +358,27 @@ class MediaKitCloudDriver:
             raise MediaKitCommandError("MediaKit capability schema changed")
         query_capability = await self._router.discover_capability("shared", "query-task")
 
+        source_context = MediaKitCloudSourceContext(
+            user_id=request.user_id,
+            project_id=spec.project_id,
+            local_task_id=local_task_id,
+            source_ref=spec.source_ref,
+            rights_ref=spec.rights_ref,
+            source_content_sha256=spec.source_content_sha256,
+        )
+        try:
+            source = await self._resolve_source(source_context)
+        except Exception:
+            raise MediaKitCommandError("MediaKit media source resolution failed") from None
+        if not isinstance(source, EphemeralMediaSource):
+            raise MediaKitCommandError("MediaKit source resolver returned an invalid contract")
+        if source.source_ref != spec.source_ref or source.rights_ref != spec.rights_ref:
+            raise MediaKitCommandError("MediaKit resolved source identity mismatch")
+        try:
+            await self._verify_source(source_context, source)
+        except Exception:
+            raise MediaKitCommandError("MediaKit source content verification failed") from None
+
         authorization = MediaKitCloudAuthorizationContext(
             user_id=request.user_id,
             project_id=spec.project_id,
@@ -373,19 +398,6 @@ class MediaKitCloudDriver:
             await self._authorize(authorization)
         except Exception:
             raise PermissionError("MediaKit cloud authorization failed") from None
-
-        try:
-            source = await self._resolve_source(
-                request.user_id,
-                spec.source_ref,
-                spec.rights_ref,
-            )
-        except Exception:
-            raise MediaKitCommandError("MediaKit media source resolution failed") from None
-        if not isinstance(source, EphemeralMediaSource):
-            raise MediaKitCommandError("MediaKit source resolver returned an invalid contract")
-        if source.source_ref != spec.source_ref or source.rights_ref != spec.rights_ref:
-            raise MediaKitCommandError("MediaKit resolved source identity mismatch")
         prepared = await self._router.prepare_video_call(
             domain=spec.capability_domain,
             tool=spec.capability_tool,
@@ -417,6 +429,19 @@ class MediaKitCloudDriver:
             "currency": spec.currency,
             "maximum_amount_micros": spec.maximum_amount_micros,
         }
+        try:
+            await self._verify_source(source_context, source)
+        except Exception:
+            driver_data["source_verification_state"] = "changed_after_submission"
+            return TaskSubmission(
+                remote_task_id=submitted.remote_task_id,
+                snapshot=TaskSnapshot(
+                    status=TaskStatus.FAILED,
+                    error="MediaKit source content changed during cloud submission",
+                ),
+                driver_data=driver_data,
+            )
+        driver_data["source_verification_state"] = "verified"
         return TaskSubmission(
             remote_task_id=submitted.remote_task_id,
             snapshot=TaskSnapshot(
@@ -505,6 +530,7 @@ __all__ = [
     "CloudAuthorizer",
     "CloudResultMaterializer",
     "CloudSourceResolver",
+    "CloudSourceVerifier",
     "MediaKitCloudDriver",
     "mediakit_cloud_operation_sha256",
 ]
