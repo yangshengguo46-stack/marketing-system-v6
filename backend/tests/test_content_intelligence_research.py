@@ -11,12 +11,10 @@ from deerflow.content_intelligence import (
     ContentIntelligenceRequest,
     ContentRootDecisionDraft,
     EvidenceReadingDraft,
+    LexicalWorldExplorationDraft,
     ResearchBudget,
     ResearchDiscoveryDraft,
     ResearchSearchResult,
-    SemanticFamilyExpansionDraft,
-    SharedWorldReviewDraft,
-    SharedWorldSynthesisDraft,
     TopicEditorialDecisionDraft,
     enrich_content_world_with_research,
     render_content_world_narration,
@@ -32,18 +30,27 @@ from deerflow.content_intelligence.research import (
 class SequencedStructuredFakeModel:
     def __init__(self, payloads: dict[type, dict[str, Any]]) -> None:
         self.payloads = payloads
-        self.current_schema = None
         self.schemas: list[type] = []
         self.message_batches: list[tuple[object, ...]] = []
+        self.call_schemas: list[type] = []
 
     def with_structured_output(self, schema, *, include_raw: bool = False):
-        self.current_schema = schema
         self.schemas.append(schema)
-        return self
+        return BoundStructuredFakeModel(self, schema)
+
+    async def _ainvoke_for(self, schema, messages, config=None):
+        self.message_batches.append(tuple(messages))
+        self.call_schemas.append(schema)
+        return schema.model_validate(self.payloads[schema])
+
+
+class BoundStructuredFakeModel:
+    def __init__(self, parent: SequencedStructuredFakeModel, schema: type) -> None:
+        self.parent = parent
+        self.schema = schema
 
     async def ainvoke(self, messages, config=None):
-        self.message_batches.append(tuple(messages))
-        return self.current_schema.model_validate(self.payloads[self.current_schema])
+        return await self.parent._ainvoke_for(self.schema, messages, config)
 
 
 def _semantic_payload() -> dict[str, Any]:
@@ -79,23 +86,24 @@ def _root_candidates_payload() -> dict[str, Any]:
     }
 
 
-def _shared_world_payload() -> dict[str, Any]:
+def _lexical_world_payload() -> dict[str, Any]:
     return {
-        "common_action_or_relation": "sharing a meal",
-        "participant_relationship": "people eating together",
-        "world_label": "shared meals",
-        "semantic_path": ["meal base", "eating together", "shared meals"],
-        "covered_frames": ["communal dining"],
+        "lexical_head": "base",
+        "semantic_family": {
+            "components": [],
+            "branches": [],
+            "limitations": [],
+        },
+        "shared_world": {
+            "common_action_or_relation": None,
+            "participant_relationship": None,
+            "world_label": None,
+            "semantic_path": [],
+            "covered_frames": [],
+            "limitations": [],
+        },
+        "review": None,
         "limitations": [],
-    }
-
-
-def _shared_world_review_payload() -> dict[str, Any]:
-    return {
-        "reviewed_world_label": "shared meals",
-        "entry_path_is_explanatory": False,
-        "substitution_counterfactual": "People can share many unrelated meals without this particular served object.",
-        "rationale": "The social setting is adjacent to the object rather than constitutive of it.",
     }
 
 
@@ -132,18 +140,12 @@ async def _content_world_bundle():
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            SemanticFamilyExpansionDraft: {
-                "components": [],
-                "branches": [],
-                "limitations": [],
-            },
-            SharedWorldSynthesisDraft: _shared_world_payload(),
-            SharedWorldReviewDraft: _shared_world_review_payload(),
+            LexicalWorldExplorationDraft: _lexical_world_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _map_payload(),
         }
     )
-    return await analyze_content_intelligence(
+    bundle = await analyze_content_intelligence(
         ContentIntelligenceRequest(
             user_request="Help this business start an account",
             subject_expression="regional meal base",
@@ -151,6 +153,8 @@ async def _content_world_bundle():
         ),
         model=model,
     )
+    assert LexicalWorldExplorationDraft in model.call_schemas
+    return bundle
 
 
 def _discovery_payload() -> dict[str, Any]:

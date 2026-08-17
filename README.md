@@ -757,8 +757,7 @@ Use it as-is. Or tear it apart and make it yours.
 This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
-the direct `explore_content_world` path: isolated semantic reading, a product-blind
-lexical-semantic worker, a product-blind shared-world proposal and independent counterfactual review, deterministic typed
+the direct `explore_content_world` path: two concurrent bounded readers, deterministic
 candidate assembly, candidate-only root adjudication, frozen-root expansion,
 parallel map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
@@ -769,17 +768,19 @@ it records the durable audience promise, recurring interpretive lens, drift boun
 and long-term territories. It has a content-addressed version; every downstream
 `TopicBrief` binds that version and starts its path at the frozen root. Trends may supply
 fresh evidence only after this boundary and cannot rewrite the positioning.
-Before candidate assembly, the literal reader separates the verbatim business object,
-lexical head, modifiers, offering role, and the smallest complete objects served by an
-intermediate or operating container. A separate lexical-semantic worker sees only that
-lexical head. It may identify a strict meaning-bearing component and expand a bounded
-semantic family, but it cannot see the product, industry, activities, or user request.
-Natural sources, materials, ordinary objects, and sensory qualities do not qualify as
-social or cultural nuclei. The shared-world worker then receives exactly one of two
-mutually exclusive projections: the isolated semantic family, or the unmodified direct
-activities and contexts. An independent reviewer rejects generic use or consumption
-contexts and semantic-family proposals that collapse back to one narrow activity. Code
-then assembles exact upstream candidates and labels narrow
+Before candidate assembly, a business-semantic reader separates the verbatim object,
+lexical head, modifiers, offering role, served objects, and complete participant
+activities. At the same time, a lexical-world reader sees only the exact subject
+expression, independently extracts the lexical head, and may propose a strict
+meaning-bearing component, bounded semantic family, nullable human world, and a bound
+replacement-counterfactual review. It cannot see the other reader's output or the source
+pack. At the join, exact heads merge directly; nested head ranges retain only meaning
+components valid in both readings, while incompatible heads are withdrawn. Optional local
+lexical evidence filters family claims and unsupported meaning paths. The semantic reader
+also binds each constitutive modifier to a complete object, activity, event, participant
+world, or relationship world. Those bindings become required candidate context, so an
+unmodified tool action cannot replace the complete activity that gives the tool its identity. The two readers overlap;
+root adjudication and map expansion remain serial after the join. Code then labels narrow
 contexts as non-selectable example branches;
 the final adjudicator can only choose among frozen root candidates. Each specialist sees
 only the input it owns. Search begins only after the content root

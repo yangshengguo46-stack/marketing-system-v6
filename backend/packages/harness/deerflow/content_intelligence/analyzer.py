@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import hashlib
 import json
 import logging
@@ -47,8 +48,6 @@ from deerflow.content_intelligence.lexical_evidence import (
 )
 
 logger = logging.getLogger(__name__)
-
-_LEXICAL_WORKER_INPUT_MAX_BYTES = 8_192
 
 
 class AnalysisFocus(StrEnum):
@@ -157,21 +156,52 @@ class SemanticFamilyExpansionDraft(ContractModel):
     limitations: tuple[NonEmptyStr, ...] = ()
 
 
+class ContextBoundWorldDraft(ContractModel):
+    label: NonEmptyStr = Field(description=("保留构成语境的最小完整对象、可独立参与活动、共同事件、人群处境或关系世界；若修饰语本身已经是完整活动、事件或对象，必须原样复制该修饰语，不得改成上位类或其中一个环节。"))
+    kind: Literal[
+        "complete_object",
+        "complete_activity",
+        "shared_event",
+        "participant_world",
+        "relationship_world",
+        "other",
+    ]
+    source_contexts: tuple[NonEmptyStr, ...] = Field(
+        description="该候选明确保留的 constitutive_context 修饰语原文。",
+    )
+    rationale: NonEmptyStr
+
+
 class SemanticReadingDraft(ContractModel):
     source_object: NonEmptyStr
     lexical_head: NonEmptyStr
     modifiers: tuple[SemanticModifierDraft, ...] = ()
-    offering_role: OfferingRole
+    offering_role: OfferingRole = Field(description=("按意义终点分类，而不是按 SKU 是否物理完整或能否单独售卖分类；主要用于完成另一对象或独立活动的工具、部件、原料或设备属于 intermediate_enabler。"))
     role_rationale: NonEmptyStr
-    served_objects: tuple[NonEmptyStr, ...] = ()
-    served_activities: tuple[NonEmptyStr, ...] = ()
+    served_objects: tuple[NonEmptyStr, ...] = Field(
+        default=(),
+        description="该对象完成、承载或形成的最小完整对象；人物或用户群不能写入此字段。",
+    )
+    served_activities: tuple[NonEmptyStr, ...] = Field(
+        default=(),
+        description="该对象明确服务、且人们可以独立参与的活动，不是工具自身的机械动作。",
+    )
     defining_functions_or_uses: tuple[NonEmptyStr, ...] = ()
     social_or_cultural_frames: tuple[NonEmptyStr, ...] = ()
+    context_bound_worlds: tuple[ContextBoundWorldDraft, ...] = ()
     unmodified_subject_activities: tuple[NonEmptyStr, ...] | None = None
     unmodified_subject_functions_or_uses: tuple[NonEmptyStr, ...] | None = None
     unmodified_subject_frames: tuple[NonEmptyStr, ...] | None = None
     seller_actions: tuple[NonEmptyStr, ...] = ()
     uncertainties: tuple[NonEmptyStr, ...] = ()
+
+    @model_validator(mode="after")
+    def bind_context_worlds_to_constitutive_modifiers(self) -> SemanticReadingDraft:
+        known_contexts = {modifier.term for modifier in self.modifiers if modifier.world_scope_effect == "constitutive_context"}
+        for world in self.context_bound_worlds:
+            if not world.source_contexts or not set(world.source_contexts) <= known_contexts:
+                raise ValueError("context-bound worlds must reference known constitutive modifier terms")
+        return self
 
 
 class SharedWorldSynthesisDraft(ContractModel):
@@ -222,6 +252,26 @@ class SharedWorldReviewDraft(ContractModel):
     rationale: NonEmptyStr
 
 
+class LexicalWorldExplorationDraft(ContractModel):
+    lexical_head: NonEmptyStr
+    semantic_family: SemanticFamilyExpansionDraft = Field(default_factory=SemanticFamilyExpansionDraft)
+    shared_world: SharedWorldSynthesisDraft = Field(default_factory=SharedWorldSynthesisDraft)
+    review: SharedWorldReviewDraft | None = None
+    limitations: tuple[NonEmptyStr, ...] = ()
+
+    @model_validator(mode="after")
+    def bind_review_to_proposed_world(self) -> LexicalWorldExplorationDraft:
+        world_label = self.shared_world.world_label
+        if world_label is None and self.review is not None:
+            raise ValueError("a lexical-world review requires a proposed world")
+        if world_label is not None:
+            if self.review is None:
+                raise ValueError("a proposed lexical world requires a counterfactual review")
+            if self.review.reviewed_world_label != world_label:
+                raise ValueError("lexical-world review must bind the exact proposed label")
+        return self
+
+
 class RootCandidateDraft(ContractModel):
     level: Literal[
         "commercial_object",
@@ -240,6 +290,8 @@ class RootCandidateDraft(ContractModel):
     relation_to_business: NonEmptyStr
     strength: NonEmptyStr
     overreach_risk: NonEmptyStr
+    required_contexts: tuple[NonEmptyStr, ...] = ()
+    preserved_contexts: tuple[NonEmptyStr, ...] = ()
 
 
 class ContentDirectionDraft(ContractModel):
@@ -354,12 +406,19 @@ SEMANTIC_READING_SYSTEM_PROMPT = """<content_intelligence_method>
 - 区分商业对象、词法主词、修饰关系、卖方动作和品类的构成功能。
 - 逐层拆解复合修饰关系；若一个修饰项自身仍包含完整对象与材质、地域、用途等修饰，不得把它们吞成一个不可再分析的词组。
 - 对每个修饰语做内容世界反事实并填写 world_scope_effect。
-- 若移除它后仍是同一种反复活动、参与者关系和生活世界，只改变商品变体、样式或子范围，标为 branch_specificity；若移除后会丢失一组不可替代的人物角色、共同事件、关系结构或生命周期处境，标为 constitutive_context；证据不足标为 uncertain。
+- 若移除它后仍是同一种反复活动、参与者关系和生活世界，只改变商品变体、样式或子范围，标为 branch_specificity。
+- 若移除后会丢失一组不可替代的人物角色、共同事件、关系结构或生命周期处境，或者改变参与者、核心活动或回到原商业对象的解释路径，标为 constitutive_context；证据不足标为 uncertain。
+- 裸主词在语法上仍是合法品类，不等于修饰语只是分支。若移除修饰语后，原本明确的人类活动或生活场景变成可被许多无关行业替换的泛工具、泛服务或泛容器，必须按上述反事实保留该构成语境。
 - world_scope_effect 只描述修饰语是否构成内容世界，不代表它更重要，也不能用材质、地域、价格、人群等关键词直接猜标签。
 - 判断对象本身是完整商品/服务、完成另一完整对象或活动的部件/原料/工具/中间载体、经营容器，还是当前有歧义。
+- 这里的“完整”指意义上已经是人们最终识别、体验或参与的对象，不指物理上完整、可以包装或单独售卖；一个可独立销售的工具或设备，仍可能只是进入另一完整对象或独立活动的中间实现物。
+- 若修饰语本身就是被服务的完整对象、活动或人事世界，且对象身份主要因服务它而成立，将其最小完整名称写入 served_objects 或 served_activities；不要把材质、价格、普通样式或无关地域照搬成终点。
+- 对每个 constitutive_context，用 context_bound_worlds 显式绑定它保留的最小完整对象、可独立参与活动、共同事件、人群处境或关系世界。source_contexts 逐字引用相应修饰语。
+- 若构成修饰语本身已经命名完整活动、事件或对象，context_bound_worlds.label 必须原样复制该修饰语，不得扩大成上位类别，也不得缩成其中一个步骤、阶段或场面；其他宽窄联想可以留在普通活动与场景字段中。
 - 场所或经营容器可能由专名、缩写或行业惯用名隐含表达；即使没有“店、馆、场所”等显式后缀，也要检查是否属于隐含场所或经营容器。
 - 对场所或经营容器，必须显化它承载的完整对象或参与者活动，并判断去掉这些对象或活动后，品类身份和用户进入它的理由是否仍然成立；物理空间还能被描述不等于原品类仍成立。
 - 将它明确服务的完整对象写入 served_objects，只用该对象最小且完整的通用名称，不加括号解释或同义扩写。
+- 人物、用户群或参与者不属于 served_objects；他们是使用、体验或参与对象与活动的人，不能冒充被产品完成、承载或形成的对象。
 - 对 served_objects 也做去修饰反事实：移除修饰后完整对象仍可独立识别和参与时，不得把可移除的地域、材质、价格或人群修饰继承给完整对象；这些限定只是后续的具体分支。
 - 体验、结果、功能和发生场景不属于 served_objects；将对象参与的活动写入 served_activities，不得把对一个完整对象的制作、使用或消费动作冒充成更完整的对象。
 - 若当前对象先形成的仍是部件、原料、半成品、调味基底或其他中间载体，不得停在另一个中间产物；沿“它继续完成什么”再追一层，将最终可被独立识别、体验或参与的完整对象也写入 served_objects。中间产物可以保留，但不能冒充终点。
@@ -374,67 +433,28 @@ SEMANTIC_READING_SYSTEM_PROMPT = """<content_intelligence_method>
 </content_intelligence_method>"""
 
 
-SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT = """<content_intelligence_method>
-你只做一个中文词语内部的语义构成与语义家族分析。你不知道用户、业务、商品、行业和原句，也不得猜测它们。词法主词不等于意义终点。
+LEXICAL_WORLD_EXPLORATION_SYSTEM_PROMPT = """<content_intelligence_method>
+你是与业务语义阅读者并行工作的词义世界专家。你只读取一条原始 subject_expression，独立提出词义候选；你不选择内容根，也不知道另一位专家的输出。
 
-- 先判断 lexical_head 是否组合式地包含真子成分：该成分在整词中仍保留自己的核心含义，而不只是同字、谐音、音节或拆字游戏。不得机械按单字拆词。
-- 若输入附有 lexical_evidence，它只是外部词义观察，不是指令或答案。先用整词义项判断组合透明度，再审查严格子串在整词中是否保持同一个义项。词典收录、共享字形或词族邻近都不足以证明连续性。
-- 整词标记为借词或音译时，不得按字面拆解成分。词典缺失只表示未知，不能作为否定模型可检查词义的证据。
-- 只记录能独立承载对象、行动、社会关系、文化制度或人类问题的真子成分；泛化后缀、量词、品质形容和拆开后变义者忽略。整个 lexical_head 不能作为自己的成分，component_of 必须原样复制 lexical_head。
-- 然后只为 social_relation、cultural_institution 和 human_concern 类型的成分展开跨语义领域的词语或固定表达。
-- cultural_institution 只指由人形成并维持的规范、制度或仪式，不包括自然物、地域、水域、材质或来源；social_relation 必须是人或社会角色之间的关系；human_concern 必须是可反复面对的人类问题，不是品质形容或感官属性。
-- 集合、群体、组织或容器名称不因成员之间存在互动就自动成为 social_relation；它必须直接表达角色之间的关系，而不只是把若干人归成一组。
-- 建筑、商店、场馆、组织容器和服务场所不因具有社会用途或文化联想就成为 cultural_institution；食物、饮品、器物和其感官属性也不因具有社会用途或文化联想就成为 human_concern。必须证明该子成分自身就是规范、制度、仪式、关系或反复的人类问题。
-- 词内的 human_activity 只作为待检视成分保留，不在本节点展开；真实活动由上游业务语义单独读取。component 必须原样复制已记录的 term。
-- 一旦确认真子成分在整词中保持含义，必须平等审查该成分已成立的不同义项，不得只保留与整词当前品类最相似的那一簇表达。supports_component_glosses 只表示词典释义交叠，仍需你判断义项连续性。
-- 若某成分附有 related_expressions，对应 branch.expression 必须原样复制其中一个 term，不得改写、合并或用模型记忆替换成证据外的相邻词。选择时要覆盖不同 supports_component_glosses，而不是集中在同一义项。
-- 不同分支不能只是同一活动的近义词、步骤或场景变体。continuity 要解释每条分支与该成分之间保持了哪个核心含义。
-- 无把握时留空并在 limitations 说明，不为数量补造。
-- 不选内容根，不合成共同世界，不展开内容地图或选题。
-
-只返回结构化合同，列表可以为空。
-</content_intelligence_method>"""
-
-
-SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT = """<content_intelligence_method>
-你只做意义路径与共同世界阅读，不选择内容根，也不展开内容地图。输入有两种互斥模式：
-
-- semantic_family：只给出隔离业务上下文后的意义核、该成分在词法主词中的已选义项及其跨域语义家族。已选义项是进入家族的锚点；任何共同世界都必须反向解释它，不能被某一个 related expression 的具体事件带走。
-- 比较各分支共同指向的关系、规则、制度、秩序或人类问题。共同世界必须覆盖多个实质不同的语义领域，不得猜测原商品，也不得把家族压回其中一个具体行为、器物或固定表达。
-- direct_practice：没有可展开的意义核时，只给出去修饰主词、活动、功能与场景。辨认它们是否反复呈现同一种人类行动、关系或生活实践。
-- 两种模式都可能附带 modifier_candidates 和 required_constitutive_contexts。前者只提供修饰词、语义关系与已冻结的范围判断；后者是语义阅读者已经确认、当前步骤不得推翻的构成语境。
-- 将 required_constitutive_contexts 逐字复制到 constitutive_contexts，并用它把泛化世界恢复到完整的人事处境。若它改变的是“谁与谁发生这件事、这段关系为何成立、当事人处在哪个生命周期”，不能只因裸主词动作仍能发生就删除参与者差异。
-- branch_specificity 只改变商品变体、样式或普通子范围，不得写入 constitutive_contexts；不得猜测原商品或引入未提供的修饰语。
-
-不得重新引入输入中没有的商业对象、修饰语或商品价值。
-
-- world_label 用普通人自然理解的问题或生活世界命名，说明人们在做什么、面对什么、如何相处或共同规则如何运作；避免学术术语、理论范畴、制度口号和抽象名词堆叠。
-- 若你在 constitutive_contexts 接受了上下文，world_label 必须保留它造成的具体人事差异，但不能只是把修饰语与原词法主词重新拼回商品名。
-- semantic_family 模式下，若已接受的意义核原词本身普通人可理解且仍是语义桥梁，world_label 必须保留该意义核原词，不得擦除成‘规则’、‘文化’或‘生活’等泛词。
-- world_label 只命名世界，示例和枚举放入 semantic_path 或 covered_frames，不得用破折号、括号或冒号拼进名称。
-- 它可以比直接实践再高一层；关键是存在双向解释：输入能自然走到该世界，而理解该世界又能解释参与者为什么会进行这些活动、如何赋予其意义。
-- semantic_path 按实际语义跃迁逐步记录，不得跳过中间含义。若只能靠泛泛的“生活、文化、人生、人性”连接，world_label 应为空。
-- 普通使用、消费、制作、交易或发生场合仍只是相邻情境。若任何对象仅因被人使用、购买或消费都能走到同一大词，或者输入没有意义承载成分与关系功能支撑，该世界不成立。
-- 不机械追求更抽象。完整对象本身拥有更具体、更丰富且更自然的内容世界时，共同世界可以为空，留给下游与对象候选比较。
-- covered_frames 只列确实被意义路径解释的场景；无法覆盖的场景不要强行并入，并在 limitations 显示边界。
-- 若不存在可检查的意义路径，字段可以为空。不要为了完整感补造共同世界。
-- 不输出候选排名、内容根、地图、选题、平台、表现形式、销售、实验或数量。
-
-只返回结构化合同，列表可以为空。
-</content_intelligence_method>"""
-
-
-SHARED_WORLD_REVIEW_SYSTEM_PROMPT = """<content_intelligence_method>
-你是独立的意义路径反事实审查者，不选择内容根，不生成新候选，不展开内容地图。输入可能是隔离业务上下文的意义核与语义家族，或去修饰主词的直接实践，以及另一工作者提出的共同世界和语义路径。
-
-- reviewed_world_label 必须原样复制待审名称，不得改名或修复。
-- entry_path_is_explanatory 只判断给定路径是否双向可解释：输入中的意义核、关系功能或反复实践能自然进入该世界；该世界也确实解释参与者为何进行该实践以及实践承载什么意义。
-- semantic_family 模式下，若待审世界只覆盖一个分支，或又退回某一具体行为、器物或固定表达，entry_path_is_explanatory 必须为 false。
-- 若 proposed_shared_world 接受了 constitutive_contexts，逐项检查这些词是否来自 required_constitutive_contexts，且世界名称没有丢掉相应的人物、共同事件、关系或生命周期差异。擅自增加构成语境，或接受后又在世界中擦掉该差异，都必须为 false。
-- 做替换反事实时要区分两种情况。换掉具体物品但保留同一意义核或关系实践后世界仍成立，可以支持较大世界；换成任何无关对象、只凭“有人使用或消费”也能成立，则说明路径过泛，必须为 false。
-- 词语中出现相同单字不构成语义路径；意义核、语义家族和上位世界之间必须保持可解释的含义连续性。
-- 普通使用、消费、制作、交易、聚会或发生场合，若没有独立意义核或关系功能，只是相邻情境，必须为 false。
-- 只审查已给候选；不输出商品、平台、销售、表现形式、实验或数量。
+- 先从 subject_expression 中原样摘录商业对象的词法主词 lexical_head。词法主词不等于意义终点；它必须是输入中的连续片段，不得添加上位词、括号解释或同义改写。
+- 只分析 lexical_head 自身的组合意义。不得把用户、客户、卖方动作、产品优势、平台、销售、运营或账号方案带进来。
+- semantic_family.components 只记录在整词中仍保留同一核心义项的真子成分；不得机械按单字拆词、谐音联想、共享字形或把整个 lexical_head 当作自己的成分。借词、音译、泛化后缀、量词、品质形容和拆开后变义者不得强拆。
+- cultural_institution 只指人形成并维持的规范、制度或仪式；social_relation 必须直接表达人与社会角色之间的关系；human_concern 必须是人会反复面对的问题，不能只是感官或品质属性。
+- 集合、群体、组织或容器不因成员之间存在互动就自动成为 social_relation。建筑、商店、场馆、组织容器和服务场所不因具有社会用途或文化联想就成为 cultural_institution；食物、饮品、器物和感官属性也不因具有社会用途或文化联想就成为 human_concern。
+- 只有 social_relation、cultural_institution、human_concern 这类直接承载人际关系、共同规范、仪式制度或反复人类问题的成分，才可以继续展开 semantic_family.branches。
+- human_activity 可以作为成分记录，但真实活动由并行业务语义专家读取，不在这里扩成共同世界。
+- branches 必须保持成分在 lexical_head 中已经成立的同一核心义项，并跨越实质不同的表达领域；普通近义词、同一动作的步骤、商品变体和同字不同义都不成立。不同分支要解释连续含义，不为数量补造。
+- shared_world 只在已成立的人类意义成分与多个实质不同的分支能够共同指向一个普通人可理解、可长期展开的人事世界时提出；不得被某一个具体表达、案例或事件带走。
+- 普通使用、制作、消费、交易、聚会或工具动作由业务语义专家处理，不能在这里冒充更大的世界。
+- world_label 用普通人自然理解的行动、关系、共同规则或长期问题命名。若意义核原词本身仍是普通人可理解且不可缺少的语义桥梁，world_label 必须保留该意义核原词，不得擦除成“规则”“文化”“生活”“人生”或“人性”等泛词。
+- world_label 只命名共同世界；示例和枚举放入 semantic_path 或 covered_frames，不得用破折号、括号或冒号拼进名称。完整对象本身更具体、更丰富时，shared_world 可以为空，不机械追求更抽象。
+- shared_world.semantic_path 必须逐步写清 lexical_head、意义成分和 world_label 之间的连续路径，并能双向解释：输入为什么自然通向该世界，该世界又为什么解释原意义。
+- 若只靠泛泛生活联想、同字不同义或“任何东西都有人使用或消费”才能成立，world_label 与 semantic_path 都留空。
+- covered_frames 只列确实被意义路径解释的场景；无法覆盖的场景不强行并入，并写入 limitations。
+- 词义世界不接收业务修饰语，因此 shared_world.constitutive_contexts 必须为空。
+- 提出 world_label 时必须同时填写 review。reviewed_world_label 原样复制它，不得改名或修复。
+- review 检查它是否覆盖多个分支、是否保留意义核、是否双向可解释，并用替换反事实排除仅凭普通使用或消费成立的过泛世界。任一项不成立，将 entry_path_is_explanatory 设为 false。
+- 不输出内容地图、选题、故事、表现形式、平台、销售、实验或数量。没有可靠候选就留空并写入 limitations。
 
 只返回结构化合同。
 </content_intelligence_method>"""
@@ -444,6 +464,7 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 你只裁决一个已经冻结的候选集合，不生成、改名、合并或补充候选，也不展开内容地图。
 
 - selected_candidate_index 只能指向 scope_role=root_candidate；example_branch 无论多具体、多热闹、搜索资料多丰富，都不能成为内容根。
+- required_contexts 是原表达不可丢失的构成语境；只能选择 preserved_contexts 覆盖全部 required_contexts 的候选。不得为了扩大范围删掉人物、完整活动、关系或生命周期语境。
 - 只能在输入索引中选择，不能把较窄对象与较宽关系世界拼成折中混合根。
 - primary_content_center 是账号当前最值得长期占领的最大有效内容世界：它必须具体、与原表达有直接可解释关系，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级。
 - 内容根选择不是品类定义测验。完整商品或服务没有先验优先权；对象能够脱离某个场景独立存在，不足以否决与原表达直接相连、解释力更强的人类活动或关系世界。
@@ -451,6 +472,7 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 - 候选来源不是胜负规则，但必须辨清层级：served_object 是中间实现物所服务的完整对象；subject_activity 是围绕主词发生的动作；subject_function_or_use 是主词承担的功能或结果。
 - semantic_component 是复合表达中仍独立承载对象、行动、关系、制度或人类问题含义的成分；它不是机械拆字，也不因字数更短而自动胜出。
 - 普通制作、处理、食用或使用动作通常只是对象地图中的一条路径，不能仅因动词短语看起来更宽就压过完整对象。只有它本身形成可独立命名、反复发生且能解释更多人物、事件与关系的人类实践时，才可能成为内容根。
+- 若一个候选仍围绕工具名称或工具的机械动作命名，而另一候选是该工具明确服务的完整且可独立参与的活动，前者通常只是后者的一条技术分支；除非完整活动会丢失构成语境或把大量无关世界混入，否则不能因前者更贴近器材而优先。
 - 当商业对象是 intermediate_enabler 时，优先检验 served_object 是否才是完整内容对象；中间实现物的使用步骤不能冒充它所完成的对象世界。
 - 对经营容器做构成性判断时，比较的是品类身份和用户进入它的理由是否仍然成立，不是物理外壳、设备或卖方流程仍然存在。
 - 应优先比较它承载的完整对象或参与者活动；经营容器的进货、陈列、结算和店务流程只是卖方运营，不能仅因为能列出较多内容就压过这些完整对象或活动。
@@ -709,85 +731,67 @@ async def _analyze_focused_content_world(
         SystemMessage(content=SEMANTIC_READING_SYSTEM_PROMPT),
         HumanMessage(content=_render_semantic_input(request.subject_expression, sources)),
     )
-    semantic = await _invoke_structured(
-        model,
-        SemanticReadingDraft,
-        semantic_messages,
-        runnable_config=runnable_config,
-        include_raw=True,
-        container_fields={
-            "modifiers",
-            "served_objects",
-            "served_activities",
-            "defining_functions_or_uses",
-            "social_or_cultural_frames",
-            "unmodified_subject_activities",
-            "unmodified_subject_functions_or_uses",
-            "unmodified_subject_frames",
-            "seller_actions",
-            "uncertainties",
-        },
+    lexical_world_messages = (
+        SystemMessage(content=LEXICAL_WORLD_EXPLORATION_SYSTEM_PROMPT),
+        HumanMessage(content=_render_lexical_world_input(request.subject_expression)),
     )
-    lexical_evidence = None
-    if lexical_evidence_provider is not None:
-        try:
-            lexical_evidence = await lexical_evidence_provider.lookup(
-                semantic.lexical_head,
-                mode=LexicalEvidenceMode.RELATIONS,
-            )
-        except Exception as exc:
-            logger.warning(
-                "Optional lexical evidence was unavailable; preserving model-only semantic analysis: %s",
-                type(exc).__name__,
-            )
-    semantic_family_messages = (
-        SystemMessage(content=SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT),
-        HumanMessage(
-            content=_render_semantic_family_input(
-                semantic.lexical_head,
-                lexical_evidence=lexical_evidence,
-            )
-        ),
-    )
-    semantic_family = await _invoke_structured(
-        model,
-        SemanticFamilyExpansionDraft,
-        semantic_family_messages,
-        runnable_config=runnable_config,
-        include_raw=True,
-        container_fields={"components", "branches", "limitations"},
-    )
-    semantic_family = _normalize_semantic_family(
-        semantic.lexical_head,
-        semantic_family,
-        lexical_evidence=lexical_evidence,
-    )
-    shared_world_messages = (
-        SystemMessage(content=SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT),
-        HumanMessage(
-            content=_render_shared_world_input(
-                semantic,
-                semantic_family,
-            )
-        ),
-    )
-    try:
-        shared_world = await _invoke_structured(
+    semantic_task = asyncio.create_task(
+        _invoke_structured(
             model,
-            SharedWorldSynthesisDraft,
-            shared_world_messages,
+            SemanticReadingDraft,
+            semantic_messages,
             runnable_config=runnable_config,
             include_raw=True,
             container_fields={
-                "constitutive_contexts",
-                "semantic_path",
-                "covered_frames",
-                "limitations",
+                "modifiers",
+                "served_objects",
+                "served_activities",
+                "defining_functions_or_uses",
+                "social_or_cultural_frames",
+                "context_bound_worlds",
+                "unmodified_subject_activities",
+                "unmodified_subject_functions_or_uses",
+                "unmodified_subject_frames",
+                "seller_actions",
+                "uncertainties",
             },
+        ),
+        name="content-intelligence-semantic-reading",
+    )
+    lexical_world_task = asyncio.create_task(
+        _invoke_structured(
+            model,
+            LexicalWorldExplorationDraft,
+            lexical_world_messages,
+            runnable_config=runnable_config,
+            include_raw=True,
+            container_fields={"semantic_family", "shared_world", "review", "limitations"},
+        ),
+        name="content-intelligence-lexical-world",
+    )
+    try:
+        semantic = await semantic_task
+    except BaseException:
+        lexical_world_task.cancel()
+        await asyncio.gather(lexical_world_task, return_exceptions=True)
+        raise
+
+    lexical_evidence_task = None
+    if lexical_evidence_provider is not None:
+        lexical_evidence_task = asyncio.create_task(
+            _lookup_optional_lexical_evidence(
+                lexical_evidence_provider,
+                semantic.lexical_head,
+            ),
+            name="content-intelligence-lexical-evidence",
         )
+
+    lexical_exploration: LexicalWorldExplorationDraft | None
+    try:
+        lexical_exploration = await lexical_world_task
     except Exception as exc:
         logger.warning(
-            "Optional shared-world synthesis was unavailable; preserving other semantic candidates: %s",
+            "Optional lexical-world exploration was unavailable; preserving business-semantic candidates: %s",
             type(exc).__name__,
         )
         semantic = semantic.model_copy(
@@ -796,34 +800,33 @@ async def _analyze_focused_content_world(
                     dict.fromkeys(
                         (
                             *semantic.uncertainties,
-                            "共同世界分析暂时不可用，当前内容根未使用该候选。",
+                            "词义世界分析暂时不可用，当前内容根只使用业务语义候选。",
                         )
                     )
                 )
             }
         )
-        shared_world = SharedWorldSynthesisDraft()
-    shared_world = _normalize_shared_world_contexts(semantic, shared_world)
-    if shared_world.world_label is not None:
-        review_messages = (
-            SystemMessage(content=SHARED_WORLD_REVIEW_SYSTEM_PROMPT),
-            HumanMessage(
-                content=_render_shared_world_review_input(
-                    semantic,
-                    semantic_family,
-                    shared_world,
+        lexical_exploration = None
+
+    lexical_evidence = await lexical_evidence_task if lexical_evidence_task is not None else None
+    semantic_family, shared_world, lexical_limitations = _normalize_lexical_world_exploration(
+        semantic,
+        lexical_exploration,
+        lexical_evidence=lexical_evidence,
+    )
+    if lexical_limitations:
+        semantic = semantic.model_copy(
+            update={
+                "uncertainties": tuple(
+                    dict.fromkeys(
+                        (
+                            *semantic.uncertainties,
+                            *lexical_limitations,
+                        )
+                    )
                 )
-            ),
+            }
         )
-        shared_world_review = await _invoke_structured(
-            model,
-            SharedWorldReviewDraft,
-            review_messages,
-            runnable_config=runnable_config,
-            include_raw=True,
-            container_fields=set(),
-        )
-        shared_world = _apply_shared_world_review(shared_world, shared_world_review)
     candidate_set = _build_root_candidate_set(semantic, semantic_family, shared_world)
     decision_messages = (
         SystemMessage(content=CONTENT_ROOT_DECISION_SYSTEM_PROMPT),
@@ -1145,6 +1148,11 @@ def _render_semantic_input(
     return "--- BEGIN SEMANTIC READING INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SEMANTIC READING INPUT ---"
 
 
+def _render_lexical_world_input(subject_expression: str) -> str:
+    payload = {"subject_expression": subject_expression}
+    return "--- BEGIN LEXICAL WORLD INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END LEXICAL WORLD INPUT ---"
+
+
 def _human_world_components(
     semantic_family: SemanticFamilyExpansionDraft,
 ) -> tuple[MeaningBearingComponentDraft, ...]:
@@ -1154,25 +1162,6 @@ def _human_world_components(
         "human_concern",
     }
     return tuple(component for component in semantic_family.components if component.role in eligible_roles)
-
-
-def _render_semantic_family_input(
-    lexical_head: str,
-    *,
-    lexical_evidence: LexicalEvidence | None = None,
-) -> str:
-    payload = {"lexical_head": lexical_head}
-    if lexical_evidence is None:
-        return "--- BEGIN SEMANTIC FAMILY INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SEMANTIC FAMILY INPUT ---"
-    if lexical_evidence.lexical_head != lexical_head:
-        raise ValueError("lexical evidence must bind the exact lexical head")
-
-    for evidence_budget in (6_500, 5_500, 4_500, 3_500, 2_500, 1_500, 1_024):
-        payload["lexical_evidence"] = lexical_evidence.to_model_payload(max_bytes=evidence_budget)
-        rendered = "--- BEGIN SEMANTIC FAMILY INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SEMANTIC FAMILY INPUT ---"
-        if len(rendered.encode("utf-8")) <= _LEXICAL_WORKER_INPUT_MAX_BYTES:
-            return rendered
-    raise ValueError("lexical evidence could not fit the isolated worker input budget")
 
 
 def _normalize_semantic_family(
@@ -1209,94 +1198,96 @@ def _normalize_semantic_family(
     )
 
 
-def _semantic_family_payload(
-    semantic_family: SemanticFamilyExpansionDraft,
-) -> dict[str, Any]:
-    components = _human_world_components(semantic_family)
-    return {
-        "input_mode": "semantic_family",
-        "meaning_bearing_components": [
-            {
-                "term": component.term,
-                "role": component.role,
-                "selected_meaning_in_head": component.relation_to_subject.replace(
-                    component.component_of,
-                    "该词法主词",
-                ),
+def _normalize_lexical_world_exploration(
+    semantic: SemanticReadingDraft,
+    exploration: LexicalWorldExplorationDraft | None,
+    *,
+    lexical_evidence: LexicalEvidence | None,
+) -> tuple[SemanticFamilyExpansionDraft, SharedWorldSynthesisDraft, tuple[str, ...]]:
+    if exploration is None:
+        return SemanticFamilyExpansionDraft(), SharedWorldSynthesisDraft(), ()
+
+    limitations = list(exploration.limitations)
+    if not _lexical_heads_are_nested(
+        semantic.lexical_head,
+        exploration.lexical_head,
+        source_object=semantic.source_object,
+    ):
+        limitations.append("并行词义专家与业务语义专家没有识别出同一词法主词；该词义候选已撤下。")
+        return SemanticFamilyExpansionDraft(), SharedWorldSynthesisDraft(), tuple(dict.fromkeys(limitations))
+
+    lexical_family = exploration.semantic_family
+    if exploration.lexical_head != semantic.lexical_head:
+        lexical_family = lexical_family.model_copy(
+            update={
+                "components": tuple(
+                    component.model_copy(update={"component_of": semantic.lexical_head})
+                    for component in lexical_family.components
+                    if component.component_of == exploration.lexical_head and component.term.casefold() in semantic.lexical_head.casefold()
+                )
             }
-            for component in components
-        ],
-        "semantic_family_branches": [branch.model_dump(mode="json") for branch in semantic_family.branches],
-        "family_limitations": semantic_family.limitations,
-    }
+        )
 
+    if lexical_evidence is not None and lexical_evidence.lexical_head != semantic.lexical_head:
+        limitations.append("外部词义证据没有绑定同一词法主词；本轮只保留模型可检查的词义候选。")
+        lexical_evidence = None
 
-def _direct_practice_payload(semantic: SemanticReadingDraft) -> dict[str, Any]:
-    activities = semantic.unmodified_subject_activities
-    if activities is None:
-        activities = semantic.served_activities
-    frames = semantic.unmodified_subject_frames
-    if frames is None:
-        frames = semantic.social_or_cultural_frames
-    functions = semantic.unmodified_subject_functions_or_uses
-    if functions is None:
-        functions = semantic.defining_functions_or_uses
-    return {
-        "input_mode": "direct_practice",
-        "unmodified_subject": semantic.lexical_head,
-        "served_activities": activities,
-        "functions_or_uses": functions,
-        "social_or_cultural_frames": frames,
-    }
+    semantic_family = _normalize_semantic_family(
+        semantic.lexical_head,
+        lexical_family,
+        lexical_evidence=lexical_evidence,
+    )
+    shared_world = exploration.shared_world.model_copy(update={"constitutive_contexts": ()})
+    if shared_world.world_label is None:
+        return semantic_family, shared_world, tuple(dict.fromkeys(limitations))
 
+    meaning_terms = {component.term for component in _human_world_components(semantic_family)}
+    if not meaning_terms or not any(term in shared_world.semantic_path for term in meaning_terms):
+        limitations.append("词义世界没有绑定仍在词法主词中成立的人类意义成分；该候选已撤下。")
+        return (
+            semantic_family,
+            SharedWorldSynthesisDraft(limitations=shared_world.limitations),
+            tuple(dict.fromkeys(limitations)),
+        )
 
-def _modifier_candidate_payload(
-    semantic: SemanticReadingDraft,
-) -> list[dict[str, str]]:
-    return [
-        {
-            "term": modifier.term,
-            "relation": modifier.relation,
-            "world_scope_effect": modifier.world_scope_effect,
-        }
-        for modifier in semantic.modifiers
-    ]
-
-
-def _render_shared_world_input(
-    semantic: SemanticReadingDraft,
-    semantic_family: SemanticFamilyExpansionDraft,
-) -> str:
-    components = _human_world_components(semantic_family)
-    if components:
-        payload = _semantic_family_payload(semantic_family)
+    review = exploration.review
+    if review is None:
+        limitations.append("词义世界缺少替换反事实审查；该候选已撤下。")
+        shared_world = SharedWorldSynthesisDraft(limitations=shared_world.limitations)
     else:
-        payload = _direct_practice_payload(semantic)
-    if modifier_candidates := _modifier_candidate_payload(semantic):
-        payload["modifier_candidates"] = modifier_candidates
-    required_contexts = [modifier.term for modifier in semantic.modifiers if modifier.world_scope_effect == "constitutive_context"]
-    if required_contexts:
-        payload["required_constitutive_contexts"] = required_contexts
-    return "--- BEGIN SHARED WORLD INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SHARED WORLD INPUT ---"
+        shared_world = _apply_shared_world_review(shared_world, review)
+    return semantic_family, shared_world, tuple(dict.fromkeys(limitations))
 
 
-def _render_shared_world_review_input(
-    semantic: SemanticReadingDraft,
-    semantic_family: SemanticFamilyExpansionDraft,
-    shared_world: SharedWorldSynthesisDraft,
-) -> str:
-    components = _human_world_components(semantic_family)
-    if components:
-        payload = _semantic_family_payload(semantic_family)
-    else:
-        payload = _direct_practice_payload(semantic)
-    if modifier_candidates := _modifier_candidate_payload(semantic):
-        payload["modifier_candidates"] = modifier_candidates
-    required_contexts = [modifier.term for modifier in semantic.modifiers if modifier.world_scope_effect == "constitutive_context"]
-    if required_contexts:
-        payload["required_constitutive_contexts"] = required_contexts
-    payload["proposed_shared_world"] = shared_world.model_dump(mode="json", exclude_none=True)
-    return "--- BEGIN SHARED WORLD REVIEW INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SHARED WORLD REVIEW INPUT ---"
+def _lexical_heads_are_nested(
+    semantic_head: str,
+    exploration_head: str,
+    *,
+    source_object: str,
+) -> bool:
+    semantic_normalized = semantic_head.casefold()
+    exploration_normalized = exploration_head.casefold()
+    source_normalized = source_object.casefold()
+    if semantic_normalized not in source_normalized or exploration_normalized not in source_normalized:
+        return False
+    return semantic_normalized in exploration_normalized or exploration_normalized in semantic_normalized
+
+
+async def _lookup_optional_lexical_evidence(
+    provider: LexicalEvidenceProvider,
+    lexical_head: str,
+) -> LexicalEvidence | None:
+    try:
+        return await provider.lookup(
+            lexical_head,
+            mode=LexicalEvidenceMode.RELATIONS,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Optional lexical evidence was unavailable; preserving model-only semantic analysis: %s",
+            type(exc).__name__,
+        )
+        return None
 
 
 def _render_root_decision_input(
@@ -1308,6 +1299,8 @@ def _render_root_decision_input(
         {
             "level": candidate.level,
             "label": candidate.label,
+            "required_contexts": candidate.required_contexts,
+            "preserved_contexts": candidate.preserved_contexts,
         }
         for candidate in candidate_set.candidates
         if candidate.scope_role == "root_candidate"
@@ -1317,39 +1310,6 @@ def _render_root_decision_input(
         "root_candidates": root_candidates,
     }
     return "--- BEGIN CONTENT ROOT DECISION INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END CONTENT ROOT DECISION INPUT ---"
-
-
-def _normalize_shared_world_contexts(
-    semantic: SemanticReadingDraft,
-    shared_world: SharedWorldSynthesisDraft,
-) -> SharedWorldSynthesisDraft:
-    known_terms = {modifier.term for modifier in semantic.modifiers}
-    accepted: list[str] = []
-    for term in shared_world.constitutive_contexts:
-        if term not in known_terms or term in accepted:
-            continue
-        accepted.append(term)
-    required_by_semantic_reading = {modifier.term for modifier in semantic.modifiers if modifier.world_scope_effect == "constitutive_context"}
-    missing_required = tuple(sorted(required_by_semantic_reading - set(accepted)))
-    if shared_world.world_label is not None and missing_required:
-        missing_terms = "、".join(missing_required)
-        return shared_world.model_copy(
-            update={
-                "world_label": None,
-                "constitutive_contexts": (),
-                "semantic_path": (),
-                "covered_frames": (),
-                "limitations": tuple(
-                    dict.fromkeys(
-                        (
-                            *shared_world.limitations,
-                            f"语义阅读将 {missing_terms} 判为构成语境，但共同世界未独立确认；暂不采用该泛化世界。",
-                        )
-                    )
-                ),
-            }
-        )
-    return shared_world.model_copy(update={"constitutive_contexts": tuple(accepted)})
 
 
 def _apply_shared_world_review(
@@ -1385,6 +1345,7 @@ def _build_root_candidate_set(
 ) -> ContentRootCandidateSetDraft:
     candidates: list[RootCandidateDraft] = []
     seen_labels: set[str] = set()
+    required_contexts = tuple(dict.fromkeys(modifier.term for modifier in semantic.modifiers if modifier.world_scope_effect == "constitutive_context"))
 
     def add(
         *,
@@ -1403,6 +1364,7 @@ def _build_root_candidate_set(
         label: str,
         scope_role: Literal["root_candidate", "example_branch"],
         relation: str,
+        preserved_contexts: tuple[str, ...] = (),
     ) -> None:
         normalized = label.strip()
         if not normalized or normalized in seen_labels:
@@ -1416,6 +1378,8 @@ def _build_root_candidate_set(
                 relation_to_business=relation,
                 strength="由上游语义记录直接识别",
                 overreach_risk="仍需与其他已绑定候选比较边界与解释力",
+                required_contexts=required_contexts,
+                preserved_contexts=tuple(dict.fromkeys(preserved_contexts)),
             )
         )
 
@@ -1424,6 +1388,7 @@ def _build_root_candidate_set(
         label=semantic.source_object,
         scope_role="root_candidate",
         relation="用户商业表达中的完整对象",
+        preserved_contexts=required_contexts,
     )
     add(
         level="lexical_head",
@@ -1438,6 +1403,22 @@ def _build_root_candidate_set(
             scope_role="root_candidate",
             relation=component.relation_to_subject,
         )
+    context_level_by_kind = {
+        "complete_object": "served_object",
+        "complete_activity": "served_object_or_activity",
+        "shared_event": "social_or_cultural_world",
+        "participant_world": "social_or_cultural_world",
+        "relationship_world": "social_or_cultural_world",
+        "other": "other",
+    }
+    for world in semantic.context_bound_worlds:
+        add(
+            level=context_level_by_kind[world.kind],
+            label=world.label,
+            scope_role="root_candidate",
+            relation=world.rationale,
+            preserved_contexts=world.source_contexts,
+        )
     if semantic.offering_role != "complete_object_or_service":
         for label in semantic.served_objects:
             add(
@@ -1446,6 +1427,14 @@ def _build_root_candidate_set(
                 scope_role="root_candidate",
                 relation="当前对象明确服务或承载的完整对象",
             )
+
+    for label in semantic.served_activities:
+        add(
+            level="served_object_or_activity",
+            label=label,
+            scope_role="root_candidate",
+            relation="当前对象在完整构成语境中明确服务的参与活动",
+        )
 
     activities = semantic.unmodified_subject_activities
     if activities is None:
@@ -1503,12 +1492,14 @@ def _resolve_root_selection(
     if not 0 <= decision.selected_candidate_index < len(eligible_indices):
         raise ValueError("selected_candidate_index must identify an explicit root candidate")
     selected_candidate_index = eligible_indices[decision.selected_candidate_index]
+    _validate_candidate_context_binding(candidate_set.candidates[selected_candidate_index])
 
     audience_territory_candidate_index = None
     if decision.audience_territory_candidate_index is not None:
         if not 0 <= decision.audience_territory_candidate_index < len(eligible_indices):
             raise ValueError("audience_territory_candidate_index must identify an explicit root candidate")
         audience_territory_candidate_index = eligible_indices[decision.audience_territory_candidate_index]
+        _validate_candidate_context_binding(candidate_set.candidates[audience_territory_candidate_index])
 
     return ContentRootSelectionDraft(
         source_object=candidate_set.source_object,
@@ -1518,6 +1509,12 @@ def _resolve_root_selection(
         root_rationale=decision.root_rationale,
         unknowns=tuple(dict.fromkeys((*candidate_set.unknowns, *decision.unknowns))),
     )
+
+
+def _validate_candidate_context_binding(candidate: RootCandidateDraft) -> None:
+    missing = set(candidate.required_contexts) - set(candidate.preserved_contexts)
+    if missing:
+        raise ValueError("selected root candidate dropped a required constitutive context")
 
 
 def _render_frozen_map_input(

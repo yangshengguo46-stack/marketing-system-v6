@@ -26,6 +26,27 @@
 - 不开发电影化 IP 或导演工作台。
 - TikTok 达人签约只保留为延期业务模块，不进入当前主线。
 
+## 当前主线断点
+
+2026-08-17 用户确认语义理解、内容根与内容地图按 A58 当前可用版本冻结，不再为追求最优解阻塞
+后续产品。`TopicBrief` 是下一个具体开发模块，但系统目标没有缩成选题工具。
+
+发布回执之前仍必须完成的主链为：
+
+```text
+项目事实
+-> 语义理解 / 内容根 / 账号级内容地图
+-> 对标与受众证据
+-> 孵化判断：定位 / 受众 / 人设 / 表现形式 / 变现
+-> 具体 TopicBrief
+-> MessagePlan / BaseDraft / FormatDecision
+-> 素材方案 / MediaKit 感知与制作 / MediaArtifact
+```
+
+当前暂缓点从 `PreflightPrediction` 开始，包括不可逆发布审批、平台写操作、发布回执、指标与复盘。
+前面已经实现的 A41-A57 证据、项目谱系、抖音 MCP 与 MediaKit 基础必须继续复用，不能因开发
+`TopicBrief` 而另起一条孤立链路。
+
 ## 状态语义
 
 | 状态 | 含义 |
@@ -45,7 +66,7 @@
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
-| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented; golden-gift project persistence verified` | 保留现有运行时和项目版本谱系 | 用户确认、版本切换、事实边界与性能优化 |
+| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented; two-reader overlap and context binding verified offline` | 保留现有运行时和项目版本谱系 | 新保留集真实质量/延迟、用户确认与版本切换 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
@@ -71,7 +92,7 @@
 | --- | --- | --- | --- |
 | Lead Agent | 理解用户当前目标、选择高层能力、最终收敛并对用户负责 | 已使用 | 自己记住全部业务事实或绕过审批 |
 | LangGraph/checkpoint | 交互运行、中断恢复、状态转移与重放 | W01 起 | 代替项目、回执和指标数据库 |
-| 受控内部工作者 | 语义、证据阅读、候选与收敛等紧耹合结构化分工 | 已使用 | 变成可修改状态的自由 Agent |
+| 受控内部工作者 | 业务语义与词义世界首轮并发；证据阅读、候选与收敛等紧耹合结构化分工 | 已使用；首轮并发离线验收 | 变成可修改状态的自由 Agent |
 | `task` 子 Agent | 可并行的大样本对标研究、独立反证和长报告 | W02/W06 | 固定每次启动的子 Agent 阵容 |
 | MCP 持久会话 | 抖音、浏览器和后续平台连接器 | W02/W05 | 将低层 API 平铺给 Lead |
 | `tool_search` | 延迟装载 MCP Schema，只提升当前需要的领域能力 | W02 启用验收 | 概率猜测权限或未审阅 Child |
@@ -86,7 +107,7 @@
 | Run events/SSE/StreamBridge | 子任务、媒体、发布和复盘的可见进度、恢复与成本观测 | W02 起 | 将大原始工件作为 SSE 消息传输 |
 | Authorization/guardrails | 账号、路由、工具和不可逆操作授权 | W01/W05 | 基于内容评分拦截创作 |
 | Tool progress/loop detection | 发现重复搜索、无新信息调用和不可恢复配置问题 | W02 起 | 将正常多路取证误判为死循环 |
-| Circuit breaker/LLM concurrency | 供应商故障降级、并发和 Token/成本保护 | W02 压测后配置 | 用重试风暴填补证据缺失 |
+| Circuit breaker/LLM concurrency | 供应商故障降级、并发和 Token/成本保护 | Lead 已有；结构化工作者固定两路，进程级共用保护待压测 | 用重试风暴填补证据缺失 |
 | Plan/Todo | 长任务的用户可见执行计划与进度 | W02 起按需 | 固化所有用户的业务阶段 |
 
 矩阵的原则是“把 DeerFlow 原生能力用到它擅长的边界”，不是追求一次请求同时触发所有功能。

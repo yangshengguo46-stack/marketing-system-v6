@@ -156,9 +156,15 @@ from deerflow.config import get_app_config
 `ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft`.
 Bounded workers isolate literal/lexical reading, root adjudication, mapping, research,
 and convergence; they are not `task` subagents or a mandatory workflow. The lexical
-worker sees only `lexical_head`. Code freezes typed candidates, selects the largest
-effective world, and prevents later evidence, trends, or example branches from changing
-the root. Dense lexical recall was rejected and has no production interface.
+world worker and business-semantic worker start concurrently from the exact subject
+expression and cannot see each other's output. Their immutable contracts join before one
+root adjudicator runs; nested head ranges are reduced to meaning components valid in both
+readings, while incompatible heads, unsupported meaning paths, and candidates that drop a
+constitutive context are rejected deterministically. Optional lexical evidence
+filters family claims only after the join. Code then freezes typed candidates, selects the
+largest effective world, and prevents later evidence, trends, or example branches from
+changing the root. These bounded model calls are not DeerFlow `task` subagents. Dense
+lexical recall was rejected and has no production interface.
 
 `ContentWorldView` is a content-addressed account map, not a daily topic list. Every
 topic starts at and binds its frozen map version. The map owns neither commercial return
