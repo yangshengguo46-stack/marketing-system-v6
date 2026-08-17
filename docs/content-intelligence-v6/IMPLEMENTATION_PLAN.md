@@ -271,6 +271,11 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 `14 passed`，下一步把它接入内容工具自动孵化链。详见
 `audits/A68-project-judgment-evidence-selection.md`。
 
+2026-08-18 第十一切片回执：ProductionPlan 改为消费精确适配稿和形式决定；MediaArtifact 只允许
+方案批准的用户素材或同一方案的中间输出，并绑定适配正文哈希、MediaKit 回执与 QC。合同回归
+`29 passed`。生成运行时、MediaKit 执行和内容工具编排仍待完成。详见
+`audits/A69-production-plan-and-media-artifact-lineage.md`。
+
 ### W04 MediaKit 制作路由
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的

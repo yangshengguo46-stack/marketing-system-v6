@@ -207,6 +207,10 @@ topic_brief + optional incubation_judgment
                 -> format_decision
 base draft + format decision
                 -> adapted_draft
+adapted draft + format decision + approved user material
+                -> production_plan
+production_plan + exact media inputs + MediaKit receipt
+                -> media_artifact
 ```
 
 `content_reading` 保留本次阅读、根选择候选、命名候选和未知；`content_world` 只保留稳定定位，

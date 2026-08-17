@@ -1682,3 +1682,14 @@ TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和�
 缺失均留下限制说明。没有正式证据只标 missing，不阻断判断。选择器测试 `6 passed`，与判断运行时
 联合回归 `14 passed`。内容工具读取与主链接线仍待完成。详见
 `audits/A68-project-judgment-evidence-selection.md`。
+
+## A69 素材方案与成片产物谱系
+
+2026-08-18 修正制作层父级。ProductionPlan 现在消费精确 `AdaptedDraft + FormatDecision`，保存适配
+正文哈希，不再越级从 BaseDraft 另写内容；已有素材必须是同项目、经精确形式决定审阅的
+`user_material` 媒体观察。
+
+MediaArtifact 绑定适配正文、精确方案、输入集合、MediaKit 回执、稳定内部引用、媒体字节哈希和 QC。
+媒体观察必须由方案批准，中间媒体必须来自同一方案，声明父级缺失时拒绝。合同测试 `29 passed`。
+模型生成 ProductionPlan、动态 Schema 执行与主链接线继续进行。详见
+`audits/A69-production-plan-and-media-artifact-lineage.md`。

@@ -213,6 +213,13 @@ when resources are unknown, and may carry a narrative-method hint only for narra
 contains no platform, sales, publishing, cadence, duration, shot-count, or quota controls.
 The bounded format runtime validates that lineage before its model call and accepts resource evidence only as
 same-project `user_material` media observations; benchmark evidence cannot impersonate owned production resources.
+`AdaptedDraft` then translates the exact base draft into the selected form. Every presentation unit retains a
+contiguous verbatim BaseDraft anchor; non-narrative forms cannot force dialogue or narrative staging. A
+`ProductionPlan` consumes the exact adapted draft and format decision, not the BaseDraft directly, and existing
+materials must be exact same-project `user_material` media observations already reviewed by that format decision.
+`MediaArtifact` binds the adapted-body hash, exact ProductionPlan, approved user inputs, same-plan intermediate
+outputs, MediaKit execution receipt, stable `artifact://` storage reference, byte hash, and QC. It must never admit
+topic/benchmark evidence as production material or retain local paths, temporary URLs, credentials, or raw commands.
 The incubation-judgment runtime accepts only sealed Brief/world/evidence parents. Benchmark and
 audience artifacts are validated by type and evidence role, then projected through their existing
 bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete
