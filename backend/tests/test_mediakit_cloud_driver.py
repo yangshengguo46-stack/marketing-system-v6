@@ -27,6 +27,16 @@ from deerflow.mcp.tasks import McpTaskDriverRegistry, TaskReference, TaskStatus,
 from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
 from deerflow.persistence.mcp_tasks import McpTaskRepository
 
+_DRIVER_NOW = datetime(2026, 8, 17, 12, 1, tzinfo=UTC)
+_QUOTE_VALID_UNTIL = datetime(2099, 1, 1, tzinfo=UTC)
+_PRICING_EVIDENCE_SHA256 = "9" * 64
+_FEE_QUOTE_SHA256 = "8" * 64
+_ESTIMATED_AMOUNT_MICROS = 12_500
+
+
+def _clock() -> datetime:
+    return _DRIVER_NOW
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def _close_persistence_engine():
@@ -147,6 +157,10 @@ async def _materialize(
     context: MediaKitCloudMaterializationContext,
 ) -> MediaKitCloudMaterializedOutput:
     assert context.provider_output["video_url"].startswith("https://provider.example/")
+    assert context.pricing_evidence_sha256 == _PRICING_EVIDENCE_SHA256
+    assert context.fee_quote_sha256 == _FEE_QUOTE_SHA256
+    assert context.estimated_amount_micros == _ESTIMATED_AMOUNT_MICROS
+    assert context.fee_quote_valid_until == _QUOTE_VALID_UNTIL
     return MediaKitCloudMaterializedOutput(
         artifact_ref=f"artifact://media/{context.local_task_id}",
         content_sha256="a" * 64,
@@ -176,6 +190,10 @@ def _request(schema_sha256: str, *, local_task_id: str = "task-local-1") -> Task
             "fee_authorization_ref": "approval-fee-1",
             "currency": "CNY",
             "maximum_amount_micros": 1_000_000,
+            "pricing_evidence_sha256": _PRICING_EVIDENCE_SHA256,
+            "fee_quote_sha256": _FEE_QUOTE_SHA256,
+            "estimated_amount_micros": _ESTIMATED_AMOUNT_MICROS,
+            "fee_quote_valid_until": _QUOTE_VALID_UNTIL.isoformat(),
         },
         local_task_id=local_task_id,
     )
@@ -198,6 +216,10 @@ async def _driver(
         assert context.fee_authorization_ref == "approval-fee-1"
         assert context.currency == "CNY"
         assert context.maximum_amount_micros == 1_000_000
+        assert context.pricing_evidence_sha256 == _PRICING_EVIDENCE_SHA256
+        assert context.fee_quote_sha256 == _FEE_QUOTE_SHA256
+        assert context.estimated_amount_micros == _ESTIMATED_AMOUNT_MICROS
+        assert context.fee_quote_valid_until == _QUOTE_VALID_UNTIL
         if events is not None:
             events.append("authorize")
 
@@ -228,6 +250,7 @@ async def _driver(
             verify_source=verify_source,
             materialize_result=_materialize,
             poll_after_seconds=1,
+            clock=_clock,
         ),
         capability.schema_sha256,
     )
@@ -253,6 +276,10 @@ async def test_cloud_submit_verifies_source_around_authorized_submission_and_use
     assert "provider-request-secret" not in serialized
     assert submission.driver_data["request_id_sha256"]
     assert submission.driver_data["client_token_sha256"]
+    assert submission.driver_data["pricing_evidence_sha256"] == _PRICING_EVIDENCE_SHA256
+    assert submission.driver_data["fee_quote_sha256"] == _FEE_QUOTE_SHA256
+    assert submission.driver_data["estimated_amount_micros"] == _ESTIMATED_AMOUNT_MICROS
+    assert submission.driver_data["fee_quote_valid_until"] == _QUOTE_VALID_UNTIL.isoformat()
 
 
 @pytest.mark.asyncio
@@ -368,6 +395,10 @@ def test_operation_digest_binds_source_schema_arguments_and_fee_limit() -> None:
         ("source_content_sha256", "c" * 64),
         ("expected_schema_sha256", "e" * 64),
         ("maximum_amount_micros", 1_000_001),
+        ("pricing_evidence_sha256", "7" * 64),
+        ("fee_quote_sha256", "6" * 64),
+        ("estimated_amount_micros", _ESTIMATED_AMOUNT_MICROS + 1),
+        ("fee_quote_valid_until", datetime(2099, 1, 2, tzinfo=UTC).isoformat()),
     ):
         changed = dict(baseline)
         changed[field] = value
@@ -381,6 +412,73 @@ def test_operation_digest_binds_source_schema_arguments_and_fee_limit() -> None:
     changed_approval_refs["cloud_processing_approval_ref"] = "approval-cloud-2"
     changed_approval_refs["fee_authorization_ref"] = "approval-fee-2"
     assert mediakit_cloud_operation_sha256(changed_approval_refs) == baseline_digest
+
+
+@pytest.mark.asyncio
+async def test_expired_fee_quote_stops_before_source_resolution_authorization_or_cloud() -> None:
+    runner = FakeMediaKitRunner()
+    resolved = False
+    authorized = False
+
+    async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
+        nonlocal authorized
+        del context
+        authorized = True
+
+    async def resolve_source(context: MediaKitCloudSourceContext) -> EphemeralMediaSource:
+        nonlocal resolved
+        del context
+        resolved = True
+        return _source()
+
+    router = MediaKitCapabilityRouter(runner=runner)
+    capability = await router.discover_capability("video", "asr-subtitles")
+    request = _request(capability.schema_sha256)
+    request.arguments["fee_quote_valid_until"] = _DRIVER_NOW.isoformat()
+    runner.commands.clear()
+    driver = MediaKitCloudDriver(
+        router=router,
+        authorize=authorize,
+        resolve_source=resolve_source,
+        verify_source=_verify_source,
+        materialize_result=_materialize,
+        clock=_clock,
+    )
+
+    with pytest.raises(PermissionError, match="MediaKit fee quote expired"):
+        await driver.submit(request)
+
+    assert resolved is False
+    assert authorized is False
+    assert not any("--cloud" in command for command in runner.commands)
+
+
+@pytest.mark.asyncio
+async def test_fee_estimate_above_user_cap_stops_before_discovery_or_authorization() -> None:
+    runner = FakeMediaKitRunner()
+    authorized = False
+
+    async def authorize(context: MediaKitCloudAuthorizationContext) -> None:
+        nonlocal authorized
+        del context
+        authorized = True
+
+    driver = MediaKitCloudDriver(
+        router=MediaKitCapabilityRouter(runner=runner),
+        authorize=authorize,
+        resolve_source=_resolve_source,
+        verify_source=_verify_source,
+        materialize_result=_materialize,
+        clock=_clock,
+    )
+    request = _request("f" * 64)
+    request.arguments["estimated_amount_micros"] = 1_000_001
+
+    with pytest.raises(ValueError, match="estimate exceeds the authorized maximum"):
+        await driver.submit(request)
+
+    assert authorized is False
+    assert runner.commands == []
 
 
 @pytest.mark.asyncio
@@ -753,12 +851,25 @@ def test_materialized_output_requires_a_stable_artifact_reference() -> None:
 
 
 @pytest.mark.asyncio
-async def test_recovery_rejects_tampered_hash_before_provider_query() -> None:
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("request_sha256", "not-a-digest"),
+        ("pricing_evidence_sha256", "not-a-digest"),
+        ("fee_quote_sha256", "not-a-digest"),
+        ("estimated_amount_micros", 1_000_001),
+        ("fee_quote_valid_until", "not-a-datetime"),
+    ],
+)
+async def test_recovery_rejects_tampered_quote_data_before_provider_query(
+    field: str,
+    value: object,
+) -> None:
     runner = FakeMediaKitRunner()
     driver, schema_sha256 = await _driver(runner)
     submission = await driver.submit(_request(schema_sha256))
     driver_data = dict(submission.driver_data)
-    driver_data["request_sha256"] = "not-a-digest"
+    driver_data[field] = value
     task = TaskReference(
         local_task_id="task-local-1",
         user_id="user-1",

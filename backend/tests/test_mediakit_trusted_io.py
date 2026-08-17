@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import ipaddress
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
@@ -43,6 +44,7 @@ def _materialization_context(
     provider_output: dict[str, object],
     provider_output_sha256: str = "e" * 64,
     operation_sha256: str = "d" * 64,
+    fee_quote_sha256: str = "8" * 64,
 ) -> MediaKitCloudMaterializationContext:
     return MediaKitCloudMaterializationContext(
         local_task_id="task-1",
@@ -64,6 +66,10 @@ def _materialization_context(
         fee_authorization_ref="approval-fee-1",
         currency="CNY",
         maximum_amount_micros=1_000_000,
+        pricing_evidence_sha256="9" * 64,
+        fee_quote_sha256=fee_quote_sha256,
+        estimated_amount_micros=12_500,
+        fee_quote_valid_until=datetime(2099, 1, 1, tzinfo=UTC),
         provider_output=provider_output,
         provider_output_sha256=provider_output_sha256,
     )
@@ -336,6 +342,51 @@ async def test_result_materializer_downloads_checks_and_reuses_first_sealed_task
             )
         )
     assert downloads == 1
+
+
+@pytest.mark.asyncio
+async def test_result_receipt_rejects_a_different_fee_quote_for_the_same_task(tmp_path: Path) -> None:
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"valid-video")
+
+    async def quality_check(
+        _path: Path,
+        _policy: MediaKitCloudOutputPolicy,
+        _declared_content_type: str | None,
+    ) -> str:
+        return "video/mp4"
+
+    materializer = MediaKitCloudResultMaterializer(
+        root=tmp_path / "private-media",
+        downloader=MediaKitSafeHttpDownloader(
+            allowed_hosts={"media.example.com"},
+            transport=httpx.MockTransport(handler),
+            resolver=_public_resolver,
+        ),
+        policies=(
+            MediaKitCloudOutputPolicy(
+                capability_domain="video",
+                capability_tool="enhance-video",
+                url_field="video_url",
+                media_kind="video",
+                maximum_bytes=1024,
+            ),
+        ),
+        quality_check=quality_check,
+    )
+    await materializer(
+        _materialization_context(
+            provider_output={"video_url": "https://media.example.com/first.mp4"},
+        )
+    )
+
+    with pytest.raises(MediaKitCommandError, match="sealed result receipt is invalid"):
+        await materializer(
+            _materialization_context(
+                provider_output={"video_url": "https://media.example.com/second.mp4"},
+                fee_quote_sha256="7" * 64,
+            )
+        )
 
 
 @pytest.mark.asyncio

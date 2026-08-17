@@ -1481,3 +1481,23 @@ URL 只存在执行内存；完成任务必须物化为内部 `artifact://` 引�
 确定性费用报价；真实任务仍需用户对当次素材、规格和金额重新明确同意。本轮没有注册驱动、上传素材、
 调用云能力或产生费用。详见 `audits/A54-mediakit-first-cloud-capability.md` 与
 `evidence/mediakit-first-cloud-capability-a54-2026-08-17.md`。
+
+## A55 W04 MediaKit 画质增强费用预检与任务绑定
+
+2026-08-17 按 A54 先写失败测试，再实现 `video/enhance-video` 专属离线预检。当前动态 Schema 必须
+与审阅摘要一致，首轮只允许标准版、720P 及以下、15-30fps 和显式输出规格；缺规格、专业版、Schema
+漂移、价格证据过期或用户金额不足均失败。官方价格正文被封装为带来源、正文哈希、检查时间和有效期的
+证据，一秒合成视频按 `0.75 CNY/分钟` 得到 `0.0125 CNY` 确定性估值。
+
+报价不再停留在调用内存：价格证据摘要、报价摘要、估值和有效期进入
+`mediakit-cloud-operation-v2`，继而绑定云处理/费用批准、持久任务恢复数据和私有结果回执。报价在
+到期瞬间失效，驱动会在素材解析和批准消费前停止；重启后若价格或报价字段被篡改，也会在供应商查询前
+失败。本机只读探针确认 CLI `0.2.0` 的能力摘要仍为
+`5573324d5727b5398b13ca89182a1e45c7953c9a8389bb12eec0b331eca46f00`，没有使用 `--cloud`。
+
+聚焦回归为 `54 passed`，MediaKit、持久任务、批准、孵化谱系与迁移联合回归为 `132 passed`，
+阻塞 I/O 回归为 `71 passed, 2 warnings`。完整离线后端回归为
+`11842 passed, 76 skipped, 17 warnings in 427.66s`。
+供应商没有单任务费用硬封顶，故状态仍为 `reviewed`：驱动未注册，没有批准 API，没有上传素材、
+调用云能力或产生费用。详见 `audits/A55-mediakit-enhance-video-preflight.md` 与
+`evidence/mediakit-enhance-video-preflight-a55-2026-08-17.md`。

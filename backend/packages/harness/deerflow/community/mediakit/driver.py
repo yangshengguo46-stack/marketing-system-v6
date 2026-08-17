@@ -5,6 +5,7 @@ import json
 import re
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from deerflow.incubation.media import EphemeralMediaSource
@@ -25,6 +26,7 @@ CloudResultMaterializer = Callable[
     [MediaKitCloudMaterializationContext],
     Awaitable[MediaKitCloudMaterializedOutput],
 ]
+Clock = Callable[[], datetime]
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _COMMAND_TOKEN = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
@@ -44,6 +46,10 @@ _SPEC_KEYS = frozenset(
         "fee_authorization_ref",
         "currency",
         "maximum_amount_micros",
+        "pricing_evidence_sha256",
+        "fee_quote_sha256",
+        "estimated_amount_micros",
+        "fee_quote_valid_until",
     }
 )
 _EXECUTION_ONLY_KEY_PARTS = (
@@ -60,7 +66,7 @@ _EXECUTION_ONLY_KEY_PARTS = (
     "url",
 )
 _DURABLE_ARGUMENT_BUDGET_BYTES = 16 * 1024
-_CLOUD_OPERATION_CONTRACT_VERSION = "mediakit-cloud-operation-v1"
+_CLOUD_OPERATION_CONTRACT_VERSION = "mediakit-cloud-operation-v2"
 
 
 def _text(value: Any, *, name: str, maximum: int) -> str:
@@ -84,6 +90,21 @@ def _sha256(value: Any, *, name: str) -> str:
     if not _SHA256.fullmatch(normalized):
         raise ValueError(f"MediaKit {name} must be a SHA-256 digest")
     return normalized
+
+
+def _aware_utc(value: datetime, *, name: str) -> datetime:
+    if not isinstance(value, datetime) or value.tzinfo is None:
+        raise ValueError(f"MediaKit {name} must be timezone-aware")
+    return value.astimezone(UTC)
+
+
+def _iso_datetime(value: Any, *, name: str) -> datetime:
+    normalized = _text(value, name=name, maximum=64)
+    try:
+        parsed = datetime.fromisoformat(normalized.replace("Z", "+00:00"))
+    except ValueError:
+        raise ValueError(f"MediaKit {name} must be an ISO-8601 datetime") from None
+    return _aware_utc(parsed, name=name)
 
 
 def _canonical_sha256(value: Mapping[str, Any]) -> str:
@@ -126,6 +147,10 @@ class _CloudTaskSpec:
     fee_authorization_ref: str
     currency: str
     maximum_amount_micros: int
+    pricing_evidence_sha256: str
+    fee_quote_sha256: str
+    estimated_amount_micros: int
+    fee_quote_valid_until: datetime
 
     @property
     def operation_sha256(self) -> str:
@@ -142,6 +167,10 @@ class _CloudTaskSpec:
                 "expected_schema_sha256": self.expected_schema_sha256,
                 "currency": self.currency,
                 "maximum_amount_micros": self.maximum_amount_micros,
+                "pricing_evidence_sha256": self.pricing_evidence_sha256,
+                "fee_quote_sha256": self.fee_quote_sha256,
+                "estimated_amount_micros": self.estimated_amount_micros,
+                "fee_quote_valid_until": self.fee_quote_valid_until.isoformat(),
             }
         )
 
@@ -177,6 +206,11 @@ class _CloudTaskSpec:
         maximum_amount_micros = value.get("maximum_amount_micros")
         if not isinstance(maximum_amount_micros, int) or isinstance(maximum_amount_micros, bool) or maximum_amount_micros <= 0:
             raise ValueError("MediaKit maximum_amount_micros must be a positive integer")
+        estimated_amount_micros = value.get("estimated_amount_micros")
+        if not isinstance(estimated_amount_micros, int) or isinstance(estimated_amount_micros, bool) or estimated_amount_micros <= 0:
+            raise ValueError("MediaKit estimated_amount_micros must be a positive integer")
+        if estimated_amount_micros > maximum_amount_micros:
+            raise ValueError("MediaKit fee estimate exceeds the authorized maximum")
         return cls(
             project_id=_stable_reference(
                 value.get("project_id"),
@@ -213,6 +247,19 @@ class _CloudTaskSpec:
             ),
             currency=currency,
             maximum_amount_micros=maximum_amount_micros,
+            pricing_evidence_sha256=_sha256(
+                value.get("pricing_evidence_sha256"),
+                name="pricing_evidence_sha256",
+            ),
+            fee_quote_sha256=_sha256(
+                value.get("fee_quote_sha256"),
+                name="fee_quote_sha256",
+            ),
+            estimated_amount_micros=estimated_amount_micros,
+            fee_quote_valid_until=_iso_datetime(
+                value.get("fee_quote_valid_until"),
+                name="fee_quote_valid_until",
+            ),
         )
 
 
@@ -233,10 +280,10 @@ def _required_driver_sha256(data: Mapping[str, Any], name: str) -> str:
     return value
 
 
-def _required_driver_amount(data: Mapping[str, Any]) -> int:
-    value = data.get("maximum_amount_micros")
+def _required_driver_amount(data: Mapping[str, Any], name: str) -> int:
+    value = data.get(name)
     if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-        raise ValueError("driver_data.maximum_amount_micros must be a positive integer")
+        raise ValueError(f"driver_data.{name} must be a positive integer")
     return value
 
 
@@ -265,6 +312,10 @@ class _CloudRecoveryData:
     fee_authorization_ref: str
     currency: str
     maximum_amount_micros: int
+    pricing_evidence_sha256: str
+    fee_quote_sha256: str
+    estimated_amount_micros: int
+    fee_quote_valid_until: datetime
 
     @classmethod
     def from_mapping(cls, data: Mapping[str, Any]) -> _CloudRecoveryData:
@@ -277,6 +328,10 @@ class _CloudRecoveryData:
         request_id_sha256 = data.get("request_id_sha256")
         if request_id_sha256 is not None and (not isinstance(request_id_sha256, str) or not _SHA256.fullmatch(request_id_sha256)):
             raise ValueError("driver_data.request_id_sha256 must be a SHA-256 digest")
+        maximum_amount_micros = _required_driver_amount(data, "maximum_amount_micros")
+        estimated_amount_micros = _required_driver_amount(data, "estimated_amount_micros")
+        if estimated_amount_micros > maximum_amount_micros:
+            raise ValueError("driver_data fee estimate exceeds the authorized maximum")
         return cls(
             project_id=_stable_reference(
                 data.get("project_id"),
@@ -311,7 +366,17 @@ class _CloudRecoveryData:
                 maximum=80,
             ),
             currency=_required_driver_currency(data),
-            maximum_amount_micros=_required_driver_amount(data),
+            maximum_amount_micros=maximum_amount_micros,
+            pricing_evidence_sha256=_required_driver_sha256(
+                data,
+                "pricing_evidence_sha256",
+            ),
+            fee_quote_sha256=_required_driver_sha256(data, "fee_quote_sha256"),
+            estimated_amount_micros=estimated_amount_micros,
+            fee_quote_valid_until=_iso_datetime(
+                data.get("fee_quote_valid_until"),
+                name="driver_data.fee_quote_valid_until",
+            ),
         )
 
 
@@ -329,6 +394,7 @@ class MediaKitCloudDriver:
         poll_after_seconds: float = 5,
         submission_timeout_seconds: float = 180,
         query_timeout_seconds: float = 60,
+        clock: Clock | None = None,
     ) -> None:
         if poll_after_seconds <= 0:
             raise ValueError("MediaKit poll interval must be positive")
@@ -342,6 +408,7 @@ class MediaKitCloudDriver:
         self._poll_after_seconds = poll_after_seconds
         self._submission_timeout_seconds = submission_timeout_seconds
         self._query_timeout_seconds = query_timeout_seconds
+        self._clock = clock or (lambda: datetime.now(UTC))
 
     async def submit(self, request: TaskSubmitRequest) -> TaskSubmission:
         spec = _CloudTaskSpec.from_arguments(request.arguments)
@@ -356,6 +423,8 @@ class MediaKitCloudDriver:
         )
         if capability.schema_sha256 != spec.expected_schema_sha256:
             raise MediaKitCommandError("MediaKit capability schema changed")
+        if _aware_utc(self._clock(), name="clock result") >= spec.fee_quote_valid_until:
+            raise PermissionError("MediaKit fee quote expired")
         query_capability = await self._router.discover_capability("shared", "query-task")
 
         source_context = MediaKitCloudSourceContext(
@@ -393,6 +462,10 @@ class MediaKitCloudDriver:
             fee_authorization_ref=spec.fee_authorization_ref,
             currency=spec.currency,
             maximum_amount_micros=spec.maximum_amount_micros,
+            pricing_evidence_sha256=spec.pricing_evidence_sha256,
+            fee_quote_sha256=spec.fee_quote_sha256,
+            estimated_amount_micros=spec.estimated_amount_micros,
+            fee_quote_valid_until=spec.fee_quote_valid_until,
         )
         try:
             await self._authorize(authorization)
@@ -428,6 +501,10 @@ class MediaKitCloudDriver:
             "fee_authorization_ref": spec.fee_authorization_ref,
             "currency": spec.currency,
             "maximum_amount_micros": spec.maximum_amount_micros,
+            "pricing_evidence_sha256": spec.pricing_evidence_sha256,
+            "fee_quote_sha256": spec.fee_quote_sha256,
+            "estimated_amount_micros": spec.estimated_amount_micros,
+            "fee_quote_valid_until": spec.fee_quote_valid_until.isoformat(),
         }
         try:
             await self._verify_source(source_context, source)
@@ -508,6 +585,10 @@ class MediaKitCloudDriver:
             fee_authorization_ref=recovery.fee_authorization_ref,
             currency=recovery.currency,
             maximum_amount_micros=recovery.maximum_amount_micros,
+            pricing_evidence_sha256=recovery.pricing_evidence_sha256,
+            fee_quote_sha256=recovery.fee_quote_sha256,
+            estimated_amount_micros=recovery.estimated_amount_micros,
+            fee_quote_valid_until=recovery.fee_quote_valid_until,
             provider_output=queried.provider_output,
             provider_output_sha256=queried.provider_output_sha256,
         )

@@ -31,7 +31,7 @@ ArtifactQualityCheck = Callable[[Path, MediaKitCloudOutputPolicy, str | None], A
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _CONTENT_TYPE = re.compile(r"^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$")
 _SOURCE_CONTRACT_VERSION = "mediakit-private-source-v1"
-_RESULT_CONTRACT_VERSION = "mediakit-private-result-v1"
+_RESULT_CONTRACT_VERSION = "mediakit-private-result-v2"
 _SOURCE_RESOLVER = "mediakit-private-content-store:v1"
 _DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 
@@ -506,6 +506,8 @@ class MediaKitCloudResultMaterializer:
             "capability_domain": context.capability_domain,
             "capability_tool": context.capability_tool,
             "operation_sha256": context.operation_sha256,
+            "pricing_evidence_sha256": context.pricing_evidence_sha256,
+            "fee_quote_sha256": context.fee_quote_sha256,
         }
 
     async def _reuse_receipt(

@@ -136,6 +136,10 @@ class MediaKitCloudAuthorizationContext:
     fee_authorization_ref: str
     currency: str
     maximum_amount_micros: int
+    pricing_evidence_sha256: str
+    fee_quote_sha256: str
+    estimated_amount_micros: int
+    fee_quote_valid_until: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,6 +197,10 @@ class MediaKitCloudMaterializationContext:
     fee_authorization_ref: str
     currency: str
     maximum_amount_micros: int
+    pricing_evidence_sha256: str
+    fee_quote_sha256: str
+    estimated_amount_micros: int
+    fee_quote_valid_until: datetime
     provider_output: Mapping[str, Any] = field(repr=False)
     provider_output_sha256: str
 
