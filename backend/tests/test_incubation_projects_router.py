@@ -15,9 +15,16 @@ from deerflow.incubation import (
     ApprovalGrant,
     ArtifactEnvelope,
     ArtifactParentRef,
+    MediaKitExecutionReceipt,
+    MediaObservationSnapshot,
+    MediaSourceReceipt,
     ProjectRecord,
     ProjectRef,
+    VideoMetadataObservation,
+    seal_media_observation_snapshot,
+    seal_media_source_receipt,
 )
+from deerflow.incubation.media import VideoFormatMetadata, VideoStreamMetadata
 from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
 
 NOW = datetime(2026, 8, 17, 12, 0, tzinfo=UTC)
@@ -68,6 +75,13 @@ class _FakeLedger:
         if grant is None or grant.project.owner_user_id != owner_user_id:
             return None
         return grant
+
+    async def put_artifact(self, artifact: ArtifactEnvelope) -> ArtifactEnvelope:
+        existing = self.artifacts.get(artifact.artifact_id)
+        if existing is not None:
+            return existing
+        self.artifacts[artifact.artifact_id] = artifact
+        return artifact
 
     async def issue_approval_pair(
         self,
@@ -167,9 +181,11 @@ def _approval_request_artifact(
     project_id: str = "media-project",
     quoted_at: datetime = NOW,
     valid_until: datetime = datetime(2099, 1, 1, tzinfo=UTC),
+    operation_sha256: str = "a" * 64,
+    parent: ArtifactParentRef | None = None,
 ) -> ArtifactEnvelope:
     request = MediaKitCloudApprovalRequest(
-        operation_sha256="a" * 64,
+        operation_sha256=operation_sha256,
         capability_domain="video",
         capability_tool="enhance-video",
         capability_schema_sha256="b" * 64,
@@ -195,7 +211,8 @@ def _approval_request_artifact(
         version=1,
         payload=request.model_dump(mode="json"),
         parents=(
-            ArtifactParentRef(
+            parent
+            or ArtifactParentRef(
                 owner_user_id=owner,
                 project_id=project_id,
                 artifact_id="media-observation-1",
@@ -207,6 +224,154 @@ def _approval_request_artifact(
         source_thread_id="thread-1",
         source_run_id="run-1",
     )
+
+
+def _media_artifacts() -> tuple[ArtifactEnvelope, ArtifactEnvelope]:
+    project = ProjectRef(owner_user_id=USER_ID, project_id="media-project")
+    source = seal_media_source_receipt(
+        project=project,
+        receipt=MediaSourceReceipt(
+            source_ref="media-source-1",
+            media_kind="video",
+            transport="local_file",
+            resolver="gateway-upload",
+            rights_ref="rights-1",
+            locator_sha256="1" * 64,
+            resolved_at=NOW,
+        ),
+        evidence_role="user_material",
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+    snapshot = MediaObservationSnapshot(
+        source_ref="media-source-1",
+        observation_kind="video_metadata",
+        observed_at=NOW,
+        observation=VideoMetadataObservation(
+            format_meta=VideoFormatMetadata(container="mp4", duration=1.0, size=2_320),
+            video_stream_meta=VideoStreamMetadata(
+                codec="h264",
+                duration=1.0,
+                width=320,
+                height=240,
+                fps=25,
+            ),
+        ),
+        execution=MediaKitExecutionReceipt(
+            capability_domain="video",
+            capability_tool="probe-video-metadata",
+            cli_version="0.2.0",
+            schema_sha256="2" * 64,
+            execution_mode="local",
+            request_sha256="3" * 64,
+            source_content_sha256="f" * 64,
+            output_sha256="4" * 64,
+            completed_at=NOW,
+            cloud_processing_approved=False,
+        ),
+    )
+    observation = seal_media_observation_snapshot(
+        project=project,
+        snapshot=snapshot,
+        source_receipt_artifact=source,
+        source_thread_id="thread-1",
+        source_run_id="run-2",
+    )
+    return source, observation
+
+
+class _FakeQuoteService:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    async def prepare_approval_request(self, **kwargs) -> ArtifactEnvelope:
+        self.calls.append(kwargs)
+        observation = kwargs["media_observation_artifact"]
+        assert isinstance(observation, ArtifactEnvelope)
+        return _approval_request_artifact(
+            quoted_at=kwargs["quoted_at"],
+            valid_until=datetime(2099, 1, 1, tzinfo=UTC),
+            parent=observation.to_parent_ref(),
+        )
+
+
+def test_mediakit_quote_api_uses_owned_observation_and_persists_reviewable_request() -> None:
+    app, ledger, _thread_store = _build_app()
+    project = ProjectRef(owner_user_id=USER_ID, project_id="media-project")
+    asyncio.run(ledger.create_project(project, display_name="Media project"))
+    source, observation = _media_artifacts()
+    ledger.artifacts[source.artifact_id] = source
+    ledger.artifacts[observation.artifact_id] = observation
+    quote_service = _FakeQuoteService()
+    app.state.mediakit_quote_service = quote_service
+
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/incubation/projects/media-project/media/mediakit/enhance-video/quotes",
+            json={
+                "media_observation_artifact_id": observation.artifact_id,
+                "tool_version": "standard",
+                "scene": "common",
+                "resolution": "720p",
+                "fps": 25,
+                "bitrate_level": "medium",
+                "maximum_amount_micros": 20_000,
+            },
+        )
+        invented_price = client.post(
+            "/api/incubation/projects/media-project/media/mediakit/enhance-video/quotes",
+            json={
+                "media_observation_artifact_id": observation.artifact_id,
+                "tool_version": "standard",
+                "scene": "common",
+                "resolution": "720p",
+                "fps": 25,
+                "bitrate_level": "medium",
+                "maximum_amount_micros": 20_000,
+                "amount_micros_per_minute": 1,
+            },
+        )
+
+    assert created.status_code == 201, created.text
+    assert created.json()["capability_tool"] == "enhance-video"
+    assert created.json()["estimated_amount_micros"] == 12_500
+    quote_artifact_id = created.json()["quote_artifact_id"]
+    assert ledger.artifacts[quote_artifact_id].artifact_type == "mediakit_cloud_approval_request"
+    assert quote_service.calls[0]["source_receipt_artifact"] == source
+    assert quote_service.calls[0]["media_observation_artifact"] == observation
+    assert invented_price.status_code == 422
+    assert not hasattr(app.state, "mediakit_cloud_driver")
+
+
+def test_mediakit_quote_api_fails_closed_without_service_or_valid_lineage() -> None:
+    app, ledger, _thread_store = _build_app()
+    project = ProjectRef(owner_user_id=USER_ID, project_id="media-project")
+    asyncio.run(ledger.create_project(project, display_name="Media project"))
+    source, observation = _media_artifacts()
+    ledger.artifacts[source.artifact_id] = source
+    ledger.artifacts[observation.artifact_id] = observation
+    body = {
+        "media_observation_artifact_id": observation.artifact_id,
+        "tool_version": "standard",
+        "scene": "common",
+        "resolution": "720p",
+        "fps": 25,
+        "bitrate_level": "medium",
+        "maximum_amount_micros": 20_000,
+    }
+
+    with TestClient(app) as client:
+        unavailable = client.post(
+            "/api/incubation/projects/media-project/media/mediakit/enhance-video/quotes",
+            json=body,
+        )
+        missing = client.post(
+            "/api/incubation/projects/media-project/media/mediakit/enhance-video/quotes",
+            json={**body, "media_observation_artifact_id": "artifact_" + "0" * 64},
+        )
+
+    assert unavailable.status_code == 503
+    assert missing.status_code == 404
 
 
 def test_exact_mediakit_approval_api_issues_two_grants_without_starting_a_task() -> None:
@@ -238,6 +403,7 @@ def test_exact_mediakit_approval_api_issues_two_grants_without_starting_a_task()
 
     assert review.status_code == 200, review.text
     assert review.json()["capability_tool"] == "enhance-video"
+    assert review.json()["pricing_evidence_sha256"] == "d" * 64
     assert review.json()["output_resolution_tier"] == "720p"
     assert review.json()["estimated_amount_micros"] == 12_500
     assert review.json()["requires_no_provider_hard_cap_acknowledgement"] is True
@@ -255,6 +421,45 @@ def test_exact_mediakit_approval_api_issues_two_grants_without_starting_a_task()
         "fee_authorization",
     }
     assert not hasattr(app.state, "mediakit_cloud_driver")
+
+
+def test_two_quote_artifacts_for_one_operation_replay_the_same_approval_pair() -> None:
+    app, ledger, _thread_store = _build_app()
+    project = ProjectRef(owner_user_id=USER_ID, project_id="media-project")
+    asyncio.run(ledger.create_project(project, display_name="Media project"))
+    first = _approval_request_artifact(quoted_at=NOW)
+    second = _approval_request_artifact(quoted_at=NOW.replace(second=1))
+    assert first.artifact_id != second.artifact_id
+    ledger.artifacts[first.artifact_id] = first
+    ledger.artifacts[second.artifact_id] = second
+
+    def body(artifact: ArtifactEnvelope) -> dict[str, object]:
+        return {
+            "quote_artifact_id": artifact.artifact_id,
+            "fee_quote_sha256": "e" * 64,
+            "currency": "CNY",
+            "maximum_amount_micros": 20_000,
+            "confirm_cloud_processing": True,
+            "confirm_fee_authorization": True,
+            "acknowledge_no_provider_hard_cap": True,
+        }
+
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/incubation/projects/media-project/approvals/mediakit-cloud",
+            json=body(first),
+        )
+        replayed = client.post(
+            "/api/incubation/projects/media-project/approvals/mediakit-cloud",
+            json=body(second),
+        )
+
+    assert created.status_code == 201, created.text
+    assert replayed.status_code == 200, replayed.text
+    assert replayed.json()["replayed"] is True
+    assert replayed.json()["cloud_processing_grant_id"] == created.json()["cloud_processing_grant_id"]
+    assert replayed.json()["fee_authorization_grant_id"] == created.json()["fee_authorization_grant_id"]
+    assert len(ledger.grants) == 2
 
 
 def test_mediakit_approval_api_rejects_stale_or_cross_project_confirmation() -> None:

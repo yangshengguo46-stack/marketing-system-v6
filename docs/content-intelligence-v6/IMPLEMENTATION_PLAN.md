@@ -211,7 +211,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 前置合同已实现：`MediaKitCapabilityRouter` 动态读取版本和 Schema，
 `EphemeralMediaSource` 与 `MediaSourceReceipt` 分离执行定位符和持久回执。
 本地执行、模拟云生命周期、精确批准、私有来源和视频结果物化已经接通，但这不等于 W04 已具备生产制作能力；
-批准入口、供应商费用硬上限、非视频结果策略和真实云回执仍待验收。
+生产任务接线、非视频结果策略和真实云回执仍待验收；供应商本身不提供单任务费用硬上限。
 
 2026-08-17 第一执行切片：本地文件现可通过动态能力路由真实执行
 `probe-video-metadata`。执行前后双哈希防止输入替换，CLI 原始 JSON 先经 Output Schema 再经
@@ -267,6 +267,14 @@ Gateway 环境中的 Key、Secret 和 Device ID
 或缺少“供应商无硬封顶”确认时均不签发。两类 `ApprovalGrant` 由同一数据库事务原子创建，确定性 ID
 使双击和重试收敛到首个成功决定。接口不会排队、注册驱动或调用云端。详见
 `audits/A56-mediakit-exact-approval-api.md`。
+
+2026-08-17 第九执行切片：新增默认关闭的服务器报价生产入口。Gateway 只接受同 owner/project 下
+已有的 `user_material` 元信息观察，追溯其精确来源回执；客户端不能提交费率、价格证据、来源定位符
+或操作摘要。运营方价格 JSON 受大小、严格字段、来源哈希和有效期约束，服务在每次报价时重新读取
+MediaKit 版本与 `enhance-video` Schema，漂移即失败。报价只封存可审阅对象，不创建长任务。批准凭证
+改按精确操作摘要确定身份，使同一操作的多个报价产物也只会签发一对凭证。默认配置、Helm 示例和
+配置版本已同步；前端素材选择、任务创建和真实云验收继续暂停。详见
+`audits/A57-mediakit-server-quote-preparation.md`。
 
 首批验收：
 

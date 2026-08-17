@@ -24,6 +24,10 @@ from deerflow.community.mediakit.enhance_video import (
     MediaKitPricingEvidence,
     MediaKitPricingRate,
 )
+from deerflow.community.mediakit.quote_service import (
+    MediaKitEnhanceVideoQuoteService,
+    MediaKitPricingConfigurationError,
+)
 from deerflow.community.mediakit.router import (
     MediaKitCapabilityRouter,
     MediaKitCommandError,
@@ -58,10 +62,12 @@ __all__ = [
     "MediaKitCommandError",
     "MediaKitExecutionResult",
     "MediaKitEnhanceVideoPreflight",
+    "MediaKitEnhanceVideoQuoteService",
     "MediaKitFeeQuote",
     "MediaKitDownloadedArtifact",
     "MediaKitSafeHttpDownloader",
     "MediaKitPricingEvidence",
+    "MediaKitPricingConfigurationError",
     "MediaKitPricingRate",
     "MediaKitStagedSource",
     "MediaKitTrustedSourceStore",

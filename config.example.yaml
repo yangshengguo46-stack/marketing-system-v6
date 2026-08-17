@@ -15,7 +15,7 @@
 # ============================================================================
 # Bump this number when the config schema changes.
 # Run `make config-upgrade` to merge new fields into your local config.yaml.
-config_version: 33
+config_version: 34
 
 # ============================================================================
 # Logging
@@ -2121,6 +2121,28 @@ mcp_tasks:
   poll_interval_seconds: 5
   lease_seconds: 120
   max_concurrent_polls: 8
+
+# ============================================================================
+# MediaKit Quote Preparation
+# ============================================================================
+# Generates a reviewable quote from an existing, owner-scoped user-material
+# media observation. It only runs `mediakit-cli version` and `--schema`; it does
+# not register a cloud driver, upload media, start a task, or spend money.
+# The operator-owned JSON pricing evidence must carry a checked_at, valid_until,
+# source document hash, and structured rates. Missing, malformed, stale, or
+# schema-drifted evidence fails closed.
+mediakit:
+  quote_preparation_enabled: false
+  cli_path: mediakit-cli
+  pricing_evidence_path: .deer-flow/mediakit/enhance-video-pricing.json
+  expected_schema_sha256: 5573324d5727b5398b13ca89182a1e45c7953c9a8389bb12eec0b331eca46f00
+  allowed_tool_versions:
+    - standard
+  allowed_resolution_tiers:
+    - 720p
+  minimum_fps: 15
+  maximum_fps: 30
+  maximum_output_bytes: 26214400
 
 # ============================================================================
 # Run Ownership Configuration

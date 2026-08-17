@@ -1521,3 +1521,21 @@ Schema、价格和报价字段，再封存为以 `user_material` 媒体观察为
 上传素材、调用供应商或产生费用。详见
 `audits/A56-mediakit-exact-approval-api.md` 与
 `evidence/mediakit-exact-approval-api-a56-2026-08-17.md`。
+
+## A57 W04 MediaKit 服务器报价生产入口
+
+2026-08-17 沿 A56 的真实缺口先写失败测试：报价路由为 404、关闭服务没有明确 503，且同一精确操作
+只因生成了两个报价产物就能取得第二对批准。实现新增默认关闭的 `mediakit` 配置与 Gateway 报价服务。
+它只从当前 owner/project 下已有的 `user_material` 元信息观察及其精确来源父级起步；客户端只能提交
+已审阅输出规格和金额上限，不能提交费率、价格证据、来源定位符或操作摘要。
+
+服务器每次读取最大 64 KiB、禁止未知字段、带来源正文哈希和有效期的运营方价格证据，并通过
+`MediaKitCapabilityRouter` 重新发现本机 `video/enhance-video` Schema。缺失、损坏、过期、Schema
+漂移、非用户素材或谱系不匹配均失败。封存载荷与审阅响应不含素材定位符、权利引用、本机路径和临时
+URL。批准凭证身份改为精确操作摘要，使同一操作的重复报价、双击与网络重试收敛到同一对凭证。
+
+聚焦报价回归为 `20 passed, 1 warning`，MediaKit、孵化谱系与配置联合回归为
+`174 passed, 1 warning`，阻塞 I/O 回归为 `71 passed, 2 warnings`。完整离线后端回归为
+`11864 passed, 76 skipped, 17 warnings in 426.03s`。本轮没有创建 `mcp_task`、注册 MediaKit 云驱动、
+上传素材、调用供应商或产生费用；前端素材选择与真实云验收仍未开始。完整验证结果见
+`evidence/mediakit-server-quote-preparation-a57-2026-08-17.md`。

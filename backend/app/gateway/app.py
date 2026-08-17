@@ -290,6 +290,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Must run AFTER langgraph_runtime so app.state.store is available for thread migration
         await _ensure_admin_user(app)
 
+        from app.gateway.mediakit import build_mediakit_quote_service
+
+        mediakit_quote_service = build_mediakit_quote_service(getattr(startup_config, "mediakit", None))
+        if mediakit_quote_service is not None:
+            app.state.mediakit_quote_service = mediakit_quote_service
+
         # Start IM channel service if any channels are configured
         try:
             from app.channels.service import start_channel_service

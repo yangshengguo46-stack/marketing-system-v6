@@ -870,7 +870,11 @@ user cap, and quote expiry into the durable operation and result receipt. It rem
 the provider exposes no per-task hard fee cap. A project-scoped API can now review one immutable,
 server-generated quote and atomically issue separate cloud-processing and fee grants after exact
 confirmation; it never accepts a caller-invented operation digest or starts a task. No live cloud
-call is allowed without later task wiring and capability-specific acceptance.
+call is allowed without later task wiring and capability-specific acceptance. Quote preparation is
+also server-side now: a default-disabled Gateway endpoint starts from an owner/project-scoped
+`user_material` observation, reads a strict operator-owned pricing document, re-discovers the live
+CLI Schema, and seals the review object without exposing the source locator or invoking MediaKit
+cloud execution. Repeated quotes for the same exact operation converge on one grant pair.
 
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps

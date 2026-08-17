@@ -628,6 +628,14 @@ def get_incubation_ledger_repo(request: Request):
     return val
 
 
+def get_mediakit_quote_service(request: Request):
+    """Return the optional, local-only MediaKit quote preparation service."""
+    val = getattr(request.app.state, "mediakit_quote_service", None)
+    if val is None:
+        raise HTTPException(status_code=503, detail="MediaKit quote service not available")
+    return val
+
+
 def get_scheduled_task_repo(request: Request):
     val = getattr(request.app.state, "scheduled_task_repo", None)
     if val is None:

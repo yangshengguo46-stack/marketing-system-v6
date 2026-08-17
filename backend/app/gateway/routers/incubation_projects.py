@@ -11,11 +11,16 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from app.gateway.authz import require_permission
 from app.gateway.deps import (
     get_incubation_ledger_repo,
+    get_mediakit_quote_service,
     get_optional_user_from_request,
     get_thread_store,
 )
 from app.gateway.internal_auth import INTERNAL_SYSTEM_ROLE, get_trusted_internal_owner_user_id
-from deerflow.community.mediakit import MediaKitCloudApprovalRequest
+from deerflow.community.mediakit import (
+    MediaKitCloudApprovalRequest,
+    MediaKitCommandError,
+    MediaKitPricingConfigurationError,
+)
 from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ApprovalGrant, ProjectRecord, ProjectRef
 from deerflow.persistence.incubation_ledger import ApprovalGrantConflictError, ProjectConflictError
 from deerflow.utils.thread_id import ThreadId
@@ -49,7 +54,7 @@ class ThreadProjectBindingResponse(BaseModel):
 
 
 class MediaKitCloudApprovalConfirmRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     quote_artifact_id: str = Field(min_length=1, max_length=80)
     fee_quote_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -76,6 +81,7 @@ class MediaKitCloudApprovalResponse(BaseModel):
 class MediaKitCloudApprovalReviewResponse(BaseModel):
     quote_artifact_id: str
     fee_quote_sha256: str
+    pricing_evidence_sha256: str
     capability_domain: str
     capability_tool: str
     capability_schema_sha256: str
@@ -92,6 +98,18 @@ class MediaKitCloudApprovalReviewResponse(BaseModel):
     quoted_at: datetime
     valid_until: datetime
     expired: bool
+
+
+class MediaKitEnhanceVideoQuoteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    media_observation_artifact_id: str = Field(pattern=r"^artifact_[0-9a-f]{64}$")
+    tool_version: Literal["standard"]
+    scene: Literal["common", "ugc", "short_series", "aigc", "old_film"]
+    resolution: Literal["240p", "360p", "480p", "540p", "720p"]
+    fps: float = Field(ge=15, le=30)
+    bitrate_level: Literal["low", "medium", "high"]
+    maximum_amount_micros: int = Field(gt=0)
 
 
 async def _effective_owner_user_id(request: Request) -> str:
@@ -124,8 +142,8 @@ def _response(record: ProjectRecord) -> IncubationProjectResponse:
     )
 
 
-def _approval_grant_id(kind: str, quote_artifact_id: str) -> str:
-    digest = hashlib.sha256(f"{kind}\0{quote_artifact_id}".encode()).hexdigest()
+def _approval_grant_id(kind: str, operation_sha256: str) -> str:
+    digest = hashlib.sha256(f"{kind}\0{operation_sha256}".encode()).hexdigest()
     return f"approval-{kind}:{digest}"
 
 
@@ -171,6 +189,67 @@ async def _load_mediakit_approval_request(
     if artifact.created_at != approval.quoted_at:
         raise HTTPException(status_code=409, detail="MediaKit approval request is invalid")
     return artifact, approval
+
+
+async def _load_mediakit_quote_lineage(
+    *,
+    ledger,
+    owner_user_id: str,
+    project: ProjectRef,
+    media_observation_artifact_id: str,
+):
+    observation = await ledger.get_artifact(
+        media_observation_artifact_id,
+        owner_user_id=owner_user_id,
+    )
+    if observation is None or observation.project != project:
+        raise HTTPException(status_code=404, detail="MediaKit media observation not found")
+    if observation.artifact_type != "media_observation" or observation.version != 1 or observation.evidence_role != "user_material" or len(observation.parents) != 1 or observation.parents[0].artifact_type != "media_source_receipt":
+        raise HTTPException(status_code=409, detail="MediaKit media observation is invalid")
+    parent = observation.parents[0]
+    source_receipt = await ledger.get_artifact(
+        parent.artifact_id,
+        owner_user_id=owner_user_id,
+    )
+    if (
+        source_receipt is None
+        or source_receipt.project != project
+        or source_receipt.to_parent_ref() != parent
+        or source_receipt.artifact_type != "media_source_receipt"
+        or source_receipt.version != 1
+        or source_receipt.evidence_role != "user_material"
+    ):
+        raise HTTPException(status_code=409, detail="MediaKit media source lineage is invalid")
+    return source_receipt, observation
+
+
+def _approval_review_response(
+    *,
+    artifact,
+    approval: MediaKitCloudApprovalRequest,
+    now: datetime,
+) -> MediaKitCloudApprovalReviewResponse:
+    return MediaKitCloudApprovalReviewResponse(
+        quote_artifact_id=artifact.artifact_id,
+        fee_quote_sha256=approval.fee_quote_sha256,
+        pricing_evidence_sha256=approval.pricing_evidence_sha256,
+        capability_domain=approval.capability_domain,
+        capability_tool=approval.capability_tool,
+        capability_schema_sha256=approval.capability_schema_sha256,
+        tool_version=approval.tool_version,
+        source_duration_milliseconds=approval.source_duration_milliseconds,
+        output_resolution_tier=approval.output_resolution_tier,
+        output_fps=approval.output_fps,
+        currency=approval.currency,
+        amount_micros_per_minute=approval.amount_micros_per_minute,
+        estimated_amount_micros=approval.estimated_amount_micros,
+        maximum_amount_micros=approval.maximum_amount_micros,
+        provider_hard_cap_supported=approval.provider_hard_cap_supported,
+        requires_no_provider_hard_cap_acknowledgement=(not approval.provider_hard_cap_supported),
+        quoted_at=approval.quoted_at,
+        valid_until=approval.valid_until,
+        expired=now >= approval.valid_until,
+    )
 
 
 async def _require_thread(request: Request, *, thread_id: str, owner_user_id: str):
@@ -231,6 +310,62 @@ async def get_incubation_project(
     return _response(record)
 
 
+@router.post(
+    "/projects/{project_id}/media/mediakit/enhance-video/quotes",
+    response_model=MediaKitCloudApprovalReviewResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("threads", "write")
+async def create_mediakit_enhance_video_quote(
+    project_id: str,
+    body: MediaKitEnhanceVideoQuoteRequest,
+    request: Request,
+) -> MediaKitCloudApprovalReviewResponse:
+    owner_user_id = await _effective_owner_user_id(request)
+    project = _project_ref(owner_user_id, project_id)
+    ledger = get_incubation_ledger_repo(request)
+    source_receipt, observation = await _load_mediakit_quote_lineage(
+        ledger=ledger,
+        owner_user_id=owner_user_id,
+        project=project,
+        media_observation_artifact_id=body.media_observation_artifact_id,
+    )
+    quote_service = get_mediakit_quote_service(request)
+    quoted_at = datetime.now(UTC)
+    try:
+        artifact = await quote_service.prepare_approval_request(
+            project=project,
+            media_observation_artifact=observation,
+            source_receipt_artifact=source_receipt,
+            capability_arguments={
+                "tool_version": body.tool_version,
+                "scene": body.scene,
+                "resolution": body.resolution,
+                "fps": body.fps,
+                "bitrate_level": body.bitrate_level,
+            },
+            maximum_amount_micros=body.maximum_amount_micros,
+            quoted_at=quoted_at,
+            source_run_id=f"gateway-mediakit-quote-{uuid.uuid4().hex}",
+        )
+    except (MediaKitPricingConfigurationError, MediaKitCommandError) as exc:
+        raise HTTPException(status_code=503, detail="MediaKit quote evidence is unavailable") from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=409, detail="MediaKit quote is unavailable for the requested fee or time") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid MediaKit quote request") from exc
+    stored = await ledger.put_artifact(artifact)
+    try:
+        approval = MediaKitCloudApprovalRequest.model_validate(stored.payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=409, detail="MediaKit quote artifact is invalid") from exc
+    return _approval_review_response(
+        artifact=stored,
+        approval=approval,
+        now=quoted_at,
+    )
+
+
 @router.get(
     "/projects/{project_id}/approvals/mediakit-cloud/{quote_artifact_id}",
     response_model=MediaKitCloudApprovalReviewResponse,
@@ -250,25 +385,10 @@ async def review_mediakit_cloud_request(
         quote_artifact_id=quote_artifact_id,
     )
     now = datetime.now(UTC)
-    return MediaKitCloudApprovalReviewResponse(
-        quote_artifact_id=artifact.artifact_id,
-        fee_quote_sha256=approval.fee_quote_sha256,
-        capability_domain=approval.capability_domain,
-        capability_tool=approval.capability_tool,
-        capability_schema_sha256=approval.capability_schema_sha256,
-        tool_version=approval.tool_version,
-        source_duration_milliseconds=approval.source_duration_milliseconds,
-        output_resolution_tier=approval.output_resolution_tier,
-        output_fps=approval.output_fps,
-        currency=approval.currency,
-        amount_micros_per_minute=approval.amount_micros_per_minute,
-        estimated_amount_micros=approval.estimated_amount_micros,
-        maximum_amount_micros=approval.maximum_amount_micros,
-        provider_hard_cap_supported=approval.provider_hard_cap_supported,
-        requires_no_provider_hard_cap_acknowledgement=(not approval.provider_hard_cap_supported),
-        quoted_at=approval.quoted_at,
-        valid_until=approval.valid_until,
-        expired=now >= approval.valid_until,
+    return _approval_review_response(
+        artifact=artifact,
+        approval=approval,
+        now=now,
     )
 
 
@@ -301,8 +421,8 @@ async def approve_mediakit_cloud_request(
     if approval.provider_hard_cap_supported:
         raise HTTPException(status_code=409, detail="MediaKit provider fee-cap evidence changed")
 
-    cloud_id = _approval_grant_id("cloud", artifact.artifact_id)
-    fee_id = _approval_grant_id("fee", artifact.artifact_id)
+    cloud_id = _approval_grant_id("cloud", approval.operation_sha256)
+    fee_id = _approval_grant_id("fee", approval.operation_sha256)
     existing_cloud = await ledger.get_approval_grant(cloud_id, owner_user_id=owner_user_id)
     existing_fee = await ledger.get_approval_grant(fee_id, owner_user_id=owner_user_id)
     replayed = existing_cloud is not None or existing_fee is not None
