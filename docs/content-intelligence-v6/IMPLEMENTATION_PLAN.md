@@ -75,7 +75,7 @@
 | 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
 | MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata + trusted private I/O verified; live cloud disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图、精确批准、私有来源与受控物化 | 逐项登记结果策略并验收 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
-| 表现形式选择 | 第四版方法审计 | `adopted; unimplemented` | 新增薄 `FormatDecision`，不改写选题 | 口播、图文、纯素材、访谈与短剧的资源匹配 |
+| 表现形式选择 | 第四版方法审计 | `contract implemented; runtime pending` | 薄 `FormatDecision` 绑定精确 MessagePlan，不改写选题 | 真实模型资源匹配、用户确认与素材方案接线 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
 | MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `local foundation + exact approval + trusted I/O implemented; production pending` | 经统一路由执行已批准制作任务 | 本地编辑产物、批准入口、可核验云费用上限与首个真实云能力 |
 | 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
@@ -205,7 +205,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 ### W03 孵化与单条内容产物谱系
 
-状态：`in progress; brief/judgment contract and content reading through base draft are project-bound; runtime judgment and format decision pending`
+状态：`in progress; brief/judgment and format-decision contracts implemented; runtime generation and production wiring pending`
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
 地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
@@ -234,6 +234,11 @@ Gateway 环境中的 Key、Secret 和 Device ID
 全部中间节点；无证据或错路线时明确弃权，不再静默换题或把地图冒充成品。聚焦回归 `90 passed`，
 真实模型验收与后续 `FormatDecision` 仍待完成。详见
 `audits/A61-shootable-topic-goal-and-exact-map-path.md`。
+
+2026-08-17 第四切片回执：新增薄 `FormatDecision`，精确绑定 MessagePlan 的受保护内容与证据边界
+哈希，并可引用同项目孵化判断和资源证据。它只选择本条呈现形式，不能改写选题、加入平台销售发布或
+固定数量；资源未知允许 provisional，非叙事形式不能携带编剧提示。联合回归 `39 passed`。真实模型
+生成、用户确认与素材方案仍待接线。详见 `audits/A62-format-decision-lineage.md`。
 
 ### W04 MediaKit 制作路由
 

@@ -1,0 +1,278 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+from datetime import datetime
+from typing import Literal
+
+from pydantic import field_validator, model_validator
+
+from deerflow.incubation.contracts import (
+    ArtifactEnvelope,
+    ArtifactParentRef,
+    IncubationContract,
+    NonEmptyStr,
+    ProjectRef,
+)
+
+FormatKind = Literal[
+    "spoken_delivery",
+    "micro_drama",
+    "situational_drama",
+    "image_text",
+    "material_only",
+    "interview",
+    "documentary_observation",
+    "custom",
+]
+FormatDecisionStatus = Literal["provisional", "confirmed"]
+
+_NARRATIVE_FORMATS = frozenset({"micro_drama", "situational_drama"})
+_CONTENT_SOURCE_LABELS = frozenset(
+    {
+        "historicalstory",
+        "realcase",
+        "历史故事",
+        "真实案例",
+    }
+)
+_PROTECTED_MESSAGE_PLAN_FIELDS = (
+    "topic_title",
+    "focal_subject",
+    "concrete_event_or_question",
+    "point_of_view",
+)
+_EVIDENCE_BOUNDARY_FIELDS = (
+    "evidence_refs",
+    "limitations",
+    "unknown_refs",
+    "research_needed",
+)
+
+
+def _canonical_sha256(value: object) -> str:
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _normalized_label(value: str) -> str:
+    return re.sub(r"[\s_-]+", "", value.casefold())
+
+
+def _canonical_ids(value: tuple[str, ...]) -> tuple[str, ...]:
+    if len(set(value)) != len(value):
+        raise ValueError("artifact references must be unique")
+    return tuple(sorted(value))
+
+
+class FormatChoice(IncubationContract):
+    kind: FormatKind
+    custom_name: NonEmptyStr | None = None
+
+    @model_validator(mode="after")
+    def validate_custom_form(self) -> FormatChoice:
+        if self.kind == "custom":
+            if self.custom_name is None:
+                raise ValueError("custom form requires custom_name")
+            if _normalized_label(self.custom_name) in _CONTENT_SOURCE_LABELS:
+                raise ValueError("a content source is not a presentation form")
+        elif self.custom_name is not None:
+            raise ValueError("custom_name is only valid for a custom form")
+        return self
+
+
+class ResourceMatch(IncubationContract):
+    resource: NonEmptyStr
+    fit: NonEmptyStr
+    basis_artifact_ids: tuple[NonEmptyStr, ...] = ()
+
+    @field_validator("basis_artifact_ids")
+    @classmethod
+    def canonicalize_basis_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _canonical_ids(value)
+
+
+class FormatAlternative(IncubationContract):
+    format: FormatChoice
+    rationale: NonEmptyStr
+    tradeoffs: tuple[NonEmptyStr, ...] = ()
+
+
+class MessagePlanBinding(IncubationContract):
+    artifact_id: NonEmptyStr
+    artifact_content_sha256: NonEmptyStr
+    message_plan_id: NonEmptyStr
+    record_id: NonEmptyStr
+    protected_content_sha256: NonEmptyStr
+    evidence_boundary_sha256: NonEmptyStr
+
+    @field_validator(
+        "artifact_content_sha256",
+        "protected_content_sha256",
+        "evidence_boundary_sha256",
+    )
+    @classmethod
+    def validate_sha256(cls, value: str) -> str:
+        if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+            raise ValueError("message plan binding hashes must be lowercase SHA-256")
+        return value
+
+
+class FormatDecisionDraft(IncubationContract):
+    """A format-only proposal with no fields that can rewrite the selected topic."""
+
+    status: FormatDecisionStatus = "provisional"
+    selected_format: FormatChoice
+    selection_rationale: NonEmptyStr
+    resource_matches: tuple[ResourceMatch, ...] = ()
+    resource_gaps: tuple[NonEmptyStr, ...] = ()
+    sustainability_risks: tuple[NonEmptyStr, ...] = ()
+    alternatives: tuple[FormatAlternative, ...] = ()
+    unknowns: tuple[NonEmptyStr, ...] = ()
+    narrative_method_hint: NonEmptyStr | None = None
+
+    @model_validator(mode="after")
+    def keep_narrative_method_optional_and_downstream(self) -> FormatDecisionDraft:
+        if self.narrative_method_hint is not None and self.selected_format.kind not in _NARRATIVE_FORMATS:
+            raise ValueError("narrative method hint requires a narrative presentation form")
+        return self
+
+
+class FormatDecision(FormatDecisionDraft):
+    message_plan_binding: MessagePlanBinding
+    incubation_judgment_ref: ArtifactParentRef | None = None
+    resource_evidence_refs: tuple[ArtifactParentRef, ...] = ()
+
+    @field_validator("resource_evidence_refs")
+    @classmethod
+    def canonicalize_resource_refs(
+        cls,
+        value: tuple[ArtifactParentRef, ...],
+    ) -> tuple[ArtifactParentRef, ...]:
+        if len({item.artifact_id for item in value}) != len(value):
+            raise ValueError("resource evidence references must be unique")
+        return tuple(sorted(value, key=lambda item: item.artifact_id))
+
+
+def _require_parent(
+    artifact: ArtifactEnvelope,
+    *,
+    project: ProjectRef,
+    artifact_type: str | None = None,
+) -> None:
+    if artifact.project != project:
+        raise ValueError("parent project must match format decision project")
+    if artifact_type is not None and artifact.artifact_type != artifact_type:
+        raise ValueError(f"expected {artifact_type} parent")
+
+
+def _required_text(payload: dict[str, object], field: str) -> str:
+    value = payload.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"message plan requires a non-empty {field}")
+    return value
+
+
+def _message_plan_binding(message_plan_artifact: ArtifactEnvelope) -> MessagePlanBinding:
+    payload = message_plan_artifact.payload
+    protected_fields = {field: _required_text(payload, field) for field in _PROTECTED_MESSAGE_PLAN_FIELDS}
+    evidence_boundary: dict[str, object] = {}
+    for field in _EVIDENCE_BOUNDARY_FIELDS:
+        value = payload.get(field)
+        if not isinstance(value, list):
+            raise ValueError(f"message plan requires an explicit {field} boundary")
+        evidence_boundary[field] = value
+
+    return MessagePlanBinding(
+        artifact_id=message_plan_artifact.artifact_id,
+        artifact_content_sha256=message_plan_artifact.content_sha256,
+        message_plan_id=_required_text(payload, "message_plan_id"),
+        record_id=_required_text(payload, "record_id"),
+        protected_content_sha256=_canonical_sha256(protected_fields),
+        evidence_boundary_sha256=_canonical_sha256(evidence_boundary),
+    )
+
+
+def seal_format_decision(
+    *,
+    project: ProjectRef,
+    draft: FormatDecisionDraft,
+    message_plan_artifact: ArtifactEnvelope,
+    created_at: datetime,
+    source_thread_id: str,
+    source_run_id: str,
+    incubation_judgment_artifact: ArtifactEnvelope | None = None,
+    resource_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
+) -> ArtifactEnvelope:
+    """Bind one presentation decision below an immutable message plan."""
+
+    _require_parent(
+        message_plan_artifact,
+        project=project,
+        artifact_type="message_plan",
+    )
+    if incubation_judgment_artifact is not None:
+        _require_parent(
+            incubation_judgment_artifact,
+            project=project,
+            artifact_type="incubation_judgment",
+        )
+    for artifact in resource_evidence_artifacts:
+        _require_parent(artifact, project=project)
+
+    resource_ids = {artifact.artifact_id for artifact in resource_evidence_artifacts}
+    if len(resource_ids) != len(resource_evidence_artifacts):
+        raise ValueError("resource evidence artifacts must be unique")
+    used_resource_ids = {artifact_id for match in draft.resource_matches for artifact_id in match.basis_artifact_ids}
+    if not used_resource_ids.issubset(resource_ids):
+        raise ValueError("every resource basis artifact must be included as a parent")
+
+    resource_refs = tuple(
+        artifact.to_parent_ref()
+        for artifact in sorted(
+            resource_evidence_artifacts,
+            key=lambda item: item.artifact_id,
+        )
+    )
+    judgment_ref = incubation_judgment_artifact.to_parent_ref() if incubation_judgment_artifact is not None else None
+    decision = FormatDecision(
+        **draft.model_dump(),
+        message_plan_binding=_message_plan_binding(message_plan_artifact),
+        incubation_judgment_ref=judgment_ref,
+        resource_evidence_refs=resource_refs,
+    )
+    parents = (
+        message_plan_artifact.to_parent_ref(),
+        *((judgment_ref,) if judgment_ref is not None else ()),
+        *resource_refs,
+    )
+    return ArtifactEnvelope.seal(
+        project=project,
+        artifact_type="format_decision",
+        version=1,
+        payload=decision.model_dump(mode="json"),
+        parents=parents,
+        created_at=created_at,
+        source_thread_id=source_thread_id,
+        source_run_id=source_run_id,
+    )
+
+
+__all__ = [
+    "FormatAlternative",
+    "FormatChoice",
+    "FormatDecision",
+    "FormatDecisionDraft",
+    "FormatDecisionStatus",
+    "FormatKind",
+    "MessagePlanBinding",
+    "ResourceMatch",
+    "seal_format_decision",
+]

@@ -203,6 +203,10 @@ browser state, temporary URLs, and local paths. `/api/incubation` owns project/t
 monetization hypotheses separate, binds the exact brief and frozen content-world version, and
 may cite benchmark or audience artifacts only as explicit parents. Neither object may rewrite
 semantic recognition or the content map. Account presentation is not a per-topic format decision.
+Per-topic `FormatDecision` binds the exact `message_plan` artifact plus protected-content and
+evidence-boundary hashes. Its draft has no topic or evidence rewrite fields, may remain provisional
+when resources are unknown, and may carry a narrative-method hint only for narrative formats. It
+contains no platform, sales, publishing, cadence, duration, shot-count, or quota controls.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed
