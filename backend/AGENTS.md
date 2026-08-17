@@ -225,6 +225,13 @@ reviewed user-material lineage before its model call. Its 32 KB projection conta
 the selected form, execution gaps, and up to eight reviewed user materials. The model may specify asset needs,
 capture/record/layout actions, and assembly order; it may not reopen content, invent resources or facts, or add sales,
 platform, publishing, approval, cadence, duration, or quota decisions. No-material plans may remain provisional.
+The first local production executor is intentionally narrower than the plan language. It supports only a reviewed
+`editing/trim-video` operation bound to exact plan action, assembly-step, asset, input, Schema, and argument hashes.
+Resolve and verify the private trusted source before starting the CLI, force each attempt into a server-created output
+directory, accept only regular files inside that exact directory, then double-hash, quality-check, content-address, and
+seal the first result. Operation arguments must not contain paths, URLs, callbacks, tokens, or unreviewed CLI fields.
+Do not infer timecodes from ProductionPlan prose or claim other MediaKit capabilities without their own narrow contract
+and real acceptance (A75).
 The incubation-judgment runtime accepts only sealed Brief/world/evidence parents. Benchmark and
 audience artifacts are validated by type and evidence role, then projected through their existing
 bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete

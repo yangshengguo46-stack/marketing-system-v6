@@ -5,10 +5,12 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import stat
 import tempfile
 from collections.abc import Awaitable, Callable, Collection
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -22,11 +24,15 @@ from .contracts import (
     MediaKitCloudMaterializedOutput,
     MediaKitCloudOutputPolicy,
     MediaKitCloudSourceContext,
+    MediaKitLocalMaterializationContext,
+    MediaKitLocalMaterializedOutput,
+    MediaKitLocalOutputPolicy,
 )
 from .router import MediaKitCapabilityRouter, MediaKitCommandError
 
 AddressResolver = Callable[[str], list]
-ArtifactQualityCheck = Callable[[Path, MediaKitCloudOutputPolicy, str | None], Awaitable[str]]
+MediaKitOutputPolicy = MediaKitCloudOutputPolicy | MediaKitLocalOutputPolicy
+ArtifactQualityCheck = Callable[[Path, MediaKitOutputPolicy, str | None], Awaitable[str]]
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _CONTENT_TYPE = re.compile(r"^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$")
@@ -153,6 +159,48 @@ def _read_private_text(path: Path) -> str | None:
         return path.read_text(encoding="utf-8")
     except OSError:
         raise MediaKitCommandError("MediaKit sealed result receipt is invalid") from None
+
+
+def _copy_regular_file(
+    source_path: Path,
+    target_path: Path,
+    *,
+    maximum_bytes: int,
+) -> tuple[str, int]:
+    """Copy one stable regular file into a private temporary path."""
+
+    before_sha256, before_size = _hash_regular_file(
+        source_path,
+        maximum_bytes=maximum_bytes,
+    )
+    if before_size == 0:
+        raise MediaKitCommandError("MediaKit local result was empty")
+    _private_directory(target_path.parent)
+    digest = hashlib.sha256()
+    size = 0
+    try:
+        source_stat = source_path.lstat()
+        if stat.S_ISLNK(source_stat.st_mode) or not stat.S_ISREG(source_stat.st_mode):
+            raise MediaKitCommandError("MediaKit local result is invalid")
+        with source_path.open("rb") as source, target_path.open("xb") as target:
+            while chunk := source.read(_DOWNLOAD_CHUNK_BYTES):
+                size += len(chunk)
+                if size > maximum_bytes:
+                    raise MediaKitCommandError("MediaKit local result exceeds its byte limit")
+                digest.update(chunk)
+                target.write(chunk)
+            target.flush()
+            os.fsync(target.fileno())
+        copied_sha256 = digest.hexdigest()
+        if copied_sha256 != before_sha256 or size != before_size:
+            raise MediaKitCommandError("MediaKit local result changed during materialization")
+        return copied_sha256, size
+    except MediaKitCommandError:
+        _unlink_quietly(target_path)
+        raise
+    except (FileExistsError, OSError):
+        _unlink_quietly(target_path)
+        raise MediaKitCommandError("MediaKit local result materialization failed") from None
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -333,6 +381,279 @@ class MediaKitTrustedSourceStore:
                 raise ValueError("trusted source content mismatch")
         except Exception:
             raise MediaKitCommandError("MediaKit source content verification failed") from None
+
+
+class MediaKitLocalResultMaterializer:
+    """Copy one allowlisted local CLI result into the private artifact store."""
+
+    def __init__(
+        self,
+        *,
+        root: str | Path,
+        policies: Collection[MediaKitLocalOutputPolicy],
+        quality_check: ArtifactQualityCheck,
+    ) -> None:
+        self._root = Path(root).expanduser().resolve()
+        self._quality_check = quality_check
+        self._policies: dict[tuple[str, str], MediaKitLocalOutputPolicy] = {}
+        for policy in policies:
+            key = (policy.capability_domain, policy.capability_tool)
+            if key in self._policies:
+                raise ValueError("MediaKit local output policies must be unique per capability")
+            self._policies[key] = policy
+        if not self._policies:
+            raise ValueError("MediaKit local output policies cannot be empty")
+
+    async def create_output_workspace(
+        self,
+        *,
+        user_id: str,
+        production_plan_artifact_id: str,
+        operation_id: str,
+    ) -> Path:
+        owner = _bounded_text(user_id, name="user_id", maximum=64)
+        plan = _bounded_text(
+            production_plan_artifact_id,
+            name="production_plan_artifact_id",
+            maximum=80,
+        )
+        operation = _bounded_text(operation_id, name="operation_id", maximum=128)
+        parent = self._root / "local-workspaces" / _sha256_text(owner) / _sha256_text(plan) / _sha256_text(operation)
+        await asyncio.to_thread(_private_directory, parent)
+        workspace = await asyncio.to_thread(
+            tempfile.mkdtemp,
+            prefix="attempt-",
+            dir=parent,
+        )
+        path = Path(workspace)
+        await asyncio.to_thread(path.chmod, 0o700)
+        return path
+
+    async def cleanup_output_workspace(self, workspace: Path) -> None:
+        try:
+            workspace_root = (self._root / "local-workspaces").resolve()
+            workspace_stat = await asyncio.to_thread(workspace.lstat)
+            resolved = await asyncio.to_thread(workspace.resolve)
+            if stat.S_ISLNK(workspace_stat.st_mode) or not stat.S_ISDIR(workspace_stat.st_mode):
+                raise ValueError("invalid workspace")
+            if not resolved.is_relative_to(workspace_root):
+                raise ValueError("workspace escaped its root")
+            await asyncio.to_thread(shutil.rmtree, resolved)
+        except FileNotFoundError:
+            return
+        except Exception:
+            raise MediaKitCommandError("MediaKit local output workspace cleanup failed") from None
+
+    def validate_operation(
+        self,
+        *,
+        capability_domain: str,
+        capability_tool: str,
+        output_field: str,
+        maximum_output_bytes: int,
+    ) -> MediaKitLocalOutputPolicy:
+        policy = self._policies.get((capability_domain, capability_tool))
+        if policy is None:
+            raise MediaKitCommandError("MediaKit local output capability is not enabled")
+        if policy.path_field != output_field:
+            raise MediaKitCommandError("MediaKit local output field is not enabled")
+        if maximum_output_bytes > policy.maximum_bytes:
+            raise MediaKitCommandError("MediaKit local result exceeds its configured byte limit")
+        return policy
+
+    def _operation_dir(self, context: MediaKitLocalMaterializationContext) -> Path:
+        return self._root / "local-results" / _sha256_text(context.user_id) / _sha256_text(context.production_plan_artifact_id) / _sha256_text(context.operation_id)
+
+    @staticmethod
+    def _receipt_identity(
+        context: MediaKitLocalMaterializationContext,
+    ) -> dict[str, object]:
+        return {
+            "contract_version": "mediakit-private-local-result-v1",
+            "project_id_sha256": _sha256_text(context.project_id),
+            "production_plan_artifact_id": context.production_plan_artifact_id,
+            "production_plan_content_sha256": context.production_plan_content_sha256,
+            "operation_id": context.operation_id,
+            "source_ref_sha256": _sha256_text(context.source_ref),
+            "source_content_sha256": context.source_content_sha256,
+            "capability_domain": context.capability_domain,
+            "capability_tool": context.capability_tool,
+            "capability_schema_sha256": context.capability_schema_sha256,
+            "request_sha256": context.request_sha256,
+            "output_field": context.output_field,
+            "maximum_output_bytes": context.maximum_output_bytes,
+        }
+
+    async def _reuse_receipt(
+        self,
+        context: MediaKitLocalMaterializationContext,
+        receipt_path: Path,
+    ) -> MediaKitLocalMaterializedOutput | None:
+        try:
+            payload = await asyncio.to_thread(_read_private_text, receipt_path)
+            if payload is None:
+                return None
+            record = json.loads(payload)
+            if not isinstance(record, dict):
+                raise ValueError("invalid receipt")
+            expected_identity = self._receipt_identity(context)
+            if any(record.get(key) != value for key, value in expected_identity.items()):
+                raise ValueError("receipt identity mismatch")
+            output = MediaKitLocalMaterializedOutput(
+                artifact_ref=record["artifact_ref"],
+                content_sha256=record["content_sha256"],
+                content_type=record["content_type"],
+                size_bytes=record["size_bytes"],
+                execution_output_sha256=record["execution_output_sha256"],
+                completed_at=datetime.fromisoformat(record["completed_at"]),
+            )
+            artifact_path = self._operation_dir(context) / f"{output.content_sha256}.media"
+            actual_sha256, actual_size = await asyncio.to_thread(
+                _hash_regular_file,
+                artifact_path,
+                maximum_bytes=context.maximum_output_bytes,
+            )
+            if actual_sha256 != output.content_sha256 or actual_size != output.size_bytes:
+                raise ValueError("sealed artifact changed")
+            return output
+        except Exception:
+            raise MediaKitCommandError("MediaKit sealed local result receipt is invalid") from None
+
+    def _resolve_output_path(
+        self,
+        context: MediaKitLocalMaterializationContext,
+        policy: MediaKitLocalOutputPolicy,
+        expected_output_root: Path,
+    ) -> Path:
+        raw_path = context.provider_output.get(policy.path_field)
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            raise MediaKitCommandError("MediaKit local result omitted its enabled output")
+        candidate = Path(raw_path).expanduser()
+        if not candidate.is_absolute():
+            raise MediaKitCommandError("MediaKit local output path is not allowed")
+        try:
+            stat_result = candidate.lstat()
+            if stat.S_ISLNK(stat_result.st_mode) or not stat.S_ISREG(stat_result.st_mode):
+                raise ValueError("not a regular file")
+            resolved = candidate.resolve(strict=True)
+        except (OSError, ValueError):
+            raise MediaKitCommandError("MediaKit local output path is not allowed") from None
+        try:
+            root_stat = expected_output_root.lstat()
+            expected_root = expected_output_root.resolve(strict=True)
+        except OSError:
+            raise MediaKitCommandError("MediaKit local output path is not allowed") from None
+        if stat.S_ISLNK(root_stat.st_mode) or not stat.S_ISDIR(root_stat.st_mode):
+            raise MediaKitCommandError("MediaKit local output path is not allowed")
+        if not expected_root.is_relative_to((self._root / "local-workspaces").resolve()):
+            raise MediaKitCommandError("MediaKit local output path is not allowed")
+        if not resolved.is_relative_to(expected_root):
+            raise MediaKitCommandError("MediaKit local output path is not allowed")
+        return resolved
+
+    async def __call__(
+        self,
+        context: MediaKitLocalMaterializationContext,
+        *,
+        expected_output_root: Path,
+    ) -> MediaKitLocalMaterializedOutput:
+        policy = self.validate_operation(
+            capability_domain=context.capability_domain,
+            capability_tool=context.capability_tool,
+            output_field=context.output_field,
+            maximum_output_bytes=context.maximum_output_bytes,
+        )
+        operation_dir = self._operation_dir(context)
+        await asyncio.to_thread(_private_directory, operation_dir)
+        receipt_path = operation_dir / "receipt.json"
+        reused = await self._reuse_receipt(context, receipt_path)
+        if reused is not None:
+            return reused
+
+        source_path = self._resolve_output_path(
+            context,
+            policy,
+            expected_output_root,
+        )
+        temporary_path = operation_dir / f".local-{os.urandom(12).hex()}.part"
+        try:
+            content_sha256, size_bytes = await asyncio.to_thread(
+                _copy_regular_file,
+                source_path,
+                temporary_path,
+                maximum_bytes=context.maximum_output_bytes,
+            )
+            try:
+                content_type = await self._quality_check(
+                    temporary_path,
+                    policy,
+                    None,
+                )
+            except Exception:
+                raise MediaKitCommandError("MediaKit local result quality check failed") from None
+            try:
+                normalized_content_type = _bounded_text(
+                    content_type,
+                    name="quality content_type",
+                    maximum=128,
+                ).casefold()
+            except ValueError:
+                raise MediaKitCommandError("MediaKit local result quality check returned an invalid content type") from None
+            if not _CONTENT_TYPE.fullmatch(normalized_content_type) or not normalized_content_type.startswith(f"{policy.media_kind}/"):
+                raise MediaKitCommandError("MediaKit local result quality check returned an invalid content type")
+
+            artifact_path = operation_dir / f"{content_sha256}.media"
+            if await asyncio.to_thread(artifact_path.exists):
+                actual_sha256, actual_size = await asyncio.to_thread(
+                    _hash_regular_file,
+                    artifact_path,
+                    maximum_bytes=context.maximum_output_bytes,
+                )
+                if actual_sha256 != content_sha256 or actual_size != size_bytes:
+                    raise MediaKitCommandError("MediaKit private local result store is inconsistent")
+                await asyncio.to_thread(_unlink_quietly, temporary_path)
+            else:
+                await asyncio.to_thread(os.chmod, temporary_path, 0o400)
+                await asyncio.to_thread(os.replace, temporary_path, artifact_path)
+
+            owner_token = _sha256_text(context.user_id)
+            plan_token = _sha256_text(context.production_plan_artifact_id)
+            operation_token = _sha256_text(context.operation_id)
+            artifact_ref = f"artifact://mediakit/{owner_token}/{plan_token}/{operation_token}/{content_sha256}"
+            output = MediaKitLocalMaterializedOutput(
+                artifact_ref=artifact_ref,
+                content_sha256=content_sha256,
+                content_type=normalized_content_type,
+                size_bytes=size_bytes,
+                execution_output_sha256=context.provider_output_sha256,
+                completed_at=context.executed_at,
+            )
+            record = {
+                **self._receipt_identity(context),
+                **output.as_result(),
+            }
+            encoded = json.dumps(
+                record,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+            sealed = await asyncio.to_thread(
+                _seal_private_json_once,
+                receipt_path,
+                encoded,
+            )
+            if sealed:
+                return output
+            winner = await self._reuse_receipt(context, receipt_path)
+            if winner is None:
+                raise MediaKitCommandError("MediaKit sealed local result receipt is invalid")
+            if winner.content_sha256 != output.content_sha256:
+                await asyncio.to_thread(_unlink_quietly, artifact_path)
+            return winner
+        finally:
+            await asyncio.to_thread(_unlink_quietly, temporary_path)
 
 
 @dataclass(frozen=True, slots=True, repr=False)
@@ -679,6 +1000,7 @@ __all__ = [
     "ArtifactQualityCheck",
     "MediaKitCloudResultMaterializer",
     "MediaKitDownloadedArtifact",
+    "MediaKitLocalResultMaterializer",
     "MediaKitSafeHttpDownloader",
     "MediaKitStagedSource",
     "MediaKitTrustedSourceStore",

@@ -4,8 +4,10 @@ import asyncio
 import hashlib
 import json
 import re
+import stat
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
@@ -233,6 +235,7 @@ class MediaKitCapabilityRouter:
         mode: ExecutionMode = "auto",
         arguments: Mapping[str, Any] | None = None,
         client_token: str | None = None,
+        output_path: str | Path | None = None,
     ) -> PreparedMediaKitCall:
         if mode not in {"auto", "local", "cloud"}:
             raise ValueError("unsupported MediaKit execution mode")
@@ -261,6 +264,20 @@ class MediaKitCapabilityRouter:
         if mode != "auto":
             command.append(f"--{mode}")
         command.extend((capability.domain, capability.tool))
+        if output_path is not None:
+            if mode != "local":
+                raise ValueError("MediaKit output_path is available only for local execution")
+            candidate = Path(output_path).expanduser()
+            if not candidate.is_absolute():
+                raise ValueError("MediaKit local output_path must be an absolute directory")
+            try:
+                output_stat = candidate.lstat()
+            except OSError:
+                raise ValueError("MediaKit local output_path must be an existing directory") from None
+            if stat.S_ISLNK(output_stat.st_mode) or not stat.S_ISDIR(output_stat.st_mode):
+                raise ValueError("MediaKit local output_path must be an existing directory")
+            resolved_output_path = str(candidate.resolve())
+            command.extend(("--output-path", resolved_output_path))
         command.extend(_flag_arguments("video_url", source.locator))
         for name, value in supplied.items():
             command.extend(_flag_arguments(name, value))

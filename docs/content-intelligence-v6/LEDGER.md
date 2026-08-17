@@ -1752,3 +1752,19 @@ FormatDecision、BaseDraft、MessagePlan 和最多八份已审阅 `user_material
 当前为 `implemented boundary`：没有真实 HLLM 权重服务、多 actor 聚合、覆盖率回执或已验收画像解释器，
 所以 HLLM 中间结果不进入 A68，也不是冷启动硬门。详见
 `audits/A74-audience-observation-and-hllm-boundary.md`。
+
+## A75 MediaKit 制作方案本地执行纵切
+
+2026-08-18 在 A69/A73 的精确 ProductionPlan 谱系之后，新增首条真实
+`ProductionPlan -> MediaKit -> MediaArtifact` 纵切。首版只允许本地 `editing/trim-video`，操作精确
+绑定方案动作、装配步骤、计划素材、动态 Schema 和裁剪参数；输入必须来自同项目、已授权且字节未变的
+`user_material`。
+
+每次执行使用服务端创建的独立私有输出目录。只有目录内的普通文件可被物化，之后再经双哈希、
+MediaKit 元信息质检、MIME 校验和内容寻址封存；命令、临时路径、权利引用和凭据不进入业务产物。
+相同操作重放复用第一份封存回执。聚焦回归 `51 passed`。
+
+真实烟测使用本机 `mediakit-cli 0.2.0` 将仓库演示 MP4 裁成一份 1 秒视频，得到 346,615 字节
+`video/mp4`，QC 通过，保存为 `artifact://`，临时工作目录已清空。当前状态为 `verified local vertical`：
+后端执行内核已通，但内容工具/Gateway/用户审阅入口、其他本地能力和云端真实验收仍待独立接线。详见
+`audits/A75-mediakit-production-plan-local-execution.md`。

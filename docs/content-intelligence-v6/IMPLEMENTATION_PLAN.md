@@ -75,9 +75,9 @@
 | 受众情报 | 第五版 E15/A38/A40 + 第六版 A74 | `observed contracts implemented; live connectors and HLLM aggregation pending` | 官方聚合画像可进入孵化；伪名 actor 行为与 HLLM 表征保持中间层 | 验收官方真实受众快照；再做多 actor 聚合、画像解释器和中文留出评测 |
 | MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata + trusted private I/O verified; live cloud disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图、精确批准、私有来源与受控物化 | 逐项登记结果策略并验收 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
-| 表现形式选择 | 第四版方法审计 | `contract + bounded runtime implemented; orchestration pending` | 薄 `FormatDecision` 绑定精确 MessagePlan 与 BaseDraft，不改写选题或正文 | 项目运行接线、真实模型资源匹配与素材方案 |
+| 表现形式选择 | 第四版方法审计 | `contract, bounded runtime, and selected-project orchestration implemented` | 薄 `FormatDecision` 绑定精确 MessagePlan 与 BaseDraft，不改写选题或正文 | 真实模型资源匹配、用户审阅与版本切换 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
-| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `local foundation + exact approval + trusted I/O implemented; production pending` | 经统一路由执行已批准制作任务 | 本地编辑产物、批准入口、可核验云费用上限与首个真实云能力 |
+| MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `first local trim vertical verified; high-level orchestration and broader capabilities pending` | 经统一路由执行精确绑定 ProductionPlan 的制作操作 | 内容工具/Gateway 入口、更多本地能力与首个真实云能力 |
 | 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
 | 审批与发布状态机 | 第四版发布可靠性代码 | `reviewed` | 薄迁移幂等、恢复和未知对账 | 错账号、审批过期、内容变更、崩溃与重放 |
 | 发布回执 | 第四版 repository/API | `reviewed; old implementation exists` | 重写最小不可变回执，不迁旧领域包 | 第一方作品 ID、公开链接和未知结果 |
@@ -211,7 +211,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 ### W03 孵化与单条内容产物谱系
 
-状态：`implemented through ProductionPlan; MediaKit execution and user review UI pending`
+状态：`implemented through ProductionPlan; first local MediaKit executor verified; high-level execution and user review UI pending`
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
 地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
@@ -306,8 +306,9 @@ AdaptedDraft。表现形式只读取本条内容与已审阅用户素材，适�
 
 前置合同已实现：`MediaKitCapabilityRouter` 动态读取版本和 Schema，
 `EphemeralMediaSource` 与 `MediaSourceReceipt` 分离执行定位符和持久回执。
-本地执行、模拟云生命周期、精确批准、私有来源和视频结果物化已经接通，但这不等于 W04 已具备生产制作能力；
-生产任务接线、非视频结果策略和真实云回执仍待验收；供应商本身不提供单任务费用硬上限。
+本地执行、模拟云生命周期、精确批准、私有来源和视频结果物化已经接通。A75 又完成了首条真实
+`ProductionPlan -> editing/trim-video -> MediaArtifact` 纵切；这仍不等于 W04 已完成全部制作能力，
+高层入口、其他本地工具、非视频结果策略和真实云回执仍待验收；供应商本身不提供单任务费用硬上限。
 
 2026-08-17 第一执行切片：本地文件现可通过动态能力路由真实执行
 `probe-video-metadata`。执行前后双哈希防止输入替换，CLI 原始 JSON 先经 Output Schema 再经
@@ -371,6 +372,12 @@ MediaKit 版本与 `enhance-video` Schema，漂移即失败。报价只封存可
 改按精确操作摘要确定身份，使同一操作的多个报价产物也只会签发一对凭证。默认配置、Helm 示例和
 配置版本已同步；前端素材选择、任务创建和真实云验收继续暂停。详见
 `audits/A57-mediakit-server-quote-preparation.md`。
+
+2026-08-18 第十执行切片：新增只允许 `editing/trim-video` 的薄本地生产操作。它精确绑定
+ProductionPlan 的动作、装配步骤和素材，执行前复核授权来源与字节哈希，强制 CLI 写入每次独立的
+私有目录，再经路径约束、双哈希、元信息质检和内容寻址封存为 MediaArtifact。同一操作重放复用首份
+回执。聚焦回归 `51 passed`，本机 `mediakit-cli 0.2.0` 真实视频烟测通过。高层调用入口和其他媒体
+能力仍待逐项接线。详见 `audits/A75-mediakit-production-plan-local-execution.md`。
 
 首批验收：
 
@@ -483,3 +490,8 @@ AdaptedDraft`，并将结果分栏呈现；内部附加正文不进入公开持�
 
 2026-08-18 A73 已把 ProductionPlan 接入选中项目的真实内容运行并展示可审查制作方案，联合回归
 `126 passed`。下一断点只负责将已封存计划路由到 MediaKit 并生成 MediaArtifact，不重开内容判断。
+
+2026-08-18 A75 已完成首条真实本地制作纵切：精确 ProductionPlan 操作经
+`editing/trim-video` 产生通过 QC 的内容寻址 MediaArtifact，模拟回归与本机真实 CLI 烟测均通过。
+下一断点是把该执行内核接到 owner/project 作用域的高层入口并保存产物；在此之前不扩展发布尾段，
+也不把自然语言 ProductionPlan 自动猜成媒体参数。

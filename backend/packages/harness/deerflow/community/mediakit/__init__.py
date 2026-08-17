@@ -15,6 +15,9 @@ from deerflow.community.mediakit.contracts import (
     MediaKitCloudSourceContext,
     MediaKitCloudSubmissionResult,
     MediaKitExecutionResult,
+    MediaKitLocalMaterializationContext,
+    MediaKitLocalMaterializedOutput,
+    MediaKitLocalOutputPolicy,
     PreparedMediaKitCall,
 )
 from deerflow.community.mediakit.driver import MediaKitCloudDriver, mediakit_cloud_operation_sha256
@@ -35,6 +38,7 @@ from deerflow.community.mediakit.router import (
 from deerflow.community.mediakit.trusted_io import (
     MediaKitCloudResultMaterializer,
     MediaKitDownloadedArtifact,
+    MediaKitLocalResultMaterializer,
     MediaKitSafeHttpDownloader,
     MediaKitStagedSource,
     MediaKitTrustedSourceStore,
@@ -61,6 +65,10 @@ __all__ = [
     "MediaKitCloudSubmissionResult",
     "MediaKitCommandError",
     "MediaKitExecutionResult",
+    "MediaKitLocalMaterializationContext",
+    "MediaKitLocalMaterializedOutput",
+    "MediaKitLocalOutputPolicy",
+    "MediaKitLocalResultMaterializer",
     "MediaKitEnhanceVideoPreflight",
     "MediaKitEnhanceVideoQuoteService",
     "MediaKitFeeQuote",

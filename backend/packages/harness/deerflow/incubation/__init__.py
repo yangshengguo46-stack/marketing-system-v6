@@ -113,10 +113,16 @@ from deerflow.incubation.media_artifact import (
     MediaArtifactDraft,
     MediaArtifactStage,
     MediaInputBinding,
+    MediaProductionBinding,
     MediaQCCheck,
     MediaQCCheckStatus,
     MediaQCSummary,
+    build_media_production_binding,
     seal_media_artifact,
+)
+from deerflow.incubation.media_execution import (
+    MediaKitLocalProductionOperation,
+    execute_local_media_operation,
 )
 from deerflow.incubation.production_plan import (
     AssemblyStep,
@@ -251,6 +257,8 @@ __all__ = [
     "MediaArtifactDraft",
     "MediaArtifactStage",
     "MediaInputBinding",
+    "MediaKitLocalProductionOperation",
+    "MediaProductionBinding",
     "MediaObservationSnapshot",
     "MediaQCCheck",
     "MediaQCCheckStatus",
@@ -296,6 +304,7 @@ __all__ = [
     "VideoMetadataObservation",
     "SourceExcerptAnchor",
     "seal_content_world_version",
+    "build_media_production_binding",
     "build_hllm_inference_request",
     "pseudonymize_audience_actor",
     "seal_content_run_artifacts",
@@ -316,6 +325,7 @@ __all__ = [
     "generate_adapted_draft",
     "generate_format_decision",
     "generate_production_plan",
+    "execute_local_media_operation",
     "seal_adapted_draft",
     "validate_production_plan_parents",
 ]

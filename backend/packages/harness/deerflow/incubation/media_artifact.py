@@ -112,12 +112,45 @@ class MediaInputBinding(IncubationContract):
         return _validate_sha256(value, name="input media_sha256")
 
 
+class MediaProductionBinding(IncubationContract):
+    operation_id: NonEmptyStr = Field(max_length=128)
+    production_action_ids: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=32)
+    assembly_step_ids: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=32)
+    plan_asset_ids: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=32)
+    capability_domain: NonEmptyStr = Field(max_length=64)
+    capability_tool: NonEmptyStr = Field(max_length=64)
+    expected_schema_sha256: NonEmptyStr
+    arguments_sha256: NonEmptyStr
+    operation_sha256: NonEmptyStr
+
+    @field_validator(
+        "production_action_ids",
+        "assembly_step_ids",
+        "plan_asset_ids",
+    )
+    @classmethod
+    def canonicalize_ids(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if len(set(value)) != len(value):
+            raise ValueError("media production binding IDs must be unique")
+        return tuple(sorted(value))
+
+    @field_validator(
+        "expected_schema_sha256",
+        "arguments_sha256",
+        "operation_sha256",
+    )
+    @classmethod
+    def validate_hashes(cls, value: str, info) -> str:
+        return _validate_sha256(value, name=info.field_name)
+
+
 class MediaArtifact(MediaArtifactDraft):
     content_sha256: NonEmptyStr
     production_plan_ref: ArtifactParentRef
     input_assets: tuple[MediaInputBinding, ...] = ()
     input_set_sha256: NonEmptyStr
     execution: MediaKitExecutionReceipt
+    production_binding: MediaProductionBinding | None = None
 
     @field_validator("content_sha256", "input_set_sha256")
     @classmethod
@@ -142,6 +175,50 @@ class MediaArtifact(MediaArtifactDraft):
         return self
 
 
+def _validate_production_binding(
+    *,
+    binding: MediaProductionBinding,
+    plan: ProductionPlan,
+    production_plan_ref: ArtifactParentRef,
+    input_bindings: tuple[MediaInputBinding, ...],
+    execution: MediaKitExecutionReceipt,
+) -> None:
+    action_by_id = {action.action_id: action for action in plan.production_actions}
+    step_by_id = {step.step_id: step for step in plan.assembly_steps}
+    known_asset_ids = {asset.asset_id for asset in plan.asset_requirements}
+    if not set(binding.production_action_ids).issubset(action_by_id):
+        raise ValueError("media production binding references an unknown production action")
+    if not set(binding.assembly_step_ids).issubset(step_by_id):
+        raise ValueError("media production binding references an unknown assembly step")
+    if not set(binding.plan_asset_ids).issubset(known_asset_ids):
+        raise ValueError("media production binding references an unknown plan asset")
+    selected_assets = set(binding.plan_asset_ids)
+    if any(not selected_assets.intersection(action_by_id[action_id].asset_ids) for action_id in binding.production_action_ids):
+        raise ValueError("media production action does not use a bound plan asset")
+    if any(not selected_assets.intersection(step_by_id[step_id].input_asset_ids) for step_id in binding.assembly_step_ids):
+        raise ValueError("media assembly step does not use a bound plan asset")
+    if execution.capability_domain != binding.capability_domain or execution.capability_tool != binding.capability_tool:
+        raise ValueError("media execution capability does not match its production binding")
+    if execution.schema_sha256 != binding.expected_schema_sha256:
+        raise ValueError("media execution schema does not match its production binding")
+    expected_operation_sha256 = _canonical_sha256(
+        {
+            "operation_id": binding.operation_id,
+            "production_plan_ref": production_plan_ref.model_dump(mode="json"),
+            "production_action_ids": binding.production_action_ids,
+            "assembly_step_ids": binding.assembly_step_ids,
+            "plan_asset_ids": binding.plan_asset_ids,
+            "capability_domain": binding.capability_domain,
+            "capability_tool": binding.capability_tool,
+            "expected_schema_sha256": binding.expected_schema_sha256,
+            "arguments_sha256": binding.arguments_sha256,
+            "input_assets": [item.model_dump(mode="json") for item in input_bindings],
+        }
+    )
+    if binding.operation_sha256 != expected_operation_sha256:
+        raise ValueError("media production operation hash does not match its exact binding")
+
+
 def _input_media_sha256(artifact: ArtifactEnvelope) -> str:
     if artifact.artifact_type == "media_observation":
         observation = MediaObservationSnapshot.model_validate(artifact.payload)
@@ -154,6 +231,54 @@ def _input_media_sha256(artifact: ArtifactEnvelope) -> str:
     raise ValueError("media input must be a media_observation or media_artifact")
 
 
+def build_media_production_binding(
+    *,
+    production_plan_artifact: ArtifactEnvelope,
+    operation_id: str,
+    production_action_ids: tuple[str, ...],
+    assembly_step_ids: tuple[str, ...],
+    plan_asset_ids: tuple[str, ...],
+    capability_domain: str,
+    capability_tool: str,
+    expected_schema_sha256: str,
+    arguments_sha256: str,
+    input_asset_artifacts: tuple[ArtifactEnvelope, ...],
+) -> MediaProductionBinding:
+    input_bindings = tuple(
+        sorted(
+            (
+                MediaInputBinding(
+                    artifact_ref=artifact.to_parent_ref(),
+                    media_sha256=_input_media_sha256(artifact),
+                )
+                for artifact in input_asset_artifacts
+            ),
+            key=lambda item: item.artifact_ref.artifact_id,
+        )
+    )
+    values = {
+        "operation_id": operation_id,
+        "production_action_ids": tuple(sorted(production_action_ids)),
+        "assembly_step_ids": tuple(sorted(assembly_step_ids)),
+        "plan_asset_ids": tuple(sorted(plan_asset_ids)),
+        "capability_domain": capability_domain,
+        "capability_tool": capability_tool,
+        "expected_schema_sha256": expected_schema_sha256,
+        "arguments_sha256": arguments_sha256,
+    }
+    operation_sha256 = _canonical_sha256(
+        {
+            **values,
+            "production_plan_ref": production_plan_artifact.to_parent_ref().model_dump(mode="json"),
+            "input_assets": [item.model_dump(mode="json") for item in input_bindings],
+        }
+    )
+    return MediaProductionBinding(
+        **values,
+        operation_sha256=operation_sha256,
+    )
+
+
 def seal_media_artifact(
     *,
     project: ProjectRef,
@@ -163,6 +288,7 @@ def seal_media_artifact(
     source_thread_id: str,
     source_run_id: str,
     input_asset_artifacts: tuple[ArtifactEnvelope, ...] = (),
+    production_binding: MediaProductionBinding | None = None,
 ) -> ArtifactEnvelope:
     """Seal a produced media receipt without exposing execution-only locators."""
 
@@ -212,6 +338,16 @@ def seal_media_artifact(
     elif execution.source_content_sha256 is not None:
         raise ValueError("execution source content hash requires an exact input asset")
 
+    if production_binding is not None:
+        production_binding = MediaProductionBinding.model_validate(production_binding.model_dump(mode="python"))
+        _validate_production_binding(
+            binding=production_binding,
+            plan=plan,
+            production_plan_ref=production_plan_artifact.to_parent_ref(),
+            input_bindings=canonical_inputs,
+            execution=execution,
+        )
+
     artifact = MediaArtifact(
         **draft.model_dump(),
         content_sha256=plan.adapted_body_sha256,
@@ -219,6 +355,7 @@ def seal_media_artifact(
         input_assets=canonical_inputs,
         input_set_sha256=_canonical_sha256([item.model_dump(mode="json") for item in canonical_inputs]),
         execution=execution,
+        production_binding=production_binding,
     )
     return ArtifactEnvelope.seal(
         project=project,
@@ -240,8 +377,10 @@ __all__ = [
     "MediaArtifactDraft",
     "MediaArtifactStage",
     "MediaInputBinding",
+    "MediaProductionBinding",
     "MediaQCCheck",
     "MediaQCCheckStatus",
     "MediaQCSummary",
+    "build_media_production_binding",
     "seal_media_artifact",
 ]

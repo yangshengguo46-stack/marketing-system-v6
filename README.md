@@ -868,8 +868,10 @@ requirements, capture/record/layout actions, and assembly order. It accepts at m
 same-project user materials already reviewed by the exact format decision. Missing material
 can keep the plan provisional; the runtime cannot reopen the topic or add facts, sales,
 platform, publishing, approval, cadence, duration, or quota decisions. The resulting
-plan is stored and rendered after the adapted draft. MediaKit execution remains a separate
-acceptance step.
+plan is stored and rendered after the adapted draft. A first local execution vertical can now
+bind an exact ready-plan action, assembly step, reviewed user material, dynamic CLI Schema, and
+`trim-video` arguments to a resulting `MediaArtifact`. It is a backend execution boundary, not
+yet a user-facing content-tool or Gateway action.
 
 Content-world research now reaches official Douyin video search only through the
 configured `douyin_search` MCP domain. It discovers the current Manifest, calls the exact
@@ -885,8 +887,13 @@ Git, logs, artifacts, or model context.
 MediaKit local execution now runs through the same V6 provenance boundary. A local video is
 hashed before and after execution, the current CLI output is checked against both its dynamic
 schema and a narrow capability-specific observation contract, and the resulting artifact
-inherits its source evidence role without persisting the command, URL, or local path. The task
-runtime now durably records an idempotent submission intent before any remote call and binds the
+inherits its source evidence role without persisting the command, URL, or local path. The local
+production path also has one verified slice: `editing/trim-video` accepts only an exact
+ProductionPlan-bound operation, re-verifies the authorized source bytes, forces each attempt into
+its own private output directory, quality-checks the copied result, and seals the first successful
+content-addressed receipt as a `MediaArtifact`. Replays converge on that receipt. Other local tools
+and the user-facing execution entry remain pending. The task runtime now durably records an
+idempotent submission intent before any remote call and binds the
 remote handle under a lease afterward. An isolated MediaKit cloud driver now passes mocked,
 no-fee submission, restart recovery, status normalization, redaction, and artifact-materialization
 tests. Trusted source/output I/O is implemented, and the first reviewed `enhance-video` preflight

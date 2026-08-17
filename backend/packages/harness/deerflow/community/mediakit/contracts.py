@@ -176,6 +176,127 @@ class MediaKitCloudOutputPolicy:
             raise ValueError("maximum_bytes must be a positive integer")
 
 
+@dataclass(frozen=True, slots=True)
+class MediaKitLocalOutputPolicy:
+    capability_domain: str
+    capability_tool: str
+    path_field: Literal["video_url", "audio_url"]
+    media_kind: Literal["video", "audio"]
+    maximum_bytes: int
+
+    def __post_init__(self) -> None:
+        for name in ("capability_domain", "capability_tool"):
+            object.__setattr__(
+                self,
+                name,
+                _bounded_text(getattr(self, name), name=name, maximum=64),
+            )
+        expected_kind = self.path_field.removesuffix("_url")
+        if self.media_kind != expected_kind:
+            raise ValueError("path_field and media_kind must agree")
+        if not isinstance(self.maximum_bytes, int) or isinstance(self.maximum_bytes, bool) or self.maximum_bytes <= 0:
+            raise ValueError("maximum_bytes must be a positive integer")
+
+
+@dataclass(frozen=True, slots=True, repr=False)
+class MediaKitLocalMaterializationContext:
+    operation_id: str
+    user_id: str
+    project_id: str
+    production_plan_artifact_id: str
+    production_plan_content_sha256: str
+    source_ref: str
+    source_content_sha256: str
+    capability_domain: str
+    capability_tool: str
+    capability_schema_sha256: str
+    request_sha256: str
+    output_field: Literal["video_url", "audio_url"]
+    maximum_output_bytes: int
+    provider_output: Mapping[str, Any] = field(repr=False)
+    provider_output_sha256: str
+    executed_at: datetime
+
+    def __post_init__(self) -> None:
+        for name, maximum in (
+            ("operation_id", 128),
+            ("user_id", 64),
+            ("project_id", 64),
+            ("production_plan_artifact_id", 80),
+            ("source_ref", 255),
+            ("capability_domain", 64),
+            ("capability_tool", 64),
+        ):
+            object.__setattr__(
+                self,
+                name,
+                _bounded_text(getattr(self, name), name=name, maximum=maximum),
+            )
+        for name in (
+            "production_plan_content_sha256",
+            "source_content_sha256",
+            "capability_schema_sha256",
+            "request_sha256",
+            "provider_output_sha256",
+        ):
+            if not _SHA256.fullmatch(getattr(self, name)):
+                raise ValueError(f"{name} must be a SHA-256 digest")
+        if not isinstance(self.maximum_output_bytes, int) or isinstance(self.maximum_output_bytes, bool) or self.maximum_output_bytes <= 0:
+            raise ValueError("maximum_output_bytes must be a positive integer")
+        if self.executed_at.tzinfo is None or self.executed_at.utcoffset() is None:
+            raise ValueError("executed_at must be timezone-aware")
+
+    def __repr__(self) -> str:
+        return (
+            "MediaKitLocalMaterializationContext("
+            f"operation_id={self.operation_id!r}, source_ref={self.source_ref!r}, "
+            f"capability={self.capability_domain!r}/{self.capability_tool!r}, "
+            f"provider_output_sha256={self.provider_output_sha256!r}, provider_output='<redacted>')"
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class MediaKitLocalMaterializedOutput:
+    artifact_ref: str
+    content_sha256: str
+    content_type: str
+    size_bytes: int
+    execution_output_sha256: str
+    completed_at: datetime
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "artifact_ref",
+            _bounded_text(self.artifact_ref, name="artifact_ref", maximum=1024),
+        )
+        if not _ARTIFACT_REFERENCE.fullmatch(self.artifact_ref):
+            raise ValueError("artifact reference must be a stable internal artifact:// reference")
+        object.__setattr__(
+            self,
+            "content_type",
+            _bounded_text(self.content_type, name="content_type", maximum=128),
+        )
+        if not _SHA256.fullmatch(self.content_sha256):
+            raise ValueError("content_sha256 must be a SHA-256 digest")
+        if not _SHA256.fullmatch(self.execution_output_sha256):
+            raise ValueError("execution_output_sha256 must be a SHA-256 digest")
+        if not isinstance(self.size_bytes, int) or isinstance(self.size_bytes, bool) or self.size_bytes <= 0:
+            raise ValueError("size_bytes must be a positive integer")
+        if self.completed_at.tzinfo is None or self.completed_at.utcoffset() is None:
+            raise ValueError("completed_at must be timezone-aware")
+
+    def as_result(self) -> dict[str, Any]:
+        return {
+            "artifact_ref": self.artifact_ref,
+            "content_sha256": self.content_sha256,
+            "content_type": self.content_type,
+            "size_bytes": self.size_bytes,
+            "execution_output_sha256": self.execution_output_sha256,
+            "completed_at": self.completed_at.isoformat(),
+        }
+
+
 @dataclass(frozen=True, slots=True, repr=False)
 class MediaKitCloudMaterializationContext:
     local_task_id: str
@@ -259,5 +380,8 @@ __all__ = [
     "MediaKitCloudSourceContext",
     "MediaKitCloudSubmissionResult",
     "MediaKitExecutionResult",
+    "MediaKitLocalMaterializationContext",
+    "MediaKitLocalMaterializedOutput",
+    "MediaKitLocalOutputPolicy",
     "PreparedMediaKitCall",
 ]
