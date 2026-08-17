@@ -20,6 +20,14 @@ from deerflow.content_intelligence import (
     synthesize_shooting_delivery,
 )
 from deerflow.content_intelligence.delivery import SHOOTING_DELIVERY_SYSTEM_PROMPT
+from deerflow.incubation import (
+    AccountPresentationPlan,
+    AudienceHypothesis,
+    IncubationJudgment,
+    MonetizationHypothesis,
+    PersonaDecision,
+    PositioningDecision,
+)
 
 
 class StructuredDeliveryFakeModel:
@@ -127,6 +135,42 @@ def _message_plan_payload() -> dict[str, Any]:
     }
 
 
+def _incubation_judgment(bundle: ContentIntelligenceBundle) -> IncubationJudgment:
+    assert bundle.content_world is not None
+    return IncubationJudgment(
+        content_map_version_id=bundle.content_world.content_map_version_id(),
+        positioning=PositioningDecision(
+            decision="从酒桌中的具体人物和事情理解地方礼俗",
+            audience_promise="让观众借一张具体饭桌看懂关系如何被表达",
+            rationale="它与冻结内容根一致。",
+        ),
+        audience=AudienceHypothesis(
+            people="对地方生活、人际往来和酒桌现象好奇的观众",
+            recurring_interest="具体场合中的关系表达",
+            why_return="每次都从一件具体事情得到新的关系解释",
+            rationale="这是待真实反馈校正的受众假设。",
+        ),
+        persona=PersonaDecision(
+            account_role="观察日常酒桌与地方人情的经营者",
+            trust_basis=("用户只声明自己卖白酒。",),
+            boundaries=("不冒充民俗学者。",),
+            rationale="只使用用户原话允许的经营者立场。",
+        ),
+        presentation=AccountPresentationPlan(
+            primary_forms=("围绕具体人物和事件展开",),
+            rationale="账号级表达应服务长期观察方法。",
+        ),
+        monetization=(
+            MonetizationHypothesis(
+                path="通过长期信任承接白酒购买需求",
+                trust_required="观众认可账号懂酒桌与人情",
+                rationale="只是一条待验证商业假设。",
+            ),
+        ),
+        unknowns=("尚未确认用户是否愿意出镜。",),
+    )
+
+
 @pytest.mark.asyncio
 async def test_topic_brief_becomes_a_concrete_shooting_delivery_from_the_users_position() -> None:
     bundle = _evidence_bound_bundle()
@@ -163,6 +207,28 @@ async def test_topic_brief_becomes_a_concrete_shooting_delivery_from_the_users_p
     assert "business_semantics" not in prompt_input
     assert "map_dimensions" not in prompt_input
     assert "A bounded public record" not in prompt_input
+
+
+@pytest.mark.asyncio
+async def test_incubation_judgment_guides_position_and_audience_without_leaking_monetization() -> None:
+    bundle = _evidence_bound_bundle()
+    model = StructuredDeliveryFakeModel(_message_plan_payload())
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="我是卖白酒的，该怎么起号？",
+        model=model,
+        incubation_judgment=_incubation_judgment(bundle),
+    )
+
+    assert delivery is not None
+    prompt_input = model.message_batches[0][1].content
+    assert "从酒桌中的具体人物和事情理解地方礼俗" in prompt_input
+    assert "对地方生活、人际往来和酒桌现象好奇的观众" in prompt_input
+    assert "观察日常酒桌与地方人情的经营者" in prompt_input
+    assert "尚未确认用户是否愿意出镜" in prompt_input
+    assert "通过长期信任承接白酒购买需求" not in prompt_input
+    assert "monetization" not in prompt_input.casefold()
 
 
 @pytest.mark.asyncio

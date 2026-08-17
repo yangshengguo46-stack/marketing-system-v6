@@ -14,6 +14,7 @@ from deerflow.content_intelligence.contracts import (
     ContractModel,
     NonEmptyStr,
 )
+from deerflow.incubation.judgment import IncubationJudgment
 
 MessageBeats = Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
 
@@ -143,6 +144,8 @@ SHOOTING_DELIVERY_SYSTEM_PROMPT = """<content_intelligence_delivery>
 - context 描述内容世界里的时间、地点、场合或处境，只在它真正影响这件事时填写；不得填写来源名称、资料年代、检索过程，也不得为了对称强行补齐。
 - concrete_event_or_question 必须是一件可讲清的事、一个可回答的具体问题或一个可观察的行为，不得使用“品类与文化”、“某物的多元价值”一类宽泛方向。
 - account_position 只能由用户原话支持。可以使用从业者、经营者或当事人的观察视角，但不得补造年限、客户案例、业绩、资质或专业能力，不得冒充用户没有声明的身份。
+- 输入若包含孵化判断，可以用其中的定位、受众和人设假设校准观察立场与解释重点；这些仍是假设，不是事实，不得更换选题、补造素材或写入新的事实断言。
+- 账号级表现形式只描述长期可持续的表达方向，不能在这里强迫本条采用口播、短剧、图文或出镜；本层仍输出形式无关的基础文案。
 - 用户身份只决定观察角度，不要求把用户的店铺、职业或商品写进正文；不得冒充医生、律师、历史学者或其他身份。
 - point_of_view 必须是一句可被辩认的明确判断，但不得超出 TopicBrief 的中心判断、机制、反面边界和已读证据。用户立场只决定观察角度，不能替代事实证据。
 - entry_point 必须说明从哪个具体事实、人物、物件、场面或问题切入；选择一个主入口，让观众立刻进入这条内容，不要把多个来源和背景资料并列成目录。
@@ -169,6 +172,7 @@ async def synthesize_shooting_delivery(
     user_request: str,
     model: Any,
     runnable_config: dict[str, Any] | None = None,
+    incubation_judgment: IncubationJudgment | None = None,
 ) -> ShootingDelivery | None:
     """Translate one evidence-bound topic into a concrete, format-neutral delivery."""
 
@@ -176,13 +180,21 @@ async def synthesize_shooting_delivery(
     world = bundle.content_world
     if topic is None or world is None or world.content_root is None:
         return None
+    if incubation_judgment is not None and incubation_judgment.content_map_version_id != world.content_map_version_id():
+        raise ValueError("incubation judgment must match the frozen content world")
 
     draft = await _invoke_structured(
         model,
         MessagePlanDraft,
         (
             SystemMessage(content=SHOOTING_DELIVERY_SYSTEM_PROMPT),
-            HumanMessage(content=_render_delivery_input(bundle, user_request=user_request)),
+            HumanMessage(
+                content=_render_delivery_input(
+                    bundle,
+                    user_request=user_request,
+                    incubation_judgment=incubation_judgment,
+                )
+            ),
         ),
         runnable_config=runnable_config,
         include_raw=True,
@@ -191,7 +203,12 @@ async def synthesize_shooting_delivery(
     return draft.bind(bundle=bundle, account_position_basis=user_request)
 
 
-def _render_delivery_input(bundle: ContentIntelligenceBundle, *, user_request: str) -> str:
+def _render_delivery_input(
+    bundle: ContentIntelligenceBundle,
+    *,
+    user_request: str,
+    incubation_judgment: IncubationJudgment | None = None,
+) -> str:
     topic = bundle.topic_brief
     world = bundle.content_world
     assert topic is not None and world is not None and world.content_root is not None
@@ -249,8 +266,24 @@ def _render_delivery_input(bundle: ContentIntelligenceBundle, *, user_request: s
             for source_id in source_ids
             if (source := sources_by_id.get(source_id)) is not None
         ],
+        "孵化判断": (_delivery_judgment_projection(incubation_judgment) if incubation_judgment is not None else None),
     }
     return "--- BEGIN SHOOTING DELIVERY INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SHOOTING DELIVERY INPUT ---"
+
+
+def _delivery_judgment_projection(
+    judgment: IncubationJudgment,
+) -> dict[str, object]:
+    """Expose editorial hypotheses while keeping monetization out of the draft layer."""
+
+    return {
+        "定位": (judgment.positioning.model_dump(mode="json") if judgment.positioning is not None else None),
+        "受众假设": (judgment.audience.model_dump(mode="json") if judgment.audience is not None else None),
+        "人设判断": (judgment.persona.model_dump(mode="json") if judgment.persona is not None else None),
+        "账号级表达方向": (judgment.presentation.model_dump(mode="json") if judgment.presentation is not None else None),
+        "未知": judgment.unknowns,
+        "备选": judgment.alternatives,
+    }
 
 
 def render_shooting_delivery(

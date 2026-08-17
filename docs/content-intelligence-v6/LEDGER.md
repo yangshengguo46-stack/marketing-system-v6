@@ -1650,3 +1650,14 @@ TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和�
 
 最小简报、领域合同和孵化判断联合回归 `21 passed`。当前是可接线零件，尚未由内容工具调用、读取项目
 证据或自动持久化。详见 `audits/A65-minimal-incubation-brief-runtime.md`。
+
+## A66 孵化判断进入内容交付的边界
+
+2026-08-18 将已封存的孵化判断接到 `MessagePlan` 生成边界。内容交付只读取定位、受众假设、人设、
+账号级表达方向、未知与备选；变现假设明确不进入 TopicBrief 或 BaseDraft。判断只能校准账号立场与
+解释重点，不能重选内容根、选题、事实或单条表现形式。
+
+当判断实际参与交付时，`message_plan` 同时绑定精确 `topic_brief + incubation_judgment`；选题仍只
+绑定阅读和冻结地图。不同项目、错误类型、不同地图版本或没有交付的判断均在封存前拒绝。聚焦回归
+`25 passed`。内容工具自动构造、项目证据读取、持久化和表现形式主链接线仍在进行。详见
+`audits/A66-incubation-judgment-to-delivery-lineage.md`。

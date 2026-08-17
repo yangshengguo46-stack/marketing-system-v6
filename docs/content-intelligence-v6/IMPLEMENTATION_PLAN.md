@@ -256,6 +256,11 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 猜测。联合回归 `21 passed`。内容工具调用、项目持久化和 Brief 后续更新仍待接线。详见
 `audits/A65-minimal-incubation-brief-runtime.md`。
 
+2026-08-18 第八切片回执：孵化判断可以有界进入内容交付，只投影定位、受众、人设和账号级表达
+方向，不把变现写进基础稿。实际使用后 `MessagePlan` 绑定精确判断父级，TopicBrief 仍保持阅读与
+地图边界。聚焦回归 `25 passed`；内容工具自动创建判断与后续形式适配仍待接线。详见
+`audits/A66-incubation-judgment-to-delivery-lineage.md`。
+
 ### W04 MediaKit 制作路由
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的

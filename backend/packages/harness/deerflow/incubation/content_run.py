@@ -57,12 +57,22 @@ def seal_content_run_artifacts(
     source_thread_id: str,
     source_run_id: str,
     reading_parents: tuple[ArtifactParentRef, ...] = (),
+    incubation_judgment_artifact: ArtifactEnvelope | None = None,
 ) -> ContentRunArtifactSet:
     """Seal one content-intelligence run without changing its judgments."""
 
     world = bundle.content_world
     if world is None or world.content_root is None:
         raise ValueError("content run persistence requires a frozen content world")
+    if incubation_judgment_artifact is not None:
+        if delivery is None:
+            raise ValueError("incubation judgment lineage requires a shooting delivery")
+        if incubation_judgment_artifact.project != project:
+            raise ValueError("incubation judgment project must match content run project")
+        if incubation_judgment_artifact.artifact_type != "incubation_judgment":
+            raise ValueError("incubation judgment parent has the wrong artifact type")
+        if incubation_judgment_artifact.payload.get("content_map_version_id") != world.content_map_version_id():
+            raise ValueError("incubation judgment content world version must match the frozen content world")
 
     record_payload = bundle.record.model_dump(mode="json")
     for source in record_payload["sources"]:
@@ -127,7 +137,10 @@ def seal_content_run_artifacts(
             artifact_type="message_plan",
             version=1,
             payload=delivery.message_plan.model_dump(mode="json"),
-            parents=(topic_artifact.to_parent_ref(),),
+            parents=(
+                topic_artifact.to_parent_ref(),
+                *((incubation_judgment_artifact.to_parent_ref(),) if incubation_judgment_artifact is not None else ()),
+            ),
             created_at=created_at,
             source_thread_id=source_thread_id,
             source_run_id=source_run_id,

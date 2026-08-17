@@ -201,6 +201,7 @@ flowchart LR
 selected topic_evidence -> content_reading
 content_reading + content_world
                 -> topic_brief
+topic_brief + optional incubation_judgment
                 -> message_plan
                 -> draft_version
                 -> format_decision

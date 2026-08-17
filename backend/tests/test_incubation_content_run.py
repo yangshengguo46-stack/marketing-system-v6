@@ -1,5 +1,7 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from deerflow.content_intelligence import (
     BaseDraft,
     BasisRef,
@@ -16,6 +18,7 @@ from deerflow.content_intelligence import (
     TopicBrief,
 )
 from deerflow.incubation import (
+    ArtifactEnvelope,
     ArtifactParentRef,
     EvidenceCoverageReceipt,
     EvidenceItem,
@@ -204,6 +207,126 @@ def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
     assert all(artifact.project == project for artifact in ordered)
     assert all(artifact.source_thread_id == "thread-1" for artifact in ordered)
     assert all(artifact.source_run_id == "run-1" for artifact in ordered)
+
+
+def test_message_plan_records_the_exact_incubation_judgment_it_used() -> None:
+    bundle, delivery = _content_run()
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    judgment = ArtifactEnvelope.seal(
+        project=project,
+        artifact_type="incubation_judgment",
+        version=1,
+        payload={"content_map_version_id": bundle.content_world.content_map_version_id()},
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    sealed = seal_content_run_artifacts(
+        project=project,
+        bundle=bundle,
+        delivery=delivery,
+        incubation_judgment_artifact=judgment,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    assert set(sealed.topic_brief.parents) == {
+        sealed.content_reading.to_parent_ref(),
+        sealed.content_world.to_parent_ref(),
+    }
+    assert set(sealed.message_plan.parents) == {
+        sealed.topic_brief.to_parent_ref(),
+        judgment.to_parent_ref(),
+    }
+    assert sealed.draft_version.parents == (sealed.message_plan.to_parent_ref(),)
+
+
+def test_rejects_judgment_lineage_without_a_delivery() -> None:
+    bundle, _delivery = _content_run()
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    judgment = ArtifactEnvelope.seal(
+        project=project,
+        artifact_type="incubation_judgment",
+        version=1,
+        payload={"content_map_version_id": bundle.content_world.content_map_version_id()},
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    with pytest.raises(ValueError, match="requires a shooting delivery"):
+        seal_content_run_artifacts(
+            project=project,
+            bundle=bundle,
+            delivery=None,
+            incubation_judgment_artifact=judgment,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-1",
+        )
+
+
+@pytest.mark.parametrize(
+    ("project", "artifact_type", "message"),
+    (
+        (ProjectRef(owner_user_id="other-user", project_id="golden-gift"), "incubation_judgment", "project"),
+        (ProjectRef(owner_user_id="user-1", project_id="golden-gift"), "evidence_snapshot", "type"),
+    ),
+)
+def test_rejects_invalid_judgment_parent(
+    project: ProjectRef,
+    artifact_type: str,
+    message: str,
+) -> None:
+    bundle, delivery = _content_run()
+    expected_project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    judgment = ArtifactEnvelope.seal(
+        project=project,
+        artifact_type=artifact_type,
+        version=1,
+        payload={"content_map_version_id": bundle.content_world.content_map_version_id()},
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    with pytest.raises(ValueError, match=message):
+        seal_content_run_artifacts(
+            project=expected_project,
+            bundle=bundle,
+            delivery=delivery,
+            incubation_judgment_artifact=judgment,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-1",
+        )
+
+
+def test_rejects_judgment_for_a_different_content_world_version() -> None:
+    bundle, delivery = _content_run()
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    judgment = ArtifactEnvelope.seal(
+        project=project,
+        artifact_type="incubation_judgment",
+        version=1,
+        payload={"content_map_version_id": "content-map-stale"},
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    with pytest.raises(ValueError, match="content world version"):
+        seal_content_run_artifacts(
+            project=project,
+            bundle=bundle,
+            delivery=delivery,
+            incubation_judgment_artifact=judgment,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-1",
+        )
 
 
 def test_content_run_selects_only_topic_snapshots_used_by_the_final_reading() -> None:
