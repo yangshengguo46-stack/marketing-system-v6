@@ -5,8 +5,10 @@ from datetime import UTC, datetime
 
 import pytest
 
+import deerflow.incubation.brief_runtime as brief_runtime
 from deerflow.incubation.brief_runtime import build_minimal_incubation_brief
 from deerflow.incubation.contracts import ProjectRef
+from deerflow.incubation.judgment import IncubationBrief
 
 NOW = datetime(2026, 8, 17, 18, 0, tzinfo=UTC)
 PROJECT = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
@@ -31,6 +33,8 @@ def test_builds_only_one_verbatim_user_stated_business_fact() -> None:
     assert artifact.artifact_type == "incubation_brief"
     assert artifact.project == PROJECT
     assert artifact.parents == ()
+    assert artifact.source_thread_id == "thread-1"
+    assert artifact.source_run_id == "run-1"
     assert artifact.payload["subject_expression"] == "我是做黄金礼品的，我要怎么起号？"
     assert artifact.payload["business_facts"] == [
         {
@@ -57,6 +61,8 @@ def test_leaves_unstated_facts_empty_and_explicitly_unknown() -> None:
         ("我是卖海鲜的", "海 鲜"),
         ("我是开火锅店的", ""),
         ("", "火锅"),
+        ("   ", "火锅"),
+        ("我是开火锅店的", "\t\n"),
     ),
 )
 def test_rejects_non_verbatim_or_blank_inputs(user_text: str, source_object: str) -> None:
@@ -66,7 +72,9 @@ def test_rejects_non_verbatim_or_blank_inputs(user_text: str, source_object: str
 
 def test_builder_has_no_model_questionnaire_or_guess_inputs() -> None:
     parameter_names = set(inspect.signature(build_minimal_incubation_brief).parameters)
+    module_source = inspect.getsource(brief_runtime).casefold()
 
+    assert inspect.iscoroutinefunction(build_minimal_incubation_brief) is False
     assert parameter_names == {
         "project",
         "verbatim_user_request",
@@ -75,3 +83,29 @@ def test_builder_has_no_model_questionnaire_or_guess_inputs() -> None:
         "source_thread_id",
         "source_run_id",
     }
+    assert "langchain" not in module_source
+    assert "questionnaire" not in module_source
+
+
+def test_delegates_artifact_creation_to_seal_incubation_brief(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sentinel = object()
+    captured: dict[str, object] = {}
+
+    def fake_seal_incubation_brief(**kwargs):
+        captured.update(kwargs)
+        return sentinel
+
+    monkeypatch.setattr(
+        brief_runtime,
+        "seal_incubation_brief",
+        fake_seal_incubation_brief,
+    )
+
+    result = _build()
+
+    assert result is sentinel
+    assert captured["project"] == PROJECT
+    assert isinstance(captured["brief"], IncubationBrief)
+    assert captured["brief"].business_facts[0].statement == "黄金礼品"
