@@ -1462,3 +1462,22 @@ URL 只存在执行内存；完成任务必须物化为内部 `artifact://` 引�
 上传素材、调用云能力或产生费用；费用供应商侧硬上限和逐能力真实回执仍未验收。详见
 `audits/A53-mediakit-trusted-io.md` 与
 `evidence/mediakit-trusted-io-a53-2026-08-17.md`。
+
+## A54 W04 MediaKit 首个云能力选择
+
+2026-08-17 对本机 `mediakit-cli 0.2.0`、官方仓库 HEAD、当前动态 Schema 和火山引擎四份实时文档
+做交叉核对。`video/enhance-video` 的能力 Schema 明确声明终态 `video_url`、`duration` 与
+`resolution`，可以接入 A53 的视频下载、哈希和本地质检；ASR、OCR、场景切分却仍只把终态声明为
+`local_path`，而通用 `query-task` Schema 没有公开它们的结构化结果，因此不能把第五版的历史烟测
+当作第六版输出合同。
+
+本轮选择画质增强作为首个真实云候选，但保持关闭。首轮范围冻结为合成视频、标准版、720P 及以下、
+30fps 及以下。官方 2026-08-06 计费正文显示该档按输出毫秒级时长计费，单价为 `0.75 CNY/分钟`；
+一秒输出的公式估值是 `0.0125 CNY`。提交 API 与 CLI 均无供应商侧单任务金额上限，本地批准金额不能
+冒充供应商硬封顶。官方查询接口还将在 2026-08-20 起只支持查询 30 天内任务，临时结果默认保留
+24 小时。
+
+因此 A54 状态是 `reviewed`：下一步先以失败测试实现能力专属 Schema 检查、带时效的价格证据和
+确定性费用报价；真实任务仍需用户对当次素材、规格和金额重新明确同意。本轮没有注册驱动、上传素材、
+调用云能力或产生费用。详见 `audits/A54-mediakit-first-cloud-capability.md` 与
+`evidence/mediakit-first-cloud-capability-a54-2026-08-17.md`。

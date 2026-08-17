@@ -245,6 +245,14 @@ Gateway 环境中的 Key、Secret 和 Device ID
 `artifact://` 结果。已通过真实本地视频烟测，但未注册云驱动或产生费用。详见
 `audits/A53-mediakit-trusted-io.md`。
 
+2026-08-17 第六审计切片：对照本机 CLI、官方仓库 HEAD、最新提交/查询文档与视频工具计费页，
+选择 `video/enhance-video` 作为首个真实云验收候选。它的终态明确包含视频 URL、时长和分辨率，
+可复用 A53 视频物化边界；ASR、OCR 和场景切分的当前终态 Schema 仍只有含糊的 `local_path`，暂缓。
+首轮候选限定合成视频、标准版、720P 及以下、30fps 及以下，当前计费公式估值为每输出分钟
+`0.75 CNY`。供应商提交接口没有单任务金额硬上限，故本轮仍不注册、不上传、不调用；下一切片先把
+价格证据、明确规格和费用报价绑定进预检合同。详见
+`audits/A54-mediakit-first-cloud-capability.md`。
+
 首批验收：
 
 - 本地剪辑、字幕、裁剪、拼接、混音、合成和元信息。
