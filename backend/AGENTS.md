@@ -199,6 +199,9 @@ Artifacts are owner/project scoped, content-addressed, parent-checked, and rejec
 browser state, temporary URLs, and local paths. `/api/incubation` owns project/thread binding;
 `start_run` ignores caller project IDs, owner-validates the stored binding, and rejects staleness.
 `IncubationBrief` contains only user-stated or authorized observed facts plus unknowns.
+Its minimal runtime builder accepts only a frozen source object that is a contiguous verbatim span of the current
+user request; it records one user-stated business fact and leaves every other project facet unknown without a model,
+questionnaire, or heuristic parser.
 `IncubationJudgment` keeps positioning, audience, persona, account-level presentation, and
 monetization hypotheses separate, binds the exact brief and frozen content-world version, and
 may cite benchmark or audience artifacts only as explicit parents. Neither object may rewrite

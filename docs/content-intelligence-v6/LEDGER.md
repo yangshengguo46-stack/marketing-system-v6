@@ -1641,3 +1641,12 @@ TopicBrief。聚焦合同测试 `6 passed`，与项目台账、内容地图和�
 `41 passed`，Ruff、格式和差异检查通过。项目主链、形式适配稿、素材方案和 MediaArtifact 尚未接通，
 因此仍不能宣称发布前链完成。详见
 `audits/A64-format-decision-runtime-and-base-draft-binding.md`。
+
+## A65 最小项目简报运行时
+
+2026-08-17 新增确定性的 `build_minimal_incubation_brief`，把语义模块冻结的 `source_object` 与用户整句
+原话逐字核对后，只记录一条 `user_stated` 业务事实。非连续片段、空值和改写均拒绝；能力、资源、限制、
+目标、偏好、受众、变现和平台不被猜测，并保留显式未知。构造器不接模型、问卷、模板或检索。
+
+最小简报、领域合同和孵化判断联合回归 `21 passed`。当前是可接线零件，尚未由内容工具调用、读取项目
+证据或自动持久化。详见 `audits/A65-minimal-incubation-brief-runtime.md`。

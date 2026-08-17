@@ -8,6 +8,7 @@ from deerflow.incubation.benchmark import (
     BenchmarkSnapshot,
     seal_benchmark_snapshot,
 )
+from deerflow.incubation.brief_runtime import build_minimal_incubation_brief
 from deerflow.incubation.contracts import (
     INCUBATION_PROJECT_ID_KEY,
     ArtifactEnvelope,
@@ -130,6 +131,7 @@ __all__ = [
     "BenchmarkProfileObservation",
     "BenchmarkRouteReceipt",
     "BenchmarkSnapshot",
+    "build_minimal_incubation_brief",
     "AudienceHypothesis",
     "BriefFact",
     "ContentRunArtifactSet",

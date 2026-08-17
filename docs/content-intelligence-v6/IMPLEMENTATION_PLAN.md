@@ -251,6 +251,11 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 `41 passed`。项目主链接线、形式适配稿和素材方案仍待完成。详见
 `audits/A64-format-decision-runtime-and-base-draft-binding.md`。
 
+2026-08-17 第七切片回执：新增完全确定性的最小 Brief 构造器。它只接受用户原话中的连续逐字
+`source_object`，只封存一条用户陈述的业务事实，其余项目事实保持未知；不接模型、问卷、模板或营销
+猜测。联合回归 `21 passed`。内容工具调用、项目持久化和 Brief 后续更新仍待接线。详见
+`audits/A65-minimal-incubation-brief-runtime.md`。
+
 ### W04 MediaKit 制作路由
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的
