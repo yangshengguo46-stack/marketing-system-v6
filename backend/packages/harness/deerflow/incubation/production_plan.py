@@ -185,18 +185,14 @@ def _require_artifact(
         raise ValueError(f"expected {artifact_type} parent")
 
 
-def seal_production_plan(
+def validate_production_plan_parents(
     *,
     project: ProjectRef,
-    draft: ProductionPlanDraft,
     adapted_draft_artifact: ArtifactEnvelope,
     format_decision_artifact: ArtifactEnvelope,
-    created_at: datetime,
-    source_thread_id: str,
-    source_run_id: str,
     user_material_artifacts: tuple[ArtifactEnvelope, ...] = (),
-) -> ArtifactEnvelope:
-    """Seal executable production instructions without reopening content choices."""
+) -> tuple[AdaptedDraft, FormatDecision]:
+    """Validate exact immutable production lineage before any model call."""
 
     _require_artifact(
         adapted_draft_artifact,
@@ -215,6 +211,7 @@ def seal_production_plan(
         raise ValueError("production plan requires an adapted draft from the exact format decision")
     if adapted.selected_format != decision.selected_format or adapted.base_draft_binding != decision.base_draft_binding:
         raise ValueError("adapted draft content lineage must match the exact format decision")
+
     base_binding = adapted.base_draft_binding
     expected_base_ref = ArtifactParentRef(
         owner_user_id=project.owner_user_id,
@@ -223,8 +220,23 @@ def seal_production_plan(
         artifact_type="draft_version",
         content_sha256=base_binding.artifact_content_sha256,
     )
-    if expected_base_ref not in adapted_draft_artifact.parents:
-        raise ValueError("adapted draft must retain the exact base draft parent")
+    if expected_base_ref not in adapted_draft_artifact.parents or expected_base_ref not in format_decision_artifact.parents:
+        raise ValueError("adapted draft and format decision must retain the exact base draft parent")
+
+    message_binding = decision.message_plan_binding
+    expected_message_ref = ArtifactParentRef(
+        owner_user_id=project.owner_user_id,
+        project_id=project.project_id,
+        artifact_id=message_binding.artifact_id,
+        artifact_type="message_plan",
+        content_sha256=message_binding.artifact_content_sha256,
+    )
+    if expected_message_ref not in format_decision_artifact.parents:
+        raise ValueError("format decision must retain the exact message plan parent")
+
+    format_material_refs = set(decision.resource_evidence_refs)
+    if any(ref not in format_decision_artifact.parents for ref in format_material_refs):
+        raise ValueError("format decision must retain every exact resource evidence parent")
 
     material_ids: set[str] = set()
     for artifact in user_material_artifacts:
@@ -237,10 +249,33 @@ def seal_production_plan(
         if artifact.artifact_id in material_ids:
             raise ValueError("user material artifacts must be unique")
         material_ids.add(artifact.artifact_id)
+        if artifact.to_parent_ref() not in format_material_refs:
+            raise ValueError("existing material must have been reviewed by the exact format decision")
 
-    format_material_refs = set(decision.resource_evidence_refs)
-    if any(artifact.to_parent_ref() not in format_material_refs for artifact in user_material_artifacts):
-        raise ValueError("existing material must have been reviewed by the exact format decision")
+    return adapted, decision
+
+
+def seal_production_plan(
+    *,
+    project: ProjectRef,
+    draft: ProductionPlanDraft,
+    adapted_draft_artifact: ArtifactEnvelope,
+    format_decision_artifact: ArtifactEnvelope,
+    created_at: datetime,
+    source_thread_id: str,
+    source_run_id: str,
+    user_material_artifacts: tuple[ArtifactEnvelope, ...] = (),
+) -> ArtifactEnvelope:
+    """Seal executable production instructions without reopening content choices."""
+
+    adapted, decision = validate_production_plan_parents(
+        project=project,
+        adapted_draft_artifact=adapted_draft_artifact,
+        format_decision_artifact=format_decision_artifact,
+        user_material_artifacts=user_material_artifacts,
+    )
+    exact_format_ref = format_decision_artifact.to_parent_ref()
+    material_ids = {artifact.artifact_id for artifact in user_material_artifacts}
 
     claimed_material_ids = {artifact_id for requirement in draft.asset_requirements if requirement.source == "existing_user_material" for artifact_id in requirement.basis_artifact_ids}
     if claimed_material_ids != material_ids:
@@ -288,4 +323,5 @@ __all__ = [
     "ProductionPlanDraft",
     "ProductionPlanStatus",
     "seal_production_plan",
+    "validate_production_plan_parents",
 ]

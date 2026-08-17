@@ -24,6 +24,7 @@ from deerflow.incubation.production_plan import (
     ProductionPlan,
     ProductionPlanDraft,
     seal_production_plan,
+    validate_production_plan_parents,
 )
 
 NOW = datetime(2026, 8, 17, 8, 0, tzinfo=UTC)
@@ -233,6 +234,41 @@ def test_production_plan_binds_exact_adapted_draft_format_and_user_material() ->
     assert "text" not in sealed.payload
     assert "topic_title" not in sealed.payload
     assert "point_of_view" not in sealed.payload
+
+
+def test_parent_validator_returns_exact_adaptation_and_format_before_sealing() -> None:
+    material = _user_material()
+    format_decision, _base_draft_artifact, adapted_draft = _format_decision(user_material=material)
+
+    adapted, decision = validate_production_plan_parents(
+        project=PROJECT,
+        adapted_draft_artifact=adapted_draft,
+        format_decision_artifact=format_decision,
+        user_material_artifacts=(material,),
+    )
+
+    assert adapted.adapted_body_sha256 == adapted_draft.payload["adapted_body_sha256"]
+    assert adapted.format_decision_ref == format_decision.to_parent_ref()
+    assert decision.selected_format == adapted.selected_format
+    assert material.to_parent_ref() in decision.resource_evidence_refs
+
+
+def test_parent_validator_rejects_a_tampered_adapted_body_hash() -> None:
+    format_decision, _base_draft_artifact, adapted_draft = _format_decision()
+    tampered_payload = dict(adapted_draft.payload)
+    tampered_payload["adapted_body_sha256"] = "0" * 64
+    tampered = _artifact(
+        artifact_type="adapted_draft",
+        payload=tampered_payload,
+        parents=adapted_draft.parents,
+    )
+
+    with pytest.raises(ValueError, match="adapted body hash"):
+        validate_production_plan_parents(
+            project=PROJECT,
+            adapted_draft_artifact=tampered,
+            format_decision_artifact=format_decision,
+        )
 
 
 def test_production_plan_rejects_an_adapted_draft_from_another_format_decision() -> None:

@@ -220,6 +220,11 @@ materials must be exact same-project `user_material` media observations already 
 `MediaArtifact` binds the adapted-body hash, exact ProductionPlan, approved user inputs, same-plan intermediate
 outputs, MediaKit execution receipt, stable `artifact://` storage reference, byte hash, and QC. It must never admit
 topic/benchmark evidence as production material or retain local paths, temporary URLs, credentials, or raw commands.
+The bounded ProductionPlan runtime validates the exact AdaptedDraft, FormatDecision, BaseDraft, MessagePlan, and
+reviewed user-material lineage before its model call. Its 32 KB projection contains only adapted presentation units,
+the selected form, execution gaps, and up to eight reviewed user materials. The model may specify asset needs,
+capture/record/layout actions, and assembly order; it may not reopen content, invent resources or facts, or add sales,
+platform, publishing, approval, cadence, duration, or quota decisions. No-material plans may remain provisional.
 The incubation-judgment runtime accepts only sealed Brief/world/evidence parents. Benchmark and
 audience artifacts are validated by type and evidence role, then projected through their existing
 bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete

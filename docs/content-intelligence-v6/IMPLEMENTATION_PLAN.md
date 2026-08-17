@@ -459,3 +459,6 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 2026-08-18 主链继续完成 A71：选中项目的有效 BaseDraft 已自动进入精确 `FormatDecision ->
 AdaptedDraft`，并将结果分栏呈现；内部附加正文不进入公开持久化回执。该层联合回归 `103 passed`。
 下一断点是 `ProductionPlan` 有界运行时和 MediaKit 执行，不将发布预演、审批、发布回执提前混入。
+
+2026-08-18 A72 已实现并验收独立 ProductionPlan 运行时，精确消费 AdaptedDraft、FormatDecision 和
+已审阅用户素材。下一切片把它接入内容工具并让 MediaKit 只执行已封存方案；发布尾段继续后排。

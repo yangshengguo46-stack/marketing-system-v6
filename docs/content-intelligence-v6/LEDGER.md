@@ -1714,3 +1714,12 @@ FormatDecision、适配稿、素材方案与 MediaKit 尚待继续接入本运�
 回答现在分栏展示本条表现形式与适配稿。内部 `_answer_appendix` 不进入前端持久化回执；后置模型失败
 只降级这一段，不吞掉已经有效的选题和基础稿。联合回归 `103 passed`。详见
 `audits/A71-format-adaptation-runtime-orchestration.md`。
+
+## A72 素材与制作方案运行时
+
+2026-08-18 新增 32 KB 有界 ProductionPlan 运行时。在模型调用前核验精确 AdaptedDraft、
+FormatDecision、BaseDraft、MessagePlan 和最多八份已审阅 `user_material`；模型只负责素材需求、
+拍摄/录音/排版动作和装配顺序，不能重开选题、改观点、补事实、编造资源或加入销售平台发布安排。
+
+无素材时可形成带明确缺口的 `provisional` 方案；模型失败不封存半份结果。聚焦复核 `51 passed`。
+主工具与 MediaKit 接线仍待完成。详见 `audits/A72-production-plan-runtime.md`。

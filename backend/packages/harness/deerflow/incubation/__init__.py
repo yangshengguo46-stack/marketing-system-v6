@@ -110,6 +110,14 @@ from deerflow.incubation.production_plan import (
     ProductionPlanDraft,
     ProductionPlanStatus,
     seal_production_plan,
+    validate_production_plan_parents,
+)
+from deerflow.incubation.production_runtime import (
+    PRODUCTION_PLAN_MODEL_INPUT_MAX_BYTES,
+    PRODUCTION_PLAN_SYSTEM_PROMPT,
+    ProductionPlanModelError,
+    StructuredProductionPlanModel,
+    generate_production_plan,
 )
 from deerflow.incubation.project_evidence import (
     MAX_AUDIENCE_JUDGMENT_EVIDENCE,
@@ -243,12 +251,16 @@ __all__ = [
     "ProductionAssetSource",
     "ProductionPlan",
     "ProductionPlanDraft",
+    "ProductionPlanModelError",
     "ProductionPlanStatus",
+    "PRODUCTION_PLAN_MODEL_INPUT_MAX_BYTES",
+    "PRODUCTION_PLAN_SYSTEM_PROMPT",
     "ProjectEvidenceSelection",
     "ResourceMatch",
     "StructuredJudgmentModel",
     "StructuredAdaptedDraftModel",
     "StructuredFormatModel",
+    "StructuredProductionPlanModel",
     "VideoMetadataObservation",
     "SourceExcerptAnchor",
     "seal_content_world_version",
@@ -267,5 +279,7 @@ __all__ = [
     "generate_incubation_judgment",
     "generate_adapted_draft",
     "generate_format_decision",
+    "generate_production_plan",
     "seal_adapted_draft",
+    "validate_production_plan_parents",
 ]
