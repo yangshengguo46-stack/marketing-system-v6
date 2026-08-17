@@ -205,7 +205,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 ### W03 孵化与单条内容产物谱系
 
-状态：`in progress; brief/judgment and format-decision contracts implemented; runtime generation and production wiring pending`
+状态：`in progress; bounded judgment runtime and format-decision contract implemented; orchestration and production wiring pending`
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
 地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
@@ -239,6 +239,11 @@ Gateway 环境中的 Key、Secret 和 Device ID
 哈希，并可引用同项目孵化判断和资源证据。它只选择本条呈现形式，不能改写选题、加入平台销售发布或
 固定数量；资源未知允许 provisional，非叙事形式不能携带编剧提示。联合回归 `39 passed`。真实模型
 生成、用户确认与素材方案仍待接线。详见 `audits/A62-format-decision-lineage.md`。
+
+2026-08-17 第五切片回执：孵化判断增加注入式结构化模型运行时，严格绑定 Brief、冻结地图和可选
+对标/受众父产物。完整证据不进模型，统一使用现有有界投影，整个输入限制为 16,000 UTF-8 字节；
+错误产物类型、角色、项目或模型输出均不产生半份判断。联合回归 `14 passed`。Brief 构造、真实模型、
+项目证据读取与回答接线仍待完成。详见 `audits/A63-incubation-judgment-runtime.md`。
 
 ### W04 MediaKit 制作路由
 

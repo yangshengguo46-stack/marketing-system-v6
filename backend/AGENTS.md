@@ -207,6 +207,11 @@ Per-topic `FormatDecision` binds the exact `message_plan` artifact plus protecte
 evidence-boundary hashes. Its draft has no topic or evidence rewrite fields, may remain provisional
 when resources are unknown, and may carry a narrative-method hint only for narrative formats. It
 contains no platform, sales, publishing, cadence, duration, shot-count, or quota controls.
+The incubation-judgment runtime accepts only sealed Brief/world/evidence parents. Benchmark and
+audience artifacts are validated by type and evidence role, then projected through their existing
+bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete
+structured-model input is limited to 16,000 UTF-8 bytes. Model or contract failure must not seal a
+partial judgment, and this service remains unregistered until project/runtime wiring is tested.
 
 W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
 its full form stays in the ledger and its Lead projection reports omissions. The reviewed
