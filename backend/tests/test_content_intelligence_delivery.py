@@ -45,6 +45,22 @@ class StructuredDeliveryFakeModel:
         return self.schema.model_validate(self.payload)
 
 
+class SequencedStructuredDeliveryFakeModel:
+    def __init__(self, payloads: list[dict[str, Any]]) -> None:
+        self.payloads = payloads
+        self.schema = None
+        self.message_batches: list[tuple[object, ...]] = []
+
+    def with_structured_output(self, schema, *, include_raw: bool = False):
+        self.schema = schema
+        return self
+
+    async def ainvoke(self, messages, config=None):
+        self.message_batches.append(tuple(messages))
+        payload = self.payloads[min(len(self.message_batches) - 1, len(self.payloads) - 1)]
+        return self.schema.model_validate(payload)
+
+
 def _evidence_bound_bundle() -> ContentIntelligenceBundle:
     evidence_ref = BasisRef(kind="observation", ref_id="observation-topic-1")
     record = ComprehensionRecord(
@@ -229,6 +245,36 @@ async def test_incubation_judgment_guides_position_and_audience_without_leaking_
     assert "尚未确认用户是否愿意出镜" in prompt_input
     assert "通过长期信任承接白酒购买需求" not in prompt_input
     assert "monetization" not in prompt_input.casefold()
+
+
+@pytest.mark.asyncio
+async def test_delivery_repairs_named_numeric_and_absolute_claims_absent_from_evidence() -> None:
+    bundle = _evidence_bound_bundle()
+    unsupported = _message_plan_payload()
+    unsupported["topic_title"] = "全球最贵的地方酒桌"
+    unsupported["opening"] = "1977 年，Eduardo Rivera 第一次来到这张酒桌。"
+    unsupported["message_beats"] = [
+        "这个只有模型记忆、没有证据的人名和年份，不能被补进稿子。",
+    ]
+    model = SequencedStructuredDeliveryFakeModel([unsupported, _message_plan_payload()])
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="我是卖白酒的，该怎么起号？",
+        model=model,
+    )
+
+    assert delivery is not None
+    assert "Eduardo Rivera" not in delivery.base_draft.text
+    assert "1977" not in delivery.base_draft.text
+    assert "全球最贵" not in delivery.message_plan.topic_title
+    assert len(model.message_batches) == 2
+    repair_message = model.message_batches[1][-1].content
+    assert "Eduardo" in repair_message
+    assert "Rivera" in repair_message
+    assert "1977" in repair_message
+    assert "全球最贵" in repair_message
+    assert "do not replace it with another name" in repair_message
 
 
 @pytest.mark.asyncio

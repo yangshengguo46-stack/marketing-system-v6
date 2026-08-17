@@ -83,6 +83,13 @@ _BLOCKED_TAG_NAMES: frozenset[str] = frozenset(
         "content_intelligence_delivery",
         "content_intelligence_method",
         "content_intelligence_research",
+        "incubation_judgment",
+        "format_decision",
+        "adapted_draft",
+        "production_plan",
+        "user_topic_seed_policy",
+        "user_topic_seed_evidence_policy",
+        "malformed_tool_arguments",
         "uploaded_files",  # old uploads tag — still processed by deermem for backward-compat
         "current_uploads",
         "subagent_system",

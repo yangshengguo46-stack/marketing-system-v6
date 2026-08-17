@@ -2,13 +2,13 @@
 
 ## 当前状态
 
-- 台账日期：2026-08-17
+- 台账日期：2026-08-18
 - 第五版冻结提交：`3ee135f7`
 - 第五版归档分支：`codex/archive-v5-final`
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`reviewed -> adopted as first vertical slice`
+- 当前结论状态：`A76 corrective checkpoint; general core acceptance pending`
 
 ## A01 第五版与第六版边界
 
@@ -1768,3 +1768,34 @@ MediaKit 元信息质检、MIME 校验和内容寻址封存；命令、临时路
 `video/mp4`，QC 通过，保存为 `artifact://`，临时工作目录已清空。当前状态为 `verified local vertical`：
 后端执行内核已通，但内容工具/Gateway/用户审阅入口、其他本地能力和云端真实验收仍待独立接线。详见
 `audits/A75-mediakit-production-plan-local-execution.md`。
+
+## A76 核心端到端、内容根与事实交付修复
+
+2026-08-18 按用户要求暂停制作和素材，把真实验收终点收在 `AdaptedDraft`；表现形式与表达适配仍
+属于孵化和内容认知，不等于制作。全新“宠物殡葬”留出题没有
+从业务对象迁移到陪伴、失去、哀伤和告别世界，也没有形成 TopicBrief，严格记失败并转为开发证据。
+
+雪茄馆回归又发现 A58 的采用实现把“雪茄品鉴”冻结成内容根并将人物、历史路线判为漂移。Git 追踪到
+`c2ede5b6` 在并行提速之外同时替换了语义链，并把模型中间判断编译成候选硬门。本轮恢复其父提交的
+顺序语义、词义家族、共同世界、独立复核、单根裁决和冻结地图；ADR-020 正式取代 ADR-019 的运行
+决策。恢复后又通过通用反例修正“场馆 + 消费 + 社交”长场景冒充更大世界的问题，真实内容根最终为
+“雪茄”。
+
+完整研究随后形成 Cohiba 的政治特权、产区风土与工艺稀缺性选题。供应商未转义中文引号曾使完整
+孵化和 MessagePlan 被解析器丢弃；统一结构化边界现在可将最多 16 KiB 畸形参数作为不可信数据做一次
+纯协议修复。修复后的首稿又从模型记忆补入证据外人名并写出“全球最贵”，因此交付层新增一次有界
+事实修复：证据外专名、数字、显式新名字和高风险绝对断言只能删除或泛化，仍越界则拒绝交付。
+
+真实复跑得到标题“Cohiba：一支雪茄如何从政治特权走向全球溢价”，保留百科/零售商来源偏弱的
+限制，并生成 MessagePlan 与 BaseDraft。真实续跑得到 `provisional` 的口头表达候选和八单元
+AdaptedDraft，明确保留出镜、表达能力、平台和视觉资源未知；人工复核未见新增事实。最终台账有九类
+认知与表达产物，不含 ProductionPlan 或 MediaArtifact。全部内容理解、孵化、形式、适配、制作合同与
+导入边界回归为 `333 passed, 1 warning`。第一次完整回归发现七个新增内部提示标签尚未纳入共享防伪
+净化名单；逐项归类并补回归后，相关净化测试 `180 passed`，第二次完整后端非 live 回归为
+`12074 passed, 76 skipped, 17 warnings in 421.79s`。本轮没有运行 ProductionPlan、素材任务、MediaKit
+或平台写操作。
+一个雪茄案例通过不能覆盖宠物殡葬
+失败，也不能宣称通用营销脑已经完成。详见
+`audits/A76-core-e2e-root-and-delivery-recovery.md`、
+`decisions/ADR-020-retire-parallel-root-gates-and-recover-evidence-delivery.md` 与
+`evidence/core-e2e-a76-2026-08-18.md`。

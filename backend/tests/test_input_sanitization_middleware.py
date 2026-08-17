@@ -188,6 +188,17 @@ _FRAMEWORK_STRUCTURED_TAGS = [
     "citations",
     "content_intelligence",
     "content_intelligence_method",
+    "content_intelligence_research",
+    # Dedicated content/incubation calls use these wrappers as internal policy
+    # or structured-task boundaries. User or fetched text must not impersonate
+    # them when it later crosses the shared sanitization primitive.
+    "incubation_judgment",
+    "format_decision",
+    "adapted_draft",
+    "production_plan",
+    "user_topic_seed_policy",
+    "user_topic_seed_evidence_policy",
+    "malformed_tool_arguments",
     "skill_index",
     "available_skills",
     "disabled_skills",

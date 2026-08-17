@@ -120,10 +120,6 @@ from deerflow.incubation.media_artifact import (
     build_media_production_binding,
     seal_media_artifact,
 )
-from deerflow.incubation.media_execution import (
-    MediaKitLocalProductionOperation,
-    execute_local_media_operation,
-)
 from deerflow.incubation.production_plan import (
     AssemblyStep,
     ProductionAction,
@@ -174,6 +170,12 @@ _CONTENT_RUN_EXPORTS = frozenset(
         "select_used_topic_evidence_snapshots",
     }
 )
+_MEDIA_EXECUTION_EXPORTS = frozenset(
+    {
+        "MediaKitLocalProductionOperation",
+        "execute_local_media_operation",
+    }
+)
 
 
 def __getattr__(name: str):
@@ -189,6 +191,10 @@ def __getattr__(name: str):
         from deerflow.incubation import content_run
 
         return getattr(content_run, name)
+    if name in _MEDIA_EXECUTION_EXPORTS:
+        from deerflow.incubation import media_execution
+
+        return getattr(media_execution, name)
     raise AttributeError(name)
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Annotated, Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -17,6 +18,21 @@ from deerflow.content_intelligence.contracts import (
 from deerflow.incubation.judgment import IncubationJudgment
 
 MessageBeats = Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
+
+_LATIN_NAMED_TOKEN_RE = re.compile(r"(?<![A-Za-zÀ-ÖØ-öø-ÿ0-9])(?:[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]{2,}|[A-Z]{2,})(?![A-Za-zÀ-ÖØ-öø-ÿ0-9])")
+_NUMBER_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9])\d+(?:[.,]\d+)*(?![A-Za-z0-9])")
+_INTRODUCED_NAME_RE = re.compile(r"(?:名叫|名为|叫作|叫做)\s*[‘’“”\"']?([\u4e00-\u9fff·]{2,10}|[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,4})")
+_ABSOLUTE_CLAIM_MARKERS = (
+    "全球最贵",
+    "价格的最顶端",
+    "最贵",
+    "唯一",
+    "总是",
+    "从不",
+    "绝对",
+    "必然",
+    "只属于",
+)
 
 
 class MessagePlanDraft(ContractModel):
@@ -89,6 +105,10 @@ class ShootingDelivery(ContractModel):
         if self.base_draft.message_plan_id != self.message_plan.message_plan_id:
             raise ValueError("base draft must bind to the same message plan")
         return self
+
+
+class DeliveryFactBoundaryError(ValueError):
+    """The delivery added named, numeric, or absolute details absent from its evidence ledger."""
 
 
 def _bind_message_plan_draft(
@@ -183,24 +203,121 @@ async def synthesize_shooting_delivery(
     if incubation_judgment is not None and incubation_judgment.content_map_version_id != world.content_map_version_id():
         raise ValueError("incubation judgment must match the frozen content world")
 
+    messages = (
+        SystemMessage(content=SHOOTING_DELIVERY_SYSTEM_PROMPT),
+        HumanMessage(
+            content=_render_delivery_input(
+                bundle,
+                user_request=user_request,
+                incubation_judgment=incubation_judgment,
+            )
+        ),
+    )
     draft = await _invoke_structured(
         model,
         MessagePlanDraft,
-        (
-            SystemMessage(content=SHOOTING_DELIVERY_SYSTEM_PROMPT),
-            HumanMessage(
-                content=_render_delivery_input(
-                    bundle,
-                    user_request=user_request,
-                    incubation_judgment=incubation_judgment,
-                )
-            ),
-        ),
+        messages,
         runnable_config=runnable_config,
         include_raw=True,
         container_fields={"message_beats", "limitations", "unknowns"},
     )
+    unsupported_details = _unsupported_delivery_details(
+        draft,
+        bundle=bundle,
+        user_request=user_request,
+    )
+    if unsupported_details:
+        repair_payload = {
+            "contract_error": "The draft introduced factual specifics absent from the supplied fact ledger.",
+            "unsupported_details": unsupported_details,
+            "repair_instruction": (
+                "Return one corrected MessagePlanDraft for the same topic. Remove or generalize every listed detail; "
+                "do not replace it with another name, number, ranking, absolute claim, event, or fact from model memory. "
+                "Use only the supplied user statement, TopicBrief, and evidence observations. Preserve unknowns and "
+                "do not change the content root, topic, or central claim."
+            ),
+        }
+        draft = await _invoke_structured(
+            model,
+            MessagePlanDraft,
+            (*messages, HumanMessage(content=json.dumps(repair_payload, ensure_ascii=False, indent=2))),
+            runnable_config=runnable_config,
+            include_raw=True,
+            container_fields={"message_beats", "limitations", "unknowns"},
+        )
+        remaining_details = _unsupported_delivery_details(
+            draft,
+            bundle=bundle,
+            user_request=user_request,
+        )
+        if remaining_details:
+            raise DeliveryFactBoundaryError("delivery still contains unsupported factual specifics after one bounded repair: " + ", ".join(remaining_details))
     return draft.bind(bundle=bundle, account_position_basis=user_request)
+
+
+def _unsupported_delivery_details(
+    draft: MessagePlanDraft,
+    *,
+    bundle: ContentIntelligenceBundle,
+    user_request: str,
+) -> tuple[str, ...]:
+    """Catch high-signal evidence leakage without pretending to solve semantic fact checking."""
+
+    fact_ledger = _delivery_fact_ledger(bundle, user_request=user_request)
+    draft_text = "\n".join(_message_plan_text_values(draft))
+    unsupported: list[str] = []
+
+    allowed_latin_tokens = {item.casefold() for item in _LATIN_NAMED_TOKEN_RE.findall(fact_ledger)}
+    for token in _LATIN_NAMED_TOKEN_RE.findall(draft_text):
+        if token.casefold() not in allowed_latin_tokens:
+            unsupported.append(token)
+
+    allowed_numbers = set(_NUMBER_TOKEN_RE.findall(fact_ledger))
+    for token in _NUMBER_TOKEN_RE.findall(draft_text):
+        if token not in allowed_numbers:
+            unsupported.append(token)
+
+    for match in _INTRODUCED_NAME_RE.finditer(draft_text):
+        candidate = match.group(1).strip()
+        if candidate and candidate not in fact_ledger:
+            unsupported.append(candidate)
+
+    for marker in _ABSOLUTE_CLAIM_MARKERS:
+        if marker in draft_text and marker not in fact_ledger:
+            unsupported.append(marker)
+
+    return tuple(dict.fromkeys(unsupported))
+
+
+def _delivery_fact_ledger(
+    bundle: ContentIntelligenceBundle,
+    *,
+    user_request: str,
+) -> str:
+    topic = bundle.topic_brief
+    assert topic is not None
+    referenced_observation_ids = {item.ref_id for item in topic.evidence_refs if item.kind == "observation"}
+    observations = [observation.claim for observation in bundle.record.observations if observation.observation_id in referenced_observation_ids]
+    return json.dumps(
+        {
+            "user_request": user_request,
+            "topic_brief": topic.model_dump(mode="json"),
+            "evidence_observations": observations,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+
+
+def _message_plan_text_values(draft: MessagePlanDraft) -> tuple[str, ...]:
+    payload = draft.model_dump(mode="python")
+    values: list[str] = []
+    for value in payload.values():
+        if isinstance(value, str):
+            values.append(value)
+        elif isinstance(value, tuple):
+            values.extend(item for item in value if isinstance(item, str))
+    return tuple(values)
 
 
 def _render_delivery_input(

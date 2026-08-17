@@ -313,13 +313,14 @@ async def enrich_content_world_with_research(
         questions = discovery.unknowns or (TOPIC_SEED_NO_EVIDENCE_UNKNOWN,)
         return _bind_research_unknowns(bundle, questions)
 
+    reading_messages = (
+        SystemMessage(content=_render_evidence_reading_system_prompt(topic_seed)),
+        HumanMessage(content=_render_reading_input(bundle, routes, evidence_payload, topic_seed=topic_seed)),
+    )
     reading = await _invoke_structured(
         model,
         EvidenceReadingDraft,
-        (
-            SystemMessage(content=_render_evidence_reading_system_prompt(topic_seed)),
-            HumanMessage(content=_render_reading_input(bundle, routes, evidence_payload, topic_seed=topic_seed)),
-        ),
+        reading_messages,
         runnable_config=runnable_config,
         include_raw=True,
         container_fields={
@@ -331,12 +332,51 @@ async def enrich_content_world_with_research(
             "unknowns",
         },
     )
-    reading, selected_evidence_sources = _project_selected_route_reading(
-        reading,
-        routes,
-        evidence_sources,
-        evidence_payload,
-    )
+    try:
+        reading, selected_evidence_sources = _project_selected_route_reading(
+            reading,
+            routes,
+            evidence_sources,
+            evidence_payload,
+        )
+    except ValueError as exc:
+        if str(exc) != "evidence reading changed the latent recall entity":
+            raise
+        selected_route = next(route for route in routes if route.candidate_id == reading.selected_candidate_id)
+        if selected_route.entity is None:
+            raise
+        repair_payload = {
+            "contract_error": "A latent-recall route may not rename its recalled entity.",
+            "selected_candidate_id": selected_route.candidate_id,
+            "invalid_selected_entity": reading.selected_entity,
+            "required_selected_entity_if_route_is_kept": selected_route.entity,
+            "repair_instruction": (
+                "Return one corrected EvidenceReadingDraft from the same evidence receipt. "
+                "If you keep this candidate id, copy its entity exactly. You may select a different "
+                "evidenced route only when its own sources support that route. Do not add facts or sources."
+            ),
+        }
+        reading = await _invoke_structured(
+            model,
+            EvidenceReadingDraft,
+            (*reading_messages, HumanMessage(content=json.dumps(repair_payload, ensure_ascii=False, indent=2))),
+            runnable_config=runnable_config,
+            include_raw=True,
+            container_fields={
+                "observations",
+                "relations",
+                "state_changes",
+                "interpretations",
+                "limitations",
+                "unknowns",
+            },
+        )
+        reading, selected_evidence_sources = _project_selected_route_reading(
+            reading,
+            routes,
+            evidence_sources,
+            evidence_payload,
+        )
     _validate_reading_receipt(reading, routes, evidence_sources, evidence_payload)
     selected_route = next(route for route in routes if route.candidate_id == reading.selected_candidate_id)
     if _has_topic_seed(topic_seed) and selected_route.discovery_mode != "latent_recall":

@@ -182,13 +182,10 @@ These apply repo-wide; module guides own the module-specific detail.
 - **Test-driven development** — features and bug fixes ship with tests. Backend tests live
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
-- **V6 content core** — isolate lexical, shared-world, root, map, and evidence roles.
-  Topics bind the content-addressed account map instead of rewriting it. Third-party
-  accounts use project-scoped, author-consistent `BenchmarkSnapshot` observations capped
-  at 24 posts, never audience or success claims. Douyin v2 author-label samples remain
-  candidates until stable identity is proven; one Lead tool returns a bounded
-  read-only projection and persists only after server-authenticated project ownership.
-  Xingtu and Buyin are deferred gap sources. Dense recall remains rejected. See
-  `docs/content-intelligence-v6/`.
+- **V6 content core** — use ADR-020's dependency-ordered semantic chain; A58's concurrent
+  root gates are retired. Topics bind the frozen account map. Expression may continue through
+  `FormatDecision` and `AdaptedDraft`; production is server-gated and off by default.
+  Competitor observations stay project-scoped, author-consistent, capped at 24, and make no
+  audience or success claims. See `docs/content-intelligence-v6/` and `backend/AGENTS.md`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

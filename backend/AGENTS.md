@@ -152,125 +152,41 @@ from deerflow.config import get_app_config
 
 ### V6 Content Incubation Core
 
-`content_intelligence/` owns the optional chain
-`ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft`.
-Bounded workers isolate literal/lexical reading, root adjudication, mapping, research,
-and convergence; they are not `task` subagents or a mandatory workflow. The lexical
-world worker and business-semantic worker start concurrently from the exact subject
-expression and cannot see each other's output. Their immutable contracts join before one
-root adjudicator runs; nested head ranges are reduced to meaning components valid in both
-readings, while incompatible heads, unsupported meaning paths, and candidates that drop a
-constitutive context are rejected deterministically. Optional lexical evidence
-filters family claims only after the join. Code then freezes typed candidates, selects the
-largest effective world, and prevents later evidence, trends, or example branches from
-changing the root. These bounded model calls are not DeerFlow `task` subagents. Dense
-lexical recall was rejected and has no production interface.
+`content_intelligence/` owns the optional chain `ComprehensionRecord -> ContentWorldView ->
+TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`. ADR-020 retired
+A58's concurrent-reader gates after a live root regression. Keep the current dependency-ordered
+semantic chain; typed intermediate labels are inspectable evidence, never deterministic candidate
+gates. A venue/object/consumption/social scene remains one map path when the object also expands
+into people, history, events, regions, or works outside that scene.
 
-`ContentWorldView` is a content-addressed account map, not a daily topic list. Every
-topic starts at and binds its frozen map version. The map owns neither commercial return
-paths nor screenwriting conflict. `MessagePlan` and `BaseDraft` remain format-neutral;
-they must not invent context, sales bridges, experiments, quantities, or publishing
-decisions. Narrative structure is optional and evidence-bound. Broad account starts use
-the `return_direct` `explore_content_world` tool, whose only model-visible input is the
-verbatim request; return one hidden tagged `ToolMessage`, never an appended `AIMessage`.
-The tool distinguishes explicit long-term-positioning requests from the default one-shootable-topic
-goal. A user-named topic seed must be a contiguous verbatim request span and remains an unverified
-lead. Research candidates bind an exact frozen map path, and the final TopicBrief preserves every
-intermediate step. Seed failure cannot silently fall back to an unrelated map topic, and a shootable
-goal cannot present a map-only result as success.
+`ContentWorldView` is a content-addressed account map. Every topic binds its frozen version;
+trends, sales, formats, and screenwriting cannot rewrite it. `explore_content_world` receives the
+verbatim request and returns one hidden direct-response `ToolMessage`. Shootable topics bind an
+exact map path and evidence receipt. Search starts only after root freeze; generic search is
+`topic_evidence`, never competitor evidence. Unsupported routes or weak sources must remain
+limitations instead of becoming facts.
 
-Root-frozen map search and named recall run together. Read only bounded public text,
-revalidate redirects, and use configured `web_fetch` as fallback. Losing-route facts,
-retrieval rationales, and unsupported model knowledge cannot become grounded claims.
-Generic search is `topic_evidence`, never competitor-account evidence. ByteDance Web
-Search uses `WEB_SEARCH_API_KEY`, not an Ark model key. Deterministic code validates
-IDs, references, provenance, and projection binding; it must not contain industry
-examples or choose roots.
+`MessagePlan` and `BaseDraft` are format-neutral. They cannot invent context, materials, sales
+bridges, experiments, quantities, or publishing decisions. One bounded fact repair may only delete
+or generalize new proper names, numbers, explicit names, and unsupported absolutes; a remaining
+violation rejects delivery. This is not a complete fact checker.
 
-The wider V6 system reuses DeerFlow checkpoints, bounded subagents, deferred MCP/tools
-and Skills, Memory, Sandbox/uploads, durable MCP tasks, Scheduler, SSE, authorization,
-and output budgets. Do not build a second runtime or fixed business pipeline. Database
-artifacts and platform receipts are truth; thread state and Memory get bounded
-projections only. Cognitive workers cannot directly write approvals, publications,
-metrics, or adopted learning rules. See `../docs/content-intelligence-v6/` and ADR-018.
+`deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, content-addressed,
+parent-checked truth. Thread state and Memory receive projections only. Brief, judgment, audience,
+benchmark, format, and adaptation artifacts must preserve type, role, owner, project, parent, hash,
+and source boundaries. Account presentation is not a per-topic format. `FormatDecision` may remain
+provisional; every `AdaptedDraft` unit retains a BaseDraft anchor. The server-only
+`content_include_production_plan` flag defaults false. Production, user materials, MediaKit, and
+publishing are separate downstream capabilities and cannot erase an accepted topic or draft.
 
-W01 uses `deerflow.incubation`, its SQL ledger, and schema `0012_incubation_ledger`.
-Artifacts are owner/project scoped, content-addressed, parent-checked, and reject secrets,
-browser state, temporary URLs, and local paths. `/api/incubation` owns project/thread binding;
-`start_run` ignores caller project IDs, owner-validates the stored binding, and rejects staleness.
-`IncubationBrief` contains only user-stated or authorized observed facts plus unknowns.
-Its minimal runtime builder accepts only a frozen source object that is a contiguous verbatim span of the current
-user request; it records one user-stated business fact and leaves every other project facet unknown without a model,
-questionnaire, or heuristic parser.
-`IncubationJudgment` keeps positioning, audience, persona, account-level presentation, and
-monetization hypotheses separate, binds the exact brief and frozen content-world version, and
-may cite benchmark or audience artifacts only as explicit parents. Neither object may rewrite
-semantic recognition or the content map. Account presentation is not a per-topic format decision.
-Per-topic `FormatDecision` binds the exact `message_plan` and its directly derived
-`draft_version(stage=base)`, plus protected-content, evidence-boundary, and base-body hashes. Its draft has no topic,
-body, or evidence rewrite fields, may remain provisional
-when resources are unknown, and may carry a narrative-method hint only for narrative formats. It
-contains no platform, sales, publishing, cadence, duration, shot-count, or quota controls.
-The bounded format runtime validates that lineage before its model call and accepts resource evidence only as
-same-project `user_material` media observations; benchmark evidence cannot impersonate owned production resources.
-`AdaptedDraft` then translates the exact base draft into the selected form. Every presentation unit retains a
-contiguous verbatim BaseDraft anchor; non-narrative forms cannot force dialogue or narrative staging. A
-`ProductionPlan` consumes the exact adapted draft and format decision, not the BaseDraft directly, and existing
-materials must be exact same-project `user_material` media observations already reviewed by that format decision.
-`MediaArtifact` binds the adapted-body hash, exact ProductionPlan, approved user inputs, same-plan intermediate
-outputs, MediaKit execution receipt, stable `artifact://` storage reference, byte hash, and QC. It must never admit
-topic/benchmark evidence as production material or retain local paths, temporary URLs, credentials, or raw commands.
-The bounded ProductionPlan runtime validates the exact AdaptedDraft, FormatDecision, BaseDraft, MessagePlan, and
-reviewed user-material lineage before its model call. Its 32 KB projection contains only adapted presentation units,
-the selected form, execution gaps, and up to eight reviewed user materials. The model may specify asset needs,
-capture/record/layout actions, and assembly order; it may not reopen content, invent resources or facts, or add sales,
-platform, publishing, approval, cadence, duration, or quota decisions. No-material plans may remain provisional.
-The first local production executor is intentionally narrower than the plan language. It supports only a reviewed
-`editing/trim-video` operation bound to exact plan action, assembly-step, asset, input, Schema, and argument hashes.
-Resolve and verify the private trusted source before starting the CLI, force each attempt into a server-created output
-directory, accept only regular files inside that exact directory, then double-hash, quality-check, content-address, and
-seal the first result. Operation arguments must not contain paths, URLs, callbacks, tokens, or unreviewed CLI fields.
-Do not infer timecodes from ProductionPlan prose or claim other MediaKit capabilities without their own narrow contract
-and real acceptance (A75).
-The incubation-judgment runtime accepts only sealed Brief/world/evidence parents. Benchmark and
-audience artifacts are validated by type and evidence role, then projected through their existing
-bounded Lead contracts; the frozen world is reduced to its account-level fields. The complete
-structured-model input is limited to 16,000 UTF-8 bytes. Model or contract failure must not seal a
-partial judgment. For a selected project, `explore_content_world` now stores the current reading/world,
-builds the minimal Brief, selects formal project evidence, seals the judgment, and passes only its editorial
-projection into MessagePlan generation; monetization remains outside TopicBrief and BaseDraft. A failure in
-this optional preparation must preserve the existing evidence-bound topic answer. After the exact BaseDraft is
-stored, the same run may continue through `FormatDecision -> AdaptedDraft -> ProductionPlan`; all three results are
-rendered after the format-neutral draft, while internal answer-only fields are removed from the public persistence
-receipt. Failure in this post-draft continuation cannot erase or relabel the already valid topic and base draft.
-
-W02 `EvidenceSnapshot` keeps role, provenance, coverage, limitations, and route hashes;
-its full form stays in the ledger and its Lead projection reports omissions. The reviewed
-Douyin v2 video-search adapter produces `topic_evidence` for research or
-`benchmark_account_candidate` for discovery; a candidate is not a stable account read.
-The bounded candidate collector reuses one Domain Manifest across pages, exact-matches a
-Unicode-normalized actor display name, deduplicates public video IDs, and can seal at most
-24 observations into the ledger. Optional `open_id` is authorized-viewer context, never
-the target competitor identity, and is not persisted. Xingtu and Buyin stay deferred until
-the official public sample has a specific field gap.
-Expose that collector to Lead only through `collect_douyin_benchmark_candidate`. Its
-model-facing schema contains the query, exact actor label, and sample cap only. Runtime
-user/thread/run/project identity stays server-injected; a selected project is ownership-
-checked before collection. No project is a valid read-only path, and a ledger write failure
-must retain the collected projection while returning a fixed redacted persistence status.
-Third-party account reads use `BenchmarkSnapshot`: one stable external account ID,
-author-consistent unique posts, at most 24 requested posts, explicit exclusions, and role
-`benchmark_evidence` without a customer `PlatformAccountRef`. Its bounded projection is
-observation only; positioning, audience, causality, and transferability require later child
-artifacts. Connector-local credentials and raw pages never enter either snapshot. The
-contract is implemented; Douyin live connector acceptance remains pending.
-
-Content providers emit only `user_material` or `topic_evidence`; MediaKit locators stay
-execution-only. Cloud runs need durable intents, private double-hashed input, QC, and timed quotes.
-Default-off quote preparation accepts project `user_material`, strict operator pricing, and live
-CLI Schema. It seals a review object; exact-operation approval
-replays one grant pair and starts no task. No provider hard cap exists. Keep the driver unregistered
-pending explicit task wiring and live acceptance (A49-A57).
+Douyin topic search and competitor discovery use distinct evidence roles. Author-label search
+results remain candidates until stable identity and author-consistent multi-post coverage exist;
+`BenchmarkSnapshot` caps observations at 24 and never claims audience, causality, or transferability.
+Credentials, cookies, raw pages, local paths, and temporary URLs never enter model projections or
+business artifacts. Cognitive workers cannot write approvals, publications, metrics, or adopted
+learning rules. Full contracts, current status, and rejected experiments live in
+`../docs/content-intelligence-v6/`, especially `ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`, and
+ADR-018 through ADR-020.
 
 ## Development Workflow
 

@@ -757,9 +757,10 @@ Use it as-is. Or tear it apart and make it yours.
 This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
 still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
-the direct `explore_content_world` path: two concurrent bounded readers, deterministic
-candidate assembly, candidate-only root adjudication, frozen-root expansion,
-parallel map-direction discovery and named recall,
+the direct `explore_content_world` path: bounded semantic reading, optional lexical
+evidence, semantic-family expansion, nullable shared-world synthesis, independent
+counterfactual review, one root adjudication, frozen-root expansion, parallel
+map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
 Root selection compares the largest effective content world rather than giving a
 complete product or service automatic priority.
@@ -768,22 +769,16 @@ it records the durable audience promise, recurring interpretive lens, drift boun
 and long-term territories. It has a content-addressed version; every downstream
 `TopicBrief` binds that version and starts its path at the frozen root. Trends may supply
 fresh evidence only after this boundary and cannot rewrite the positioning.
-Before candidate assembly, a business-semantic reader separates the verbatim object,
-lexical head, modifiers, offering role, served objects, and complete participant
-activities. At the same time, a lexical-world reader sees only the exact subject
-expression, independently extracts the lexical head, and may propose a strict
-meaning-bearing component, bounded semantic family, nullable human world, and a bound
-replacement-counterfactual review. It cannot see the other reader's output or the source
-pack. At the join, exact heads merge directly; nested head ranges retain only meaning
-components valid in both readings, while incompatible heads are withdrawn. Optional local
-lexical evidence filters family claims and unsupported meaning paths. The semantic reader
-also binds each constitutive modifier to a complete object, activity, event, participant
-world, or relationship world. Those bindings become required candidate context, so an
-unmodified tool action cannot replace the complete activity that gives the tool its identity. The two readers overlap;
-root adjudication and map expansion remain serial after the join. Code then labels narrow
-contexts as non-selectable example branches;
-the final adjudicator can only choose among frozen root candidates. Each specialist sees
-only the input it owns. Search begins only after the content root
+The semantic chain runs in dependency order. It separates the verbatim business object,
+lexical head, modifiers, offering role, served objects, activities, candidate semantic
+families, and a nullable shared human world before one adjudicator freezes the root.
+Optional local lexical evidence may challenge unsupported word-sense paths but cannot
+choose the answer. Deterministic code binds candidates and labels narrow examples as map
+branches; it does not turn model-generated intermediate labels into hard eligibility
+gates. A venue, product, consumption action, and social result combined into a long phrase
+does not automatically outrank the product: if the product still expands into people,
+history, events, regions, or works outside that scene, the scene remains one map path.
+Search begins only after the content root
 is frozen. A map-direction search starts alongside model recall, so an unsupported
 recalled name cannot monopolize the evidence path; both lanes merge before evidence
 reading. Search-result URLs are deduplicated and opened with a bounded local public-page
@@ -802,13 +797,18 @@ topic receive different plan identities. Source metadata is not story context, t
 user's occupation does not require business insertion, and attention packaging cannot
 replace evidence-backed payoff. Time, place, or situation remains nullable when it is not constitutive.
 Code joins the reviewed opening, message beats, and closing into a `BaseDraft` without a
-second model rewrite. Broad account-start runs lead with the account positioning and
+second free-form rewrite. Before it is sealed, one bounded repair may only delete or
+generalize high-signal names, numbers, or absolute claims that are absent from the fact
+ledger; a remaining violation rejects delivery. Broad account-start runs lead with the account positioning and
 then one map-bound "shoot today" example; the
 map prose is a fail-open response when no topic exists or delivery validation fails.
 For a selected project, the completed BaseDraft now enters a separate per-topic
 `FormatDecision` and `AdaptedDraft`. The decision may remain provisional when owned
 resources are unknown; the adaptation must preserve verbatim anchors from the BaseDraft,
 and narrative staging is available only when a narrative form is actually selected.
+The run may stop there. `ProductionPlan`, user-material work, MediaKit, and publishing are
+separate downstream capabilities, disabled by default, and are not required for incubation
+or expression acceptance.
 The completed prose is delivered through the native return-direct exit
 and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
 it back into a product catalogue.

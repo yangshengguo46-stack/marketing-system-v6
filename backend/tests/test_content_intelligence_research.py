@@ -14,10 +14,12 @@ from deerflow.content_intelligence import (
     ContentPathStep,
     ContentRootDecisionDraft,
     EvidenceReadingDraft,
-    LexicalWorldExplorationDraft,
     ResearchBudget,
     ResearchDiscoveryDraft,
     ResearchSearchResult,
+    SemanticFamilyExpansionDraft,
+    SharedWorldReviewDraft,
+    SharedWorldSynthesisDraft,
     TopicEditorialDecisionDraft,
     enrich_content_world_with_research,
     render_content_world_narration,
@@ -31,11 +33,12 @@ from deerflow.content_intelligence.research import (
 
 
 class SequencedStructuredFakeModel:
-    def __init__(self, payloads: dict[type, dict[str, Any]]) -> None:
+    def __init__(self, payloads: dict[type, dict[str, Any] | list[dict[str, Any]]]) -> None:
         self.payloads = payloads
         self.schemas: list[type] = []
         self.message_batches: list[tuple[object, ...]] = []
         self.call_schemas: list[type] = []
+        self.schema_call_counts: dict[type, int] = {}
 
     def with_structured_output(self, schema, *, include_raw: bool = False):
         self.schemas.append(schema)
@@ -44,7 +47,13 @@ class SequencedStructuredFakeModel:
     async def _ainvoke_for(self, schema, messages, config=None):
         self.message_batches.append(tuple(messages))
         self.call_schemas.append(schema)
-        return schema.model_validate(self.payloads[schema])
+        payload = self.payloads[schema]
+        if isinstance(payload, list):
+            call_index = self.schema_call_counts.get(schema, 0)
+            selected = payload[min(call_index, len(payload) - 1)]
+            self.schema_call_counts[schema] = call_index + 1
+            payload = selected
+        return schema.model_validate(payload)
 
 
 class BoundStructuredFakeModel:
@@ -89,24 +98,23 @@ def _root_candidates_payload() -> dict[str, Any]:
     }
 
 
-def _lexical_world_payload() -> dict[str, Any]:
+def _shared_world_payload() -> dict[str, Any]:
     return {
-        "lexical_head": "base",
-        "semantic_family": {
-            "components": [],
-            "branches": [],
-            "limitations": [],
-        },
-        "shared_world": {
-            "common_action_or_relation": None,
-            "participant_relationship": None,
-            "world_label": None,
-            "semantic_path": [],
-            "covered_frames": [],
-            "limitations": [],
-        },
-        "review": None,
+        "common_action_or_relation": "sharing a meal",
+        "participant_relationship": "people eating together",
+        "world_label": "shared meals",
+        "semantic_path": ["meal base", "eating together", "shared meals"],
+        "covered_frames": ["communal dining"],
         "limitations": [],
+    }
+
+
+def _shared_world_review_payload() -> dict[str, Any]:
+    return {
+        "reviewed_world_label": "shared meals",
+        "entry_path_is_explanatory": False,
+        "substitution_counterfactual": "People can share many unrelated meals without this particular served object.",
+        "rationale": "The social setting is adjacent to the object rather than constitutive of it.",
     }
 
 
@@ -143,7 +151,13 @@ async def _content_world_bundle():
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: _semantic_payload(),
-            LexicalWorldExplorationDraft: _lexical_world_payload(),
+            SemanticFamilyExpansionDraft: {
+                "components": [],
+                "branches": [],
+                "limitations": [],
+            },
+            SharedWorldSynthesisDraft: _shared_world_payload(),
+            SharedWorldReviewDraft: _shared_world_review_payload(),
             ContentRootDecisionDraft: _root_decision_payload(),
             FrozenContentMapDraft: _map_payload(),
         }
@@ -156,7 +170,7 @@ async def _content_world_bundle():
         ),
         model=model,
     )
-    assert LexicalWorldExplorationDraft in model.call_schemas
+    assert SemanticFamilyExpansionDraft in model.call_schemas
     return bundle
 
 
@@ -796,6 +810,45 @@ async def test_latent_recall_route_cannot_launder_a_different_selected_entity() 
             search=search,
             budget=ResearchBudget(max_queries=3, max_results_per_query=1, max_evidence_items=3),
         )
+
+
+@pytest.mark.asyncio
+async def test_latent_entity_drift_gets_one_bounded_contract_repair() -> None:
+    bundle = await _content_world_bundle()
+    invalid_reading = _reading_payload(source_ref="source-web-2")
+    invalid_reading["selected_entity"] = "a renamed event"
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: [
+                invalid_reading,
+                _reading_payload(source_ref="source-web-2"),
+            ],
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/{abs(hash(query))}",
+                content=f"Evidence for {query}.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        budget=ResearchBudget(max_queries=3, max_results_per_query=1, max_evidence_items=3),
+    )
+
+    assert enriched.topic_brief is not None
+    assert research_model.call_schemas.count(EvidenceReadingDraft) == 2
+    repair_messages = research_model.message_batches[2]
+    assert "a documented public event" in repair_messages[-1].content
+    assert "a renamed event" in repair_messages[-1].content
 
 
 @pytest.mark.asyncio

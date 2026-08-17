@@ -2,7 +2,7 @@
 
 ## 文档状态
 
-- 日期：2026-08-16
+- 日期：2026-08-18
 - 状态：`active implementation plan`
 - 第六版开发分支：`codex/v6-comprehension-core`
 - 第六版当前基线检查点：`f752d3a1`（后续实施事实以 `LEDGER.md` 和独立提交为准）
@@ -28,8 +28,9 @@
 
 ## 当前主线断点
 
-2026-08-17 用户确认语义理解、内容根与内容地图按 A58 当前可用版本冻结，不再为追求最优解阻塞
-后续产品。`TopicBrief` 是下一个具体开发模块，但系统目标没有缩成选题工具。
+2026-08-18 A76 的真实留出与雪茄回归推翻了 A58 运行时检查点：并行版本同时改变语义合同并加入
+候选硬门，导致内容根回退。ADR-020 已恢复顺序语义链并修复场景外延、结构化输出和交付事实边界。
+用户同时明确暂停制作与素材；当前开发验收收在 `AdaptedDraft`，已有后置制作代码保留但不继续扩展。
 
 发布回执之前仍必须完成的主链为：
 
@@ -39,13 +40,15 @@
 -> 对标与受众证据
 -> 孵化判断：定位 / 受众 / 人设 / 表现形式 / 变现
 -> 具体 TopicBrief
--> MessagePlan / BaseDraft / FormatDecision
--> 素材方案 / MediaKit 感知与制作 / MediaArtifact
+-> MessagePlan / BaseDraft
+-> 本条 FormatDecision / AdaptedDraft
+
+暂停：ProductionPlan、素材任务、MediaKit 制作与 MediaArtifact
 ```
 
-当前暂缓点从 `PreflightPrediction` 开始，包括不可逆发布审批、平台写操作、发布回执、指标与复盘。
-前面已经实现的 A41-A57 证据、项目谱系、抖音 MCP 与 MediaKit 基础必须继续复用，不能因开发
-`TopicBrief` 而另起一条孤立链路。
+当前暂缓点前移到 AdaptedDraft 之后，包括素材、制作、预演、不可逆发布审批、平台写
+操作、发布回执、指标与复盘。已实现的 A41-A75 代码和证据不删除；需要恢复该主线时仍从同一产物
+谱系继续，不能另起一条孤立链路。
 
 ## 状态语义
 
@@ -66,7 +69,7 @@
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
-| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented; two-reader overlap and context binding verified offline` | 保留现有运行时和项目版本谱系 | 新保留集真实质量/延迟、用户确认与版本切换 |
+| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; one real pass and one held-out failure` | 使用 ADR-020 顺序链与单根裁决；ADR-019 运行时撤下 | 全新留出集真实质量/延迟、用户确认与版本切换 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
@@ -74,8 +77,8 @@
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
 | 受众情报 | 第五版 E15/A38/A40 + 第六版 A74 | `observed contracts implemented; live connectors and HLLM aggregation pending` | 官方聚合画像可进入孵化；伪名 actor 行为与 HLLM 表征保持中间层 | 验收官方真实受众快照；再做多 actor 聚合、画像解释器和中文留出评测 |
 | MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata + trusted private I/O verified; live cloud disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图、精确批准、私有来源与受控物化 | 逐项登记结果策略并验收 ASR/OCR/场景切分与人工核对 |
-| `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
-| 表现形式选择 | 第四版方法审计 | `contract, bounded runtime, and selected-project orchestration implemented` | 薄 `FormatDecision` 绑定精确 MessagePlan 与 BaseDraft，不改写选题或正文 | 真实模型资源匹配、用户审阅与版本切换 |
+| `MessagePlan` 与基础文案 | 第六版 | `implemented; real fact-repair pass on cigar case` | 继续作为形式无关交付；证据外专名/数字/绝对断言一次修复后仍越界即拒绝 | 全新留出集上的观点、视角与语义事实边界 |
+| 表现形式选择 | 第四版方法审计 | `implemented; real provisional cigar decision verified` | 账号级表现形式仍在孵化判断；本条 `FormatDecision` 允许基于未知给候选与备选 | 用新留出题检验是否避免默认口播与虚构资源 |
 | 编剧与成稿方法 | 第四版 Skill | `reviewed` | 只在选定叙事形式时加载小方法 | 非叙事内容不被强制编故事 |
 | MediaKit 制作 | MediaKit CLI 与旧版可靠性证据 | `first local trim vertical verified; high-level orchestration and broader capabilities pending` | 经统一路由执行精确绑定 ProductionPlan 的制作操作 | 内容工具/Gateway 入口、更多本地能力与首个真实云能力 |
 | 发布前预演 | 第四版旧表与 `ip-content-calibration` | `reviewed; old schema retired` | 只吸收不可变预测和反事实方法 | 预测绑定精确成稿和媒体哈希 |
@@ -92,7 +95,7 @@
 | --- | --- | --- | --- |
 | Lead Agent | 理解用户当前目标、选择高层能力、最终收敛并对用户负责 | 已使用 | 自己记住全部业务事实或绕过审批 |
 | LangGraph/checkpoint | 交互运行、中断恢复、状态转移与重放 | W01 起 | 代替项目、回执和指标数据库 |
-| 受控内部工作者 | 业务语义与词义世界首轮并发；证据阅读、候选与收敛等紧耹合结构化分工 | 已使用；首轮并发离线验收 | 变成可修改状态的自由 Agent |
+| 受控内部工作者 | 顺序语义、语义家族、共同世界、复核、单根裁决；研究阶段保留有依赖的结构化分工 | 已使用；A76 真实纠错 | 变成可修改状态的自由 Agent，或为提速重新叠硬门 |
 | `task` 子 Agent | 可并行的大样本对标研究、独立反证和长报告 | W02/W06 | 固定每次启动的子 Agent 阵容 |
 | MCP 持久会话 | 抖音、浏览器和后续平台连接器 | W02/W05 | 将低层 API 平铺给 Lead |
 | `tool_search` | 延迟装载 MCP Schema，只提升当前需要的领域能力 | W02 启用验收 | 概率猜测权限或未审阅 Child |
@@ -107,7 +110,7 @@
 | Run events/SSE/StreamBridge | 子任务、媒体、发布和复盘的可见进度、恢复与成本观测 | W02 起 | 将大原始工件作为 SSE 消息传输 |
 | Authorization/guardrails | 账号、路由、工具和不可逆操作授权 | W01/W05 | 基于内容评分拦截创作 |
 | Tool progress/loop detection | 发现重复搜索、无新信息调用和不可恢复配置问题 | W02 起 | 将正常多路取证误判为死循环 |
-| Circuit breaker/LLM concurrency | 供应商故障降级、并发和 Token/成本保护 | Lead 已有；结构化工作者固定两路，进程级共用保护待压测 | 用重试风暴填补证据缺失 |
+| Circuit breaker/LLM concurrency | 供应商故障降级、并发和 Token/成本保护 | Lead 已有；认知链当前按依赖顺序运行 | 用重试风暴填补证据缺失，或未经留出比较恢复 A58 并行链 |
 | Plan/Todo | 长任务的用户可见执行计划与进度 | W02 起按需 | 固化所有用户的业务阶段 |
 
 矩阵的原则是“把 DeerFlow 原生能力用到它擅长的边界”，不是追求一次请求同时触发所有功能。
@@ -211,10 +214,10 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 ### W03 孵化与单条内容产物谱系
 
-状态：`implemented through ProductionPlan; first local MediaKit executor verified; high-level execution and user review UI pending`
+状态：`core through AdaptedDraft implemented and partially live-verified; ProductionPlan and material execution paused by user`
 
-目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
-地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
+目标：将 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`
+绑定到项目、地图版本和精确父产物；制作与素材不属于 W03 当前验收。
 
 退出条件：
 
@@ -299,7 +302,17 @@ AdaptedDraft。表现形式只读取本条内容与已审阅用户素材，适�
 后置制作段。当前明确断点为 MediaKit 尚未消费方案生成 `MediaArtifact`。详见
 `audits/A73-production-plan-runtime-orchestration.md`。
 
+2026-08-18 A76 纠错回执：真实宠物殡葬留出失败，真实雪茄回归追到 A58 并行检查点的语义回退。
+ADR-020 恢复顺序语义链，根裁决新增“消费场景不是自动上位世界”的通用反例；统一结构化恢复修复
+供应商畸形 JSON，MessagePlan 又增加证据外专名、数字和绝对断言的一次有界修复。雪茄案例现在能从
+“雪茄”到 Cohiba 具体 TopicBrief 与 BaseDraft，但弱来源限制仍在，不能宣布通用通过。按用户决定，
+本轮继续验证了 provisional FormatDecision 与 AdaptedDraft，但不启动 ProductionPlan 或素材制作。
+详见
+`audits/A76-core-e2e-root-and-delivery-recovery.md`。
+
 ### W04 MediaKit 制作路由
+
+状态：`paused by user after A75; retain code and evidence, do not extend in current mainline`
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的
 `MediaArtifact`。

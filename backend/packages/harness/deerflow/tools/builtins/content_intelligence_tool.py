@@ -31,6 +31,7 @@ from deerflow.content_intelligence import (
     render_shooting_delivery,
     synthesize_shooting_delivery,
 )
+from deerflow.content_intelligence.analyzer import _invoke_structured
 from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
 from deerflow.incubation import (
     AdaptedDraft,
@@ -153,6 +154,14 @@ def _runtime_context_text(runtime: Runtime, name: str) -> str | None:
     return value.strip()
 
 
+def _runtime_context_bool(runtime: Runtime, name: str, *, default: bool) -> bool:
+    context = runtime.context or {}
+    if not isinstance(context, dict):
+        return default
+    value = context.get(name)
+    return value if isinstance(value, bool) else default
+
+
 def _artifact_receipt(artifact: ArtifactEnvelope) -> dict[str, str]:
     return {
         "artifact_type": artifact.artifact_type,
@@ -163,15 +172,17 @@ def _artifact_receipt(artifact: ArtifactEnvelope) -> dict[str, str]:
 
 def _structured_model_runner(model: Any, config: RunnableConfig):
     async def invoke(schema, messages):
-        runnable = model.with_structured_output(schema, include_raw=True)
-        result = await runnable.ainvoke(messages, config=config)
-        if isinstance(result, dict) and "parsed" in result:
-            parsing_error = result.get("parsing_error")
-            parsed = result.get("parsed")
-            if parsing_error is not None or parsed is None:
-                raise ValueError("structured model output could not be parsed")
-            return parsed
-        return result
+        try:
+            return await _invoke_structured(
+                model,
+                schema,
+                tuple(messages),
+                runnable_config=config,
+                include_raw=True,
+                container_fields=set(getattr(schema, "model_fields", {})),
+            )
+        except ValueError as exc:
+            raise ValueError("structured model output could not be parsed") from exc
 
     return invoke
 
@@ -283,6 +294,7 @@ async def _persist_content_run(
     topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
     model: Any | None = None,
+    include_production_plan: bool = False,
 ) -> dict[str, Any]:
     project_id = _runtime_context_text(runtime, "incubation_project_id")
     if project_id is None:
@@ -393,22 +405,23 @@ async def _persist_content_run(
                 stored_receipts.append(_artifact_receipt(adapted_artifact))
                 answer_sections.append(_render_adapted_draft_artifact(adapted_artifact))
 
-                production_artifact = await generate_production_plan(
-                    project=project,
-                    adapted_draft_artifact=adapted_artifact,
-                    format_decision_artifact=format_artifact,
-                    user_material_artifacts=bounded_resources,
-                    structured_model=_structured_model_runner(model, runtime.config),
-                    created_at=created_at,
-                    source_thread_id=thread_id,
-                    source_run_id=run_id,
-                )
-                production_artifact = await repository.put_artifact(production_artifact)
-                stored_receipts.append(_artifact_receipt(production_artifact))
-                answer_sections.append(_render_production_plan_artifact(production_artifact))
+                if include_production_plan:
+                    production_artifact = await generate_production_plan(
+                        project=project,
+                        adapted_draft_artifact=adapted_artifact,
+                        format_decision_artifact=format_artifact,
+                        user_material_artifacts=bounded_resources,
+                        structured_model=_structured_model_runner(model, runtime.config),
+                        created_at=created_at,
+                        source_thread_id=thread_id,
+                        source_run_id=run_id,
+                    )
+                    production_artifact = await repository.put_artifact(production_artifact)
+                    stored_receipts.append(_artifact_receipt(production_artifact))
+                    answer_sections.append(_render_production_plan_artifact(production_artifact))
             except Exception as exc:
                 logger.warning(
-                    "Post-draft production continuation was unavailable: %s",
+                    "Post-draft expression or production continuation was unavailable: %s",
                     type(exc).__name__,
                 )
 
@@ -610,6 +623,11 @@ async def explore_content_world_tool(
             topic_evidence_snapshots=topic_evidence_snapshots,
             incubation_judgment_artifact=(prepared_incubation.judgment_artifact if prepared_incubation is not None and shooting_delivery is not None else None),
             model=model,
+            include_production_plan=_runtime_context_bool(
+                runtime,
+                "content_include_production_plan",
+                default=False,
+            ),
         )
         if shooting_delivery is None:
             return _terminal_content_world_command(
