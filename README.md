@@ -867,8 +867,10 @@ no-fee submission, restart recovery, status normalization, redaction, and artifa
 tests. Trusted source/output I/O is implemented, and the first reviewed `enhance-video` preflight
 freezes its dynamic schema, explicit output specs, dated pricing evidence, deterministic estimate,
 user cap, and quote expiry into the durable operation and result receipt. It remains unregistered:
-the provider exposes no per-task hard fee cap, and no live cloud call is allowed without a fresh,
-exact user approval and capability-specific acceptance.
+the provider exposes no per-task hard fee cap. A project-scoped API can now review one immutable,
+server-generated quote and atomically issue separate cloud-processing and fee grants after exact
+confirmation; it never accepts a caller-invented operation digest or starts a task. No live cloud
+call is allowed without later task wiring and capability-specific acceptance.
 
 The V6 incubation ledger now has a platform-neutral `BenchmarkSnapshot` for that receipt.
 It binds one stable external account identity to at most 24 author-qualified posts, keeps

@@ -209,12 +209,12 @@ observation only; positioning, audience, causality, and transferability require 
 artifacts. Connector-local credentials and raw pages never enter either snapshot. The
 contract is implemented; Douyin live connector acceptance remains pending.
 
-Content-world providers emit only `user_material` or `topic_evidence`. MediaKit locators stay
-execution-only. Cloud runs require durable intents, exact grants, private double-hashed input,
-capability QC, and a timed fee quote. Quote/pricing hashes, estimate, cap, and expiry bind operation,
-authorization, recovery, and result receipt; expiry stops before source or approval. There is no
-provider hard cap. Preserve uncertain handles; keep the driver unregistered pending approval
-and live acceptance (A49-A55).
+Content providers emit only `user_material` or `topic_evidence`. MediaKit locators stay
+execution-only. Cloud runs need durable intents, private double-hashed input, capability QC,
+and timed quotes. Quote/pricing hashes, estimate, cap, and expiry bind operation, recovery, and
+result receipt. Only server-sealed user-material quotes may be reviewed and atomically approved;
+the API starts no task. There is no provider hard cap. Keep driver unregistered
+pending explicit task wiring and live acceptance (A49-A56).
 
 ## Development Workflow
 

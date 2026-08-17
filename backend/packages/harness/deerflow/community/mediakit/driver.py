@@ -266,7 +266,10 @@ class _CloudTaskSpec:
 def mediakit_cloud_operation_sha256(arguments: Mapping[str, Any]) -> str:
     """Return the exact approval digest without exposing execution-only data."""
 
-    return _CloudTaskSpec.from_arguments(arguments).operation_sha256
+    normalized = dict(arguments)
+    normalized.setdefault("cloud_processing_approval_ref", "approval-pending-cloud")
+    normalized.setdefault("fee_authorization_ref", "approval-pending-fee")
+    return _CloudTaskSpec.from_arguments(normalized).operation_sha256
 
 
 def _required_driver_text(data: Mapping[str, Any], name: str, *, maximum: int = 255) -> str:

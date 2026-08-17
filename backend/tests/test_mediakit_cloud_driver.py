@@ -412,6 +412,10 @@ def test_operation_digest_binds_source_schema_arguments_and_fee_limit() -> None:
     changed_approval_refs["cloud_processing_approval_ref"] = "approval-cloud-2"
     changed_approval_refs["fee_authorization_ref"] = "approval-fee-2"
     assert mediakit_cloud_operation_sha256(changed_approval_refs) == baseline_digest
+    pending_approval_refs = dict(baseline)
+    pending_approval_refs.pop("cloud_processing_approval_ref")
+    pending_approval_refs.pop("fee_authorization_ref")
+    assert mediakit_cloud_operation_sha256(pending_approval_refs) == baseline_digest
 
 
 @pytest.mark.asyncio

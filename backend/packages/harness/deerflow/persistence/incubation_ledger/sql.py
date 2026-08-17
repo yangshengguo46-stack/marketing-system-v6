@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from deerflow.incubation.approvals import ApprovalGrant
@@ -216,6 +217,85 @@ class IncubationLedgerRepository:
             session.add(row)
             await session.commit()
             return self._approval_contract(row)
+
+    async def issue_approval_pair(
+        self,
+        cloud_processing: ApprovalGrant,
+        fee_authorization: ApprovalGrant,
+    ) -> tuple[ApprovalGrant, ApprovalGrant]:
+        cloud = ApprovalGrant.model_validate(cloud_processing.model_dump(mode="python"))
+        fee = ApprovalGrant.model_validate(fee_authorization.model_dump(mode="python"))
+        if cloud.kind != "cloud_processing" or fee.kind != "fee_authorization":
+            raise ValueError("approval pair kinds are invalid")
+        if cloud.grant_id == fee.grant_id:
+            raise ValueError("approval pair grant identities must be distinct")
+        if any(grant.bound_local_task_id is not None or grant.revoked_at is not None for grant in (cloud, fee)):
+            raise ValueError("new approval grants must be unbound and active")
+        if cloud.project != fee.project or cloud.operation_sha256 != fee.operation_sha256 or cloud.issued_at != fee.issued_at or cloud.expires_at != fee.expires_at:
+            raise ValueError("approval pair must describe one exact operation and window")
+
+        async with self._sf() as session:
+            await self._require_project(session, cloud.project)
+            existing_cloud = await session.get(IncubationApprovalGrantRow, cloud.grant_id)
+            existing_fee = await session.get(IncubationApprovalGrantRow, fee.grant_id)
+            if existing_cloud is not None or existing_fee is not None:
+                if existing_cloud is not None and existing_fee is not None:
+                    stored_cloud = self._approval_contract(existing_cloud)
+                    stored_fee = self._approval_contract(existing_fee)
+                    if (
+                        self._approval_replay_identity(stored_cloud),
+                        self._approval_replay_identity(stored_fee),
+                    ) == (
+                        self._approval_replay_identity(cloud),
+                        self._approval_replay_identity(fee),
+                    ):
+                        return stored_cloud, stored_fee
+                raise ApprovalGrantConflictError("approval pair identity already exists with different metadata")
+
+            rows = (
+                IncubationApprovalGrantRow(
+                    grant_id=cloud.grant_id,
+                    owner_user_id=cloud.project.owner_user_id,
+                    project_id=cloud.project.project_id,
+                    kind=cloud.kind,
+                    operation_sha256=cloud.operation_sha256,
+                    issued_at=cloud.issued_at,
+                    expires_at=cloud.expires_at,
+                    stored_at=datetime.now(UTC),
+                ),
+                IncubationApprovalGrantRow(
+                    grant_id=fee.grant_id,
+                    owner_user_id=fee.project.owner_user_id,
+                    project_id=fee.project.project_id,
+                    kind=fee.kind,
+                    operation_sha256=fee.operation_sha256,
+                    currency=fee.currency,
+                    maximum_amount_micros=fee.maximum_amount_micros,
+                    issued_at=fee.issued_at,
+                    expires_at=fee.expires_at,
+                    stored_at=datetime.now(UTC),
+                ),
+            )
+            session.add_all(rows)
+            try:
+                await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                existing_cloud = await session.get(IncubationApprovalGrantRow, cloud.grant_id)
+                existing_fee = await session.get(IncubationApprovalGrantRow, fee.grant_id)
+                if existing_cloud is not None and existing_fee is not None:
+                    stored_cloud = self._approval_contract(existing_cloud)
+                    stored_fee = self._approval_contract(existing_fee)
+                    if (
+                        self._approval_replay_identity(stored_cloud),
+                        self._approval_replay_identity(stored_fee),
+                    ) == (
+                        self._approval_replay_identity(cloud),
+                        self._approval_replay_identity(fee),
+                    ):
+                        return stored_cloud, stored_fee
+                raise ApprovalGrantConflictError("approval pair identity changed during issuance") from None
+            return self._approval_contract(rows[0]), self._approval_contract(rows[1])
 
     async def get_approval_grant(
         self,
@@ -484,6 +564,18 @@ class IncubationLedgerRepository:
             grant.currency,
             grant.maximum_amount_micros,
             grant.issued_at,
+            grant.expires_at,
+        )
+
+    @staticmethod
+    def _approval_replay_identity(grant: ApprovalGrant) -> tuple[object, ...]:
+        return (
+            grant.grant_id,
+            grant.project,
+            grant.kind,
+            grant.operation_sha256,
+            grant.currency,
+            grant.maximum_amount_micros,
             grant.expires_at,
         )
 

@@ -261,6 +261,13 @@ Gateway 环境中的 Key、Secret 和 Device ID
 因此本切片保持驱动未注册，未上传或调用云能力。详见
 `audits/A55-mediakit-enhance-video-preflight.md`。
 
+2026-08-17 第八执行切片：将服务器生成的报价封存为项目内不可变
+`mediakit_cloud_approval_request`。报价必须以用户授权素材的元信息观察为父级，客户端不能提交自造
+操作摘要。Gateway 新增只读审阅和精确确认入口；确认报价摘要、币种或金额变化、报价过期、项目越权
+或缺少“供应商无硬封顶”确认时均不签发。两类 `ApprovalGrant` 由同一数据库事务原子创建，确定性 ID
+使双击和重试收敛到首个成功决定。接口不会排队、注册驱动或调用云端。详见
+`audits/A56-mediakit-exact-approval-api.md`。
+
 首批验收：
 
 - 本地剪辑、字幕、裁剪、拼接、混音、合成和元信息。

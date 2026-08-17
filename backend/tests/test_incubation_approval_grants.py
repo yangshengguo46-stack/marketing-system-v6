@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from deerflow.config.database_config import DatabaseConfig
 from deerflow.incubation import (
     ApprovalGrant,
+    ApprovalGrantConflictError,
     ApprovalGrantRejectedError,
     IncubationLedgerRepository,
     ProjectRef,
@@ -103,6 +104,57 @@ def test_approval_grant_contract_keeps_cloud_consent_and_fee_limit_distinct() ->
             issued_at=NOW,
             expires_at=NOW + timedelta(minutes=5),
         )
+
+
+@pytest.mark.asyncio
+async def test_approval_pair_is_issued_atomically_and_replays_exact_identity(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project()
+    await repo.create_project(project, display_name="Media project")
+    cloud = _cloud_grant()
+    fee = _fee_grant()
+
+    first = await repo.issue_approval_pair(cloud, fee)
+    replay = await repo.issue_approval_pair(cloud, fee)
+
+    assert first == (cloud, fee)
+    assert replay == first
+
+    later_cloud = cloud.model_copy(update={"issued_at": NOW + timedelta(seconds=1)})
+    later_fee = fee.model_copy(update={"issued_at": NOW + timedelta(seconds=1)})
+    delayed_replay = await repo.issue_approval_pair(later_cloud, later_fee)
+    assert delayed_replay == first
+
+
+@pytest.mark.asyncio
+async def test_conflicting_pair_never_leaves_one_new_grant(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project()
+    await repo.create_project(project, display_name="Media project")
+    await repo.issue_approval_grant(_cloud_grant(operation_sha256="b" * 64))
+
+    with pytest.raises(ApprovalGrantConflictError):
+        await repo.issue_approval_pair(_cloud_grant(), _fee_grant())
+
+    assert await repo.get_approval_grant("approval-fee-1", owner_user_id="user-1") is None
+
+
+@pytest.mark.asyncio
+async def test_concurrent_exact_pair_issue_converges_on_one_pair(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project()
+    await repo.create_project(project, display_name="Media project")
+    cloud = _cloud_grant()
+    fee = _fee_grant()
+
+    results = await asyncio.gather(
+        repo.issue_approval_pair(cloud, fee),
+        repo.issue_approval_pair(cloud, fee),
+        return_exceptions=True,
+    )
+
+    assert all(not isinstance(result, Exception) for result in results)
+    assert results[0] == results[1] == (cloud, fee)
 
 
 @pytest.mark.asyncio

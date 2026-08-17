@@ -1501,3 +1501,23 @@ URL 只存在执行内存；完成任务必须物化为内部 `artifact://` 引�
 供应商没有单任务费用硬封顶，故状态仍为 `reviewed`：驱动未注册，没有批准 API，没有上传素材、
 调用云能力或产生费用。详见 `audits/A55-mediakit-enhance-video-preflight.md` 与
 `evidence/mediakit-enhance-video-preflight-a55-2026-08-17.md`。
+
+## A56 W04 MediaKit 精确批准审阅与签发入口
+
+2026-08-17 按 A55 后继缺口先写失败测试。最初仓储没有原子签发对，领域层没有可封存批准请求，
+Gateway 的审阅与确认路径均为 404；补并发重放后还发现仅因 `issued_at` 相差一秒就会把同一报价误判
+为冲突。实现据此只认服务器报价：`MediaKitCloudApprovalRequest` 重新核对项目、素材哈希、能力参数、
+Schema、价格和报价字段，再封存为以 `user_material` 媒体观察为父级的内容寻址产物。对标素材不能进入
+云处理批准，定位符、权利引用和本机路径不进入批准载荷或 API 响应。
+
+`GET /api/incubation/projects/{project_id}/approvals/mediakit-cloud/{quote_artifact_id}` 只展示可审阅规格、
+估值、金额上限、有效期和无供应商硬封顶警告。`POST .../mediakit-cloud` 必须回传原报价摘要、币种、
+金额以及云处理、费用和无硬封顶三项明确确认。两张凭证使用报价内容推导的稳定 ID，在同一事务内
+签发；双击和并发重试保留首个签发时间并返回同一对凭证。报价变化、过期、越权或半对冲突均失败。
+
+聚焦回归为 `73 passed, 1 warning`，所有权、谱系、迁移、Gateway 与 MediaKit 联合回归为
+`141 passed, 1 warning`，阻塞 I/O 回归为 `71 passed, 2 warnings`。完整离线后端回归为
+`11849 passed, 76 skipped, 17 warnings in 428.20s`。本轮没有创建 `mcp_task`、注册 MediaKit 云驱动、
+上传素材、调用供应商或产生费用。详见
+`audits/A56-mediakit-exact-approval-api.md` 与
+`evidence/mediakit-exact-approval-api-a56-2026-08-17.md`。

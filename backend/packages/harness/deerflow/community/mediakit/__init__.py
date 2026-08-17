@@ -1,3 +1,7 @@
+from deerflow.community.mediakit.approval_request import (
+    MediaKitCloudApprovalRequest,
+    seal_mediakit_cloud_approval_request,
+)
 from deerflow.community.mediakit.authorization import MediaKitCloudApprovalAuthorizer
 from deerflow.community.mediakit.contracts import (
     CommandResult,
@@ -40,6 +44,7 @@ __all__ = [
     "ExecutionMode",
     "MediaKitCapability",
     "MediaKitCapabilityRouter",
+    "MediaKitCloudApprovalRequest",
     "MediaKitCloudApprovalAuthorizer",
     "MediaKitCloudAuthorizationContext",
     "MediaKitCloudDriver",
@@ -63,4 +68,5 @@ __all__ = [
     "MediaKitVideoArtifactQualityChecker",
     "PreparedMediaKitCall",
     "mediakit_cloud_operation_sha256",
+    "seal_mediakit_cloud_approval_request",
 ]
