@@ -102,52 +102,23 @@ def test_lexical_evidence_provider_is_created_from_the_untracked_local_index(
 
 
 @pytest.mark.asyncio
-async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_content_world_tool_stops_after_the_frozen_map_for_long_term_positioning(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     bundle = object()
-    enriched_bundle = object()
-    narration = object()
     lexical_provider = object()
-    topic_snapshot = object()
-    topic_search = SimpleNamespace(snapshots=(topic_snapshot,))
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "DouyinMcpTopicEvidenceSearch",
-        Mock(return_value=topic_search),
-    )
+    topic_search_factory = Mock()
+    monkeypatch.setattr(content_intelligence_tool_module, "DouyinMcpTopicEvidenceSearch", topic_search_factory)
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "_create_lexical_evidence_provider",
-        lambda: lexical_provider,
-    )
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: lexical_provider)
     analysis = AsyncMock(return_value=bundle)
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "analyze_content_intelligence",
-        analysis,
-    )
-    research = AsyncMock(return_value=enriched_bundle)
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "enrich_content_world_with_research",
-        research,
-    )
-    delivery = AsyncMock(return_value=None)
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "synthesize_shooting_delivery",
-        delivery,
-    )
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "synthesize_content_world_narration",
-        AsyncMock(return_value=narration),
-    )
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "render_content_world_narration",
-        lambda actual_bundle, actual_narration: "# 火锅\n\n围绕火锅本身展开内容世界。",
-    )
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", analysis)
+    research = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    delivery = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
+    positioning = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅")
+    monkeypatch.setattr(content_intelligence_tool_module, "_render_positioning_basis", positioning, raising=False)
     persist = AsyncMock(return_value={"status": "not_selected"})
     monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persist)
 
@@ -156,6 +127,7 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
             "name": "explore_content_world",
             "args": {
                 "user_request": "我是卖重庆火锅底料的，该怎么起号？",
+                "answer_goal": "long_term_positioning",
                 "runtime": _tool_runtime("content-world-call-1"),
             },
             "id": "content-world-call-1",
@@ -168,26 +140,24 @@ async def test_content_world_tool_delivers_one_visible_terminal_ai_message(monke
     assert isinstance(result.update, dict)
     messages = result.update["messages"]
     assert len(messages) == 1
-
     tool_message = messages[0]
     assert isinstance(tool_message, ToolMessage)
     assert tool_message.tool_call_id == "content-world-call-1"
     assert tool_message.additional_kwargs["hide_from_ui"] is True
     assert tool_message.additional_kwargs["deerflow_direct_response"] is True
-    assert tool_message.content == "# 火锅\n\n围绕火锅本身展开内容世界。"
+    assert tool_message.content == "# 账号内容定位\n\n**长期讲什么：** 火锅"
     assert not any(isinstance(message, AIMessage) for message in messages)
-    research.assert_awaited_once()
+    research.assert_not_awaited()
+    delivery.assert_not_awaited()
+    topic_search_factory.assert_not_called()
     assert analysis.await_args.args[0].subject_expression == "我是卖重庆火锅底料的，该怎么起号？"
     assert analysis.await_args.args[0].source_materials == ()
     assert analysis.await_args.kwargs["lexical_evidence_provider"] is lexical_provider
-    assert research.await_args.args[0] is bundle
-    assert callable(research.await_args.kwargs["search"])
     persist.assert_awaited_once()
-    assert persist.await_args.kwargs["topic_evidence_snapshots"] == (topic_snapshot,)
-    assert research.await_args.kwargs["fetch"] is content_intelligence_tool_module._fetch_content_world_evidence
-    assert delivery.await_args.args[0] is enriched_bundle
-    assert delivery.await_args.kwargs["user_request"] == "我是卖重庆火锅底料的，该怎么起号？"
-    assert content_intelligence_tool_module.synthesize_content_world_narration.await_args.args[0] is enriched_bundle
+    assert persist.await_args.kwargs["bundle"] is bundle
+    assert persist.await_args.kwargs["delivery"] is None
+    assert persist.await_args.kwargs["topic_evidence_snapshots"] == ()
+    positioning.assert_called_once_with(bundle)
 
 
 @pytest.mark.asyncio
@@ -195,7 +165,7 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     bundle = object()
-    enriched_bundle = object()
+    enriched_bundle = SimpleNamespace(topic_brief=object())
     shooting_delivery = object()
     user_request = "我是卖白酒的，该怎么起号？"
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
@@ -214,8 +184,6 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
     monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
     render = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 饮酒与人际礼俗\n\n# 今日建议拍摄\n\n## 为什么当地的酒桌礼数这么重？")
     monkeypatch.setattr(content_intelligence_tool_module, "render_shooting_delivery", render)
-    narration = AsyncMock(return_value="# 饮酒与人际礼俗\n\n一份内部地图。")
-    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_content_world_narration", narration)
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -229,17 +197,20 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
         }
     )
 
-    assert result.update["messages"][0].content.startswith("# 账号内容定位")
-    assert "# 今日建议拍摄" in result.update["messages"][0].content
+    rendered = result.update["messages"][0].content
+    assert rendered.startswith("# 今日建议拍摄")
+    assert "# 长期定位依据" in rendered
+    assert rendered.index("# 今日建议拍摄") < rendered.index("# 长期定位依据")
     delivery.assert_awaited_once()
     assert delivery.await_args.args[0] is enriched_bundle
     assert delivery.await_args.kwargs["user_request"] == user_request
     render.assert_called_once_with(enriched_bundle, shooting_delivery)
-    narration.assert_not_awaited()
+    research = content_intelligence_tool_module.enrich_content_world_with_research
+    assert research.await_args.kwargs["topic_seed"] is None
 
 
 @pytest.mark.asyncio
-async def test_content_world_tool_preserves_the_rooted_map_when_optional_research_fails(
+async def test_shootable_topic_goal_never_silently_downgrades_to_a_map_when_research_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     bundle = object()
@@ -254,17 +225,14 @@ async def test_content_world_tool_preserves_the_rooted_map_when_optional_researc
         "enrich_content_world_with_research",
         AsyncMock(side_effect=RuntimeError("provider unavailable")),
     )
-    narration = AsyncMock(return_value="# 火锅\n\n围绕火锅本身展开内容世界。")
+    delivery = AsyncMock()
     monkeypatch.setattr(
         content_intelligence_tool_module,
-        "synthesize_content_world_narration",
-        narration,
+        "synthesize_shooting_delivery",
+        delivery,
     )
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "render_content_world_narration",
-        lambda actual_bundle, actual_narration: actual_narration,
-    )
+    positioning = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅")
+    monkeypatch.setattr(content_intelligence_tool_module, "_render_positioning_basis", positioning, raising=False)
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -279,8 +247,233 @@ async def test_content_world_tool_preserves_the_rooted_map_when_optional_researc
     )
 
     assert isinstance(result, Command)
-    assert result.update["messages"][0].content == "# 火锅\n\n围绕火锅本身展开内容世界。"
-    assert narration.await_args.args[0] is bundle
+    content = result.update["messages"][0].content
+    assert content.startswith("# 本轮选题结果")
+    assert "定位完成但未形成可拍选题" in content
+    assert "# 账号内容定位" in content
+    delivery.assert_not_awaited()
+    positioning.assert_called_once_with(bundle)
+
+
+@pytest.mark.asyncio
+async def test_shootable_topic_goal_reports_when_topic_evidence_adapter_cannot_start(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "DouyinMcpTopicEvidenceSearch",
+        Mock(side_effect=RuntimeError("topic evidence adapter unavailable")),
+    )
+    research = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_positioning_basis",
+        Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅"),
+        raising=False,
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是卖重庆火锅底料的，该怎么起号？",
+                "answer_goal": "one_shootable_topic",
+                "runtime": _tool_runtime("content-world-call-adapter-failure"),
+            },
+            "id": "content-world-call-adapter-failure",
+            "type": "tool_call",
+        }
+    )
+
+    assert "定位完成但未形成可拍选题" in result.update["messages"][0].content
+    research.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_shootable_topic_goal_reports_when_research_returns_no_topic_brief(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    researched_bundle = SimpleNamespace(topic_brief=None)
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "analyze_content_intelligence",
+        AsyncMock(return_value=bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        AsyncMock(return_value=researched_bundle),
+    )
+    delivery = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_positioning_basis",
+        Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅"),
+        raising=False,
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是卖重庆火锅底料的，该怎么起号？",
+                "answer_goal": "one_shootable_topic",
+                "runtime": _tool_runtime("content-world-call-no-topic"),
+            },
+            "id": "content-world-call-no-topic",
+            "type": "tool_call",
+        }
+    )
+
+    assert "定位完成但未形成可拍选题" in result.update["messages"][0].content
+    delivery.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_shootable_topic_goal_reports_when_message_plan_or_base_draft_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    researched_bundle = SimpleNamespace(topic_brief=object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "enrich_content_world_with_research",
+        AsyncMock(return_value=researched_bundle),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_shooting_delivery",
+        AsyncMock(side_effect=ValueError("message plan contract failed")),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_positioning_basis",
+        Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅"),
+        raising=False,
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是卖重庆火锅底料的，该怎么起号？",
+                "answer_goal": "one_shootable_topic",
+                "runtime": _tool_runtime("content-world-call-delivery-failure"),
+            },
+            "id": "content-world-call-delivery-failure",
+            "type": "tool_call",
+        }
+    )
+
+    assert "定位完成但未形成可拍选题" in result.update["messages"][0].content
+
+
+@pytest.mark.asyncio
+async def test_topic_seed_reaches_research_only_as_a_verbatim_user_request_span(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    enriched_bundle = SimpleNamespace(topic_brief=object())
+    shooting_delivery = object()
+    user_request = "我是个普通人，今天的牛来这部影片比较火，给我出一个选题"
+    research = AsyncMock(return_value=enriched_bundle)
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_shooting_delivery",
+        AsyncMock(return_value=shooting_delivery),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 账号内容定位\n\n普通人观察\n\n# 今日建议拍摄\n\n## 为什么这部影片能火？"),
+    )
+
+    await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": user_request,
+                "answer_goal": "one_shootable_topic",
+                "topic_seed": "今天的牛来这部影片比较火",
+                "runtime": _tool_runtime("content-world-call-topic-seed"),
+            },
+            "id": "content-world-call-topic-seed",
+            "type": "tool_call",
+        }
+    )
+
+    assert research.await_args.kwargs["topic_seed"] == "今天的牛来这部影片比较火"
+
+
+@pytest.mark.asyncio
+async def test_topic_seed_outside_user_request_is_rejected_before_analysis(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis = AsyncMock()
+    research = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", analysis)
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是个普通人，给我出一个选题",
+                "answer_goal": "one_shootable_topic",
+                "topic_seed": "用户没有说过的热点",
+                "runtime": _tool_runtime("content-world-call-invalid-seed"),
+            },
+            "id": "content-world-call-invalid-seed",
+            "type": "tool_call",
+        }
+    )
+
+    assert "选题线索必须直接来自你的原话" in result.update["messages"][0].content
+    analysis.assert_not_awaited()
+    research.assert_not_awaited()
+
+
+def test_tool_layer_renders_positioning_as_basis_and_prioritizes_the_shootable_topic() -> None:
+    world = SimpleNamespace(
+        content_root="火锅",
+        audience_territory=SimpleNamespace(text="围绕火锅形成的饮食与社交世界"),
+        editorial_promise="从一口锅看不同地方的人怎么吃、怎么聚",
+        recurring_lens="持续观察人物、时间、地域和事件",
+        dimensions=(
+            SimpleNamespace(
+                name="地域",
+                rationale="观察不同地方的火锅传统",
+                paths=(SimpleNamespace(steps=(SimpleNamespace(to_label="外国人怎么吃火锅"),)),),
+            ),
+        ),
+        drift_boundaries=("不能脱离火锅只讲泛餐饮",),
+    )
+
+    positioning = content_intelligence_tool_module._render_positioning_basis(SimpleNamespace(content_world=world))
+    prioritized = content_intelligence_tool_module._prioritize_shooting_delivery(positioning + "\n\n# 今日建议拍摄\n\n## 外国人到底吃不吃火锅？")
+
+    assert "**长期讲什么：** 火锅" in positioning
+    assert "外国人怎么吃火锅" in positioning
+    assert prioritized.startswith("# 今日建议拍摄")
+    assert "# 长期定位依据" in prioritized
+    assert prioritized.index("# 今日建议拍摄") < prioritized.index("# 长期定位依据")
 
 
 @pytest.mark.asyncio
@@ -621,8 +814,13 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
     schema = explore_content_world_tool.tool_call_schema.model_json_schema()
 
     assert set(schema["properties"]) == {
+        "answer_goal",
+        "topic_seed",
         "user_request",
     }
+    goal_schema = schema["$defs"]["ContentWorldAnswerGoal"]
+    assert goal_schema["enum"] == ["long_term_positioning", "one_shootable_topic"]
+    assert schema["properties"]["answer_goal"]["default"] == "one_shootable_topic"
 
 
 @pytest.mark.asyncio
@@ -790,7 +988,7 @@ async def test_content_run_persistence_is_optional_without_a_selected_project(
 async def test_content_world_tool_keeps_the_answer_when_project_persistence_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    bundle = object()
+    bundle = SimpleNamespace(topic_brief=object())
     shooting_delivery = object()
     persistence = {
         "status": "failed",
@@ -873,6 +1071,15 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "10 days" not in content_section
     assert "3 candidates" not in content_section
     normalized_section = " ".join(content_section.split())
+    assert "Use `analyze_content_intelligence` for business semantics only" in normalized_section
+    assert "answer_goal=`long_term_positioning`" in normalized_section
+    assert "answer_goal=`one_shootable_topic`" in normalized_section
+    assert "only when the user explicitly asks just for positioning" in normalized_section
+    assert 'A normal account-starting request such as "how should I start this account?"' in normalized_section
+    assert "defaults to answer_goal=`one_shootable_topic`" in normalized_section
+    assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section
+    assert "topic_seed" in normalized_section
+    assert "contiguous verbatim span of the current user request" in normalized_section
     assert "what the account should talk about before how to operate it" in normalized_section
     assert "posting cadence" in normalized_section
     assert "provisional rooted map is already a useful answer" in normalized_section

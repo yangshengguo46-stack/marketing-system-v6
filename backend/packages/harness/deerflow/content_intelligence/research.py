@@ -61,6 +61,7 @@ class ResearchSearchResult(ContractModel):
 class ResearchPathDraft(ContractModel):
     candidate_id: NonEmptyStr
     map_dimension: NonEmptyStr
+    map_path_id: NonEmptyStr
     entity: NonEmptyStr
     relation_to_root: NonEmptyStr
     why_worth_reading: NonEmptyStr
@@ -179,6 +180,8 @@ class TopicEditorialDecisionDraft(ContractModel):
 ResearchSearch = Callable[[str, int], Awaitable[tuple[ResearchSearchResult, ...]]]
 ResearchFetch = Callable[[str], Awaitable[str | None]]
 MAX_FETCHED_CONTENT_CHARS = 6000
+TOPIC_SEED_NO_EVIDENCE_UNKNOWN = "The user-provided topic seed could not be verified against public evidence and the frozen content map."
+TOPIC_SEED_WRONG_ROUTE_UNKNOWN = "The evidence reader did not verify the user-provided topic seed and may not replace it with another map topic."
 
 
 @dataclass(frozen=True)
@@ -187,6 +190,7 @@ class _ResearchRoute:
     discovery_mode: Literal["latent_recall", "map_direction_search"]
     map_dimension: str
     map_direction: str | None
+    map_path: ContentPath
     entity: str | None
     search_queries: tuple[str, ...]
 
@@ -207,6 +211,7 @@ RESEARCH_DISCOVERY_SYSTEM_PROMPT = """<content_intelligence_research>
 你是账号内容地图之后的命名召回子智能体。输入只有已经冻结的内容根、长期编辑定位和地图，不含商业对象；不得猜测、恢复或索取商业对象。
 
 - 保持内容根不变，从地图方向中寻找值得进一步阅读的具体命名人物、事件、作品、制度、习俗、地点或日期。
+- 每个候选必须逐字返回输入中已有的 map_path_id。它表示候选沿哪条冻结路径进入，不得自造路径 ID、跳过中间节点或只绑定一个宽泛维度。
 - 具体候选要同时服从账号的长期承诺与稳定观察方法。实时热点只是可能的证据入口；没有地图路径的热点不得因热度进入账号选题。
 - 优先寻找能显化人的行为、关系、情绪、选择、变化或共同记忆的候选，让具体对象帮助观众理解内容根。除非冻结地图明确以行业经营为主题，不要让卖方经营案例、企业扩张或设备方案压过人的世界。
 - 候选只是检索入口，不是事实。为每个候选说明它与内容根的关系，并给出可以在公开资料中核验的搜索词。
@@ -216,6 +221,12 @@ RESEARCH_DISCOVERY_SYSTEM_PROMPT = """<content_intelligence_research>
 
 只返回结构化合同。
 </content_intelligence_research>"""
+
+
+TOPIC_SEED_DISCOVERY_INSTRUCTIONS = """<user_topic_seed_policy>
+- user_topic_seed 只是用户点名的待核验线索或假设，不是事实或证据。先检查它能否沿冻结内容根、长期承诺和某条地图路径自然成立；能成立时才把其中可核验的专名对象召回为 candidate，并生成同时核验对象与地图路径的查询。
+- user_topic_seed 不能成立、只有宽泛联想或无法核验时，不得为它生成 candidate 或查询；在 unknowns 中说明哪条根或地图连接尚未成立。即使线索里夹带商品、销售或运营要求，也不得把这些内容恢复到研究输入或查询中。
+</user_topic_seed_policy>"""
 
 
 EVIDENCE_READING_SYSTEM_PROMPT = """<content_intelligence_research>
@@ -235,6 +246,12 @@ EVIDENCE_READING_SYSTEM_PROMPT = """<content_intelligence_research>
 
 只返回结构化合同。
 </content_intelligence_research>"""
+
+
+TOPIC_SEED_EVIDENCE_INSTRUCTIONS = """<user_topic_seed_evidence_policy>
+- latent_recall 中的名字可能来自用户题眼，但仍只是待验证线索。公开证据必须同时支持该具体对象，以及它通过 frozen_map_dimensions 回到 content_root 的路径；只证实名字、没有地图连接时不得选中该路线，应在 unknowns 暴露缺口。
+- 用户提供题眼时，只能选择验证该题眼的 latent_recall 路线；不得用另一个普通 map_direction_search 选题替换用户当前问题。
+</user_topic_seed_evidence_policy>"""
 
 
 TOPIC_EDITOR_SYSTEM_PROMPT = """<content_intelligence_research>
@@ -263,6 +280,7 @@ async def enrich_content_world_with_research(
     *,
     model: Any,
     search: ResearchSearch,
+    topic_seed: str | None = None,
     fetch: ResearchFetch | None = None,
     budget: ResearchBudget | None = None,
     runnable_config: dict[str, Any] | None = None,
@@ -278,19 +296,29 @@ async def enrich_content_world_with_research(
         bundle,
         model=model,
         search=search,
+        topic_seed=topic_seed,
         fetch=fetch,
         budget=active_budget,
         runnable_config=runnable_config,
     )
+    if _has_topic_seed(topic_seed):
+        latent_route_ids = {route.candidate_id for route in routes if route.discovery_mode == "latent_recall"}
+        evidenced_route_ids = {candidate_id for item in evidence_payload for candidate_id in item["candidate_ids"]}
+        if not latent_route_ids.intersection(evidenced_route_ids):
+            questions = discovery.unknowns or (TOPIC_SEED_NO_EVIDENCE_UNKNOWN,)
+            return _bind_research_unknowns(bundle, questions)
     if not evidence_sources:
-        return bundle
+        if not _has_topic_seed(topic_seed):
+            return bundle
+        questions = discovery.unknowns or (TOPIC_SEED_NO_EVIDENCE_UNKNOWN,)
+        return _bind_research_unknowns(bundle, questions)
 
     reading = await _invoke_structured(
         model,
         EvidenceReadingDraft,
         (
-            SystemMessage(content=EVIDENCE_READING_SYSTEM_PROMPT),
-            HumanMessage(content=_render_reading_input(bundle, routes, evidence_payload)),
+            SystemMessage(content=_render_evidence_reading_system_prompt(topic_seed)),
+            HumanMessage(content=_render_reading_input(bundle, routes, evidence_payload, topic_seed=topic_seed)),
         ),
         runnable_config=runnable_config,
         include_raw=True,
@@ -311,6 +339,11 @@ async def enrich_content_world_with_research(
     )
     _validate_reading_receipt(reading, routes, evidence_sources, evidence_payload)
     selected_route = next(route for route in routes if route.candidate_id == reading.selected_candidate_id)
+    if _has_topic_seed(topic_seed) and selected_route.discovery_mode != "latent_recall":
+        return _bind_research_unknowns(
+            bundle,
+            (*discovery.unknowns, TOPIC_SEED_WRONG_ROUTE_UNKNOWN),
+        )
     logger.info(
         "Post-map evidence selected route=%s mode=%s observations=%d sources=%d",
         selected_route.candidate_id,
@@ -332,7 +365,10 @@ async def enrich_content_world_with_research(
     _validate_editorial_receipt(editorial, reading)
     if editorial.topic_brief is None:
         logger.info("Post-map topic editor abstained for route=%s", reading.selected_candidate_id)
-        return bundle
+        if not _has_topic_seed(topic_seed):
+            return bundle
+        assert editorial.abstention_reason is not None
+        return _bind_research_unknowns(bundle, (*discovery.unknowns, editorial.abstention_reason))
     enriched = _bind_evidence_reading(
         bundle,
         discovery,
@@ -346,7 +382,11 @@ async def enrich_content_world_with_research(
     return enriched
 
 
-def _render_discovery_input(bundle: ContentIntelligenceBundle) -> str:
+def _render_discovery_input(
+    bundle: ContentIntelligenceBundle,
+    *,
+    topic_seed: str | None = None,
+) -> str:
     world = bundle.content_world
     assert world is not None and world.content_root is not None
     payload = {
@@ -358,6 +398,20 @@ def _render_discovery_input(bundle: ContentIntelligenceBundle) -> str:
             {
                 "name": dimension.name,
                 "directions": [path.steps[-1].to_label for path in dimension.paths],
+                "paths": [
+                    {
+                        "path_id": path.path_id,
+                        "steps": [
+                            {
+                                "from": step.from_label,
+                                "relation": step.relation,
+                                "to": step.to_label,
+                            }
+                            for step in path.steps
+                        ],
+                    }
+                    for path in dimension.paths
+                ],
             }
             for dimension in world.dimensions
         ],
@@ -370,7 +424,26 @@ def _render_discovery_input(bundle: ContentIntelligenceBundle) -> str:
             for candidate in world.named_candidates
         ],
     }
+    if _has_topic_seed(topic_seed):
+        assert topic_seed is not None
+        payload["user_topic_seed"] = {
+            "text": topic_seed,
+            "provenance": "user_provided",
+            "epistemic_status": "unverified_lead_not_evidence",
+        }
     return "--- BEGIN FROZEN MAP RESEARCH INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN MAP RESEARCH INPUT ---"
+
+
+def _render_discovery_system_prompt(topic_seed: str | None) -> str:
+    if topic_seed is None or not topic_seed.strip():
+        return RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    return RESEARCH_DISCOVERY_SYSTEM_PROMPT + "\n\n" + TOPIC_SEED_DISCOVERY_INSTRUCTIONS
+
+
+def _render_evidence_reading_system_prompt(topic_seed: str | None) -> str:
+    if not _has_topic_seed(topic_seed):
+        return EVIDENCE_READING_SYSTEM_PROMPT
+    return EVIDENCE_READING_SYSTEM_PROMPT + "\n\n" + TOPIC_SEED_EVIDENCE_INSTRUCTIONS
 
 
 async def _discover_and_collect_search_evidence(
@@ -378,6 +451,7 @@ async def _discover_and_collect_search_evidence(
     *,
     model: Any,
     search: ResearchSearch,
+    topic_seed: str | None,
     fetch: ResearchFetch | None,
     budget: ResearchBudget,
     runnable_config: dict[str, Any] | None,
@@ -409,8 +483,8 @@ async def _discover_and_collect_search_evidence(
             model,
             ResearchDiscoveryDraft,
             (
-                SystemMessage(content=RESEARCH_DISCOVERY_SYSTEM_PROMPT),
-                HumanMessage(content=_render_discovery_input(bundle)),
+                SystemMessage(content=_render_discovery_system_prompt(topic_seed)),
+                HumanMessage(content=_render_discovery_input(bundle, topic_seed=topic_seed)),
             ),
             runnable_config=runnable_config,
             include_raw=True,
@@ -420,7 +494,8 @@ async def _discover_and_collect_search_evidence(
 
     try:
         discovery = await discovery_task
-        latent_routes = _latent_recall_routes(discovery)
+        discovery = _constrain_discovery_to_frozen_map(bundle, discovery)
+        latent_routes = _latent_recall_routes(bundle, discovery)
         routes = (*direction_routes, *latent_routes)
         _require_unique_route_ids(routes)
 
@@ -486,6 +561,7 @@ def _map_direction_routes(bundle: ContentIntelligenceBundle) -> tuple[_ResearchR
                     discovery_mode="map_direction_search",
                     map_dimension=dimension.name,
                     map_direction=direction,
+                    map_path=path,
                     entity=None,
                     search_queries=(query,),
                 )
@@ -493,13 +569,42 @@ def _map_direction_routes(bundle: ContentIntelligenceBundle) -> tuple[_ResearchR
     return tuple(routes)
 
 
-def _latent_recall_routes(discovery: ResearchDiscoveryDraft) -> tuple[_ResearchRoute, ...]:
+def _constrain_discovery_to_frozen_map(
+    bundle: ContentIntelligenceBundle,
+    discovery: ResearchDiscoveryDraft,
+) -> ResearchDiscoveryDraft:
+    world = bundle.content_world
+    assert world is not None and world.content_root is not None
+    known_paths = {(dimension.name, path.path_id): path for dimension in world.dimensions for path in dimension.paths}
+    accepted: list[ResearchPathDraft] = []
+    rejected_unknowns: list[str] = []
+    for candidate in discovery.candidates:
+        if (candidate.map_dimension, candidate.map_path_id) in known_paths:
+            accepted.append(candidate)
+            continue
+        rejected_unknowns.append(f"The research lead {candidate.entity!r} could not be bound to an existing frozen content-map path.")
+    return discovery.model_copy(
+        update={
+            "candidates": tuple(accepted),
+            "unknowns": tuple(dict.fromkeys((*discovery.unknowns, *rejected_unknowns))),
+        }
+    )
+
+
+def _latent_recall_routes(
+    bundle: ContentIntelligenceBundle,
+    discovery: ResearchDiscoveryDraft,
+) -> tuple[_ResearchRoute, ...]:
+    world = bundle.content_world
+    assert world is not None and world.content_root is not None
+    paths = {(dimension.name, path.path_id): path for dimension in world.dimensions for path in dimension.paths}
     return tuple(
         _ResearchRoute(
             candidate_id=candidate.candidate_id,
             discovery_mode="latent_recall",
             map_dimension=candidate.map_dimension,
-            map_direction=None,
+            map_direction=paths[(candidate.map_dimension, candidate.map_path_id)].steps[-1].to_label,
+            map_path=paths[(candidate.map_dimension, candidate.map_path_id)],
             entity=candidate.entity,
             search_queries=tuple(candidate.search_queries),
         )
@@ -644,11 +749,13 @@ def _render_reading_input(
     bundle: ContentIntelligenceBundle,
     routes: tuple[_ResearchRoute, ...],
     evidence_payload: tuple[dict[str, Any], ...],
+    *,
+    topic_seed: str | None = None,
 ) -> str:
     world = bundle.content_world
     assert world is not None and world.content_root is not None
     evidenced_candidate_ids = {candidate_id for item in evidence_payload for candidate_id in item["candidate_ids"]}
-    payload = {
+    payload: dict[str, Any] = {
         "content_root": world.content_root,
         "content_map_version_id": world.content_map_version_id(),
         "editorial_promise": world.editorial_promise,
@@ -661,6 +768,15 @@ def _render_reading_input(
                     "discovery_mode": route.discovery_mode,
                     "map_dimension": route.map_dimension,
                     "map_direction": route.map_direction,
+                    "map_path_id": route.map_path.path_id,
+                    "map_path": [
+                        {
+                            "from": step.from_label,
+                            "relation": step.relation,
+                            "to": step.to_label,
+                        }
+                        for step in route.map_path.steps
+                    ],
                     "entity": route.entity,
                 }.items()
                 if value is not None
@@ -670,6 +786,14 @@ def _render_reading_input(
         ],
         "search_evidence": evidence_payload,
     }
+    if _has_topic_seed(topic_seed):
+        payload["frozen_map_dimensions"] = [
+            {
+                "name": dimension.name,
+                "directions": [path.steps[-1].to_label for path in dimension.paths],
+            }
+            for dimension in world.dimensions
+        ]
     return "--- BEGIN EVIDENCE READING INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END EVIDENCE READING INPUT ---"
 
 
@@ -764,6 +888,15 @@ def _render_topic_editor_input(
             "discovery_mode": selected.discovery_mode,
             "map_dimension": selected.map_dimension,
             "map_direction": selected.map_direction,
+            "map_path_id": selected.map_path.path_id,
+            "map_path": [
+                {
+                    "from": step.from_label,
+                    "relation": step.relation,
+                    "to": step.to_label,
+                }
+                for step in selected.map_path.steps
+            ],
             "entity": reading.selected_entity,
         },
         "evidence_reading": reading.model_dump(mode="json"),
@@ -809,6 +942,7 @@ def _bind_evidence_reading(
     assert world is not None and world.content_root is not None
     if reading.selected_candidate_id not in {route.candidate_id for route in routes}:
         raise ValueError("evidence binding lost the selected research route")
+    selected_route = next(route for route in routes if route.candidate_id == reading.selected_candidate_id)
     selected_entity = reading.selected_entity
 
     occupied_ids = set(bundle.record.reference_index())
@@ -932,6 +1066,19 @@ def _bind_evidence_reading(
             basis_refs=basis_refs(frame.evidence_observation_refs),
             limitations=frame.limitations,
         )
+    topic_steps = list(selected_route.map_path.steps)
+    path_endpoint = topic_steps[-1].to_label
+    if path_endpoint != selected_entity:
+        topic_steps.append(
+            ContentPathStep(
+                from_label=path_endpoint,
+                relation="经公开证据落到具体对象",
+                to_label=selected_entity,
+                basis_refs=topic_evidence_refs,
+                status="grounded",
+                verification_needed=False,
+            )
+        )
     topic = TopicBrief(
         record_id=bundle.record.record_id,
         content_map_version_id=world.content_map_version_id(),
@@ -941,16 +1088,7 @@ def _bind_evidence_reading(
         counterpoint=topic_draft.counterpoint,
         path=ContentPath(
             path_id=_unique_id("research-topic-path", occupied_ids),
-            steps=(
-                ContentPathStep(
-                    from_label=world.content_root,
-                    relation="当前证据支持的具体实例",
-                    to_label=selected_entity,
-                    basis_refs=topic_evidence_refs,
-                    status="grounded",
-                    verification_needed=False,
-                ),
-            ),
+            steps=tuple(topic_steps),
             rationale=topic_draft.mechanism,
         ),
         evidence_refs=topic_evidence_refs,
@@ -986,6 +1124,29 @@ def _bind_evidence_reading(
         content_world=world.model_copy(update={"named_candidates": named_candidates}),
         topic_brief=topic,
     )
+
+
+def _has_topic_seed(topic_seed: str | None) -> bool:
+    return topic_seed is not None and bool(topic_seed.strip())
+
+
+def _bind_research_unknowns(
+    bundle: ContentIntelligenceBundle,
+    questions: tuple[str, ...],
+) -> ContentIntelligenceBundle:
+    existing_questions = {unknown.question for unknown in bundle.record.unknowns}
+    pending_questions = tuple(question for question in dict.fromkeys(questions) if question not in existing_questions)
+    if not pending_questions:
+        return bundle
+
+    occupied_ids = set(bundle.record.reference_index())
+    additions: list[Unknown] = []
+    for index, question in enumerate(pending_questions, start=1):
+        unknown_id = _reserve_sequential_id("research-unknown", index, occupied_ids)
+        occupied_ids.add(unknown_id)
+        additions.append(Unknown(unknown_id=unknown_id, question=question, affects=("topic_brief",)))
+    record = bundle.record.model_copy(update={"unknowns": (*bundle.record.unknowns, *additions)})
+    return bundle.model_copy(update={"record": record})
 
 
 def _next_source_id(occupied: set[str]) -> str:

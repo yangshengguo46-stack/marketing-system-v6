@@ -472,3 +472,27 @@ def test_record_fingerprint_is_stable_and_changes_with_source_content() -> None:
 
     assert original.fingerprint() == same.fingerprint()
     assert original.fingerprint() != changed.fingerprint()
+
+
+def test_content_path_rejects_a_disconnected_chain() -> None:
+    with pytest.raises(ValidationError, match="continuous"):
+        ContentPath(
+            path_id="path-disconnected",
+            steps=(
+                ContentPathStep(
+                    from_label="海鲜",
+                    relation="向下细分",
+                    to_label="牡蛎",
+                    status="candidate",
+                    verification_needed=True,
+                ),
+                ContentPathStep(
+                    from_label="另一条无关分支",
+                    relation="进入作品",
+                    to_label="《我的叔叔于勒》",
+                    status="candidate",
+                    verification_needed=True,
+                ),
+            ),
+            rationale="这条路径中间断开，不能伪装成完整联想链。",
+        )

@@ -301,6 +301,9 @@ class ContentPath(ContractModel):
     def require_a_step(self) -> ContentPath:
         if not self.steps:
             raise ValueError("content path requires at least one step")
+        for previous, current in zip(self.steps, self.steps[1:], strict=False):
+            if previous.to_label != current.from_label:
+                raise ValueError("content path steps must form one continuous chain")
         return self
 
 

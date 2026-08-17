@@ -173,6 +173,11 @@ they must not invent context, sales bridges, experiments, quantities, or publish
 decisions. Narrative structure is optional and evidence-bound. Broad account starts use
 the `return_direct` `explore_content_world` tool, whose only model-visible input is the
 verbatim request; return one hidden tagged `ToolMessage`, never an appended `AIMessage`.
+The tool distinguishes explicit long-term-positioning requests from the default one-shootable-topic
+goal. A user-named topic seed must be a contiguous verbatim request span and remains an unverified
+lead. Research candidates bind an exact frozen map path, and the final TopicBrief preserves every
+intermediate step. Seed failure cannot silently fall back to an unrelated map topic, and a shootable
+goal cannot present a map-only result as success.
 
 Root-frozen map search and named recall run together. Read only bounded public text,
 revalidate redirects, and use configured `web_fetch` as fallback. Losing-route facts,

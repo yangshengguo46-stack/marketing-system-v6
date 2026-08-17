@@ -27,9 +27,7 @@ from deerflow.content_intelligence import (
     SourceMaterial,
     analyze_content_intelligence,
     enrich_content_world_with_research,
-    render_content_world_narration,
     render_shooting_delivery,
-    synthesize_content_world_narration,
     synthesize_shooting_delivery,
 )
 from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
@@ -56,6 +54,11 @@ _direct_readability_extractor = ReadabilityExtractor()
 class ToolAnalysisFocus(StrEnum):
     BUSINESS_SEMANTICS = "business_semantics"
     TOPIC_BRIEF = "topic_brief"
+
+
+class ContentWorldAnswerGoal(StrEnum):
+    LONG_TERM_POSITIONING = "long_term_positioning"
+    ONE_SHOOTABLE_TOPIC = "one_shootable_topic"
 
 
 class _ContentIntelligenceToolInput(BaseModel):
@@ -258,17 +261,29 @@ async def _analyze_content_intelligence(
 async def explore_content_world_tool(
     runtime: Runtime,
     user_request: str,
+    answer_goal: ContentWorldAnswerGoal = ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC,
+    topic_seed: str | None = None,
 ) -> Command:
-    """Build the long-term content world for a broad account-starting request.
+    """Build a rooted account position or one evidence-bound shootable topic.
 
-    This directly answers what human or object world the account can keep
-    talking about after bounded semantic reading, root selection, pure map
-    expansion, research, and editorial convergence. It stops before platform,
+    Both goals freeze business semantics, one content root, and its content map.
+    Long-term positioning stops there. A shootable-topic goal continues through
+    research, TopicBrief, MessagePlan, and BaseDraft. It stops before platform,
     presentation format, cadence, sales, experiments, or questionnaires.
 
     Args:
-        user_request: The current broad account-starting or long-term-content request, copied without adding requirements.
+        user_request: The current account-positioning or concrete-topic request, copied without adding requirements.
+        answer_goal: Whether to return long-term positioning or one concrete shootable topic.
+        topic_seed: Optional hotspot, person, work, event, or question copied as one contiguous verbatim span from user_request.
     """
+    try:
+        validated_topic_seed = _validate_topic_seed(user_request, topic_seed)
+    except ValueError:
+        return _terminal_content_world_command(
+            "选题线索必须直接来自你的原话，因此这次没有让该线索进入研究。",
+            tool_call_id=runtime.tool_call_id,
+        )
+
     config = runtime.config
     tool_call_id = runtime.tool_call_id
     model = _create_content_intelligence_model(config)
@@ -279,17 +294,6 @@ async def explore_content_world_tool(
         focus=AnalysisFocus.CONTENT_WORLD,
         source_materials=(),
     )
-    douyin_topic_search = DouyinMcpTopicEvidenceSearch(runtime)
-
-    async def search_content_evidence(
-        query: str,
-        max_results: int,
-    ) -> tuple[ResearchSearchResult, ...]:
-        return await _search_content_world_evidence(
-            query,
-            max_results,
-            douyin_search=douyin_topic_search,
-        )
 
     try:
         bundle = await analyze_content_intelligence(
@@ -298,19 +302,72 @@ async def explore_content_world_tool(
             runnable_config=config,
             lexical_evidence_provider=lexical_evidence_provider,
         )
+        if answer_goal == ContentWorldAnswerGoal.LONG_TERM_POSITIONING:
+            persistence = await _persist_content_run(
+                bundle=bundle,
+                delivery=None,
+                runtime=runtime,
+                topic_evidence_snapshots=(),
+            )
+            return _terminal_content_world_command(
+                _render_positioning_basis(bundle),
+                tool_call_id=tool_call_id,
+                persistence=persistence,
+            )
+
+        douyin_topic_search: DouyinMcpTopicEvidenceSearch | None = None
         try:
+            douyin_topic_search = DouyinMcpTopicEvidenceSearch(runtime)
+
+            async def search_content_evidence(
+                query: str,
+                max_results: int,
+            ) -> tuple[ResearchSearchResult, ...]:
+                return await _search_content_world_evidence(
+                    query,
+                    max_results,
+                    douyin_search=douyin_topic_search,
+                )
+
             bundle = await enrich_content_world_with_research(
                 bundle,
                 model=model,
                 search=search_content_evidence,
+                topic_seed=validated_topic_seed,
                 fetch=_fetch_content_world_evidence,
                 runnable_config=config,
             )
         except Exception as exc:
             logger.warning(
-                "Post-map research was unavailable; preserving the rooted map: %s",
+                "Post-map research was unavailable; no shootable topic was formed: %s",
                 type(exc).__name__,
             )
+            persistence = await _persist_content_run(
+                bundle=bundle,
+                delivery=None,
+                runtime=runtime,
+                topic_evidence_snapshots=(douyin_topic_search.snapshots if douyin_topic_search is not None else ()),
+            )
+            return _terminal_content_world_command(
+                _render_shootable_topic_failure(bundle),
+                tool_call_id=tool_call_id,
+                persistence=persistence,
+            )
+
+        topic_evidence_snapshots = douyin_topic_search.snapshots
+        if bundle.topic_brief is None:
+            persistence = await _persist_content_run(
+                bundle=bundle,
+                delivery=None,
+                runtime=runtime,
+                topic_evidence_snapshots=topic_evidence_snapshots,
+            )
+            return _terminal_content_world_command(
+                _render_shootable_topic_failure(bundle),
+                tool_call_id=tool_call_id,
+                persistence=persistence,
+            )
+
         try:
             shooting_delivery = await synthesize_shooting_delivery(
                 bundle,
@@ -318,9 +375,12 @@ async def explore_content_world_tool(
                 model=model,
                 runnable_config=config,
             )
+            if shooting_delivery is None:
+                raise ValueError("shootable-topic delivery returned no MessagePlan or BaseDraft")
+            rendered_delivery = _prioritize_shooting_delivery(render_shooting_delivery(bundle, shooting_delivery))
         except Exception as exc:
             logger.warning(
-                "Evidence topic delivery was unavailable; preserving the rooted map: %s",
+                "Evidence topic delivery was unavailable; no shootable topic was formed: %s",
                 type(exc).__name__,
             )
             shooting_delivery = None
@@ -328,21 +388,16 @@ async def explore_content_world_tool(
             bundle=bundle,
             delivery=shooting_delivery,
             runtime=runtime,
-            topic_evidence_snapshots=douyin_topic_search.snapshots,
+            topic_evidence_snapshots=topic_evidence_snapshots,
         )
-        if shooting_delivery is not None:
+        if shooting_delivery is None:
             return _terminal_content_world_command(
-                render_shooting_delivery(bundle, shooting_delivery),
+                _render_shootable_topic_failure(bundle),
                 tool_call_id=tool_call_id,
                 persistence=persistence,
             )
-        narration = await synthesize_content_world_narration(
-            bundle,
-            model=model,
-            runnable_config=config,
-        )
         return _terminal_content_world_command(
-            render_content_world_narration(bundle, narration),
+            rendered_delivery,
             tool_call_id=tool_call_id,
             persistence=persistence,
         )
@@ -355,6 +410,65 @@ async def explore_content_world_tool(
             "这次内容世界分析没有通过结构校验，因此没有用不可核验的结果替你补出起号方案。",
             tool_call_id=tool_call_id,
         )
+
+
+def _validate_topic_seed(user_request: str, topic_seed: str | None) -> str | None:
+    if topic_seed is None:
+        return None
+    if not topic_seed.strip() or topic_seed not in user_request:
+        raise ValueError("topic_seed must be a non-empty contiguous verbatim span of user_request")
+    return topic_seed
+
+
+def _render_positioning_basis(bundle: ContentIntelligenceBundle) -> str:
+    world = bundle.content_world
+    if world is None or world.content_root is None:
+        raise ValueError("positioning basis requires a frozen content root")
+
+    lines = [
+        "# 账号内容定位",
+        "",
+        f"**长期讲什么：** {world.content_root}",
+    ]
+    if world.audience_territory is not None:
+        lines.extend(("", f"**可以占领的内容世界：** {world.audience_territory.text}"))
+    if world.editorial_promise is not None:
+        lines.extend(("", f"**长期承诺：** {world.editorial_promise}"))
+    if world.recurring_lens is not None:
+        lines.extend(("", f"**稳定观察方法：** {world.recurring_lens}"))
+    if world.dimensions:
+        lines.extend(("", "## 内容地图", ""))
+        for dimension in world.dimensions:
+            directions = tuple(dict.fromkeys(path.steps[-1].to_label for path in dimension.paths if path.steps))
+            suffix = f" 可展开：{'；'.join(directions)}" if directions else ""
+            lines.append(f"- **{dimension.name}：** {dimension.rationale}{suffix}")
+    if world.drift_boundaries:
+        lines.extend(("", "## 不跑偏边界", ""))
+        lines.extend(f"- {boundary}" for boundary in world.drift_boundaries)
+    return "\n".join(lines).strip()
+
+
+def _render_shootable_topic_failure(bundle: ContentIntelligenceBundle) -> str:
+    return "# 本轮选题结果\n\n**定位完成但未形成可拍选题。** 研究、证据阅读或内容交付没有形成完整合同，因此本轮不会把长期方向冒充成具体选题。\n\n" + _render_positioning_basis(bundle)
+
+
+def _prioritize_shooting_delivery(rendered: str) -> str:
+    content = rendered.strip()
+    topic_heading = "# 今日建议拍摄"
+    if content.startswith(topic_heading):
+        return content
+    if topic_heading not in content:
+        raise ValueError("shooting delivery did not contain the concrete-topic heading")
+
+    positioning, topic = content.split(topic_heading, 1)
+    positioning_lines = positioning.strip().splitlines()
+    if positioning_lines and positioning_lines[0].strip() == "# 账号内容定位":
+        positioning_lines = positioning_lines[1:]
+    positioning_basis = "\n".join(positioning_lines).strip()
+    prioritized = topic_heading + topic.rstrip()
+    if positioning_basis:
+        prioritized += "\n\n# 长期定位依据\n\n" + positioning_basis
+    return prioritized
 
 
 async def _search_content_world_evidence(

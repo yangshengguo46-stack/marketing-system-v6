@@ -8,7 +8,10 @@ from pydantic import ValidationError
 
 from deerflow.content_intelligence import (
     AnalysisFocus,
+    ContentDimension,
     ContentIntelligenceRequest,
+    ContentPath,
+    ContentPathStep,
     ContentRootDecisionDraft,
     EvidenceReadingDraft,
     LexicalWorldExplorationDraft,
@@ -163,6 +166,7 @@ def _discovery_payload() -> dict[str, Any]:
             {
                 "candidate_id": "candidate-public-record",
                 "map_dimension": "history and public records",
+                "map_path_id": "path-direction-2-1",
                 "entity": "a documented public event",
                 "relation_to_root": "the event changed how the shared meal was understood",
                 "why_worth_reading": "it may turn a broad history branch into a concrete question",
@@ -296,7 +300,8 @@ async def test_map_direction_search_runs_in_parallel_with_latent_recall_and_can_
     assert "search_queries" not in reading_input
 
     assert enriched.topic_brief is not None
-    assert enriched.topic_brief.path.steps[0].to_label == "a verified community supper event"
+    assert enriched.topic_brief.path.steps[0].to_label == "how the shared meal carries emotion and group belonging"
+    assert enriched.topic_brief.path.steps[-1].to_label == "a verified community supper event"
 
 
 @pytest.mark.asyncio
@@ -331,7 +336,435 @@ async def test_map_direction_search_still_works_when_latent_recall_is_empty() ->
         TopicEditorialDecisionDraft,
     ]
     assert enriched.topic_brief is not None
-    assert enriched.topic_brief.path.steps[0].to_label == "a documented neighborhood meal"
+    assert enriched.topic_brief.path.steps[-1].to_label == "a documented neighborhood meal"
+
+
+@pytest.mark.asyncio
+async def test_user_topic_seed_reaches_discovery_as_an_unverified_lead() -> None:
+    bundle = await _content_world_bundle()
+    discovery = _discovery_payload()
+    discovery["candidates"][0].update(
+        {
+            "candidate_id": "candidate-user-seed",
+            "entity": "the 1914 Christmas Truce",
+            "relation_to_root": "the reported shared meal would instantiate the frozen shared-meal map",
+            "search_queries": ["1914 Christmas Truce shared meal primary source"],
+        }
+    )
+    reading = _reading_payload()
+    reading.update(
+        {
+            "selected_candidate_id": "candidate-user-seed",
+            "selected_entity": "the 1914 Christmas Truce",
+        }
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: discovery,
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="candidate-user-seed"),
+        }
+    )
+    seen_queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append(query)
+        return (
+            ResearchSearchResult(
+                title="Public record",
+                url="https://example.com/public-record",
+                content="A public source that must be read before treating the lead as fact.",
+            ),
+        )
+
+    topic_seed = "  Did the 1914 Christmas Truce include a shared meal?  "
+    await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed=topic_seed,
+    )
+
+    discovery_input = research_model.message_batches[0][1].content
+    assert '"user_topic_seed"' in discovery_input
+    assert f'"text": "{topic_seed}"' in discovery_input
+    assert '"provenance": "user_provided"' in discovery_input
+    assert '"epistemic_status": "unverified_lead_not_evidence"' in discovery_input
+    assert "regional meal base" not in discovery_input
+    assert "business_semantics" not in discovery_input
+    discovery_system_prompt = research_model.message_batches[0][0].content
+    assert "user_topic_seed" in discovery_system_prompt
+    assert "不是事实或证据" in discovery_system_prompt
+    assert "不能成立" in discovery_system_prompt
+    assert "1914 Christmas Truce shared meal primary source" in seen_queries
+
+
+@pytest.mark.asyncio
+async def test_topic_seed_candidate_must_bind_an_existing_frozen_map_dimension() -> None:
+    bundle = await _content_world_bundle()
+    rejected_entity = "an unrelated red-carpet rumor"
+    rejected_query = "unrelated red-carpet rumor"
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {
+                "candidates": [
+                    {
+                        "candidate_id": "seed-off-map",
+                        "map_dimension": "celebrity gossip",
+                        "map_path_id": "path-that-does-not-exist",
+                        "entity": rejected_entity,
+                        "relation_to_root": "none established",
+                        "why_worth_reading": "the user mentioned it",
+                        "search_queries": [rejected_query],
+                    }
+                ],
+                "unknowns": [],
+            },
+            EvidenceReadingDraft: {
+                **_reading_payload(),
+                "selected_candidate_id": "map-direction-1-1",
+                "selected_entity": "a documented neighborhood meal",
+            },
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="map-direction-1-1"),
+        }
+    )
+    seen_queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append(query)
+        return (
+            ResearchSearchResult(
+                title="Neighborhood meal record",
+                url="https://example.com/neighborhood-meal",
+                content="A public record names and dates a neighborhood meal.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed=rejected_entity,
+    )
+
+    assert rejected_query not in seen_queries
+    assert any(rejected_entity in unknown.question for unknown in enriched.record.unknowns)
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+    assert enriched.topic_brief is None
+
+
+@pytest.mark.asyncio
+async def test_rejected_topic_seed_unknown_survives_when_search_returns_no_evidence() -> None:
+    bundle = await _content_world_bundle()
+    rejection_unknown = "The user lead has no verified path to the frozen map."
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {
+                "candidates": [],
+                "unknowns": [rejection_unknown],
+            },
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return ()
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed="unverified current-event claim",
+    )
+
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+    assert rejection_unknown in {unknown.question for unknown in enriched.record.unknowns}
+
+
+@pytest.mark.asyncio
+async def test_topic_seed_with_no_public_evidence_gets_an_explicit_unknown() -> None:
+    bundle = await _content_world_bundle()
+    discovery = _discovery_payload()
+    discovery["candidates"][0].update(
+        {
+            "candidate_id": "candidate-user-seed",
+            "entity": "an alleged public event",
+            "search_queries": ["alleged public event primary source"],
+        }
+    )
+    research_model = SequencedStructuredFakeModel({ResearchDiscoveryDraft: discovery})
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return ()
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed="Did the alleged public event really happen?",
+    )
+
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+    assert any("could not be verified against public evidence" in unknown.question for unknown in enriched.record.unknowns)
+
+
+@pytest.mark.asyncio
+async def test_user_topic_seed_cannot_enter_the_evidence_receipt_by_itself() -> None:
+    bundle = await _content_world_bundle()
+    original_source_ids = {source.source_id for source in bundle.record.sources}
+    rejected_seed = "An unsupported celebrity rumor about a restaurant"
+    rejection_unknown = "The user-provided lead has no verified path to the frozen shared-meal map."
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {
+                "candidates": [],
+                "unknowns": [rejection_unknown],
+            },
+            EvidenceReadingDraft: {
+                **_reading_payload(),
+                "selected_candidate_id": "map-direction-1-1",
+                "selected_entity": "a documented neighborhood meal",
+            },
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="map-direction-1-1"),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="Neighborhood meal record",
+                url="https://example.com/neighborhood-meal-record",
+                content="A dated public record identifies a neighborhood meal.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed=rejected_seed,
+    )
+
+    discovery_input = research_model.message_batches[0][1].content
+    assert rejected_seed in discovery_input
+    research_sources = tuple(source for source in enriched.record.sources if source.source_id not in original_source_ids)
+    assert research_sources == ()
+    assert all(rejected_seed not in observation.claim for observation in enriched.record.observations)
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+
+
+@pytest.mark.asyncio
+async def test_discovery_can_reject_a_topic_seed_and_expose_the_unknown() -> None:
+    bundle = await _content_world_bundle()
+    rejected_seed = "An unrelated celebrity red-carpet rumor"
+    rejection_unknown = "The supplied lead does not yet have a rooted path through this content map."
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {
+                "candidates": [],
+                "unknowns": [rejection_unknown],
+            },
+            EvidenceReadingDraft: {
+                **_reading_payload(),
+                "selected_candidate_id": "map-direction-1-1",
+                "selected_entity": "a documented neighborhood meal",
+            },
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="map-direction-1-1"),
+        }
+    )
+    seen_queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append(query)
+        return (
+            ResearchSearchResult(
+                title="Neighborhood meal record",
+                url="https://example.com/neighborhood-meal",
+                content="A public record names and dates a neighborhood meal.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed=rejected_seed,
+    )
+
+    assert all(rejected_seed not in query for query in seen_queries)
+    assert rejection_unknown in {unknown.question for unknown in enriched.record.unknowns}
+    assert enriched.topic_brief is None
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+
+
+@pytest.mark.asyncio
+async def test_topic_seed_cannot_fall_back_to_an_unrelated_generic_map_topic() -> None:
+    bundle = await _content_world_bundle()
+    rejection_unknown = "The supplied film has no verified path through this content map."
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {
+                "candidates": [],
+                "unknowns": [rejection_unknown],
+            },
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="A generic shared-meal record",
+                url="https://example.com/generic-shared-meal",
+                content="This source supports a map direction but says nothing about the user's film.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed="今天的《牛来》为什么会火？",
+    )
+
+    assert research_model.schemas == [ResearchDiscoveryDraft]
+    assert enriched.topic_brief is None
+    assert rejection_unknown in {unknown.question for unknown in enriched.record.unknowns}
+
+
+@pytest.mark.asyncio
+async def test_topic_brief_preserves_the_exact_frozen_map_path_before_the_grounded_anchor() -> None:
+    bundle = await _content_world_bundle()
+    world = bundle.content_world
+    assert world is not None and world.content_root is not None
+    frozen_path = ContentPath(
+        path_id="path-oyster-literature",
+        steps=(
+            ContentPathStep(
+                from_label=world.content_root,
+                relation="向下进入具体食材",
+                to_label="共享餐桌上的海鲜",
+                status="candidate",
+                verification_needed=True,
+            ),
+            ContentPathStep(
+                from_label="共享餐桌上的海鲜",
+                relation="继续细分",
+                to_label="牡蛎",
+                status="candidate",
+                verification_needed=True,
+            ),
+            ContentPathStep(
+                from_label="牡蛎",
+                relation="进入文学作品中的具体场面",
+                to_label="文学中的牡蛎场景",
+                status="candidate",
+                verification_needed=True,
+            ),
+        ),
+        rationale="沿具体食材进入一部作品中的人物关系变化。",
+    )
+    world = world.model_copy(
+        update={
+            "dimensions": (
+                ContentDimension(
+                    name="食物与文学",
+                    rationale="食物怎样进入具体作品并照见人物关系。",
+                    paths=(frozen_path,),
+                ),
+            )
+        }
+    )
+    bundle = bundle.model_copy(update={"content_world": world})
+    reading = _reading_payload(source_ref="source-web-2")
+    reading.update(
+        {
+            "selected_candidate_id": "candidate-my-uncle-jules",
+            "selected_entity": "《我的叔叔于勒》",
+        }
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {
+                "candidates": [
+                    {
+                        "candidate_id": "candidate-my-uncle-jules",
+                        "map_dimension": "食物与文学",
+                        "map_path_id": frozen_path.path_id,
+                        "entity": "《我的叔叔于勒》",
+                        "relation_to_root": "作品中的牡蛎场景沿冻结路径显出一家人对身份和金钱的态度变化",
+                        "why_worth_reading": "它把宽泛地图落到一篇具体作品和一个具体场面",
+                        "search_queries": ["我的叔叔于勒 牡蛎 原文"],
+                    }
+                ],
+                "unknowns": [],
+            },
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(candidate_id="candidate-my-uncle-jules"),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/source-{abs(hash(query))}",
+                content="A bounded public text connects the named work, its oyster scene, and the family's changed treatment of Yule.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        topic_seed="《我的叔叔于勒》里为什么一定要写牡蛎？",
+    )
+
+    assert enriched.topic_brief is not None
+    actual_steps = enriched.topic_brief.path.steps
+    assert actual_steps[: len(frozen_path.steps)] == frozen_path.steps
+    assert actual_steps[-1].from_label == "文学中的牡蛎场景"
+    assert actual_steps[-1].to_label == "《我的叔叔于勒》"
+    assert actual_steps[-1].status == "grounded"
+
+
+@pytest.mark.asyncio
+async def test_research_without_topic_seed_preserves_the_existing_discovery_input_and_queries() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+    seen_queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append(query)
+        return (
+            ResearchSearchResult(
+                title="Public archive entry",
+                url="https://example.com/archive-entry",
+                content="A dated archive snippet describing the public event and the shared meal.",
+            ),
+        )
+
+    await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+    )
+
+    discovery_input = research_model.message_batches[0][1].content
+    reading_input = research_model.message_batches[1][1].content
+    assert '"user_topic_seed"' not in discovery_input
+    assert '"frozen_map_dimensions"' not in reading_input
+    assert research_model.message_batches[0][0].content == RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert research_model.message_batches[1][0].content == EVIDENCE_READING_SYSTEM_PROMPT
+    assert set(seen_queries) == {
+        "shared meal how the shared meal carries emotion and group belonging",
+        "shared meal documented changes in the shared meal over time",
+        "shared meal documented public event",
+    }
 
 
 @pytest.mark.asyncio
@@ -437,7 +870,7 @@ async def test_frozen_map_can_grow_into_an_evidence_bound_topic_brief() -> None:
     assert enriched.topic_brief.content_map_version_id == frozen_map_version
     assert enriched.topic_brief.question.startswith("How did one public event")
     assert enriched.topic_brief.path.steps[0].from_label == "shared meal"
-    assert enriched.topic_brief.path.steps[0].to_label == "a documented public event"
+    assert enriched.topic_brief.path.steps[-1].to_label == "a documented public event"
     assert enriched.topic_brief.path.rationale == "The documented event connects a concrete change with the frozen content root."
     assert enriched.topic_brief.evidence_refs[0].ref_id == "research-observation-1"
     assert enriched.topic_brief.limitations == ("The current topic is supported by one bounded evidence receipt.",)
@@ -646,6 +1079,7 @@ async def test_search_budget_gives_both_lanes_a_turn_before_reusing_a_latent_can
         {
             "candidate_id": f"candidate-{index}",
             "map_dimension": "history and public records",
+            "map_path_id": "path-direction-2-1",
             "entity": f"public subject {index}",
             "relation_to_root": "reveals one rooted public meaning",
             "why_worth_reading": "turns one map branch into a concrete question",
@@ -725,6 +1159,7 @@ async def test_reading_cannot_use_another_candidates_evidence() -> None:
         {
             "candidate_id": "candidate-other-record",
             "map_dimension": "history and public records",
+            "map_path_id": "path-direction-2-1",
             "entity": "another documented event",
             "relation_to_root": "a separate candidate path",
             "why_worth_reading": "it may support a different question",

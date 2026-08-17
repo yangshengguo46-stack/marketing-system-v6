@@ -67,7 +67,7 @@
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
 | 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented; two-reader overlap and context binding verified offline` | 保留现有运行时和项目版本谱系 | 新保留集真实质量/延迟、用户确认与版本切换 |
-| 选题证据与洞察 | 第六版联网阅读 | `implemented` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 热点、跨事件和象征联系保留证据角色 |
+| 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
@@ -228,6 +228,12 @@ Gateway 环境中的 Key、Secret 和 Device ID
 授权观察和未知与定位、受众、人设、账号级表现形式、变现假设保持分层；判断强制绑定 Brief、冻结地图
 和实际引用证据。当前仅完成领域合同与封存，运行时生成、用户审阅、选题引用和单条
 `FormatDecision` 仍待实现。详见 `audits/A60-incubation-brief-and-judgment-lineage.md`。
+
+2026-08-17 第三切片回执：内容工具明确区分长期定位与单条可拍选题，普通起号默认继续到选题和基础
+文案。用户题眼只能以原话逐字线索进入研究，命名候选绑定冻结地图的精确路径，最终 TopicBrief 保留
+全部中间节点；无证据或错路线时明确弃权，不再静默换题或把地图冒充成品。聚焦回归 `90 passed`，
+真实模型验收与后续 `FormatDecision` 仍待完成。详见
+`audits/A61-shootable-topic-goal-and-exact-map-path.md`。
 
 ### W04 MediaKit 制作路由
 
