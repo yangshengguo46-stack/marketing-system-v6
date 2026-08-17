@@ -6,10 +6,17 @@ from deerflow.incubation import ProjectRef, seal_content_world_version
 NOW = datetime(2026, 8, 16, 13, 0, tzinfo=UTC)
 
 
-def _world(*, record_id: str, named_candidate: str, content_root: str = "礼与人与人相处") -> ContentWorldView:
+def _world(
+    *,
+    record_id: str,
+    named_candidate: str,
+    content_root: str = "礼与人与人相处",
+    content_entry: str = "送礼",
+) -> ContentWorldView:
     return ContentWorldView(
         record_id=record_id,
         source_object="黄金礼品",
+        content_entry=content_entry,
         content_root=content_root,
         root_rationale="从商品用途进入长期的人际关系世界。",
         editorial_promise="借礼看人与人怎样相处。",
@@ -37,7 +44,7 @@ def test_content_world_artifact_tracks_only_the_durable_editorial_map() -> None:
     )
     later_research = seal_content_world_version(
         project=project,
-        content_world=_world(record_id="record-2", named_candidate="埃文凯尔"),
+        content_world=_world(record_id="record-2", named_candidate="埃文凯尔", content_entry="礼节"),
         created_at=NOW,
         source_thread_id="thread-2",
         source_run_id="run-2",
@@ -48,6 +55,7 @@ def test_content_world_artifact_tracks_only_the_durable_editorial_map() -> None:
     assert "record_id" not in first.payload
     assert "named_candidates" not in first.payload
     assert "source_object" not in first.payload
+    assert "content_entry" not in first.payload
 
 
 def test_content_world_artifact_changes_when_the_frozen_map_changes() -> None:

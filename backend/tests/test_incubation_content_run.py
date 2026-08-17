@@ -74,6 +74,7 @@ def _content_run() -> tuple[ContentIntelligenceBundle, ShootingDelivery]:
     world = ContentWorldView(
         record_id=record.record_id,
         source_object="黄金礼品",
+        content_entry="送礼",
         content_root="礼与人与人相处",
         root_rationale="黄金是材质，礼品的用途进入礼与人际关系。",
         editorial_promise="借具体的礼与人情故事理解人与人怎样相处。",
@@ -196,6 +197,8 @@ def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
         "topic_evidence",
     ]
     assert sealed.content_reading.parents == (evidence_parent,)
+    assert sealed.content_reading.payload["root_selection"]["content_entry"] == "送礼"
+    assert "content_entry" not in sealed.content_world.payload
     assert set(sealed.topic_brief.parents) == {
         sealed.content_reading.to_parent_ref(),
         sealed.content_world.to_parent_ref(),

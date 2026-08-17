@@ -1540,7 +1540,9 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "posting cadence" in normalized_section
     assert "provisional rooted map is already a useful answer" in normalized_section
     assert "do not call `ask_clarification` in that turn" in normalized_section
-    assert "content root is the entry into the map" in normalized_section
+    assert "`content_entry` only explains the semantic route" in normalized_section
+    assert "The durable `content_root` and audience territory define the account-level map" in normalized_section
+    assert "content root is the entry into the map" not in normalized_section
     assert "Treat the rooted content map as complete for the current question" in normalized_section
     assert "do not extend it into an unrequested downstream operating plan" in normalized_section
     assert "do not add an arbitrary number of posts, days, or branches" in normalized_section

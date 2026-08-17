@@ -12,6 +12,13 @@
 4. **Subagent tool** (if enabled):
    - `task` - Delegate to subagent (description, prompt, subagent_type)
 
+Progressive schema discovery is assembled by `assemble_deferred_tools()` on the Lead,
+embedded client, and subagent paths. With `tool_search.enabled=true`, MCP tools and exact
+local names in `tool_search.defer_tools` are removed from the initial model binding and
+advertised through the bounded deferred catalog. Promotion restores a schema for the current
+thread state only; authorization and active-Skill policy still filter discovery and execution.
+Assembly fails closed when configured deferred candidates exist but no catalog is recovered.
+
 Scheduled-task runtime note:
 - Scheduled background runs set `context.non_interactive=true` and therefore exclude `ask_clarification` from the lead-agent tool list. This keeps scheduler-triggered runs from stalling on human confirmation mid-execution. `non_interactive` is an internal-only context key: it is merged from `body.context` only when the request authenticated as the process-internal user (the scheduler path), never from arbitrary HTTP/IM clients.
 

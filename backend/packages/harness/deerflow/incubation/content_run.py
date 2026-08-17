@@ -89,6 +89,7 @@ def seal_content_run_artifacts(
             "root_selection": {
                 "content_map_version_id": world.content_map_version_id(),
                 "source_object": world.source_object,
+                "content_entry": world.content_entry,
                 "content_root": world.content_root,
                 "root_rationale": world.root_rationale,
                 "root_candidates": [candidate.model_dump(mode="json") for candidate in world.root_candidates],

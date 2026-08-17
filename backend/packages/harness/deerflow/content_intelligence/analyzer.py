@@ -303,15 +303,23 @@ class ContentRootSelectionDraft(ContractModel):
         return self
 
     @property
-    def primary_content_center(self) -> str:
+    def content_entry(self) -> str:
         return self.candidates[self.selected_candidate_index].label
 
     @property
-    def audience_territory(self) -> str:
+    def account_content_world(self) -> str:
         index = self.audience_territory_candidate_index
         if index is None:
             index = self.selected_candidate_index
         return self.candidates[index].label
+
+    @property
+    def primary_content_center(self) -> str:
+        return self.content_entry
+
+    @property
+    def audience_territory(self) -> str:
+        return self.account_content_world
 
 
 class FrozenContentMapDraft(ContractModel):
@@ -325,6 +333,7 @@ class FrozenContentMapDraft(ContractModel):
 
 class FocusedContentWorldDraft(ContractModel):
     source_object: NonEmptyStr
+    content_entry: NonEmptyStr
     audience_territory: NonEmptyStr
     primary_content_center: NonEmptyStr
     root_rationale: NonEmptyStr
@@ -359,6 +368,7 @@ SEMANTIC_READING_SYSTEM_PROMPT = """<content_intelligence_method>
 - 将用户自述的业务对象与提问动作、交付请求分开。用户询问如何处理某个业务，不等于处理流程、账号或交付物本身就是商业对象。
 - source_object 和 lexical_head 都必须原样摘录 subject_expression 中的连续片段；不得添加括号解释、上位词、同义改写或原文没有的限定。意义解释写入 role_rationale 或其他对应字段。
 - 区分商业对象、词法主词、修饰关系、卖方动作和品类的构成功能。
+- modifiers 只记录 source_object 中修饰 lexical_head 的成分；不得把 lexical_head 自己、被 lexical_head 修饰的对象，或用途解释反向登记成修饰语。词法主词内部仍保留意义的真子成分由后续语义家族单独处理。
 - 逐层拆解复合修饰关系；若一个修饰项自身仍包含完整对象与材质、地域、用途等修饰，不得把它们吞成一个不可再分析的词组。
 - 对每个修饰语做内容世界反事实并填写 world_scope_effect。
 - 若移除它后仍是同一种反复活动、参与者关系和生活世界，只改变商品变体、样式或子范围，标为 branch_specificity；若移除后会丢失一组不可替代的人物角色、共同事件、关系结构或生命周期处境，标为 constitutive_context；证据不足标为 uncertain。
@@ -406,7 +416,7 @@ SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT = """<content_intelligence_method>
 SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT = """<content_intelligence_method>
 你只做意义路径与共同世界阅读，不选择内容根，也不展开内容地图。输入有两种互斥模式：
 
-- semantic_family：只给出隔离业务上下文后的意义核、该成分在词法主词中的已选义项及其跨域语义家族。已选义项是进入家族的锚点；任何共同世界都必须反向解释它，不能被某一个 related expression 的具体事件带走。
+- semantic_family：只给出隔离业务上下文后的意义核及其跨域语义家族。合成步骤不接收该成分在原复合词中的用途解释，避免离商品最近的用途重新压过多个已成立的语义分支；这段入口连续性只在下一步独立复核时检查。
 - 比较各分支共同指向的关系、规则、制度、秩序或人类问题。共同世界必须覆盖多个实质不同的语义领域，不得猜测原商品，也不得把家族压回其中一个具体行为、器物或固定表达。
 - direct_practice：没有可展开的意义核时，只给出去修饰主词、活动、功能与场景。辨认它们是否反复呈现同一种人类行动、关系或生活实践。
 - 两种模式都可能附带 modifier_candidates 和 required_constitutive_contexts。前者只提供修饰词、语义关系与已冻结的范围判断；后者是语义阅读者已经确认、当前步骤不得推翻的构成语境。
@@ -450,9 +460,15 @@ SHARED_WORLD_REVIEW_SYSTEM_PROMPT = """<content_intelligence_method>
 CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 你只裁决一个已经冻结的候选集合，不生成、改名、合并或补充候选，也不展开内容地图。
 
-- selected_candidate_index 只能指向 scope_role=root_candidate；example_branch 无论多具体、多热闹、搜索资料多丰富，都不能成为内容根。
+- selected_candidate_index 只选择语义进入点，只能指向 scope_role=root_candidate；它回答商业表达从哪个具体对象、行动、意义核或关系进入更大的内容世界，不等于账号最终只讲这个入口。
+- example_branch 无论多具体、多热闹、搜索资料多丰富，都不能成为进入点。
+- audience_territory_candidate_index 选择账号长期占领的内容世界，也只能指向 scope_role=root_candidate；它回答内容地图最终围绕什么人、事、活动、关系或共同经验展开。
+- 两个索引承担不同职责：进入点负责解释“怎么走过去”，长期领地负责限定“最终长期讲什么”。不能因为进入点更靠近商品，就把已经成立的长期世界收缩成该入口的一种用途、场景或仪式。
 - 只能在输入索引中选择，不能把较窄对象与较宽关系世界拼成折中混合根。
-- primary_content_center 是账号当前最值得长期占领的最大有效内容世界：它必须具体、与原表达有直接可解释关系，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级。
+- relation_to_business 是上游已经形成并经审查的语义连续路径，不是候选宣传语。与原表达的语义相关性已由上游解决；当前不得重新判定“能不能从商品走到这里”。
+- social_or_cultural_world 候选已通过独立语义路径审查；你不得再次裁决这条连续性是否成立。距离商品较远不等于内容漂移，也不得以“离商品较远”为由推翻它。
+- 你仍可比较内容容量、具体性与长期编辑价值，并在该候选只是空泛口号、缺少可反复研究的人事时选择其他候选。
+- audience_territory_candidate_index 应指向账号当前最值得长期占领的最大有效内容世界：它必须具体，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级；候选与原表达的连接已经不是本节点的裁决对象。
 - 内容根选择不是品类定义测验。完整商品或服务没有先验优先权；对象能够脱离某个场景独立存在，不足以否决与原表达直接相连、解释力更强的人类活动或关系世界。
 - 完整商业实体不自动等于最好的内容根。持续发生的人类活动、社交或情绪功能及关系世界已由上游分开绑定，必须与对象候选平等比较。
 - 候选来源不是胜负规则，但必须辨清层级：served_object 是中间实现物所服务的完整对象；subject_activity 是围绕主词发生的动作；subject_function_or_use 是主词承担的功能或结果。
@@ -465,13 +481,13 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 - 只有当经营容器本身就是让参与者进入某项完整活动，而该活动构成品类身份和用户到访理由时，参与者活动才可能压过容器或其中的对象。
 - 把场所、对象、消费动作和社交结果拼进一个长名称，并不会因此拥有更大的外延；若它只描述人们在当前经营场所中的一种进入、使用、消费或停留方式，它仍是场景复述，不是更大的内容世界。
 - 比较对象与消费场景时必须检查场景之外的内容容量。若对象在该场景之外仍能长出的历史、人物、事件、地域和作品无法被该场景覆盖，而场景中的每件事又仍依赖这个对象，那么消费或到店场景只是对象地图中的一条路径，不能因同时出现人物和关系就压过对象。
-- 对每个候选比较具体人物、事件、关系、选择与跨时间空间的展开能力，也比较它是否仍由原商业表达自然通向，而不是只比较对象是否完整或知识点是否容易列举。
-- 显式做包含关系比较：若较窄候选完整包含于另一候选的一个具体分支，而较大候选仍保留了原表达的意义核、可解释路径和具体人事，较窄候选不能仅因更靠近商品或用途就胜出。
-- 包含关系不是抽象层级优先；若较大候选只是空泛上位词、无法反向解释原表达，仍应舍弃。
+- 对每个候选比较具体人物、事件、关系、选择与跨时间空间的展开能力，而不是只比较对象是否完整、距离商品多近或知识点是否容易列举。
+- 显式做包含关系比较：若较窄候选完整包含于另一候选的一个具体分支，而较大候选仍有具体人事与长期编辑容量，较窄候选不能仅因更靠近商品或用途就胜出。
+- 包含关系不是抽象层级优先；若较大候选只是空泛上位词、缺少可反复研究的具体人事，仍应舍弃，但不得借此重新审判已接受的语义路径。
 - 用观众可直接理解的对象、活动或关系判断，不要用抽象的‘XX文化’代替已经识别出的具体活动与关系。
 - 若一个候选只取多个平行场景中的一个，或擅自增加用户未给出的地域、人生阶段、人群、用途等范围限制，它应当是 example_branch，不能压过覆盖这些场景的共同世界。
 - 对象型候选可以胜出，但只能因为它本身比竞争活动或关系世界拥有更大、更具体且不失真的长期内容容量，不能仅凭“它是完整对象”获胜。
-- audience_territory_candidate_index 也只能指向冻结的 root_candidate；通常与内容根相同，只有另一候选确实更准确表达观众长期进入的人、事、活动或关系世界时才不同。
+- 若 social_or_cultural_world 已通过独立审查，它就是长期领地的权威候选；selected_candidate_index 仍可选择一个更具体的语义进入点，但不得用该入口覆盖长期领地。
 - 商业特异性不必重复在内容根中。本任务只比较候选，不把下游运营约束带入判断。
 - 候选生成者写的优势、风险、案例分支和上游详细语义已被隔离；下游成交便利性不是内容根的优先条件。
 - 只输出索引、判断理由和未知项；不得创造新标签，不输出地图、选题、平台、表现形式、销售、实验或数量。
@@ -496,6 +512,7 @@ FROZEN_CONTENT_MAP_SYSTEM_PROMPT = """<content_intelligence_method>
 - 地图边界只受已冻结内容根约束。输出只保留围绕该根可研究的人、事、活动、关系、历史、地域与作品方向。
 - 地图只提供可研究节点及其关系；叙事组织由后续选题模块负责，不得在地图阶段编排故事或制造戏剧阻碍。
 - 关系差异应按差异、协商、角色互动或融合表达，不得升级为戏剧阻碍、对抗结构或故事线。
+- 地图方向涉及多方时，必须写出参与者、可观察行为和关系变化，用具体的协商、让步、调整或融合描述；不得用概括性的关系理论标签代替实际发生的事情。故事组织留给后续表达模块。
 - 具体命名人物、事件、作品或日期只能作为待核验候选，并提供 verification_query；不得把它们混入已经成立的概念方向。
 - 输出严格使用 editorial_promise、recurring_lens、drift_boundaries、map_directions、named_candidates 和 unknowns 合同字段。
 
@@ -737,6 +754,7 @@ async def _analyze_focused_content_world(
             "uncertainties",
         },
     )
+    semantic = _normalize_semantic_reading(semantic)
     lexical_evidence = None
     if lexical_evidence_provider is not None:
         try:
@@ -846,7 +864,11 @@ async def _analyze_focused_content_world(
         include_raw=True,
         container_fields={"unknowns"},
     )
-    root = _resolve_root_selection(candidate_set, decision)
+    root = _resolve_root_selection(
+        candidate_set,
+        decision,
+        reviewed_audience_territory=shared_world.world_label,
+    )
     map_messages = (
         SystemMessage(content=FROZEN_CONTENT_MAP_SYSTEM_PROMPT),
         HumanMessage(content=_render_frozen_map_input(root)),
@@ -861,8 +883,9 @@ async def _analyze_focused_content_world(
     )
     world = FocusedContentWorldDraft(
         source_object=root.source_object,
-        audience_territory=root.audience_territory,
-        primary_content_center=root.primary_content_center,
+        content_entry=root.content_entry,
+        audience_territory=root.account_content_world,
+        primary_content_center=root.account_content_world,
         root_rationale=root.root_rationale,
         editorial_promise=content_map.editorial_promise,
         recurring_lens=content_map.recurring_lens,
@@ -1189,6 +1212,16 @@ def _render_semantic_input(
     return "--- BEGIN SEMANTIC READING INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SEMANTIC READING INPUT ---"
 
 
+def _normalize_semantic_reading(
+    semantic: SemanticReadingDraft,
+) -> SemanticReadingDraft:
+    """Remove inverted modifier records before they can constrain content roots."""
+
+    lexical_head = semantic.lexical_head.casefold()
+    modifiers = tuple(modifier for modifier in semantic.modifiers if modifier.term.casefold() != lexical_head)
+    return semantic.model_copy(update={"modifiers": modifiers})
+
+
 def _human_world_components(
     semantic_family: SemanticFamilyExpansionDraft,
 ) -> tuple[MeaningBearingComponentDraft, ...]:
@@ -1255,21 +1288,25 @@ def _normalize_semantic_family(
 
 def _semantic_family_payload(
     semantic_family: SemanticFamilyExpansionDraft,
+    *,
+    include_selected_meaning: bool,
 ) -> dict[str, Any]:
     components = _human_world_components(semantic_family)
+    component_payloads: list[dict[str, str]] = []
+    for component in components:
+        payload = {
+            "term": component.term,
+            "role": component.role,
+        }
+        if include_selected_meaning:
+            payload["selected_meaning_in_head"] = component.relation_to_subject.replace(
+                component.component_of,
+                "该词法主词",
+            )
+        component_payloads.append(payload)
     return {
         "input_mode": "semantic_family",
-        "meaning_bearing_components": [
-            {
-                "term": component.term,
-                "role": component.role,
-                "selected_meaning_in_head": component.relation_to_subject.replace(
-                    component.component_of,
-                    "该词法主词",
-                ),
-            }
-            for component in components
-        ],
+        "meaning_bearing_components": component_payloads,
         "semantic_family_branches": [branch.model_dump(mode="json") for branch in semantic_family.branches],
         "family_limitations": semantic_family.limitations,
     }
@@ -1313,7 +1350,10 @@ def _render_shared_world_input(
 ) -> str:
     components = _human_world_components(semantic_family)
     if components:
-        payload = _semantic_family_payload(semantic_family)
+        payload = _semantic_family_payload(
+            semantic_family,
+            include_selected_meaning=False,
+        )
     else:
         payload = _direct_practice_payload(semantic)
     if modifier_candidates := _modifier_candidate_payload(semantic):
@@ -1331,7 +1371,10 @@ def _render_shared_world_review_input(
 ) -> str:
     components = _human_world_components(semantic_family)
     if components:
-        payload = _semantic_family_payload(semantic_family)
+        payload = _semantic_family_payload(
+            semantic_family,
+            include_selected_meaning=True,
+        )
     else:
         payload = _direct_practice_payload(semantic)
     if modifier_candidates := _modifier_candidate_payload(semantic):
@@ -1352,6 +1395,7 @@ def _render_root_decision_input(
         {
             "level": candidate.level,
             "label": candidate.label,
+            "relation_to_business": candidate.relation_to_business,
         }
         for candidate in candidate_set.candidates
         if candidate.scope_role == "root_candidate"
@@ -1518,7 +1562,7 @@ def _build_root_candidate_set(
             level="social_or_cultural_world",
             label=shared_world.world_label,
             scope_role="root_candidate",
-            relation=shared_world.common_action_or_relation or shared_world.participant_relationship or "经独立反事实审查的共同世界",
+            relation=" -> ".join(shared_world.semantic_path),
         )
 
     frames = semantic.unmodified_subject_frames
@@ -1542,6 +1586,8 @@ def _build_root_candidate_set(
 def _resolve_root_selection(
     candidate_set: ContentRootCandidateSetDraft,
     decision: ContentRootDecisionDraft,
+    *,
+    reviewed_audience_territory: str | None = None,
 ) -> ContentRootSelectionDraft:
     eligible_indices = tuple(index for index, candidate in enumerate(candidate_set.candidates) if candidate.scope_role == "root_candidate")
     if not 0 <= decision.selected_candidate_index < len(eligible_indices):
@@ -1549,17 +1595,33 @@ def _resolve_root_selection(
     selected_candidate_index = eligible_indices[decision.selected_candidate_index]
 
     audience_territory_candidate_index = None
-    if decision.audience_territory_candidate_index is not None:
+    if reviewed_audience_territory is not None:
+        reviewed_territory_indices = tuple(index for index, candidate in enumerate(candidate_set.candidates) if candidate.scope_role == "root_candidate" and candidate.label == reviewed_audience_territory)
+        if len(reviewed_territory_indices) != 1:
+            raise ValueError("reviewed audience territory must identify exactly one explicit root candidate")
+        audience_territory_candidate_index = reviewed_territory_indices[0]
+
+    if audience_territory_candidate_index is None and decision.audience_territory_candidate_index is not None:
         if not 0 <= decision.audience_territory_candidate_index < len(eligible_indices):
             raise ValueError("audience_territory_candidate_index must identify an explicit root candidate")
         audience_territory_candidate_index = eligible_indices[decision.audience_territory_candidate_index]
+
+    if audience_territory_candidate_index is None:
+        audience_territory_candidate_index = selected_candidate_index
+
+    if audience_territory_candidate_index == selected_candidate_index:
+        root_rationale = decision.root_rationale
+    else:
+        entry = candidate_set.candidates[selected_candidate_index].label
+        territory = candidate_set.candidates[audience_territory_candidate_index].label
+        root_rationale = f"{entry} 是语义进入点；经独立路径审查的 {territory} 是账号长期内容世界与地图边界。"
 
     return ContentRootSelectionDraft(
         source_object=candidate_set.source_object,
         candidates=candidate_set.candidates,
         selected_candidate_index=selected_candidate_index,
         audience_territory_candidate_index=audience_territory_candidate_index,
-        root_rationale=decision.root_rationale,
+        root_rationale=root_rationale,
         unknowns=tuple(dict.fromkeys((*candidate_set.unknowns, *decision.unknowns))),
     )
 
@@ -1568,7 +1630,7 @@ def _render_frozen_map_input(
     root: ContentRootSelectionDraft,
 ) -> str:
     payload = {
-        "primary_content_center": root.primary_content_center,
+        "primary_content_center": root.account_content_world,
     }
     return "--- BEGIN FROZEN CONTENT MAP INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN CONTENT MAP INPUT ---"
 
@@ -1794,6 +1856,7 @@ def _bind_focused_content_world(
     content_world = ContentWorldView(
         record_id=record_id,
         source_object=world.source_object,
+        content_entry=world.content_entry,
         audience_territory=GroundedStatement(text=world.audience_territory, basis_refs=(audience_territory_ref,)),
         content_root=world.primary_content_center,
         root_rationale=world.root_rationale,

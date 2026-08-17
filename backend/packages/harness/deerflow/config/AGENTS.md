@@ -55,6 +55,7 @@ Extensions are optional only in the fallback *search* mode (priority 3-4 above):
 - `sandbox.use` - Sandbox provider class path
 - `skills.path` / `skills.container_path` - Host and container paths to skills directory
 - `skills.deferred_discovery` - When `true`, replaces the full-metadata `<available_skills>` prompt block with a compact `<skill_index>` (names only) and registers the `describe_skill` tool so the agent fetches metadata on demand. Defaults to `false` (legacy full-metadata injection)
+- `tool_search.enabled` / `tool_search.defer_tools` - Progressive tool-schema discovery. MCP tools are deferred automatically when enabled; `defer_tools` adds exact local tool names to the same catalog. Discovery never grants authority, and configured semantic/content entry tools should remain eager when they are part of the product's default reasoning path. The library-model default remains disabled/empty for compatibility, while this distribution's `config.example.yaml` enables discovery and lists generic file/attachment/review tools.
 - `title` - Auto-title generation (enabled, max_words, max_chars, model_name; null model_name uses fast local fallback, explicit model_name uses the prompt_template LLM path)
 - `summarization` - Context summarization (enabled, trigger conditions, keep policy)
 - `subagents.enabled` - Master switch for subagent delegation

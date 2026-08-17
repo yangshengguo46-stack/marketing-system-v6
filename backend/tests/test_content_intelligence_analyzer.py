@@ -36,6 +36,7 @@ from deerflow.content_intelligence.analyzer import (
     _normalize_shared_world_contexts,
     _parse_structured_result,
     _render_shared_world_input,
+    _render_shared_world_review_input,
 )
 from deerflow.content_intelligence.lexical_evidence import (
     LexicalComponentEvidence,
@@ -330,6 +331,7 @@ def test_shared_world_prompt_preserves_the_accepted_meaning_core_in_the_world_la
     assert "保留该意义核原词" in prompt
     assert "不得擦除成‘规则’、‘文化’或‘生活’" in prompt
     assert "示例和枚举放入 semantic_path" in prompt
+    assert "合成步骤不接收该成分在原复合词中的用途解释" in prompt
 
 
 def test_root_decision_compares_candidate_containment_instead_of_product_proximity() -> None:
@@ -338,6 +340,24 @@ def test_root_decision_compares_candidate_containment_instead_of_product_proximi
     assert "完整包含于另一候选的一个具体分支" in prompt
     assert "不能仅因更靠近商品或用途就胜出" in prompt
     assert "包含关系不是抽象层级优先" in prompt
+
+
+def test_root_decision_cannot_reopen_an_accepted_semantic_path() -> None:
+    prompt = CONTENT_ROOT_DECISION_SYSTEM_PROMPT
+
+    assert "已通过独立语义路径审查" in prompt
+    assert "不得再次裁决这条连续性是否成立" in prompt
+    assert "仍可比较内容容量、具体性与长期编辑价值" in prompt
+    assert "与原表达的语义相关性已由上游解决" in prompt
+    assert "距离商品较远不等于内容漂移" in prompt
+
+
+def test_root_decision_separates_the_semantic_entry_from_the_account_territory() -> None:
+    prompt = CONTENT_ROOT_DECISION_SYSTEM_PROMPT
+
+    assert "selected_candidate_index 只选择语义进入点" in prompt
+    assert "audience_territory_candidate_index 选择账号长期占领的内容世界" in prompt
+    assert "两个索引承担不同职责" in prompt
 
 
 def test_root_decision_distinguishes_acquiring_an_object_from_participating_in_an_activity() -> None:
@@ -1245,7 +1265,14 @@ async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_
                 "relation": "材质",
                 "modifies": "礼品",
                 "removal_counterfactual": "去掉材质后仍是可赠送和收受的礼品",
-            }
+            },
+            {
+                "term": "礼品",
+                "relation": "用途",
+                "modifies": "黄金",
+                "removal_counterfactual": "去掉礼品后黄金仍存在，但不再进入赠予关系",
+                "world_scope_effect": "constitutive_context",
+            },
         ],
         "offering_role": "complete_object_or_service",
         "role_rationale": "黄金是材质，礼品是完整赠送对象。",
@@ -1260,9 +1287,9 @@ async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_
         "uncertainties": [],
     }
     decision = {
-        "selected_candidate_index": 7,
-        "audience_territory_candidate_index": 7,
-        "root_rationale": "礼品中的意义核是礼；礼进一步通向关系分寸、交往规则与社会秩序。",
+        "selected_candidate_index": 3,
+        "audience_territory_candidate_index": 3,
+        "root_rationale": "送礼是从礼品进入关系世界的一个具体语义入口。",
         "unknowns": [],
     }
     content_map = {
@@ -1355,6 +1382,7 @@ async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_
     )
 
     assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
+    assert bundle.content_world.content_entry == "送礼"
     assert bundle.content_world.audience_territory.text == "人与人之间的相处与人情世故"
     assert bundle.business_semantics.semantic_family_branches[0].expression == "礼貌与礼节"
     family_input = model.message_batches[1][1].content
@@ -1363,13 +1391,18 @@ async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_
     assert "赠礼" not in family_input
     shared_world_input = model.message_batches[2][1].content
     assert '"term": "礼"' in shared_world_input
+    assert "selected_meaning_in_head" not in shared_world_input
     assert '"term": "黄金"' in shared_world_input
     assert '"relation": "材质"' in shared_world_input
     assert "黄金材质的礼品" not in shared_world_input
     assert "礼品" not in shared_world_input
     assert "保值" not in shared_world_input
     assert "赠礼" not in shared_world_input
+    root_decision_input = model.message_batches[4][1].content
+    assert '"relation_to_business"' in root_decision_input
+    assert "礼之外仍可研究人与人如何相处" in root_decision_input
     assert '"primary_content_center": "人与人之间的相处与人情世故"' in model.message_batches[5][1].content
+    assert "送礼" not in model.message_batches[5][1].content
     assert "黄金" not in model.message_batches[5][1].content
     assert "礼品" not in model.message_batches[5][1].content
     assert "婚嫁" not in model.message_batches[5][1].content
@@ -1549,13 +1582,28 @@ def test_shared_world_input_exposes_bounded_modifier_candidates_without_full_pro
 
     rendered = _render_shared_world_input(semantic, semantic_family)
 
-    assert '"selected_meaning_in_head": "该词法主词用文字和影像保存值得记住的人与事。"' in rendered
+    assert "selected_meaning_in_head" not in rendered
     assert '"term": "毕业"' in rendered
     assert '"world_scope_effect": "constitutive_context"' in rendered
     assert '"required_constitutive_contexts": [\n    "毕业"\n  ]' in rendered
     assert '"term": "烫金"' in rendered
     assert '"world_scope_effect": "branch_specificity"' in rendered
     assert "烫金毕业纪念册" not in rendered
+
+    review_rendered = _render_shared_world_review_input(
+        semantic,
+        semantic_family,
+        SharedWorldSynthesisDraft(
+            world_label="毕业群体如何保存共同记忆",
+            semantic_path=(
+                "纪念",
+                "保存人与事件",
+                "共同记忆",
+            ),
+            constitutive_contexts=("毕业",),
+        ),
+    )
+    assert '"selected_meaning_in_head": "该词法主词用文字和影像保存值得记住的人与事。"' in review_rendered
 
 
 def test_modifier_contract_exposes_world_scope_effect_for_auditable_context_selection() -> None:
@@ -1623,6 +1671,8 @@ def test_root_selection_schema_does_not_own_commercial_return_design() -> None:
 
     assert "object_anchor" not in properties
     assert "bridge_path" not in properties
+    assert "content_entry" not in properties
+    assert "account_content_world" not in properties
 
 
 def test_frozen_map_schema_cannot_reselect_the_content_root() -> None:
@@ -1648,6 +1698,9 @@ def test_frozen_map_prompt_defines_account_positioning_before_daily_topics() -> 
     assert "表现形式" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "参与者在资源、环境、价格、规则或技术变化下做出的具体选择" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "经济、贸易、政策、健康或技术因素" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "必须写出参与者、可观察行为和关系变化" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "概括性的关系理论标签" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "故事组织留给后续表达模块" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "把冻结根替换成大量无关对象" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
 
 

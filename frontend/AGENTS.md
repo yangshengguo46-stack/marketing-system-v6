@@ -48,6 +48,11 @@ The frontend is a stateful chat application. Users create **threads** (conversat
 
 `AgentThreadContext.incubation_project_id` is an optional server-validated project selection for incubation evidence persistence. Never add an owner/user identity beside it: the backend resolves ownership from authenticated runtime context. The current type is plumbing only; no product project selector is accepted yet.
 
+Composer mode resolution lives in `core/settings/input-mode.ts`. When a thinking-capable model has
+no persisted or explicit mode, both the main composer and sidecar default to `thinking`; they must
+not silently enable `pro` planning. Explicit `pro` / `ultra` choices remain sticky, and models that
+do not support thinking resolve to `flash`.
+
 ### Source Layout (`src/`)
 
 - **`app/`** — Next.js App Router. Routes include `/` (landing), `/showcase/[thread_id]` (allowlisted public read-only demos), `/workspace/chats/[thread_id]` (authenticated chat), `/workspace/agents/[agent_name]` and `/workspace/agents/new` (custom agents), `/blog/…`, the `(auth)/{login,setup,auth/callback}` flow, `/[lang]/docs/…`, and `/api/…` route handlers (e.g. `/api/memory`).

@@ -27,6 +27,10 @@ class ToolSearchConfig(BaseModel):
         default=3,
         description="Maximum number of deferred MCP tool schemas auto-promoted from routing metadata per model call",
     )
+    defer_tools: list[str] = Field(
+        default_factory=list,
+        description="Additional non-MCP tools whose schemas are discovered on demand",
+    )
 
     @field_validator("auto_promote_top_k")
     @classmethod

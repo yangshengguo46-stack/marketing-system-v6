@@ -343,6 +343,7 @@ class ContentRootCandidate(ContractModel):
 class ContentWorldView(ContractModel):
     record_id: NonEmptyStr
     source_object: NonEmptyStr | None = None
+    content_entry: NonEmptyStr | None = None
     audience_territory: GroundedStatement | None = None
     content_root: NonEmptyStr | None = None
     root_rationale: NonEmptyStr | None = None

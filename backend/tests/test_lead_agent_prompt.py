@@ -625,6 +625,15 @@ def test_system_prompt_template_preserves_placeholders():
         assert ph in template, f"placeholder {ph} accidentally removed"
 
 
+def test_system_prompt_template_has_a_fixed_overhead_budget():
+    """Keep procedural examples out of every model call.
+
+    Tool schemas and on-demand skills own their detailed usage instructions;
+    the always-on Lead prompt should carry only shared authority and behavior.
+    """
+    assert len(prompt_module.SYSTEM_PROMPT_TEMPLATE.encode("utf-8")) <= 9_000
+
+
 def _make_minimal_app_config():
     return SimpleNamespace(
         sandbox=SimpleNamespace(mounts=[]),

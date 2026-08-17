@@ -43,6 +43,15 @@ def test_setup_builds_from_mcp_survivors():
     assert setup.catalog_hash
 
 
+def test_setup_also_defers_explicit_non_mcp_tools():
+    setup = build_deferred_tool_setup(
+        [tag_mcp_tool(mcp_calc), local_echo],
+        enabled=True,
+        configured_deferred_names={"local_echo"},
+    )
+    assert setup.deferred_names == frozenset({"local_echo", "mcp_calc"})
+
+
 def test_tool_search_returns_command_with_hash_scoped_promotion():
     catalog = DeferredToolCatalog((mcp_calc,))
     ts = build_tool_search_tool(catalog)

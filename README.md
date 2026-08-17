@@ -426,6 +426,10 @@ Settings > Tools updates one MCP server at a time: an invalid stdio command on o
 Targeted updates accept both DeerFlow's `type` field and the MCP-spec `transport` field for SSE/HTTP servers.
 Runtime MCP and skill updates replace `extensions_config.json` atomically, so an interrupted write cannot leave the shared configuration truncated or partially written.
 MCP routing hints can also prefer a specific MCP tool for matching requests without forbidding other tools. When `tool_search` defers MCP schemas, matching routing metadata can auto-promote up to `tool_search.auto_promote_top_k` deferred schemas before the model call.
+This distribution enables progressive discovery by default: MCP schemas, Skill metadata, and the
+generic local tools named in `tool_search.defer_tools` are disclosed on demand instead of being
+repeated in every model call. Discovery changes visibility only; normal authorization and Skill
+policy checks still apply.
 
 OpenViking users can register the official Streamable HTTP endpoint at `/mcp`
 with an owner-bound USER API key. The native `forget` tool is exposed for
@@ -762,8 +766,15 @@ evidence, semantic-family expansion, nullable shared-world synthesis, independen
 counterfactual review, one root adjudication, frozen-root expansion, parallel
 map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
-Root selection compares the largest effective content world rather than giving a
-complete product or service automatic priority.
+Root selection separates a concrete semantic `content_entry` from the durable
+account-level `content_root`. The entry explains how the commercial expression reaches
+the content world; only the reviewed long-term root is given to the map, version hash,
+research, and topics. A nearby product use or scene therefore cannot silently shrink an
+accepted human or social world.
+Shared-world synthesis first sees the independent meaning family without the component's
+use inside the original compound. A separate reviewer receives that compound relation only
+afterward and verifies the path back to the user's expression. This keeps expansion open
+without allowing a same-character association to become an unchecked semantic jump.
 The frozen map is account-level editorial positioning rather than a daily topic list:
 it records the durable audience promise, recurring interpretive lens, drift boundaries,
 and long-term territories. It has a content-addressed version; every downstream
@@ -1568,6 +1579,9 @@ suite with `cd backend && make test-live` after providing a valid root
 `config.yaml` and API credentials; this may incur API costs and create local
 sandboxes, artifacts, or files. Direct pytest runs additionally require
 `DEER_FLOW_RUN_LIVE_TESTS=1`.
+The offline `make test` target also pins authentication on inside the test
+process, so a local `.env` auth bypass cannot invalidate CSRF or owner-isolation
+coverage.
 
 Regression coverage includes Docker sandbox mode detection and provisioner kubeconfig-path handling tests in `backend/tests/`.
 Backend blocking-IO diagnostics are available from the repository root with

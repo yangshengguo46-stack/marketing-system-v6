@@ -76,6 +76,10 @@ import { polishInputDraft } from "@/core/input-polish/api";
 import { isHiddenFromUIMessage } from "@/core/messages/utils";
 import { useModels } from "@/core/models/hooks";
 import {
+  resolveInputMode,
+  type InputMode,
+} from "@/core/settings/input-mode";
+import {
   buildReferenceMessageMetadata,
   type SidecarContext,
 } from "@/core/sidecar";
@@ -158,8 +162,6 @@ import { ReferenceAttachmentSummary, useMaybeSidecar } from "./sidecar";
 import { SlashSkillChip } from "./slash-skill-chip";
 import { Tooltip } from "./tooltip";
 
-type InputMode = "flash" | "thinking" | "pro" | "ultra";
-
 const COMPOSER_DRAFT_SAVE_DELAY_MS = 300;
 
 function focusContentEditableEnd(element: HTMLElement | null) {
@@ -200,19 +202,6 @@ function insertPlainTextAtSelection(container: HTMLElement, text: string) {
   selection.removeAllRanges();
   selection.addRange(range);
   return true;
-}
-
-function getResolvedMode(
-  mode: InputMode | undefined,
-  supportsThinking: boolean,
-): InputMode {
-  if (!supportsThinking && mode !== "flash") {
-    return "flash";
-  }
-  if (mode) {
-    return mode;
-  }
-  return supportsThinking ? "pro" : "flash";
 }
 
 function escapeXmlAttribute(value: string) {
@@ -568,7 +557,7 @@ export function InputBox({
     const fallbackModel = currentModel ?? agentDefaultModel ?? models[0]!;
     const supportsThinking = fallbackModel.supports_thinking ?? false;
     const nextModelName = fallbackModel.name;
-    const nextMode = getResolvedMode(context.mode, supportsThinking);
+    const nextMode = resolveInputMode(context.mode, supportsThinking);
 
     if (context.model_name === nextModelName && context.mode === nextMode) {
       return;
@@ -834,7 +823,10 @@ export function InputBox({
       onContextChange?.({
         ...context,
         model_name,
-        mode: getResolvedMode(context.mode, model.supports_thinking ?? false),
+        mode: resolveInputMode(
+          context.mode,
+          model.supports_thinking ?? false,
+        ),
         reasoning_effort: context.reasoning_effort,
       });
       setModelDialogOpen(false);
@@ -849,7 +841,7 @@ export function InputBox({
       }
       onContextChange?.({
         ...context,
-        mode: getResolvedMode(mode, supportThinking),
+        mode: resolveInputMode(mode, supportThinking),
         reasoning_effort:
           mode === "ultra"
             ? "high"
@@ -1122,7 +1114,7 @@ export function InputBox({
         onContextChange?.({
           ...context,
           model_name: resolvedModelName,
-          mode: getResolvedMode(
+          mode: resolveInputMode(
             context.mode,
             selectedModel?.supports_thinking ?? false,
           ),

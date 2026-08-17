@@ -79,6 +79,7 @@ _BLOCKED_TAG_NAMES: frozenset[str] = frozenset(
         "critical_reminders",
         "response_style",
         "citations",
+        "confidentiality",
         "content_intelligence",
         "content_intelligence_delivery",
         "content_intelligence_method",

@@ -15,7 +15,7 @@
 # ============================================================================
 # Bump this number when the config schema changes.
 # Run `make config-upgrade` to merge new fields into your local config.yaml.
-config_version: 34
+config_version: 35
 
 # ============================================================================
 # Logging
@@ -1058,11 +1058,27 @@ tools:
 # multiple MCP servers expose a large number of tools.
 
 tool_search:
-  enabled: false
+  enabled: true
   # When tool_search is enabled, PR1 MCP routing metadata can auto-promote
   # matching deferred MCP tool schemas before a model call. This is the maximum
   # number of matched schemas promoted per model call. Valid range: 1..5.
   auto_promote_top_k: 3
+  # Keep the incubation brain and evidence search immediately available. Load
+  # generic file, attachment, and review schemas only when the task needs them.
+  defer_tools:
+    - ask_clarification
+    - bash
+    - glob
+    - grep
+    - image_search
+    - list_uploaded_files
+    - ls
+    - present_files
+    - read_file
+    - review_skill_package
+    - str_replace
+    - view_image
+    - write_file
 
 # ============================================================================
 # Tool Output Budget Protection
@@ -1566,12 +1582,12 @@ skills:
   # Default: /mnt/skills
   container_path: /mnt/skills
 
-  # Deferred skill discovery (default: false)
+  # Deferred skill discovery (enabled in this distribution)
   # When enabled, only skill names appear in the system prompt (<skill_index>).
   # The LLM discovers skill details on demand via the describe_skill tool.
   # This keeps the system prompt compact and prefix-cache friendly when many
   # skills are installed.
-  # deferred_discovery: true
+  deferred_discovery: true
 
 # ============================================================================
 # SkillScan Configuration

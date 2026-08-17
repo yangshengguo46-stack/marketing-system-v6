@@ -114,6 +114,10 @@ make format             # Format code with ruff
 make migrate-rev MSG="..."  # Autogenerate a new alembic revision (see Schema Migrations section)
 ```
 
+`make test` pins `DEER_FLOW_AUTH_DISABLED=0` so a developer's local browser-friendly
+auth bypass in `.env` cannot silently disable authentication, CSRF, or owner-isolation
+assertions inside the test process. Individual tests may still opt into the bypass.
+
 The backend `make dev` target pre-creates and excludes `DEER_FLOW_HOME`
 (default: `backend/.deer-flow`) and `backend/sandbox` from Uvicorn's reload
 watcher. Do not replace it with a bare `uvicorn --reload`: agent tasks write
@@ -166,6 +170,17 @@ exact map path and evidence receipt. Search starts only after root freeze; gener
 `topic_evidence`, never competitor evidence. Unsupported routes or weak sources must remain
 limitations instead of becoming facts.
 
+Root selection has two explicit roles. `content_entry` is the per-reading semantic entry from the
+commercial expression; `content_root` is the durable account content world. An independently
+reviewed shared world owns the latter even when the root judge chooses a narrower entry. The map
+model sees only `content_root`; `content_entry` is stored in the reading artifact but excluded from
+the durable content-world artifact, map-version hash, topic-path start, and narration input.
+Shared-world synthesis sees an independent meaning component and its semantic family without that
+component's use inside the original compound. The separate path reviewer receives the compound
+relation afterward to verify that the wider world still explains the user's expression in both
+directions. Do not collapse these inputs: doing so re-anchors the account world to a nearby product
+use before semantic expansion begins.
+
 `MessagePlan` and `BaseDraft` are format-neutral. They cannot invent context, materials, sales
 bridges, experiments, quantities, or publishing decisions. One bounded fact repair may only delete
 or generalize new proper names, numbers, explicit names, and unsupported absolutes; a remaining
@@ -187,6 +202,13 @@ business artifacts. Cognitive workers cannot write approvals, publications, metr
 learning rules. Full contracts, current status, and rejected experiments live in
 `../docs/content-intelligence-v6/`, especially `ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`, and
 ADR-018 through ADR-020.
+
+A77 treats fixed Agent context as an explicit performance budget. This distribution enables
+deferred Skill discovery and Tool Search, and `tool_search.defer_tools` may defer named generic
+local schemas while the content-intelligence entry tools remain eager. The always-on Lead prompt
+has a UTF-8 byte regression budget; detailed tool and Skill instructions belong behind progressive
+discovery. Keep fixed entry overhead distinct from the multiple real model calls performed by a
+full incubation run.
 
 ## Development Workflow
 

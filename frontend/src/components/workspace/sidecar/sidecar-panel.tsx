@@ -57,6 +57,7 @@ import {
 import { useModels } from "@/core/models/hooks";
 import type { Model } from "@/core/models/types";
 import { useLocalSettings } from "@/core/settings";
+import { resolveInputMode } from "@/core/settings/input-mode";
 import {
   buildParentConversationContext,
   buildReferenceMessageMetadata,
@@ -114,19 +115,6 @@ function buildHiddenSidecarContextMessage({
 }
 
 type SidecarInputMode = NonNullable<ThreadStreamOptions["context"]["mode"]>;
-
-function getResolvedMode(
-  mode: ThreadStreamOptions["context"]["mode"],
-  supportsThinking: boolean,
-): SidecarInputMode {
-  if (!supportsThinking && mode !== "flash") {
-    return "flash";
-  }
-  if (mode) {
-    return mode;
-  }
-  return supportsThinking ? "pro" : "flash";
-}
 
 function reasoningEffortForMode(mode: SidecarInputMode) {
   return mode === "ultra"
@@ -230,7 +218,7 @@ export function SidecarPanel({ className }: { className?: string }) {
     );
     const fallbackModel = currentModel ?? models[0]!;
     const nextModelName = fallbackModel.name;
-    const nextMode = getResolvedMode(
+    const nextMode = resolveInputMode(
       sidecar.context.mode,
       fallbackModel.supports_thinking ?? false,
     );
@@ -283,7 +271,7 @@ export function SidecarPanel({ className }: { className?: string }) {
       if (!model) {
         return;
       }
-      const nextMode = getResolvedMode(
+      const nextMode = resolveInputMode(
         sidecar.context.mode,
         model.supports_thinking ?? false,
       );
@@ -303,7 +291,7 @@ export function SidecarPanel({ className }: { className?: string }) {
 
   const handleModeSelect = useCallback(
     (mode: SidecarInputMode) => {
-      const nextMode = getResolvedMode(mode, supportThinking);
+      const nextMode = resolveInputMode(mode, supportThinking);
       sidecar.setContext({
         ...sidecar.context,
         mode: nextMode,
@@ -758,7 +746,7 @@ function SidecarModeMenu({
   onModeSelect: (mode: SidecarInputMode) => void;
 }) {
   const { t } = useI18n();
-  const mode = getResolvedMode(context.mode, supportThinking);
+  const mode = resolveInputMode(context.mode, supportThinking);
 
   return (
     <PromptInputActionMenu>
