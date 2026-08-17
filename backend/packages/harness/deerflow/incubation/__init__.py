@@ -1,3 +1,20 @@
+from deerflow.incubation.adapted_draft import (
+    AdaptedDraft,
+    AdaptedDraftDraft,
+    NarrativeTreatment,
+    PresentationMode,
+    PresentationUnit,
+    PresentationUnitDraft,
+    SourceExcerptAnchor,
+    seal_adapted_draft,
+)
+from deerflow.incubation.adapted_draft_runtime import (
+    ADAPTED_DRAFT_MODEL_INPUT_MAX_BYTES,
+    ADAPTED_DRAFT_SYSTEM_PROMPT,
+    AdaptedDraftModelError,
+    StructuredAdaptedDraftModel,
+    generate_adapted_draft,
+)
 from deerflow.incubation.approvals import ApprovalGrant, ApprovalKind
 from deerflow.incubation.benchmark import (
     BENCHMARK_EPISTEMIC_NOTICE,
@@ -115,12 +132,17 @@ def __getattr__(name: str):
 
 
 __all__ = [
+    "ADAPTED_DRAFT_MODEL_INPUT_MAX_BYTES",
+    "ADAPTED_DRAFT_SYSTEM_PROMPT",
     "AccountConflictError",
     "ApprovalGrant",
     "ApprovalGrantConflictError",
     "ApprovalGrantRejectedError",
     "ApprovalKind",
     "AccountPresentationPlan",
+    "AdaptedDraft",
+    "AdaptedDraftDraft",
+    "AdaptedDraftModelError",
     "ArtifactConflictError",
     "ArtifactEnvelope",
     "ArtifactParentRef",
@@ -165,17 +187,23 @@ __all__ = [
     "MAX_JUDGMENT_MODEL_INPUT_BYTES",
     "MessagePlanBinding",
     "MonetizationHypothesis",
+    "NarrativeTreatment",
     "PlatformAccountRecord",
     "PlatformAccountRef",
     "PersonaDecision",
     "PositioningDecision",
+    "PresentationMode",
+    "PresentationUnit",
+    "PresentationUnitDraft",
     "ProjectConflictError",
     "ProjectRecord",
     "ProjectRef",
     "ResourceMatch",
     "StructuredJudgmentModel",
+    "StructuredAdaptedDraftModel",
     "StructuredFormatModel",
     "VideoMetadataObservation",
+    "SourceExcerptAnchor",
     "seal_content_world_version",
     "seal_content_run_artifacts",
     "select_used_topic_evidence_snapshots",
@@ -187,5 +215,7 @@ __all__ = [
     "seal_incubation_brief",
     "seal_incubation_judgment",
     "generate_incubation_judgment",
+    "generate_adapted_draft",
     "generate_format_decision",
+    "seal_adapted_draft",
 ]

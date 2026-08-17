@@ -261,6 +261,11 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 地图边界。聚焦回归 `25 passed`；内容工具自动创建判断与后续形式适配仍待接线。详见
 `audits/A66-incubation-judgment-to-delivery-lineage.md`。
 
+2026-08-18 第九切片回执：新增精确绑定 `BaseDraft + FormatDecision` 的形式适配稿。每个表现单元都
+保留基础稿逐字来源锚点，非叙事形式不加载编剧方法，合同不含事实、营销运营、发布或数量控制。
+联合回归 `61 passed`；下一切片把 ProductionPlan 改为消费适配稿。详见
+`audits/A67-format-adapted-draft.md`。
+
 ### W04 MediaKit 制作路由
 
 目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的

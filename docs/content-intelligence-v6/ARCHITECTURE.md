@@ -205,6 +205,8 @@ topic_brief + optional incubation_judgment
                 -> message_plan
                 -> draft_version
                 -> format_decision
+base draft + format decision
+                -> adapted_draft
 ```
 
 `content_reading` 保留本次阅读、根选择候选、命名候选和未知；`content_world` 只保留稳定定位，
