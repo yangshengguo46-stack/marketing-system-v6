@@ -850,6 +850,18 @@ redacted ledger or post-draft adaptation failure does not discard the generated 
 Project history UI, confirmation/version switching, and production fact review remain
 later V6 work.
 
+Audience intelligence now has a formal observation boundary. Authorized official
+demographic, interest, activity, or commerce slices retain their exact population scope
+and may enter incubation judgment as observed evidence. Pseudonymous interaction histories
+are stored separately as `audience_behavior_snapshot` inputs: raw actor IDs are replaced by
+project/account-scoped HMAC references, and comment, reply, or live-chat text is neither
+persisted in the model-visible artifact nor sent to HLLM. The HLLM adapter accepts at most
+one actor's latest 50 supported events and can receipt only a user representation or cluster
+assignment. It does not turn one actor into an audience cohort, and the stock HLLM-Creator
+contract is not presented as a natural-language audience-profile API. Real HLLM service,
+multi-actor aggregation, profile interpretation, and Chinese short-video acceptance remain
+pending; none is a cold-start gate.
+
 The next production layer is also wired into selected-project content runs. It converts
 the exact `AdaptedDraft + FormatDecision` into a `ProductionPlan` containing only asset
 requirements, capture/record/layout actions, and assembly order. It accepts at most eight

@@ -72,7 +72,7 @@
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
 | 对标账号采集 | 官方抖音能力 + 第六版 `BenchmarkSnapshot` | `author-label candidate aggregation implemented; stable identity connector pending` | 官方搜索先按作者显示名聚合候选；稳定身份、作者一致多作品与覆盖回执后才升级快照 | 先验收官方公开搜索；星图/百应延期为字段缺口补充；第五版采集器不默认迁移 |
 | 对标模式分析 | 第五版 A39/A41 | `reviewed` | 重写为只读证据分析，不直接定位当前用户 | 支持样本、反例、时期迁移与不可复制条件 |
-| 受众情报 | 第五版 E15/A38/A40 | `reviewed; partial verification` | 区分粉丝、观众、互动者、直播观众和购买者 | 自有账号官方数据与对标可见证据分路验收 |
+| 受众情报 | 第五版 E15/A38/A40 + 第六版 A74 | `observed contracts implemented; live connectors and HLLM aggregation pending` | 官方聚合画像可进入孵化；伪名 actor 行为与 HLLM 表征保持中间层 | 验收官方真实受众快照；再做多 actor 聚合、画像解释器和中文留出评测 |
 | MediaKit 感知 | 第五版 E15 + 第六版薄路由 | `local metadata + trusted private I/O verified; live cloud disabled` | 保留动态 Schema、窄结果合同、脱敏回执和哈希；云驱动使用持久意图、精确批准、私有来源与受控物化 | 逐项登记结果策略并验收 ASR/OCR/场景切分与人工核对 |
 | `MessagePlan` 与基础文案 | 第六版 | `implemented` | 继续作为形式无关交付 | 新保留集上的观点、视角与证据边界 |
 | 表现形式选择 | 第四版方法审计 | `contract + bounded runtime implemented; orchestration pending` | 薄 `FormatDecision` 绑定精确 MessagePlan 与 BaseDraft，不改写选题或正文 | 项目运行接线、真实模型资源匹配与素材方案 |
@@ -133,7 +133,7 @@
 
 ### W02 读取与证据中心
 
-状态：`in progress; Douyin MCP topic lineage, MediaKit local metadata lineage, and isolated cloud lifecycle implemented; live platform and cloud media acceptance pending`
+状态：`in progress; Douyin MCP topic lineage, observed audience/HLLM input boundary, MediaKit local metadata lineage, and isolated cloud lifecycle implemented; live platform, HLLM cohort, and cloud media acceptance pending`
 
 目标：将抖音公开搜索、对标账号、自有账号、受众和 MediaKit 感知输出统一投影为有角色的
 `EvidenceSnapshot`，但保持采集路径和权限语义不同。
@@ -203,9 +203,15 @@ Gateway 环境中的 Key、Secret 和 Device ID
 均为空，所以真实 Manifest 正确返回 `auth_not_configured` 且没有发送搜索请求。详见
 `audits/A48-douyin-mcp-topic-evidence-lineage.md`。
 
+2026-08-18 受众切片回执：官方聚合画像已有正式 observed 合同并可被 A68 选中；五种人群口径
+保持独立。单 actor 行为改为 HMAC 伪名化的 `audience_behavior_snapshot`，原始互动文本不进入
+模型可见产物或 HLLM 请求。HLLM 只保留最近 50 条的单 actor 表征/分群边界，不产生自然语言
+受众画像，也不进入 A68。真实权重、多 actor 聚合和画像解释仍待验收。详见
+`audits/A74-audience-observation-and-hllm-boundary.md`。
+
 ### W03 孵化与单条内容产物谱系
 
-状态：`in progress; bounded judgment runtime and format-decision contract implemented; orchestration and production wiring pending`
+状态：`implemented through ProductionPlan; MediaKit execution and user review UI pending`
 
 目标：将现有 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft` 绑定到项目与
 地图版本，然后增加薄 `FormatDecision` 与 `DraftVersion`。
@@ -280,6 +286,18 @@ MessagePlan 和由它直接派生的 BaseDraft，并在模型调用前校验项�
 `Brief + formal project evidence + IncubationJudgment`，判断的编辑投影进入 MessagePlan，变现单独
 展示且不污染基础稿。联合回归 `79 passed`。下一步接入 FormatDecision、适配稿和制作方案。详见
 `audits/A70-incubation-runtime-orchestration.md`。
+
+2026-08-18 第十三切片回执：主链已从 MessagePlan 与 BaseDraft 继续到 FormatDecision 和
+AdaptedDraft。表现形式只读取本条内容与已审阅用户素材，适配单元保留基础稿逐字锚点；后置失败不吞掉
+已经成立的内容产物。详见 `audits/A71-format-adaptation-runtime-orchestration.md`。
+
+2026-08-18 第十四切片回执：新增有界 `AdaptedDraft + FormatDecision -> ProductionPlan` 运行时，
+只规划素材需求、拍摄/录音/排版动作与装配顺序，不重选选题、不补事实、不承担发布。详见
+`audits/A72-production-plan-runtime.md`。
+
+2026-08-18 第十五切片回执：ProductionPlan 已接入选中项目内容主链并保存、展示；制作计划失败只降级
+后置制作段。当前明确断点为 MediaKit 尚未消费方案生成 `MediaArtifact`。详见
+`audits/A73-production-plan-runtime-orchestration.md`。
 
 ### W04 MediaKit 制作路由
 

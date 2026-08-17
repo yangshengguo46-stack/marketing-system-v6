@@ -16,7 +16,10 @@ A68 增加一层纯确定性的项目证据选择，不调用模型和网络。
 - 所有输入必须属于精确同一项目，跨项目输入直接拒绝。
 - 对标只接受通过现有 `BenchmarkSnapshot` 合同验证、角色为 `benchmark_evidence` 的正式快照。
 - 受众只接受通过现有 `EvidenceSnapshot` 合同验证、角色为 `owned_audience_observation` 或
-  `benchmark_audience_observation` 的正式快照。
+  `benchmark_audience_observation` 的正式快照，且每个 item 的 provenance 必须都是 `observed`。
+- `audience_behavior_snapshot` 是伪名化行为与 HLLM 的中间证据，不是正式受众画像，不进入
+  孵化判断，也不计为伪造的正式候选。
+- 本地派生数据、第三方估算和模型推断不能使用 audience observation 角色进入。
 - `topic_evidence`、`user_material`、`benchmark_account_candidate`、浏览器原始内容与
   `content_reading` 均不进入孵化判断证据。
 - 选择结果稳定去重、最新优先，对标与受众各最多两份；截断、近似但不合格的候选和缺失情况都留下限制说明。
@@ -24,6 +27,5 @@ A68 增加一层纯确定性的项目证据选择，不调用模型和网络。
 
 ## 验证
 
-选择器测试 `6 passed`，与孵化判断运行时联合回归 `14 passed`；Ruff、格式和差异检查通过。
-该模块尚未由内容工具自动读取项目产物，主链编排继续进行。
-
+受众来源分层回归与 A74 联合验证已通过。内容工具已自动读取项目的正式对标/受众产物；
+真实官方受众连接器与 HLLM 多 actor 聚合仍需单独验收。

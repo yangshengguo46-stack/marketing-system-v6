@@ -1732,3 +1732,23 @@ FormatDecision、BaseDraft、MessagePlan 和最多八份已审阅 `user_material
 
 后置制作失败不吞掉已经有效的内容产物。联合回归 `126 passed`。MediaKit 执行仍是下一独立断点。
 详见 `audits/A73-production-plan-runtime-orchestration.md`。
+
+## A74 受众观察与 HLLM 边界
+
+2026-08-18 对照第五版 A38、第四版归档源码和字节 HLLM/HLLM-Creator 公开合同后，确认 HLLM
+是受众行为之后的用户表征、分群和个性化创意底座，不是采集器或现成的自然语言粉丝画像 API。
+公开仓库的 `user_profile` 是训练输入，数据准备中的画像文本又来自外部 Chat 模型，因此拒绝把
+`interests / needs / content_affinities` 伪装成 HLLM-Creator 原生输出。
+
+第六版现在可封存带明确人群口径的官方聚合画像并交给 A68。单 actor 交互序列改为
+`audience_behavior_snapshot`：原始标识用 owner/项目/平台/账号作用域内的 HMAC-SHA256 伪名，评论、
+回复和直播聊天原文不进入模型可见产物或 HLLM 请求。HLLM 输入只取同一 actor 最近 50 条经
+证据匹配的行为，回执只能标明 `user_representation` 或 `cluster_assignment`。
+
+审查期间曾实现“单 actor 直接封存为 cohort 画像”候选；静态复核证明它会夸大上游能力并误导孵化，
+因此已在提交前删除，没有进入主线。A68 同时收紧为只接受全部 item 都是 `observed` 的受众快照，
+本地派生、第三方估算和模型推断不能冒充平台观察。
+
+当前为 `implemented boundary`：没有真实 HLLM 权重服务、多 actor 聚合、覆盖率回执或已验收画像解释器，
+所以 HLLM 中间结果不进入 A68，也不是冷启动硬门。详见
+`audits/A74-audience-observation-and-hllm-boundary.md`。

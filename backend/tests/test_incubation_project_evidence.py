@@ -252,6 +252,36 @@ def test_excludes_near_misses_that_do_not_satisfy_the_existing_contracts() -> No
     assert any("formal evidence contracts" in item for item in selected.limitations)
 
 
+@pytest.mark.parametrize("provenance", ["locally_derived", "third_party_estimate", "model_inference"])
+def test_audience_observation_role_requires_observed_provenance(provenance: str) -> None:
+    artifact = _audience(suffix=provenance)
+    payload = artifact.payload.copy()
+    payload["items"] = [
+        {
+            **payload["items"][0],
+            "provenance": provenance,
+        }
+    ]
+    disguised = ArtifactEnvelope.seal(
+        project=PROJECT,
+        artifact_type="evidence_snapshot",
+        version=1,
+        payload=payload,
+        evidence_role="owned_audience_observation",
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    selected = select_project_judgment_evidence(
+        project=PROJECT,
+        artifacts=(disguised,),
+    )
+
+    assert selected.audience_evidence_artifacts == ()
+    assert selected.rejected_formal_candidate_count == 1
+
+
 def test_deduplicates_and_sorts_newest_first_with_a_stable_id_tiebreak() -> None:
     old = _benchmark(suffix="old", created_at=NOW - timedelta(days=2))
     same_time_a = _benchmark(suffix="same-a", created_at=NOW)

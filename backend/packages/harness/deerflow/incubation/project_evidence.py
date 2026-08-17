@@ -98,10 +98,14 @@ def _is_formal_audience(artifact: ArtifactEnvelope) -> bool:
     if artifact.evidence_role not in _AUDIENCE_EVIDENCE_ROLES:
         return False
     snapshot = EvidenceSnapshot.model_validate(artifact.payload)
-    return snapshot.evidence_role == artifact.evidence_role
+    if snapshot.evidence_role != artifact.evidence_role or not snapshot.items:
+        return False
+    return {item.provenance for item in snapshot.items} == {"observed"}
 
 
 def _looks_like_formal_candidate(artifact: ArtifactEnvelope) -> bool:
+    if artifact.artifact_type == "audience_behavior_snapshot":
+        return False
     return artifact.artifact_type == "benchmark_snapshot" or artifact.evidence_role == "benchmark_evidence" or artifact.evidence_role in _AUDIENCE_EVIDENCE_ROLES
 
 
