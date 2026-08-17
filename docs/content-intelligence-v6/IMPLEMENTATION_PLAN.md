@@ -462,3 +462,6 @@ AdaptedDraft`，并将结果分栏呈现；内部附加正文不进入公开持�
 
 2026-08-18 A72 已实现并验收独立 ProductionPlan 运行时，精确消费 AdaptedDraft、FormatDecision 和
 已审阅用户素材。下一切片把它接入内容工具并让 MediaKit 只执行已封存方案；发布尾段继续后排。
+
+2026-08-18 A73 已把 ProductionPlan 接入选中项目的真实内容运行并展示可审查制作方案，联合回归
+`126 passed`。下一断点只负责将已封存计划路由到 MediaKit 并生成 MediaArtifact，不重开内容判断。

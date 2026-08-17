@@ -38,11 +38,13 @@ from deerflow.incubation import (
     EvidenceSnapshot,
     FormatDecision,
     IncubationJudgment,
+    ProductionPlan,
     ProjectRef,
     build_minimal_incubation_brief,
     generate_adapted_draft,
     generate_format_decision,
     generate_incubation_judgment,
+    generate_production_plan,
     seal_content_run_artifacts,
     seal_evidence_snapshot,
     select_project_judgment_evidence,
@@ -390,9 +392,23 @@ async def _persist_content_run(
                 adapted_artifact = await repository.put_artifact(adapted_artifact)
                 stored_receipts.append(_artifact_receipt(adapted_artifact))
                 answer_sections.append(_render_adapted_draft_artifact(adapted_artifact))
+
+                production_artifact = await generate_production_plan(
+                    project=project,
+                    adapted_draft_artifact=adapted_artifact,
+                    format_decision_artifact=format_artifact,
+                    user_material_artifacts=bounded_resources,
+                    structured_model=_structured_model_runner(model, runtime.config),
+                    created_at=created_at,
+                    source_thread_id=thread_id,
+                    source_run_id=run_id,
+                )
+                production_artifact = await repository.put_artifact(production_artifact)
+                stored_receipts.append(_artifact_receipt(production_artifact))
+                answer_sections.append(_render_production_plan_artifact(production_artifact))
             except Exception as exc:
                 logger.warning(
-                    "Post-draft format adaptation was unavailable: %s",
+                    "Post-draft production continuation was unavailable: %s",
                     type(exc).__name__,
                 )
 
@@ -460,8 +476,9 @@ async def explore_content_world_tool(
     Both goals freeze business semantics, one content root, and its content map.
     Long-term positioning stops there. A shootable-topic goal continues through
     research, TopicBrief, MessagePlan, and BaseDraft. With a selected project it
-    may also persist a per-topic FormatDecision and AdaptedDraft. It still stops
-    before platform, cadence, sales, experiments, or questionnaires.
+    may also persist a per-topic FormatDecision, AdaptedDraft, and ProductionPlan.
+    It still stops before MediaKit execution, platform, cadence, sales,
+    experiments, or questionnaires.
 
     Args:
         user_request: The current account-positioning or concrete-topic request, copied without adding requirements.
@@ -844,6 +861,38 @@ def _render_adapted_draft_artifact(artifact: ArtifactEnvelope) -> str:
                     f"**表演意图：** {unit.narrative_treatment.performance_intent}",
                 )
             )
+    return "\n".join(lines).strip()
+
+
+def _render_production_plan_artifact(artifact: ArtifactEnvelope) -> str:
+    plan = ProductionPlan.model_validate(artifact.payload)
+    source_labels = {
+        "existing_user_material": "已有用户素材",
+        "to_capture": "需要拍摄",
+        "to_record": "需要录制",
+        "to_create": "需要制作",
+        "derived_from_adapted_draft": "由适配稿生成",
+    }
+    status_label = "可执行" if plan.status == "ready" else "暂定"
+    lines = ["# 制作方案", "", f"**状态：** {status_label}"]
+    if plan.asset_requirements:
+        lines.extend(("", "## 素材需求", ""))
+        lines.extend(f"- **{item.asset_id}（{source_labels[item.source]}）：** {item.purpose}" for item in plan.asset_requirements)
+    if plan.production_actions:
+        lines.extend(("", "## 拍摄与制作动作", ""))
+        lines.extend(f"- {item.instruction}" for item in plan.production_actions)
+    if plan.assembly_steps:
+        lines.extend(("", "## 装配顺序", ""))
+        lines.extend(f"{index}. {item.instruction}" for index, item in enumerate(plan.assembly_steps, start=1))
+    if plan.resource_gaps:
+        lines.extend(("", "## 还缺什么", ""))
+        lines.extend(f"- {item}" for item in plan.resource_gaps)
+    if plan.unknowns:
+        lines.extend(("", "## 仍未知", ""))
+        lines.extend(f"- {item}" for item in plan.unknowns)
+    if plan.limitations:
+        lines.extend(("", "## 制作边界", ""))
+        lines.extend(f"- {item}" for item in plan.limitations)
     return "\n".join(lines).strip()
 
 

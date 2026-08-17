@@ -850,13 +850,14 @@ redacted ledger or post-draft adaptation failure does not discard the generated 
 Project history UI, confirmation/version switching, and production fact review remain
 later V6 work.
 
-The next production layer is also available as a bounded runtime component. It converts
+The next production layer is also wired into selected-project content runs. It converts
 the exact `AdaptedDraft + FormatDecision` into a `ProductionPlan` containing only asset
 requirements, capture/record/layout actions, and assembly order. It accepts at most eight
 same-project user materials already reviewed by the exact format decision. Missing material
 can keep the plan provisional; the runtime cannot reopen the topic or add facts, sales,
-platform, publishing, approval, cadence, duration, or quota decisions. Main-tool and
-MediaKit execution wiring remain separate acceptance steps.
+platform, publishing, approval, cadence, duration, or quota decisions. The resulting
+plan is stored and rendered after the adapted draft. MediaKit execution remains a separate
+acceptance step.
 
 Content-world research now reaches official Douyin video search only through the
 configured `douyin_search` MCP domain. It discovers the current Manifest, calls the exact

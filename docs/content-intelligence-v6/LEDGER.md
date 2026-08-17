@@ -1723,3 +1723,12 @@ FormatDecision、BaseDraft、MessagePlan 和最多八份已审阅 `user_material
 
 无素材时可形成带明确缺口的 `provisional` 方案；模型失败不封存半份结果。聚焦复核 `51 passed`。
 主工具与 MediaKit 接线仍待完成。详见 `audits/A72-production-plan-runtime.md`。
+
+## A73 制作方案主链接线
+
+2026-08-18 将 A72 ProductionPlan 运行时接到选中项目的 FormatDecision 与 AdaptedDraft 之后，并把
+状态、素材需求、拍摄/制作动作、装配顺序、资源缺口、未知和边界分栏展示。形式判断和制作方案复用
+同一组已审阅 `user_material`，制作层不能另取对标或选题证据冒充素材。
+
+后置制作失败不吞掉已经有效的内容产物。联合回归 `126 passed`。MediaKit 执行仍是下一独立断点。
+详见 `audits/A73-production-plan-runtime-orchestration.md`。

@@ -1227,7 +1227,7 @@ async def test_content_run_persistence_stores_used_topic_evidence_before_the_rea
 
 
 @pytest.mark.asyncio
-async def test_persistence_continues_from_base_draft_to_format_and_adapted_draft(
+async def test_persistence_continues_from_base_draft_through_production_plan(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     content_artifacts = tuple(
@@ -1255,6 +1255,11 @@ async def test_persistence_continues_from_base_draft_to_format_and_adapted_draft
         artifact_id="artifact-adapted",
         content_sha256="sha-adapted",
     )
+    production_artifact = SimpleNamespace(
+        artifact_type="production_plan",
+        artifact_id="artifact-production",
+        content_sha256="sha-production",
+    )
     repository = SimpleNamespace(
         get_project=AsyncMock(return_value=object()),
         put_artifact=AsyncMock(side_effect=lambda artifact: artifact),
@@ -1272,8 +1277,10 @@ async def test_persistence_continues_from_base_draft_to_format_and_adapted_draft
     )
     generate_format = AsyncMock(return_value=format_artifact)
     generate_adapted = AsyncMock(return_value=adapted_artifact)
+    generate_production = AsyncMock(return_value=production_artifact)
     monkeypatch.setattr(content_intelligence_tool_module, "generate_format_decision", generate_format)
     monkeypatch.setattr(content_intelligence_tool_module, "generate_adapted_draft", generate_adapted)
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_production_plan", generate_production)
     monkeypatch.setattr(
         content_intelligence_tool_module,
         "_render_format_decision_artifact",
@@ -1283,6 +1290,11 @@ async def test_persistence_continues_from_base_draft_to_format_and_adapted_draft
         content_intelligence_tool_module,
         "_render_adapted_draft_artifact",
         Mock(return_value="# 形式适配稿\n\n适配后的正文"),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_production_plan_artifact",
+        Mock(return_value="# 制作方案\n\n拍摄并装配"),
     )
     judgment_artifact = object()
 
@@ -1302,17 +1314,22 @@ async def test_persistence_continues_from_base_draft_to_format_and_adapted_draft
         *content_artifacts,
         format_artifact,
         adapted_artifact,
+        production_artifact,
     ]
     assert generate_format.await_args.kwargs["message_plan_artifact"] is artifacts_by_type["message_plan"]
     assert generate_format.await_args.kwargs["base_draft_artifact"] is artifacts_by_type["draft_version"]
     assert generate_format.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
     assert generate_adapted.await_args.kwargs["base_draft_artifact"] is artifacts_by_type["draft_version"]
     assert generate_adapted.await_args.kwargs["format_decision_artifact"] is format_artifact
-    assert [item["artifact_type"] for item in receipt["artifacts"]][-2:] == [
+    assert generate_production.await_args.kwargs["adapted_draft_artifact"] is adapted_artifact
+    assert generate_production.await_args.kwargs["format_decision_artifact"] is format_artifact
+    assert generate_production.await_args.kwargs["user_material_artifacts"] == ()
+    assert [item["artifact_type"] for item in receipt["artifacts"]][-3:] == [
         "format_decision",
         "adapted_draft",
+        "production_plan",
     ]
-    assert receipt["_answer_appendix"] == "# 本条表现形式\n\n图文\n\n# 形式适配稿\n\n适配后的正文"
+    assert receipt["_answer_appendix"] == ("# 本条表现形式\n\n图文\n\n# 形式适配稿\n\n适配后的正文\n\n# 制作方案\n\n拍摄并装配")
 
 
 @pytest.mark.asyncio
