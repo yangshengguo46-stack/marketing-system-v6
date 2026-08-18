@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A83 content-root solution landscape reviewed; runtime unchanged`
+- 当前结论状态：`A97 evidence + method + outcome self-evolving architecture reviewed; runtime unchanged`
 
 ## A01 第五版与第六版边界
 
@@ -1979,3 +1979,18 @@ A96 据此把下一步从“再次自动改提示词”改为自举数据闭环�
 `audits/A94-rv-travel-content-root-correction.md`、
 `audits/A95-senior-hearing-aid-root-and-ip-viability-correction.md` 与
 `audits/A96-content-root-bootstrapping-loop.md`。
+
+## A97 仓颉、创作者方法与平台证据的自进化编排
+
+2026-08-19 复核第五版 E15、第四版仓颉适配 Skill、个人 IP 创作者方法图谱，以及第六版抖音
+OpenAPI/MCP、MediaKit 和 HLLM 的真实状态。它们可以组成自进化系统，但不能作为多个拥有决策权的
+Skill 同时常驻 Lead：抖音与 MediaKit 是观察层，仓颉式适配是证据编译层，金枪大叔、薛辉小清新和
+文案三把刀是提出可测试创意机制的方法卡，HLLM 只在真实逐受众行为和多 actor 聚合验收后提供推断证据，
+Lead 仍是唯一营销判断者。
+
+自进化被限定为追加式、可复核和可回滚的数据闭环：`RootFeedbackRecord / AccountEvidencePack ->
+MechanismHypothesis -> PreflightPrediction -> PublicationReceipt / MetricSnapshot -> Retrospective /
+LearningClaim -> 离线候选版本 -> 全新冻结评测`。禁止运行中自动修改核心提示、自动安装方法、把单条
+爆款或模型自评分提升为规则。当前只是架构候选；仓颉与创作者图谱尚未迁入第六版运行时，抖音真实凭据、
+MediaKit 广义感知与 HLLM 真实推理仍有未验收断点。详见
+`audits/A97-skill-evidence-self-evolving-system.md`。
