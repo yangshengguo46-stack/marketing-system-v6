@@ -1,0 +1,3140 @@
+{
+  "annotation_status": "preregistered_analyst_provisional",
+  "arms": {
+    "parallel_split_attention": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "business-courtesy-gift",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "business-courtesy-gift",
+          "duration_seconds": 30.072,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1218,
+            "output_tokens": 2234,
+            "total_tokens": 3452
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 10,
+            "case_id": "children-picture-book-shelf",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "children-picture-book-shelf",
+          "duration_seconds": 35.159,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-412549e4d7ff967b",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "儿童绘本书架",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-92d6e84edc2a870f",
+                "complete_world_reason": "亲子共读场景以书架旁的固定空间为舞台，包含家长与孩子两个角色、每日睡前或周末的固定时段、选书—翻页—讨论的完整事件链，可独立容纳人物、时间、空间与互动变化。",
+                "label": "亲子共读场景",
+                "limitations": [
+                  "场景高度依赖家长参与，缺少家长视角时世界不完整"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "承载",
+                    "source": "儿童绘本书架",
+                    "target": "绘本"
+                  },
+                  {
+                    "relation": "支撑",
+                    "source": "绘本",
+                    "target": "亲子共读场景"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-abeef82e52fdbeaa",
+                "complete_world_reason": "睡前共读是无数家庭日复一日重复的实践：孩子从书架上取下今晚想听的故事，父母在床边朗读，读完放回原位。书架既是这个仪式的物理支点——决定绘本放在哪、孩子够不夠得着——也是仪式结束后绘本归位的终点。人（父母与孩子）、时间（每晚固定时段）、空间（卧室或阅读角）、事件（选书—共读—归位）和变化（孩子长大、书单更替）都能在其中独立展开。",
+                "label": "亲子睡前共读",
+                "limitations": [
+                  "不涉及书架的销售或购买决策本身",
+                  "不延伸到泛化的'阅读习惯培养'口号"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "提供随手可取的绘本存放位置",
+                    "source": "儿童绘本书架",
+                    "target": "睡前绘本选择"
+                  },
+                  {
+                    "relation": "成为亲子卧室内固定仪式的一环",
+                    "source": "睡前绘本选择",
+                    "target": "亲子睡前共读"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-3691f962998aafaa",
+                "complete_world_reason": "习惯养成是一个有时间跨度的活动世界：孩子每天从书架取书、翻阅、归位，形成重复行为链，书架的高度与分类方式直接塑造行为路径，可独立容纳人物、时间序列与行为变化。",
+                "label": "儿童自主阅读习惯养成",
+                "limitations": [
+                  "习惯养成周期较长，单次行为难以体现完整世界"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "提供",
+                    "source": "儿童绘本书架",
+                    "target": "触手可及的绘本"
+                  },
+                  {
+                    "relation": "支撑",
+                    "source": "触手可及的绘本",
+                    "target": "儿童自主阅读习惯养成"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-1e7870463d44b3a0",
+                "complete_world_reason": "许多家庭会在客厅、儿童房或走廊划出一小块区域作为专属阅读角，书架是其中决定朝向、高度和动线的核心物件。家长会随孩子身高变化调整书架位置、更换展示封面、添减坐垫——这是一种反复发生的空间实践。书架回到这个实践的方式是：没有它，阅读角就失去收纳与展示的中枢，绘本散落各处，角的意义瓦解。人、空间、时间（随成长迭代）、事件（重新布置）均可独立容纳。",
+                "label": "家庭阅读角布置",
+                "limitations": [
+                  "不涉及室内设计风格推荐或购买指南",
+                  "不延伸到全屋收纳系统"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "作为阅读角的核心家具锚定空间",
+                    "source": "儿童绘本书架",
+                    "target": "阅读角物理布局"
+                  },
+                  {
+                    "relation": "被家长持续调整以适应孩子成长",
+                    "source": "阅读角物理布局",
+                    "target": "家庭阅读角布置"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-521db6e5a6219207",
+                "complete_world_reason": "按主题、年龄或语言将绘本分格摆放、定期轮换、修补破损，是孩子或家长围绕书架反复完成的具体活动，包含操作者、操作时间、空间位置和物品状态变化，可独立成世界。",
+                "label": "绘本分类与整理活动",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "需要",
+                    "source": "儿童绘本书架",
+                    "target": "分类整理"
+                  },
+                  {
+                    "relation": "构成",
+                    "source": "分类整理",
+                    "target": "绘本分类与整理活动"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-bcfa613e8022c581",
+                "complete_world_reason": "家庭从图书馆、绘本馆或亲友处借阅绘本，书架容量有限，必须定期归还旧书、放入新书。这种轮换是周期性实践：每两周或每月一次，家长和孩子一起从书架上取下已读过的书归还，再补充新一批。书架是流转的物理中转站——它决定了'当前可读'与'待归还'的边界。人（家长带孩子去借还）、时间（固定周期）、空间（书架作为中转）、事件（借—读—还）、变化（书单不断更新）均可独立容纳。",
+                "label": "绘本借阅与轮换",
+                "limitations": [
+                  "不涉及绘本馆的经营或借阅系统设计",
+                  "不延伸到绘本出版供应链"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "提供有限容量的物理存放",
+                    "source": "儿童绘本书架",
+                    "target": "绘本进出家庭的流转节点"
+                  },
+                  {
+                    "relation": "驱动定期借还与轮换行为",
+                    "source": "绘本进出家庭的流转节点",
+                    "target": "绘本借阅与轮换"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-a4d39aab78872a0f",
+                "complete_world_reason": "以书架为锚点，搭配地垫、坐垫、小灯等元素规划一块专属阅读空间，涉及空间划分、家具摆放、氛围营造等具体事件，可独立容纳空间、人物使用与随成长变化的布置调整。",
+                "label": "儿童房间阅读角布置",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "作为",
+                    "source": "儿童绘本书架",
+                    "target": "阅读角核心家具"
+                  },
+                  {
+                    "relation": "锚定",
+                    "source": "阅读角核心家具",
+                    "target": "儿童房间阅读角布置"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-f2a3be81a7c5dbc6",
+                "complete_world_reason": "多子女家庭中，大孩子读过的绘本会被保留在书架上，等弟弟妹妹到了合适年龄再取下共读。书架在这里承担跨时间的保存与标记功能——家长往往凭记忆或书架上的位置知道'哪本适合老二现在看'。这是一种以年为单位的家庭实践：人（兄弟姐妹）、时间（年龄差带来的阅读时差）、空间（书架上的留存位置）、事件（传承某本绘本）、变化（同一本书在不同孩子身上引发不同反应）均可独立容纳。",
+                "label": "兄弟姐妹绘本传承",
+                "limitations": [
+                  "不涉及二手书交易或捐赠",
+                  "不延伸到泛化的'家庭传承'概念"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "长期保存已读绘本供后续使用",
+                    "source": "儿童绘本书架",
+                    "target": "绘本跨代际留存"
+                  },
+                  {
+                    "relation": "由年长孩子传给年幼孩子",
+                    "source": "绘本跨代际留存",
+                    "target": "兄弟姐妹绘本传承"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-ac7358f59ebf3943",
+                "complete_world_reason": "社区或班级以书架为节点开展绘本漂流，孩子取走一本、归还一本、留下读后感，形成借出—归还—记录的完整事件链，可独立容纳参与者、时间周期、空间节点与物品流转变化。",
+                "label": "绘本借阅与漂流活动",
+                "limitations": [
+                  "需要社区或组织框架支撑，非书架本身可完全承载"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "存放",
+                    "source": "儿童绘本书架",
+                    "target": "可流通的绘本"
+                  },
+                  {
+                    "relation": "支撑",
+                    "source": "可流通的绘本",
+                    "target": "绘本借阅与漂流活动"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              }
+            ],
+            "commercial_object": "儿童绘本书架",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做儿童绘本书架的",
+            "truncated": true,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1218,
+            "output_tokens": 2135,
+            "total_tokens": 3353
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "camping-cookware",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "camping-cookware",
+          "duration_seconds": 43.796,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1214,
+            "output_tokens": 2341,
+            "total_tokens": 3555
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 10,
+            "case_id": "pet-funeral-service",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "pet-funeral-service",
+          "duration_seconds": 30.263,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-fde4d3a14b7eb0e6",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "宠物殡葬服务",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-cadc4c1eef72f627",
+                "complete_world_reason": "告别仪式本身拥有独立的时间轴（仪式流程）、空间（告别厅布置）、人物关系（家属、司仪、宠物的三角情感互动）和事件发展（从入场、致辞到最终道别），可以完整承载一个家庭与宠物的最后相聚故事。",
+                "label": "宠物告别仪式",
+                "limitations": [
+                  "仪式流程的细节和风格因服务商而异，缺乏统一标准"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "包含的核心环节",
+                    "source": "宠物殡葬服务",
+                    "target": "宠物告别仪式"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-26d7c6be739f9bf0",
+                "complete_world_reason": "宠物火化后骨灰需要长期存放空间，主人会在忌日、节日或周末定期前往寄存处探望、献花、擦拭灵位。这一实践反复发生、持续数年甚至数十年，承载了主人对逝去伴侣动物的持续情感联结，也使寄存空间成为固定的纪念场所。殡葬服务提供骨灰寄存这一物理基础，探望仪式则让空间持续被人物和时间填充。",
+                "label": "宠物骨灰寄存与定期探望",
+                "limitations": [
+                  "部分主人选择将骨灰带回家自行安置，不一定使用寄存服务"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "完成后留下骨灰需要安置",
+                    "source": "宠物殡葬服务",
+                    "target": "骨灰寄存位"
+                  },
+                  {
+                    "relation": "主人定期前来探望形成周期性仪式",
+                    "source": "骨灰寄存位",
+                    "target": "宠物骨灰寄存与定期探望"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-ee0a710c4466e52b",
+                "complete_world_reason": "骨灰寄存拥有独立的空间体系（寄存室、格位）、时间跨度（从短期寄存到长期续费）、人物角色（寄存者、管理者、定期探望的家属）和持续变化的状态（寄存期限、探望记录），可独立容纳家属与已逝宠物之间的长期情感维系活动。",
+                "label": "宠物骨灰寄存",
+                "limitations": [
+                  "寄存场所的运营模式和空间规模因机构不同差异较大"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "延伸的后续服务",
+                    "source": "宠物殡葬服务",
+                    "target": "宠物骨灰寄存"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-7da6802cef9dbcad",
+                "complete_world_reason": "宠物去世后，主人常在每年忌日或特定节日（如清明节、万圣节宠物纪念活动）组织纪念仪式——点燃蜡烛、摆放照片、书写寄语、与同样失去宠物的朋友分享回忆。这种年度重复的实践将个人哀思转化为可分享的集体行为，殡葬服务方或纪念社群常提供场地和仪式框架。时间固定、人物可扩展、空间可从家中到公共纪念场地。",
+                "label": "宠物纪念日活动",
+                "limitations": [
+                  "并非所有主人都会持续多年坚持纪念日活动"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "服务对象在纪念日需要集体或个人纪念",
+                    "source": "宠物殡葬服务",
+                    "target": "宠物忌日纪念"
+                  },
+                  {
+                    "relation": "主人每年在固定日期组织或参与纪念活动",
+                    "source": "宠物忌日纪念",
+                    "target": "宠物纪念日活动"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-0e30ccfbf953a3d3",
+                "complete_world_reason": "遗体接送包含独立的空间转移路径（从家中或宠物医院到殡葬场所）、时间紧迫性（24小时响应）、人物互动（接送人员与悲痛中的家属交接）和事件张力（突发死亡后的紧急联系与等待），可独立承载宠物离世后第一时间的应急响应故事。",
+                "label": "宠物遗体接送",
+                "limitations": [
+                  "接送范围和响应速度受地域和资源限制"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "前置的物流环节",
+                    "source": "宠物殡葬服务",
+                    "target": "宠物遗体接送"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-eb602b6ac706be14",
+                "complete_world_reason": "失去宠物后，主人常经历数月甚至数年的哀伤过程，部分人寻求与有相同经历的人定期聚会、线上或线下分享感受与 coping 策略。这种互助小组以周或月为周期持续运行，成员因共同的丧失经验而聚集，形成稳定的情感支持网络。殡葬服务往往是引导主人进入这类小组的入口节点。",
+                "label": "宠物丧失互助小组",
+                "limitations": [
+                  "互助小组的持续性和规模因地区差异很大"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "服务后主人经历持续性哀伤需要情感支持",
+                    "source": "宠物殡葬服务",
+                    "target": "丧失宠物后的哀伤辅导"
+                  },
+                  {
+                    "relation": "同经历者定期聚集分享形成互助小组",
+                    "source": "丧失宠物后的哀伤辅导",
+                    "target": "宠物丧失互助小组"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-b9b50f0f80583bf3",
+                "complete_world_reason": "骨灰纪念品定制拥有独立的创作过程（设计、选型、制作）、人物角色（定制者、设计师、手工艺人）、时间线（从下单到成品交付）和情感变化（家属参与设计时的回忆与释怀），可独立容纳将骨灰转化为可触摸纪念物的完整活动。",
+                "label": "宠物骨灰纪念品定制",
+                "limitations": [
+                  "纪念品种类和定制深度因服务商能力而异"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "衍生的情感纪念方式",
+                    "source": "宠物殡葬服务",
+                    "target": "宠物骨灰纪念品定制"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-d03a2c5451416c62",
+                "complete_world_reason": "部分主人将宠物骨灰加工为吊坠、戒指等随身饰品，长期佩戴在日常生活中。这一实践将殡葬服务的产物转化为持续的身体佩戴行为，饰品成为主人与逝去宠物之间可触摸的情感纽带。定制过程本身也是一次仪式性参与，佩戴则使纪念融入日常时间流。",
+                "label": "宠物骨灰纪念饰品定制与佩戴",
+                "limitations": [
+                  "并非所有文化背景下的人都接受将骨灰制成饰品佩戴"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "火化后骨灰可制成纪念物",
+                    "source": "宠物殡葬服务",
+                    "target": "骨灰纪念饰品"
+                  },
+                  {
+                    "relation": "主人长期佩戴并作为日常情感寄托",
+                    "source": "骨灰纪念饰品",
+                    "target": "宠物骨灰纪念饰品定制与佩戴"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-6a194900f0568a8e",
+                "complete_world_reason": "哀伤辅导拥有独立的人物关系（咨询师与丧宠家属）、时间进程（单次或多次会谈）、空间（咨询室或线上）和情感变化轨迹（从否认、愤怒到接受），可独立承载丧宠者处理丧失感的心理活动全过程。",
+                "label": "宠物哀伤辅导",
+                "limitations": [
+                  "辅导的专业程度和形式因服务提供者而异，部分仅为非正式安慰而非专业心理干预"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "嵌入的心理支持环节",
+                    "source": "宠物殡葬服务",
+                    "target": "宠物哀伤辅导"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              }
+            ],
+            "commercial_object": "宠物殡葬服务",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做宠物殡葬服务的",
+            "truncated": true,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1216,
+            "output_tokens": 1951,
+            "total_tokens": 3167
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "maternity-pillow",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "maternity-pillow",
+          "duration_seconds": 30.072,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1210,
+            "output_tokens": 2024,
+            "total_tokens": 3234
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "tea-ware",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "tea-ware",
+          "duration_seconds": 32.24,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1210,
+            "output_tokens": 2147,
+            "total_tokens": 3357
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "murder-mystery-shop",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "murder-mystery-shop",
+          "duration_seconds": 40.348,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1212,
+            "output_tokens": 2061,
+            "total_tokens": 3273
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "hiking-pole",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "hiking-pole",
+          "duration_seconds": 56.341,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1210,
+            "output_tokens": 2590,
+            "total_tokens": 3800
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 10,
+            "case_id": "memorial-flowers",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "memorial-flowers",
+          "duration_seconds": 28.339,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-70f749f1df4aa2c7",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "祭祀鲜花",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-ca6e265656f16288",
+                "complete_world_reason": "清明祭扫本身就是一个完整的世界：每年清明前后，无数家庭前往墓园，携带鲜花、供品，在墓前完成清扫、献花、鞠躬、默哀等一整套仪式动作。它自带时间（清明节气）、空间（墓园墓地）、人物（家族成员）、事件（祭扫行为）和情感变化（从追思到释怀），可以独立承载大量故事与场景。",
+                "label": "清明祭扫仪式",
+                "limitations": [
+                  "时间高度集中于清明前后，其他时段较弱"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "用于",
+                    "source": "祭祀鲜花",
+                    "target": "清明祭扫仪式"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-e0657f0fca1f8cbb",
+                "complete_world_reason": "清明扫墓是华人社会每年反复发生的家族集体仪式，固定在清明节气前后，家族成员从各地回到祖墓所在地，完成除草、祭拜、献花、焚香等一整套流程。鲜花在此实践中承担表达哀思与敬意的作用，人需要它来替代或补充传统纸钱香烛，它也因每年清明的周期性而持续被需要。该实践可独立容纳人物（家族成员）、时间（清明前后）、空间（墓地陵园）、事件（祭拜流程）和变化（代际更替、祭品演变）。",
+                "label": "清明扫墓",
+                "limitations": [
+                  "仅限清明节气前后的时间窗口，非全年实践",
+                  "地域上以华人文化圈为主"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是清明祭扫时携带的核心供品",
+                    "source": "祭祀鲜花",
+                    "target": "清明扫墓"
+                  },
+                  {
+                    "relation": "每年清明前后家族集体前往墓地进行祭拜",
+                    "source": "清明扫墓",
+                    "target": "清明扫墓"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-176100e8092165e8",
+                "complete_world_reason": "墓园是祭祀鲜花的最终落位场所，本身是一个完整的世界：有不同年代的墓碑、有守墓人、有前来祭扫的各色人群、有四季更替中的草木变化。鲜花被放置在墓碑前，成为墓园景观的一部分，墓园承载了生死对话、家族记忆、代际传承等丰富的人物与事件。",
+                "label": "墓园空间",
+                "limitations": [
+                  "部分墓园管理严格，场景受限"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "交付于",
+                    "source": "祭祀鲜花",
+                    "target": "墓园空间"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-8d816d40bd20dfd7",
+                "complete_world_reason": "忌日祭拜是家庭在逝者去世周年日重复进行的纪念实践，每年固定日期家属前往墓前或家中灵位前献花、上香、默哀。鲜花在此承担标记时间节点与表达思念的功能，人需要它来让忌日仪式有可见的情感载体。该实践可独立容纳人物（直系家属）、时间（每年忌日）、空间（墓地或家中灵位）、事件（周年祭奠）和变化（随家庭结构变化参与人数增减）。",
+                "label": "忌日祭拜",
+                "limitations": [
+                  "时间分散于各家庭各自的忌日，无统一节令"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是忌日祭拜时常用的供品",
+                    "source": "祭祀鲜花",
+                    "target": "忌日祭拜"
+                  },
+                  {
+                    "relation": "家属在逝者周年忌日前往墓前或灵前祭奠",
+                    "source": "忌日祭拜",
+                    "target": "忌日祭拜"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-cb3fd752d58fd7a7",
+                "complete_world_reason": "一束祭祀鲜花背后是整个家族对逝者的追思世界：逝者的生平故事、家族的兴衰变迁、生者与死者之间的情感纽带、代际之间口耳相传的记忆。每一次献花都是一次记忆的唤醒与传递，这个世界里有人物（逝者与生者）、有时间（跨越代际）、有事件（家族故事）、有变化（记忆的淡忘与重构）。",
+                "label": "先人追思与家族记忆",
+                "limitations": [
+                  "高度依赖具体家族故事，通用性有限"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "触发",
+                    "source": "祭祀鲜花",
+                    "target": "先人追思与家族记忆"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-b8605eb6948d3145",
+                "complete_world_reason": "中元节祭祀是农历七月十五前后广泛存在于华人社会的集体祭祖实践，家庭在路口、祠堂或墓地设供桌，摆放鲜花、果品、纸钱等祭品。鲜花在此实践中用于装点祭坛和表达对先人的敬意，人需要它来让祭祀场域具有庄重感。该实践可独立容纳人物（家庭成员及社区参与者）、时间（农历七月十五前后）、空间（路口、祠堂、墓地）、事件（设供、祭拜、烧纸）和变化（城乡差异导致的仪式简化或复兴）。",
+                "label": "中元节祭祀",
+                "limitations": [
+                  "地域习俗差异较大，部分地区以焚纸为主不重鲜花"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是中元节祭祀时摆放的供品之一",
+                    "source": "祭祀鲜花",
+                    "target": "中元节祭祀"
+                  },
+                  {
+                    "relation": "农历七月十五前后家庭或社区集体祭祖超度",
+                    "source": "中元节祭祀",
+                    "target": "中元节祭祀"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-1db796262804793b",
+                "complete_world_reason": "中元节（七月半）是中国传统祭祀节日，有完整的仪式世界：焚香烧纸、供奉鲜花食物、路口祭拜、河灯放流等。它自带特定时间（农历七月十五）、空间（家中、路口、河边）、人物（家族成员、邻里）、事件（祭祀仪式）和文化变化（传统仪式在现代社会的演变），鲜花作为现代祭祀元素嵌入其中。",
+                "label": "中元节祭祀活动",
+                "limitations": [
+                  "地域差异大，南北方习俗不同"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "用于",
+                    "source": "祭祀鲜花",
+                    "target": "中元节祭祀活动"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-9a95e7a92e21272a",
+                "complete_world_reason": "冬至祭祖是部分华人地区（尤其闽南、台湾等）在冬至日进行的家族祭墓实践，家族成员携带鲜花、汤圆、牲礼等前往墓地或宗祠祭拜。鲜花在此承担祭品与装饰功能，人需要它来表达对先人的追思。该实践可独立容纳人物（家族成员）、时间（冬至日）、空间（墓地或宗祠）、事件（祭拜流程）和变化（地域习俗差异和代际传承变化）。",
+                "label": "冬至祭祖",
+                "limitations": [
+                  "主要流行于南方部分地区，非全国普遍实践"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是冬至祭祖时携带的祭品",
+                    "source": "祭祀鲜花",
+                    "target": "冬至祭祖"
+                  },
+                  {
+                    "relation": "冬至日家族前往墓地或宗祠祭拜先人",
+                    "source": "冬至祭祖",
+                    "target": "冬至祭祖"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-1c200cca7f8029ac",
+                "complete_world_reason": "殡葬告别仪式是一个完整的世界：从遗体告别、灵堂布置、亲友吊唁到出殡安葬，鲜花花圈、花篮贯穿其中。它有人物（逝者、家属、亲友、殡仪人员）、时间（从去世到安葬的数日）、空间（殡仪馆、灵堂、墓地）、事件（告别仪式各环节）和情感变化（从悲痛到告别），可独立承载大量故事。",
+                "label": "殡葬告别仪式",
+                "limitations": [
+                  "场景较为沉重，创作空间受限"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "用于",
+                    "source": "祭祀鲜花",
+                    "target": "殡葬告别仪式"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              }
+            ],
+            "commercial_object": "祭祀鲜花",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做祭祀鲜花的",
+            "truncated": true,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1210,
+            "output_tokens": 2177,
+            "total_tokens": 3387
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 10,
+            "case_id": "couple-lung-slices-guard",
+            "cohort": "lexicalized_guard",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "couple-lung-slices-guard",
+          "duration_seconds": 46.664,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-3a59c3f35f7f8ece",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "夫妻肺片预制菜",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-79b44f0864362dd5",
+                "complete_world_reason": "家庭晚餐场景自带人物（家庭成员）、时间（傍晚到夜间）、空间（厨房与餐桌）、事件（备餐、加热、围坐吃饭）和变化（从忙碌到放松、从饥饿到饱足）。夫妻肺片预制菜作为一道凉菜或快手菜嵌入其中，可以独立展开备餐决策、口味偏好冲突、亲子饮食教育、加班晚归凑合一餐等完整故事线。",
+                "label": "家庭晚餐场景",
+                "limitations": [
+                  "场景较宽泛，需要具体人物关系才能聚焦"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "被消费者购买后加热食用",
+                    "source": "夫妻肺片预制菜",
+                    "target": "家庭晚餐场景"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-820b271ab0c4066c",
+                "complete_world_reason": "家庭周末聚餐是中国城市家庭长期反复的实践：双职工在工作日无暇备菜，周末想在家做一桌像样的饭菜招待家人或亲友。凉菜是聚餐开席的第一道，需要提前摆好，夫妻肺片作为经典川味冷盘，预制形态让家庭主厨在同时处理多个热菜时不必再从零卤制、切片、调红油。人需要它来填补'凉菜环节'的时间与技能缺口，它回到这个实践是因为聚餐场景天然需要多道菜并行准备，预制冷盘正好嵌入这个并行流程。该实践可独立容纳人物（家庭主厨与聚餐成员）、时间（周末固定时段）、空间（家庭餐桌与厨房）、事件（聚餐开席）和变化（随家庭成员口味调整搭配）。",
+                "label": "家庭周末聚餐备菜",
+                "limitations": [
+                  "不涉及产品销售或获客场景",
+                  "不涉及餐厅经营性备菜"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "解决备菜耗时与调味门槛",
+                    "source": "夫妻肺片预制菜",
+                    "target": "周末家庭聚餐中的凉菜环节"
+                  },
+                  {
+                    "relation": "需要可提前拆封摆盘的即食冷盘",
+                    "source": "周末家庭聚餐中的凉菜环节",
+                    "target": "家庭周末聚餐备菜"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-b564086b952a700c",
+                "complete_world_reason": "露营野餐拥有独立的人物（驴友、家庭、情侣）、时间（周末白天到夜晚）、空间（营地、山野、湖畔）、事件（搭帐篷、生火、分享食物）和变化（从城市节奏到自然放松）。预制菜因无需复杂烹饪，天然适合户外场景，可承载食物分享社交、口味惊喜、装备与食物搭配等情节。",
+                "label": "户外露营野餐",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "作为便携即食食品被带往户外",
+                    "source": "夫妻肺片预制菜",
+                    "target": "户外露营野餐"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-b8b6aa41cc55e0bb",
+                "complete_world_reason": "户外露营与野餐是近年来持续增长的长期人类实践，参与者反复面临'户外能吃什么荤菜'的问题：户外无明火或只有简单加热设备，需要能直接食用的蛋白质菜肴。夫妻肺片预制菜作为冷盘荤菜，开袋即食、调味已完成，适合搭配户外啤酒或饮料。人需要它是因为户外场景缺乏烹饪条件但仍有吃好喝好的诉求，它回到该实践是因为冷盘荤菜恰好填补了户外饮食结构中'有酒无菜'的空缺。该实践可独立容纳人物（露营小队成员）、时间（周末或假期户外时段）、空间（营地或野餐点）、事件（围坐吃喝）和变化（随季节和营地条件调整菜单）。",
+                "label": "户外露营野餐冷盘",
+                "limitations": [
+                  "不涉及电商物流配送环节",
+                  "不涉及一次性消费即弃场景的泛化描述"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "提供无需加热即可食用的便携荤菜",
+                    "source": "夫妻肺片预制菜",
+                    "target": "露营野餐中的下酒菜需求"
+                  },
+                  {
+                    "relation": "需要开袋即食、耐常温短时存放的荤凉菜",
+                    "source": "露营野餐中的下酒菜需求",
+                    "target": "户外露营野餐冷盘"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-ae3e2d200af9e1d0",
+                "complete_world_reason": "深夜加班场景包含人物（白领、程序员、创业者）、时间（夜间十点后）、空间（办公室、出租屋）、事件（赶工、点外卖、拆速食）和变化（从疲惫到短暂满足、从工作压力到自我犒劳）。预制菜作为宵夜选择，可独立展开独居生活、职场压力、饮食健康焦虑等叙事。",
+                "label": "深夜加班宵夜",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "被加班族作为速食宵夜拆袋即食",
+                    "source": "夫妻肺片预制菜",
+                    "target": "深夜加班宵夜"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-1a088637c22f0e54",
+                "complete_world_reason": "年夜饭是中国家庭每年除夕固定重复的饮食实践，冷盘是开席前必须摆好的第一组菜。传统夫妻肺片需要卤制牛杂、调制红油，耗时数小时，而年夜饭当天主厨要同时处理鱼、鸡、汤等多道热菜，冷盘环节时间压力极大。预制夫妻肺片让主厨在年夜饭当天能将冷盘环节压缩到拆袋摆盘几分钟。人需要它是因为年夜饭备菜是多线程高压任务，冷盘是最容易被时间挤压的环节，它回到该实践是因为年夜饭冷盘是结构性的固定需求而非偶发需求。该实践可独立容纳人物（家庭主厨与团聚家人）、时间（除夕当天备餐时段）、空间（家庭厨房与年夜饭桌）、事件（年夜饭开席）和变化（随家庭人数和代际口味调整冷盘组合）。",
+                "label": "年夜饭冷盘预备",
+                "limitations": [
+                  "不涉及节日礼盒销售",
+                  "不涉及品牌营销活动"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "替代年夜饭中需要长时间卤制的冷盘",
+                    "source": "夫妻肺片预制菜",
+                    "target": "年夜饭桌上的开席凉菜"
+                  },
+                  {
+                    "relation": "属于每年除夕固定出现的备菜环节",
+                    "source": "年夜饭桌上的开席凉菜",
+                    "target": "年夜饭冷盘预备"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c146624053b55115",
+                "complete_world_reason": "年夜饭场景自带丰富的人物（多代同堂）、时间（除夕夜）、空间（老家客厅与饭桌）、事件（团圆、敬酒、回忆、争吵与和解）和变化（从各自奔波到聚首、从旧年矛盾到新年期许）。夫妻肺片作为一道川味冷盘嵌入其中，可承载代际口味差异、传统与便捷的碰撞、谁掌勺的家庭角色变迁等完整故事。",
+                "label": "年夜饭冷盘",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "作为成品冷盘摆上年夜饭桌",
+                    "source": "夫妻肺片预制菜",
+                    "target": "年夜饭冷盘"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-733b2d2ac3a0b038",
+                "complete_world_reason": "都市上班族加班后吃夜宵是长期反复的生活实践：晚归后饥饿但不想再开火做饭，需要能快速拿到手、有足够蛋白质和口味的食物。夫妻肺片预制菜开袋即食、口味重且下饭下酒，比泡面更有满足感，比外卖更快。人需要它是因为加班夜宵场景的核心矛盾是'累但想吃好的'，它回到该实践是因为重口味荤菜恰好满足夜间对味觉刺激和饱腹感的双重需求。该实践可独立容纳人物（加班族个体或同事）、时间（工作日夜间时段）、空间（家中或办公休息区）、事件（加班结束后的进食）和变化（随加班频率和季节调整夜宵选择）。",
+                "label": "加班夜宵速食搭配",
+                "limitations": [
+                  "不涉及外卖平台运营",
+                  "不涉及办公室团购场景"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "提供有荤有味、快速可得的夜宵选项",
+                    "source": "夫妻肺片预制菜",
+                    "target": "加班后的夜宵充饥需求"
+                  },
+                  {
+                    "relation": "属于都市上班族反复出现的夜间进食习惯",
+                    "source": "加班后的夜宵充饥需求",
+                    "target": "加班夜宵速食搭配"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-bc8d1b06fd420df7",
+                "complete_world_reason": "宿舍聚餐场景拥有人物（室友同学）、时间（周末夜晚）、空间（四人或六人宿舍）、事件（凑钱买吃的、追剧、聊天、考试周解压）和变化（从陌生室友到挚友、从学业压力到短暂释放）。预制菜价格亲民、无需厨具，天然嵌入宿舍生活，可独立展开青春社交、生活费拮据、异地口味乡愁等情节。",
+                "label": "大学宿舍聚餐",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "被大学生网购后宿舍内开袋即食",
+                    "source": "夫妻肺片预制菜",
+                    "target": "大学宿舍聚餐"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              }
+            ],
+            "commercial_object": "夫妻肺片预制菜",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做夫妻肺片预制菜的",
+            "truncated": true,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1220,
+            "output_tokens": 2603,
+            "total_tokens": 3823
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "mandarin-duck-hotpot-guard",
+            "cohort": "lexicalized_guard",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "mandarin-duck-hotpot-guard",
+          "duration_seconds": 37.831,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 2,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 1212,
+            "output_tokens": 2023,
+            "total_tokens": 3235
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 10,
+            "case_id": "lion-head-food-guard",
+            "cohort": "lexicalized_guard",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "lion-head-food-guard",
+          "duration_seconds": 40.947,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-d090a6efed636fe7",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "狮子头半成品",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-d0c244dc5d35f84f",
+                "complete_world_reason": "家宴餐桌是一个完整的内容世界：它容纳了家庭成员这一人物群、节日或周末的时间节点、餐厅与厨房的空间、从备餐到围坐吃饭的事件流程，以及菜品从上桌到被分享的变化过程。狮子头半成品加热摆盘后成为餐桌上的核心菜品，餐桌本身可独立承载一整套家宴叙事。",
+                "label": "家宴餐桌",
+                "limitations": [
+                  "餐桌本身偏静态，需要菜品和人物活动来激活场景"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "摆盘上桌后成为核心菜品",
+                    "source": "狮子头半成品",
+                    "target": "家宴餐桌"
+                  },
+                  {
+                    "relation": "承载",
+                    "source": "家宴餐桌",
+                    "target": "家宴餐桌"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-dd2dafac5b4591d9",
+                "complete_world_reason": "年夜饭是中国家庭每年除夕的固定仪式，狮子头（四喜丸子）是其中象征团圆的经典大菜。半成品让家庭在有限时间内完成多道菜的同时仍能端出这道工序繁复的硬菜，人需要它来减轻年节备餐压力，它也因年复一年的年夜饭需求而持续被购买和使用。该实践可容纳具体人物（掌勺的长辈或年轻一代）、时间（除夕前一两天）、空间（家庭厨房）、事件（团圆饭）和变化（代际更替导致烹饪能力下降，半成品需求上升）。",
+                "label": "年夜饭备菜",
+                "limitations": [
+                  "仅限春节前后时段，非全年性实践",
+                  "地域上以淮扬菜及受其影响的地区为主"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是传统年菜核心荤菜的预制成品形态",
+                    "source": "狮子头半成品",
+                    "target": "年夜饭备菜"
+                  },
+                  {
+                    "relation": "家庭在除夕前数日集中准备多道菜肴的长期习俗",
+                    "source": "年夜饭备菜",
+                    "target": "年夜饭备菜"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-9d894e537cedbd8d",
+                "complete_world_reason": "年夜饭是一个高度完整的内容世界：它有固定的时间节点（除夕）、明确的空间（家中饭桌）、核心人物（一家人团聚）、标志性事件（守岁团圆饭）和情感变化（辞旧迎新）。狮子头作为经典年菜，半成品形态让普通家庭也能在年夜饭上呈现这道大菜，年夜饭本身可独立容纳完整叙事。",
+                "label": "年夜饭",
+                "limitations": [
+                  "时间窗口集中在春节前后，日常适用性有限"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "作为传统年菜被端上年夜饭桌",
+                    "source": "狮子头半成品",
+                    "target": "年夜饭"
+                  },
+                  {
+                    "relation": "承载",
+                    "source": "年夜饭",
+                    "target": "年夜饭"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-75f5df8d95d3333e",
+                "complete_world_reason": "中国家庭在节日、婚丧嫁娶、亲友聚会时常以家宴待客，狮子头作为一道有分量的'压桌菜'能体现主人的诚意与排场。半成品让普通家庭也能在自家厨房端出这道需要长时间炖煮的菜，人需要它来兼顾待客的体面与备餐的效率，它也因家宴这一反复出现的社交场景而持续被需要。该实践可容纳具体人物（主妇、主人）、时间（周末或节庆）、空间（家庭餐厅与厨房）、事件（亲友来访）和变化（家庭规模与待客频率的变化）。",
+                "label": "家宴待客",
+                "limitations": [
+                  "家宴频率因家庭而异，非固定周期",
+                  "城市中外出聚餐替代家宴的趋势在增强"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是宴席硬菜的省工替代方案",
+                    "source": "狮子头半成品",
+                    "target": "家宴待客"
+                  },
+                  {
+                    "relation": "家庭以自制菜肴招待亲友的反复出现的社会交往实践",
+                    "source": "家宴待客",
+                    "target": "家宴待客"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-78d2857a8ae35cff",
+                "complete_world_reason": "食堂打饭窗口是一个完整的内容世界：它有固定的人群（学生或职工）、每日重复的时间节奏（早中晚餐时段）、明确的空间（食堂排队区与取餐台）、持续发生的事件（排队、选菜、打饭）和菜品从满盘到空盘的变化。狮子头半成品适合食堂批量出餐，窗口本身可独立承载日常饮食生活叙事。",
+                "label": "食堂打饭窗口",
+                "limitations": [
+                  "场景较为日常重复，戏剧张力有限"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "批量加热后作为荤菜供应",
+                    "source": "狮子头半成品",
+                    "target": "食堂打饭窗口"
+                  },
+                  {
+                    "relation": "承载",
+                    "source": "食堂打饭窗口",
+                    "target": "食堂打饭窗口"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-0dd09613dba6d4e3",
+                "complete_world_reason": "各类单位食堂（工厂、学校、机关）需要每周循环制定菜单，狮子头作为一道认知度高、接受面广的大众荤菜常被纳入轮换。半成品让食堂在有限人力和时间内批量出餐，人需要它来保证菜单的多样性与出餐效率，它也因食堂周复一周的配餐需求而持续被消耗。该实践可容纳具体人物（食堂厨师与就餐职工）、时间（每周工作日）、空间（单位食堂后厨与餐厅）、事件（日常供餐）和变化（季节性菜单调整与人员流动）。",
+                "label": "食堂周菜单配餐",
+                "limitations": [
+                  "主要存在于有食堂的单位，非家庭场景",
+                  "食堂可能选择其他预制荤菜替代，狮子头非唯一选项"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是食堂批量出餐的标准荤菜预制件",
+                    "source": "狮子头半成品",
+                    "target": "食堂周菜单配餐"
+                  },
+                  {
+                    "relation": "企事业单位食堂每周循环制定菜单并批量供餐的长期运作实践",
+                    "source": "食堂周菜单配餐",
+                    "target": "食堂周菜单配餐"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-0a044ac9cb671968",
+                "complete_world_reason": "户外露营野餐是一个完整的内容世界：它包含露营者这一人物、周末或假期的时间、山野或湖边的空间、搭帐篷与生火做饭的事件、以及从白天到夜晚的环境变化。狮子头半成品因便于携带和简单加热，可成为户外一餐的主菜，露营野餐本身可独立容纳完整的户外生活叙事。",
+                "label": "户外露营野餐",
+                "limitations": [
+                  "受天气和季节影响较大"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "便携加热后作为户外一餐的主菜",
+                    "source": "狮子头半成品",
+                    "target": "户外露营野餐"
+                  },
+                  {
+                    "relation": "承载",
+                    "source": "户外露营野餐",
+                    "target": "户外露营野餐"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-ff6867a78dbce33b",
+                "complete_world_reason": "中国许多地区有产后坐月子的传统，期间需要高蛋白、易消化的滋补饮食。狮子头以猪肉为主料、口感软糯，符合月子餐对营养和质地的要求。半成品让照顾产妇的家人在精力有限的情况下仍能提供这道滋补菜，人需要它来减轻月子期持续备餐的负担，它也因这一反复出现的家庭生命阶段而持续被需要。该实践可容纳具体人物（产妇、婆婆或月嫂）、时间（产后一个月）、空间（家庭厨房）、事件（产后恢复）和变化（不同产妇的体质与口味差异）。",
+                "label": "坐月子饮食调理",
+                "limitations": [
+                  "狮子头并非所有地区月子餐的标配，地域性较强",
+                  "月子期通常为一个月，单次周期有限"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是高蛋白滋补肉菜的便捷预制形态",
+                    "source": "狮子头半成品",
+                    "target": "坐月子饮食调理"
+                  },
+                  {
+                    "relation": "产后家庭为产妇系统准备滋补餐食的长期习俗实践",
+                    "source": "坐月子饮食调理",
+                    "target": "坐月子饮食调理"
+                  }
+                ],
+                "source_readers": [
+                  "human_practice"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c355aab105ce0396",
+                "complete_world_reason": "月子餐食谱是一个完整的内容世界：它有明确的人物（产妇与照护者）、持续约一个月的时间跨度、家庭厨房或月子中心的空间、每日按阶段调整饮食的事件、以及从产后恢复到满月的身体变化。狮子头肉质软嫩高蛋白，适合作为月子餐中的一道菜，食谱本身可独立承载产后恢复的完整叙事。",
+                "label": "月子餐食谱",
+                "limitations": [
+                  "受众范围较窄，集中在产后人群"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "作为高蛋白软食纳入月子餐",
+                    "source": "狮子头半成品",
+                    "target": "月子餐食谱"
+                  },
+                  {
+                    "relation": "承载",
+                    "source": "月子餐食谱",
+                    "target": "月子餐食谱"
+                  }
+                ],
+                "source_readers": [
+                  "object_activity"
+                ]
+              }
+            ],
+            "commercial_object": "狮子头半成品",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是卖狮子头半成品的",
+            "truncated": true,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1218,
+            "output_tokens": 2508,
+            "total_tokens": 3726
+          }
+        }
+      ],
+      "duration_seconds": 452.072,
+      "model_calls": 24,
+      "status": "completed",
+      "summary": {
+        "candidate_count": 50,
+        "case_count": 12,
+        "complete_case_recall": 0,
+        "contract_success": 5,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 0,
+        "recalled_group_count": 0,
+        "required_group_count": 16
+      },
+      "usage": {
+        "input_tokens": 14568,
+        "output_tokens": 26794,
+        "total_tokens": 41362
+      }
+    },
+    "single_open_recall": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "business-courtesy-gift",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "business-courtesy-gift",
+          "duration_seconds": 46.618,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 611,
+            "output_tokens": 1064,
+            "total_tokens": 1675
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "children-picture-book-shelf",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "children-picture-book-shelf",
+          "duration_seconds": 29.061,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-412549e4d7ff967b",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "儿童绘本书架",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-92d6e84edc2a870f",
+                "complete_world_reason": "亲子共读是一个完整的家庭日常场景：父母或祖辈与孩子在睡前、周末或闲暇时段围坐在一起，翻开绘本，讲述故事、讨论画面、模仿角色。这个场景包含固定的时间节奏（每晚睡前故事时间）、空间位置（书架旁的地垫或沙发）、人物互动（大人的讲述语气、孩子的提问与反应）以及情感变化（从好奇到安心入睡）。儿童绘本书架是这个场景的物理锚点，书架上随手可取的绘本决定了共读内容的选择。",
+                "label": "亲子共读场景",
+                "limitations": [
+                  "不涉及书架的购买决策或产品推荐"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "被使用于",
+                    "source": "儿童绘本书架",
+                    "target": "家庭亲子阅读活动"
+                  },
+                  {
+                    "relation": "构成",
+                    "source": "家庭亲子阅读活动",
+                    "target": "亲子共读场景"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-856c296410f2ebec",
+                "complete_world_reason": "阅读习惯养成是一个跨越数月甚至数年的成长过程：从幼儿期被大人引导翻看图画书，到学龄前自主选书、独立翻阅，再到小学低年级从绘本过渡到桥梁书。这个过程涉及儿童认知能力的变化（从识图到识字）、兴趣方向的演变（从动物主题到太空主题）、以及家庭阅读环境的长期建设。绘本书架作为书籍的长期存放与展示载体，记录了孩子阅读偏好的变迁轨迹。",
+                "label": "儿童阅读习惯养成",
+                "limitations": [
+                  "不涉及阅读教育方法论或课程产品"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "支撑",
+                    "source": "儿童绘本书架",
+                    "target": "绘本日常取阅"
+                  },
+                  {
+                    "relation": "累积为",
+                    "source": "绘本日常取阅",
+                    "target": "儿童阅读习惯养成"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-639b55ba73e693a5",
+                "complete_world_reason": "儿童房空间布置是一个完整的居住设计世界：墙面色彩选择、地面材质考量、家具尺寸适配儿童身高、收纳系统规划、安全防护措施、采光与照明设计、以及随着孩子成长而进行的阶段性改造。绘本书架是其中兼具功能与美学的组成部分，它的高度需要匹配孩子的取阅能力，位置需要配合阅读光线，外观需要融入房间的整体风格。这个空间承载了孩子从婴幼儿到学龄期的日常生活。",
+                "label": "儿童房空间布置",
+                "limitations": [
+                  "不涉及书架产品本身的材质工艺或销售参数"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "作为家具陈设于",
+                    "source": "儿童绘本书架",
+                    "target": "儿童房"
+                  },
+                  {
+                    "relation": "整体设计属于",
+                    "source": "儿童房",
+                    "target": "儿童房空间布置"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-a057546ac536b5bb",
+                "complete_world_reason": "绘本借阅与流转社区是一个真实存在的社会文化实践：社区图书馆的儿童绘本角、幼儿园的绘本漂流活动、邻里之间的绘本交换会、线上绘本借阅平台的取还流程。这些实践涉及绘本在不同家庭之间的流动轨迹、社区成员的志愿参与、儿童社交互动（一起选书、推荐喜欢的书）、以及绘本资源的共享理念。书架上的绘本不仅是私人物品，也可以进入流转网络成为社区共享资源。",
+                "label": "绘本借阅与流转社区",
+                "limitations": [
+                  "不涉及绘本销售或书架营销"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "存放的绘本可参与",
+                    "source": "儿童绘本书架",
+                    "target": "绘本交换与借阅"
+                  },
+                  {
+                    "relation": "组织形态为",
+                    "source": "绘本交换与借阅",
+                    "target": "绘本借阅与流转社区"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-a91bd23e221c3a45",
+                "complete_world_reason": "绘本创作与出版生态是一个完整的创意产业世界：插画师与文字作者的协作模式、编辑对选题的判断、翻译与版权引进流程、印刷装订的技术选择、原创绘本与引进绘本的市场格局、国内外绘本奖项（如凯迪克奖、博洛尼亚童书展）对创作方向的引导。书架上每一本绘本背后都连接着这个从创意到成书的完整链条，也反映了不同时期、不同文化背景下儿童读物审美的演变。",
+                "label": "绘本创作与出版生态",
+                "limitations": [
+                  "不涉及书架制造或供应链"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "陈列的绘本产自",
+                    "source": "儿童绘本书架",
+                    "target": "绘本创作与出版"
+                  },
+                  {
+                    "relation": "构成",
+                    "source": "绘本创作与出版",
+                    "target": "绘本创作与出版生态"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-89a3babe640683b6",
+                "complete_world_reason": "睡前仪式是许多家庭日复一日上演的完整场景：洗漱换衣、调暗灯光、选一本绘本、依偎在床上或沙发上讲述故事、互道晚安、关灯入睡。这个仪式有明确的时间边界（每晚固定时段）、空间转换（从客厅书架到卧室床边）、人物角色（讲述者与倾听者）和情感弧线（从白天的兴奋逐渐过渡到安静与安全感）。绘本书架是这个仪式链条的起点——孩子走向书架选书的那一刻，睡前仪式就开始了。",
+                "label": "睡前仪式",
+                "limitations": [
+                  "不涉及睡眠产品或书架购买"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "提供睡前故事素材",
+                    "source": "儿童绘本书架",
+                    "target": "睡前故事时间"
+                  },
+                  {
+                    "relation": "是核心环节 of",
+                    "source": "睡前故事时间",
+                    "target": "睡前仪式"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "儿童绘本书架",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做儿童绘本书架的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 611,
+            "output_tokens": 1142,
+            "total_tokens": 1753
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "camping-cookware",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "camping-cookware",
+          "duration_seconds": 24.37,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-93b9f37d479363d3",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "露营炊具",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-1917b944c903fb9d",
+                "complete_world_reason": "篝火烹饪是露营炊具最原生的使用场景，围绕篝火可以展开一整套人物、时间（从黄昏生火到深夜余烬）、空间（火塘周围的营地布局）、事件（生火、架锅、炖煮、烤制）和变化（火焰从点燃到熄灭、食材从生到熟）。它天然容纳多人协作、分工与社交，是一个完整的内容世界。",
+                "label": "户外篝火烹饪",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "露营炊具",
+                    "target": "营地烹饪"
+                  },
+                  {
+                    "relation": "核心仪式",
+                    "source": "营地烹饪",
+                    "target": "户外篝火烹饪"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-ea149452699d8bfb",
+                "complete_world_reason": "荒野求生饮食将露营炊具置于极限情境：水源获取与净化、可食植物辨识、临时捕鱼或陷阱猎获后用最简炊具加工。这个世界包含人物（求生者）、时间（多日生存周期）、空间（荒野河流、丛林、山地）、事件（觅食、净水、生火、烹饪）和变化（从饥饿到进食、从生水到安全饮水），内容张力极强。",
+                "label": "荒野求生饮食",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "极端使用情境",
+                    "source": "露营炊具",
+                    "target": "野外生存烹饪"
+                  },
+                  {
+                    "relation": "所属实践体系",
+                    "source": "野外生存烹饪",
+                    "target": "荒野求生饮食"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-f7390a5468463297",
+                "complete_world_reason": "高海拔攀登中，炊具是维持生命的基础装备。这个世界涵盖人物（登山者、向导）、时间（数日到数周的攀登周期）、空间（海拔数千米的高山营地、雪洞、帐篷内）、事件（融雪取水、低气压下烹饪、定量配餐、热饮恢复体温）和变化（从脱水状态到补给恢复、从夜间低温到晨间出发），每个环节都有真实的故事和知识。",
+                "label": "高山营地饮食",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "高海拔使用场景",
+                    "source": "露营炊具",
+                    "target": "高海拔营地烹饪"
+                  },
+                  {
+                    "relation": "所属实践体系",
+                    "source": "高海拔营地烹饪",
+                    "target": "高山营地饮食"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-8822a580118c3255",
+                "complete_world_reason": "房车旅行将炊具嵌入一种长期移动生活：人物是旅行者家庭或伴侣，时间是数周到数月的公路旅程，空间是车内厨房台面、路边营地、国家公园野餐桌，事件包括在有限空间里做一顿正餐、沿途采购本地食材、在风景前用餐，变化体现在从城市厨房到移动厨房的适应过程和一路饮食的在地化转变。",
+                "label": "房车旅行路上的厨房",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "移动生活场景",
+                    "source": "露营炊具",
+                    "target": "房车烹饪"
+                  },
+                  {
+                    "relation": "所属生活方式",
+                    "source": "房车烹饪",
+                    "target": "房车旅行路上的厨房"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-980e97fd62add295",
+                "complete_world_reason": "溯溪活动中途的溪边野炊是一个完整世界：人物是溯溪队伍，时间是夏季一日的溪流穿越，空间是溪谷石头滩、浅水区、林荫岸边，事件包括用便携炊具烧水泡茶、煮溪流里捞的小鱼或携带的简餐，变化体现在体力消耗后的补给恢复和从行进到休憩的节奏转换。溪谷环境本身也提供丰富的自然叙事。",
+                "label": "溯溪与溪边野炊",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "水域户外场景",
+                    "source": "露营炊具",
+                    "target": "溪边野炊"
+                  },
+                  {
+                    "relation": "所属活动",
+                    "source": "溪边野炊",
+                    "target": "溯溪与溪边野炊"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c9f2aca54c870b6c",
+                "complete_world_reason": "家庭露营中炊具贯穿一整天：早晨煮咖啡和煎蛋、中午简餐或三明治、晚上炖菜或烧烤。人物是父母与孩子，时间是周末两日，空间是营地帐篷区、天幕下、野餐桌，事件包含孩子第一次参与生火、全家一起备餐、围坐吃饭聊天，变化体现在从城市生活节奏到户外慢节奏的切换、孩子对户外烹饪的新鲜感与成长。",
+                "label": "家庭露营的一日三餐",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "家庭使用场景",
+                    "source": "露营炊具",
+                    "target": "家庭营地烹饪"
+                  },
+                  {
+                    "relation": "所属生活实践",
+                    "source": "家庭营地烹饪",
+                    "target": "家庭露营的一日三餐"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "露营炊具",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是卖露营炊具的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 609,
+            "output_tokens": 1017,
+            "total_tokens": 1626
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "pet-funeral-service",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "pet-funeral-service",
+          "duration_seconds": 27.145,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 610,
+            "output_tokens": 906,
+            "total_tokens": 1516
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "maternity-pillow",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "maternity-pillow",
+          "duration_seconds": 38.077,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-2aa1e569d0cd91c9",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "孕妇枕",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-a296a3d436c0aa66",
+                "complete_world_reason": "孕期睡眠障碍是一个贯穿孕中晚期的真实健康议题，涉及左侧卧位建议、耻骨联合疼痛、胃食管反流、尿频起夜、胎动干扰等多重因素。围绕它有产科医生的睡眠卫生指导、孕妇社群中的入睡经验分享、伴侣调整作息配合等人物与事件，时间线从孕中期延续到分娩前，空间横跨卧室、医院孕妇学校和线上社群。",
+                "label": "孕期睡眠障碍",
+                "limitations": [
+                  "不涉及具体药物或治疗方案推荐"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "直接缓解的症状",
+                    "source": "孕妇枕",
+                    "target": "孕期睡眠障碍"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-86dafe9f513c39b1",
+                "complete_world_reason": "孕中晚期医生普遍建议左侧卧位以改善胎盘血流，但长时间维持单一姿势会带来腰背和骨盆压力。体位管理涉及孕妇每日数小时的卧床时间、助产士的姿势指导、从仰卧到侧卧的过渡技巧、以及用支撑物维持骨盆中立位的实践。这一话题容纳了产检场景中的医嘱、家庭卧室中的日常实践和孕教课程中的示范教学。",
+                "label": "孕期体位管理",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "辅助实现的身体姿态",
+                    "source": "孕妇枕",
+                    "target": "孕期体位管理"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-57c059f8021b06aa",
+                "complete_world_reason": "孕期骨盆带疼痛（PGP）影响约20%的孕妇，表现为耻骨联合或骶髂关节区域的锐痛，在翻身、行走、上下楼梯时加剧。它涉及物理治疗师的评估与干预、孕妇对日常活动的调整、伴侣协助翻身和穿鞋等生活场景，时间线贯穿孕中晚期至产后恢复期，是一个有明确医学背景和丰富生活情境的内容世界。",
+                "label": "孕期骨盆带疼痛",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "通过支撑骨盆区域缓解的疼痛",
+                    "source": "孕妇枕",
+                    "target": "孕期骨盆带疼痛"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-d7ea8c9eaa7050c7",
+                "complete_world_reason": "随着胎儿生长，孕妇腹壁承受的牵拉力逐渐增大，身体重心前移，腰椎前凸加深，这些生物力学变化影响站姿、坐姿和卧姿。围绕这一主题有孕产康复师的体态评估、孕妇调整工作台高度和座椅靠背的日常实践、以及从孕早期到孕晚期逐步演变的身体感受记录，涉及家庭、职场和产检多个空间。",
+                "label": "孕期腹壁支撑与重心变化",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "承托腹部以应对的力学变化",
+                    "source": "孕妇枕",
+                    "target": "孕期腹壁支撑与重心变化"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-1414ac7a0f978492",
+                "complete_world_reason": "许多孕妇枕在产后被重新用作哺乳支撑枕，帮助维持侧卧哺乳或摇篮式哺乳的姿势。产后恢复期涉及夜奶频繁导致的睡眠碎片化、剖腹产伤口对卧姿的限制、月子期间的家庭照护分工、以及哺乳顾问对衔乳姿势的指导。这一世界横跨产后卧室、月子中心和哺乳门诊，时间线从分娩延续到断奶期。",
+                "label": "产后恢复期睡眠与哺乳姿势",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "可延续使用至产后的场景",
+                    "source": "孕妇枕",
+                    "target": "产后恢复期睡眠与哺乳姿势"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-a9168dbcf1831c9b",
+                "complete_world_reason": "孕妇枕的引入往往改变夫妻共眠的床铺空间分配，伴侣需要适应更小的睡眠空间、配合孕妇翻身、学习用枕头协助支撑等。这一话题涉及夫妻间的睡眠协商、准爸爸参与孕期准备的实践、家庭睡眠环境的重新布置，是一个有明确人物关系和生活情境的内容世界。",
+                "label": "孕期伴侣协作与共眠调整",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "改变床铺空间布局引发的关系调整",
+                    "source": "孕妇枕",
+                    "target": "孕期伴侣协作与共眠调整"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "孕妇枕",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是卖孕妇枕的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 861,
+            "total_tokens": 1468
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "tea-ware",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 2
+          },
+          "case_id": "tea-ware",
+          "duration_seconds": 33.661,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 1380,
+            "total_tokens": 1987
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 0,
+            "case_id": "murder-mystery-shop",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "murder-mystery-shop",
+          "duration_seconds": 33.571,
+          "error": "semantic path must end at the candidate label",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 608,
+            "output_tokens": 1061,
+            "total_tokens": 1669
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "hiking-pole",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "hiking-pole",
+          "duration_seconds": 26.776,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-bc0d134e8ed48171",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "登山杖",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-f7a6d2b90a7c0b9c",
+                "complete_world_reason": "阿尔卑斯山脉拥有勃朗峰环线（TMB）、阿尔卑斯穿越路线等世界级长距离徒步路线，横跨法、意、瑞、奥多国。每条路线都有完整的山口、避难小屋、村庄补给点和季节窗口，徒步者用登山杖跨越碎石坡、冰川遗迹和陡峭草甸，路线本身承载了数百年山岳文化、登山史和跨国步道维护体系。",
+                "label": "阿尔卑斯山脉徒步路线",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "登山杖",
+                    "target": "高山徒步"
+                  },
+                  {
+                    "relation": "经典地理载体",
+                    "source": "高山徒步",
+                    "target": "阿尔卑斯山脉徒步路线"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-6b5afe1e12bd56a3",
+                "complete_world_reason": "安纳普尔纳大环线跨越海拔5400米的陀龙垭口，途经藏传佛教村落、印度教圣地、高山草甸和深谷雨林，全程约160-230公里。徒步者依赖登山杖应对持续上下坡和高反环境，路线串联了完整的喜马拉雅人文地理世界：夏尔巴与古隆族社区、季节性牧道、山间客栈网络。",
+                "label": "尼泊尔安纳普尔纳大环徒步",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "登山杖",
+                    "target": "高海拔长距离徒步"
+                  },
+                  {
+                    "relation": "标志性目的地",
+                    "source": "高海拔长距离徒步",
+                    "target": "尼泊尔安纳普尔纳大环徒步"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c9e94dfec46824f6",
+                "complete_world_reason": "圣地亚哥朝圣之路是延续千年的基督教朝圣路线，从中世纪起朝圣者便手持手杖行走。现代徒步者沿法国之路、北方之路等线路穿越西班牙北部数百公里，登山杖是这条路上最常见装备。路线本身容纳了中世纪建筑、朝圣驿站体系、沿途修道院与节日，是一个完整的历史文化徒步世界。",
+                "label": "西班牙圣地亚哥朝圣之路",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "历史原型",
+                    "source": "登山杖",
+                    "target": "朝圣者手杖"
+                  },
+                  {
+                    "relation": "文化载体",
+                    "source": "朝圣者手杖",
+                    "target": "西班牙圣地亚哥朝圣之路"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-16124d126d2594c2",
+                "complete_world_reason": "熊野古道是纪伊半岛上延续千年的神佛习合朝圣山道，石板路穿越杉木林、瀑布和神社，2004年入选世界遗产。徒步者持登山杖行走中边路、大边路等路线，沿途有王子社序列、温泉宿场和季节性祭典，构成了一个完整的日本山岳信仰与步道文化世界。",
+                "label": "日本熊野古道",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "登山杖",
+                    "target": "石板山道徒步"
+                  },
+                  {
+                    "relation": "文化载体",
+                    "source": "石板山道徒步",
+                    "target": "日本熊野古道"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c6e8287eb72222b0",
+                "complete_world_reason": "长坪沟至毕棚沟穿越是川西经典高海拔徒步路线，沿途经过原始森林、高山草甸、冰川雪峰和垭口，海拔从3200米攀升至4600米以上。登山杖在碎石路段和陡坡下降中是关键装备，路线串联了嘉绒藏区村落、牦牛牧场和季节性高山花海，承载完整的横断山区自然与人文图景。",
+                "label": "中国四姑娘山长坪沟穿越",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "登山杖",
+                    "target": "川西高原徒步"
+                  },
+                  {
+                    "relation": "代表性路线",
+                    "source": "川西高原徒步",
+                    "target": "中国四姑娘山长坪沟穿越"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-abdefe4973d70ccb",
+                "complete_world_reason": "太平洋山脊步道（PCT）全长约4270公里，从墨西哥边境延伸至加拿大，穿越加州沙漠、内华达山脉高地和喀斯喀特火山群。长距离徒步者全程依赖登山杖应对连续上下坡和雪线穿越，步道串联了完整的北美西部地理带、国家公园体系和徒步者社区文化，是一个自1968年国家步道法案以来持续生长的户外世界。",
+                "label": "美国太平洋山脊步道",
+                "limitations": [],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "登山杖",
+                    "target": "超长距离步道徒步"
+                  },
+                  {
+                    "relation": "标志性路线",
+                    "source": "超长距离步道徒步",
+                    "target": "美国太平洋山脊步道"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "登山杖",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是卖登山杖的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 1024,
+            "total_tokens": 1631
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "memorial-flowers",
+            "cohort": "world_transfer",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "memorial-flowers",
+          "duration_seconds": 18.937,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-70f749f1df4aa2c7",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "祭祀鲜花",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-2e01747e12edff94",
+                "complete_world_reason": "清明节是中国最重要的祭祖节日之一，每年农历清明前后数亿人前往墓园扫墓，鲜花祭扫已成为主流方式。这个节日承载着家族记忆、代际传承、城乡人口流动（返乡潮）、墓园空间管理、地方习俗差异等丰富内容，能独立容纳人物、时间、空间和事件。",
+                "label": "清明节",
+                "limitations": [
+                  "清明节内容极广，鲜花祭扫只是其中一个环节"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "核心使用场景",
+                    "source": "祭祀鲜花",
+                    "target": "清明祭扫"
+                  },
+                  {
+                    "relation": "所属节俗体系",
+                    "source": "清明祭扫",
+                    "target": "清明节"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c7272fcdc771c975",
+                "complete_world_reason": "中元节（农历七月十五）是中国传统祭祀节日，民间有祭祖、放河灯、烧纸等习俗，近年来鲜花祭祀在中元节也逐渐普及。该节日涉及民间信仰、家族仪式、社区活动、地方文化差异等，能独立容纳人物、时间、空间和事件。",
+                "label": "中元节",
+                "limitations": [
+                  "中元节鲜花使用量远低于清明节"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "祭祀用途",
+                    "source": "祭祀鲜花",
+                    "target": "中元祭祖"
+                  },
+                  {
+                    "relation": "所属节俗体系",
+                    "source": "中元祭祖",
+                    "target": "中元节"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-4d7274cc672517c8",
+                "complete_world_reason": "烈士陵园是国家纪念与公众缅怀的重要空间，每逢清明、烈士纪念日等节点，社会各界前往献花。这里涉及国家记忆、英烈叙事、集体仪式、青少年教育、陵园建筑与景观等，能独立容纳人物、时间、空间和事件。",
+                "label": "烈士陵园",
+                "limitations": [
+                  "烈士陵园献花有特定政治与仪式语境，与一般祭祀鲜花有差异"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "祭祀鲜花",
+                    "target": "陵园献花"
+                  },
+                  {
+                    "relation": "典型空间载体",
+                    "source": "陵园献花",
+                    "target": "烈士陵园"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-7bc130369ad048e1",
+                "complete_world_reason": "殡葬礼仪涵盖遗体告别、追悼会、骨灰安放等环节，鲜花在其中承担花圈、花篮、灵车装饰等功能。这一领域涉及生死观念、家族关系、殡葬行业从业者、仪式流程、地方风俗差异等，能独立容纳人物、时间、空间和事件。",
+                "label": "殡葬礼仪",
+                "limitations": [
+                  "殡葬礼仪范围较广，鲜花只是其中一个元素"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "使用场景",
+                    "source": "祭祀鲜花",
+                    "target": "告别仪式用花"
+                  },
+                  {
+                    "relation": "所属体系",
+                    "source": "告别仪式用花",
+                    "target": "殡葬礼仪"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-0b5a8ea7da02fe85",
+                "complete_world_reason": "寒衣节（农历十月初一）是中国传统祭祀节日，民间有祭祖、送寒衣等习俗，部分地区也用鲜花表达哀思。该节日涉及季节更替中的生死观念、家族祭祀传统、北方地区民俗等，能独立容纳人物、时间、空间和事件。",
+                "label": "寒衣节",
+                "limitations": [
+                  "寒衣节鲜花使用尚不普遍，地域性强"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "祭祀用途",
+                    "source": "祭祀鲜花",
+                    "target": "寒衣节祭祖"
+                  },
+                  {
+                    "relation": "所属节俗体系",
+                    "source": "寒衣节祭祖",
+                    "target": "寒衣节"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-4c986279e5ceb8bd",
+                "complete_world_reason": "菊花是中国祭祀鲜花中最核心的花材，承载着哀思、高洁、长寿等多重文化象征。菊花文化涉及古代诗词绘画、重阳节俗、日本皇室象征、东西方花语差异、园艺育种史等，能独立容纳人物、时间、空间和文化事件。",
+                "label": "菊花文化",
+                "limitations": [
+                  "菊花文化范围极广，祭祀用途只是其中一个面向"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "主要花材",
+                    "source": "祭祀鲜花",
+                    "target": "菊花"
+                  },
+                  {
+                    "relation": "文化象征体系",
+                    "source": "菊花",
+                    "target": "菊花文化"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "祭祀鲜花",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做祭祀鲜花的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 888,
+            "total_tokens": 1495
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "couple-lung-slices-guard",
+            "cohort": "lexicalized_guard",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "couple-lung-slices-guard",
+          "duration_seconds": 63.339,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-3a59c3f35f7f8ece",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "夫妻肺片预制菜",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-2b4abfc9fee9b8b0",
+                "complete_world_reason": "夫妻肺片的起源与成都少城（满城）一带的回民牛杂饮食传统直接相关，清代旗营驻防带来的牛屠宰与内脏处理习惯，构成了这道菜的文化母体。从旗营饮食到街头凉拌牛杂，再到郭朝华夫妇摆摊命名'夫妻肺片'，这条线索可以容纳清代驻防制度、回民社区生活、成都街巷空间变迁和民间小吃演化等完整人物与时间链条。",
+                "label": "成都少城满城旗营饮食文化",
+                "limitations": [
+                  "旗营饮食与夫妻肺片之间的直接文献链条较薄弱，部分为口述传承"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品名溯源至",
+                    "source": "夫妻肺片预制菜",
+                    "target": "夫妻肺片"
+                  },
+                  {
+                    "relation": "诞生于",
+                    "source": "夫妻肺片",
+                    "target": "成都少城满城旗营饮食文化"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c55410ef0b0c6b39",
+                "complete_world_reason": "夫妻肺片的名字直接来自20世纪30年代成都郭朝华、张田政夫妇在长顺街一带摆摊卖凉拌牛杂的真实经历。这对夫妻的摆摊生活、配方改良、街坊口碑传播，构成了一个有具体人物、具体地点、具体时间段的完整叙事世界，可以展开民国成都底层小贩的生计方式、市井社交和食物记忆。",
+                "label": "郭朝华与张田政夫妻摆摊创业故事",
+                "limitations": [
+                  "夫妇二人的生平细节多为后人追述，缺乏同时代文字记录"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品名溯源至",
+                    "source": "夫妻肺片预制菜",
+                    "target": "夫妻肺片"
+                  },
+                  {
+                    "relation": "得名于",
+                    "source": "夫妻肺片",
+                    "target": "郭朝华与张田政夫妻摆摊创业故事"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-5fe9d875fe82e253",
+                "complete_world_reason": "夫妻肺片是川菜凉拌味型的代表性载体，涉及红油、花椒油、蒜泥、芝麻酱等多味复合调味体系。这套味型体系背后是四川盆地数百年来的香料贸易（花椒、辣椒传入与本土化）、调味哲学（麻辣鲜香的层次构建）和民间拌食传统，可以容纳从明代辣椒传入中国到川菜味型定型的长时段文化史。",
+                "label": "川菜凉拌技法与味型体系",
+                "limitations": [
+                  "味型体系的演化路径在学术上仍有争议，不同流派说法不一"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "属于",
+                    "source": "夫妻肺片预制菜",
+                    "target": "川菜凉拌菜系"
+                  },
+                  {
+                    "relation": "核心构成",
+                    "source": "川菜凉拌菜系",
+                    "target": "川菜凉拌技法与味型体系"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-9110b41c93d003b1",
+                "complete_world_reason": "夫妻肺片做成预制菜，必然嵌入中国预制菜产业近年来的快速发展脉络，包括中央厨房标准化加工、液氮速冻或高温杀菌技术、冷链物流跨区域配送、餐饮B端与家庭C端消费场景分化等。这个产业世界可以容纳从田间食材到餐桌的完整供应链、政策推动（如预制菜国标制定）、区域产业集群（如广东肇庆、山东诸城等预制菜基地）和消费文化变迁。",
+                "label": "中国预制菜产业与冷链物流",
+                "limitations": [
+                  "预制菜产业仍处于快速变化中，部分数据和格局可能已过时"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "属于产业类别",
+                    "source": "夫妻肺片预制菜",
+                    "target": "预制菜"
+                  },
+                  {
+                    "relation": "依赖基础设施",
+                    "source": "预制菜",
+                    "target": "中国预制菜产业与冷链物流"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-6309ec5493c0cd70",
+                "complete_world_reason": "夫妻肺片以牛杂为核心食材，直接关联四川回民社区的牛杂饮食传统。成都、重庆等地的回民聚居区（如成都皇城坝一带）长期经营牛杂小吃，形成了从屠宰、分部位处理到凉拌、炖煮的完整烹饪体系。这个传统可以容纳回民在四川的迁徙与定居、清真饮食规约与本地口味的融合、牛杂从下脚料到地方名吃的身份转变等丰富内容。",
+                "label": "四川牛杂饮食传统与回民社区",
+                "limitations": [
+                  "回民社区在四川的具体历史分布细节需要更多地方志佐证"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "核心食材为",
+                    "source": "夫妻肺片预制菜",
+                    "target": "牛杂（牛心、牛舌、牛肚等）"
+                  },
+                  {
+                    "relation": "饮食传统源自",
+                    "source": "牛杂（牛心、牛舌、牛肚等）",
+                    "target": "四川牛杂饮食传统与回民社区"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-5cfaac8f2dba1a6a",
+                "complete_world_reason": "夫妻肺片作为经典川菜小吃，已被多家老字号餐饮企业（如夫妻肺片总店等）经营并注册商标，是地方小吃品牌化的典型案例。从街边摊到老字号门店、再到预制菜工业化输出，这条线索可以容纳中国餐饮老字号的认定与保护制度、地方小吃的商标争议、非遗申报体系、以及传统美食从地方性走向全国市场的品牌化进程。",
+                "label": "中华老字号与地方小吃品牌化",
+                "limitations": [
+                  "不同老字号企业之间的历史传承关系存在争议"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品原型为",
+                    "source": "夫妻肺片预制菜",
+                    "target": "夫妻肺片"
+                  },
+                  {
+                    "relation": "被老字号企业经营",
+                    "source": "夫妻肺片",
+                    "target": "中华老字号与地方小吃品牌化"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "夫妻肺片预制菜",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是做夫妻肺片预制菜的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 2497,
+            "output_tokens": 3462,
+            "total_tokens": 5959
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "mandarin-duck-hotpot-guard",
+            "cohort": "lexicalized_guard",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "mandarin-duck-hotpot-guard",
+          "duration_seconds": 27.576,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-0accd6b26a89cf8b",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "鸳鸯锅底",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-e4ba035a27ed25fd",
+                "complete_world_reason": "重庆火锅文化承载了从码头工人饮食到城市名片的百年演变，包含人物（码头劳工、老火锅店主）、空间（嘉陵江畔老街、洪崖洞）、时间（民国至今）和事件（火锅节、老字号兴衰），鸳鸯锅底正是这一文化中为兼顾不同口味而生的典型形态。",
+                "label": "重庆火锅文化",
+                "limitations": [
+                  "重庆火锅文化范围较广，鸳鸯锅底只是其中一个分支形态"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "是火锅的就餐形式之一",
+                    "source": "鸳鸯锅底",
+                    "target": "火锅"
+                  },
+                  {
+                    "relation": "在重庆发展为城市饮食标志",
+                    "source": "火锅",
+                    "target": "重庆火锅文化"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-3da8e3a0839f4f29",
+                "complete_world_reason": "鸳鸯锅底的本质是麻辣红汤与清汤白汤的共存，映射了川渝饮食中'调和'的哲学：不同体质、不同地域的人围坐一桌各取所需。这一主题涉及饮食人类学中的口味地理、家庭聚餐中的代际口味差异、移民文化对本地饮食的改造等丰富内容。",
+                "label": "川渝饮食中的麻辣与清淡调和",
+                "limitations": [
+                  "口味调和是抽象概念，需要具体人物或事件来落地"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "以一锅分两味体现口味调和",
+                    "source": "鸳鸯锅底",
+                    "target": "麻辣与清淡的口味调和"
+                  },
+                  {
+                    "relation": "根植于川渝地区饮食哲学",
+                    "source": "麻辣与清淡的口味调和",
+                    "target": "川渝饮食中的麻辣与清淡调和"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-baa07552d7b21125",
+                "complete_world_reason": "火锅是中国最具社交性的餐饮形式之一，鸳鸯锅底的出现正是为了解决多人聚餐时口味不一的矛盾。围绕火锅聚餐有丰富的人物关系（朋友聚会、家庭团圆、商务宴请）、空间场景（大堂喧闹与包间私密）、时间仪式（年夜饭火锅、冬至聚餐）和社交事件（涮菜顺序的默契、谁下锅谁捞菜的权力关系）。",
+                "label": "火锅聚餐社交",
+                "limitations": [
+                  "社交场景较为泛化，需聚焦具体事件或人物才有深度"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "服务于多人围炉共食场景",
+                    "source": "鸳鸯锅底",
+                    "target": "火锅聚餐"
+                  },
+                  {
+                    "relation": "是中国式社交的重要载体",
+                    "source": "火锅聚餐",
+                    "target": "火锅聚餐社交"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-fde6d8fa59c0c285",
+                "complete_world_reason": "鸳鸯锅底的存在本身就是对中国南北方口味差异的一种妥协方案——北方重酱香浓汤、南方嗜麻辣鲜香。这一主题涵盖地理（秦岭淮河线）、历史（人口南迁带来的饮食融合）、人物（美食家对地域口味的论述）和事件（地方菜系传播中的口味博弈），是一个完整的文化内容世界。",
+                "label": "南北饮食口味差异",
+                "limitations": [
+                  "南北差异是宏大叙事，需具体案例支撑"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "以分格设计回应口味分歧",
+                    "source": "鸳鸯锅底",
+                    "target": "口味分歧"
+                  },
+                  {
+                    "relation": "折射中国南北饮食文化差异",
+                    "source": "口味分歧",
+                    "target": "南北饮食口味差异"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-6e590c61049af6f7",
+                "complete_world_reason": "鸳鸯锅底的红汤适合涮毛肚、鸭肠等重味食材，清汤适合蔬菜、菌菇、海鲜等鲜味食材，形成了一套完整的食材搭配逻辑。这一体系涉及食材产地（潮汕牛肉、内蒙古羊肉、云南菌菇）、时令（冬季羊肉夏季菌菇）、人物（火锅名厨的食材哲学）和事件（新食材引入火锅的潮流变迁）。",
+                "label": "火锅食材搭配体系",
+                "limitations": [
+                  "食材体系偏知识性，需人物故事或文化事件来激活"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "为不同食材提供对应汤底",
+                    "source": "鸳鸯锅底",
+                    "target": "食材与汤底的搭配"
+                  },
+                  {
+                    "relation": "构成火锅的完整食材体系",
+                    "source": "食材与汤底的搭配",
+                    "target": "火锅食材搭配体系"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-995a3664d04a2230",
+                "complete_world_reason": "鸳鸯锅底用太极隔板在一口锅中划分两个味域，既保留了合餐的团圆感，又赋予个体口味选择权，折射出中国饮食从合餐到'有边界合餐'的文化演变。这一主题涉及历史（宋代合餐制普及）、社会（公筷公勺运动、疫情后的饮食卫生意识）、人物（饮食史学者）和事件（分餐制倡导），内容世界完整。",
+                "label": "分餐与合餐饮食文化演变",
+                "limitations": [
+                  "学术性较强，需要生活化案例来平衡"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "以物理分格实现一锅两味",
+                    "source": "鸳鸯锅底",
+                    "target": "分格共食"
+                  },
+                  {
+                    "relation": "折射中国合餐制中的分餐意识",
+                    "source": "分格共食",
+                    "target": "分餐与合餐饮食文化演变"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "鸳鸯锅底",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是卖鸳鸯锅底的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 608,
+            "output_tokens": 1080,
+            "total_tokens": 1688
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_count": 7,
+            "case_id": "lion-head-food-guard",
+            "cohort": "lexicalized_guard",
+            "complete_recall": false,
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_forbidden_labels": [],
+            "matched_group_aliases": [],
+            "recalled_group_count": 0,
+            "required_group_count": 1
+          },
+          "case_id": "lion-head-food-guard",
+          "duration_seconds": 31.469,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_id": "root-candidate-d090a6efed636fe7",
+                "complete_world_reason": "用户输入中已冻结的商业对象。",
+                "label": "狮子头半成品",
+                "limitations": [],
+                "semantic_path": [],
+                "source_readers": [
+                  "deterministic_input"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-c093643ebae00035",
+                "complete_world_reason": "淮扬菜宴席是中国国宴和江南婚丧嫁娶、节庆聚会的重要场景，狮子头是其中标志性大菜。宴席涉及主厨、宾客、座次礼仪、时令食材搭配、上菜顺序等完整人物与事件链条，可独立容纳人物、时间、空间和事件变化。",
+                "label": "淮扬菜宴席文化",
+                "limitations": [
+                  "不涉及半成品的销售渠道或经营策略"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品溯源",
+                    "source": "狮子头半成品",
+                    "target": "狮子头"
+                  },
+                  {
+                    "relation": "所属菜系",
+                    "source": "狮子头",
+                    "target": "淮扬菜"
+                  },
+                  {
+                    "relation": "宴席承载",
+                    "source": "淮扬菜",
+                    "target": "淮扬菜宴席文化"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-75a0f7660ab60375",
+                "complete_world_reason": "扬州三头宴以狮子头、拆烩鲢鱼头、扒烧整猪头三道菜为核心，是扬州饮食文化的集中展示。三头宴有历史典故（隋炀帝下扬州传说）、名厨传承、节庆时令和宴客礼仪，构成完整的人物-时间-空间-事件世界。",
+                "label": "扬州三头宴",
+                "limitations": [
+                  "不涉及半成品制作工艺或规格"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品溯源",
+                    "source": "狮子头半成品",
+                    "target": "狮子头"
+                  },
+                  {
+                    "relation": "组成宴席",
+                    "source": "狮子头",
+                    "target": "三头宴"
+                  },
+                  {
+                    "relation": "地域归属",
+                    "source": "三头宴",
+                    "target": "扬州三头宴"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-f990dbe1a8c1fe85",
+                "complete_world_reason": "春节年夜饭是中国家庭最重要的团聚场景，狮子头因寓意团团圆圆而成为江南及全国多地年夜饭桌上的常见大菜。年夜饭涉及全家团聚、地域习俗差异、南北菜系融合、代际传承等丰富的人物、时间、空间和事件内容。",
+                "label": "春节年夜饭",
+                "limitations": [
+                  "不涉及半成品购买步骤或促销"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品溯源",
+                    "source": "狮子头半成品",
+                    "target": "狮子头"
+                  },
+                  {
+                    "relation": "节日餐桌",
+                    "source": "狮子头",
+                    "target": "年夜饭"
+                  },
+                  {
+                    "relation": "节庆归属",
+                    "source": "年夜饭",
+                    "target": "春节年夜饭"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-15a662c0adb80ee7",
+                "complete_world_reason": "周恩来总理是淮扬菜成为新中国国宴基础菜系的关键推动者，狮子头是其家乡扬州的代表菜，多次出现在国宴和外事接待中。这一主题连接了建国初期外交场景、国宾接待礼仪、厨师团队选拔、中外文化交流等完整的人物-时间-空间-事件链条。",
+                "label": "周恩来与淮扬菜国宴",
+                "limitations": [
+                  "不涉及半成品商业推广"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品溯源",
+                    "source": "狮子头半成品",
+                    "target": "狮子头"
+                  },
+                  {
+                    "relation": "国宴名菜",
+                    "source": "狮子头",
+                    "target": "淮扬菜国宴"
+                  },
+                  {
+                    "relation": "关键人物",
+                    "source": "淮扬菜国宴",
+                    "target": "周恩来与淮扬菜国宴"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-10b9d5d487772fa9",
+                "complete_world_reason": "《随园食单》是清代文人袁枚所著的中国饮食经典，系统记录了当时江南菜肴的烹饪理念与技法，其中对肉丸类菜品有详细记载，是狮子头等淮扬名菜的重要文献源头。该书涉及袁枚的交游圈、清代江南文人饮食审美、食材时令观等完整文化世界。",
+                "label": "袁枚《随园食单》",
+                "limitations": [
+                  "不涉及半成品规格或材质参数"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品溯源",
+                    "source": "狮子头半成品",
+                    "target": "狮子头"
+                  },
+                  {
+                    "relation": "文献记载",
+                    "source": "狮子头",
+                    "target": "清代饮食文献"
+                  },
+                  {
+                    "relation": "代表著作",
+                    "source": "清代饮食文献",
+                    "target": "袁枚《随园食单》"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              },
+              {
+                "candidate_id": "root-candidate-7ff98fca82a14fa8",
+                "complete_world_reason": "江南婚宴中狮子头是必备大菜，寓意吉祥圆满。婚宴习俗涵盖提亲、定亲、迎亲、回门等完整仪式流程，涉及双方家族、媒人、厨师、宾客等多方人物，以及择日、座次、菜品寓意、礼金等丰富的时间-空间-事件内容。",
+                "label": "江南婚宴习俗",
+                "limitations": [
+                  "不涉及半成品供应链或获客"
+                ],
+                "semantic_path": [
+                  {
+                    "relation": "菜品溯源",
+                    "source": "狮子头半成品",
+                    "target": "狮子头"
+                  },
+                  {
+                    "relation": "宴席场景",
+                    "source": "狮子头",
+                    "target": "婚宴"
+                  },
+                  {
+                    "relation": "地域文化",
+                    "source": "婚宴",
+                    "target": "江南婚宴习俗"
+                  }
+                ],
+                "source_readers": [
+                  "open_recall"
+                ]
+              }
+            ],
+            "commercial_object": "狮子头半成品",
+            "schema_version": "content-root-recall-v1",
+            "subject_expression": "我是卖狮子头半成品的",
+            "truncated": false,
+            "unknowns": []
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 611,
+            "output_tokens": 1066,
+            "total_tokens": 1677
+          }
+        }
+      ],
+      "duration_seconds": 400.6,
+      "model_calls": 13,
+      "status": "completed",
+      "summary": {
+        "candidate_count": 56,
+        "case_count": 12,
+        "complete_case_recall": 0,
+        "contract_success": 8,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 0,
+        "recalled_group_count": 0,
+        "required_group_count": 16
+      },
+      "usage": {
+        "input_tokens": 9193,
+        "output_tokens": 14951,
+        "total_tokens": 24144
+      }
+    }
+  },
+  "completed_at": "2026-08-18T19:31:17.912591+00:00",
+  "dataset_id": "split-attention-content-root-recall-held-out-v1",
+  "dataset_status": "frozen_before_implementation_and_live_run",
+  "dictionary_evidence_enabled": false,
+  "experiment_id": "A90-split-attention-content-root-recall-v1",
+  "git_commit": "055e2624cebbaa57939f8000ad4ec05d34a5e31f",
+  "manual_review_status": "pending",
+  "model_name": "glm-5-2-260617",
+  "network_evidence_enabled": false,
+  "preflight": {
+    "all_within_budget": true,
+    "case_count": 12,
+    "max_input_bytes": 1126,
+    "message_count": 36,
+    "messages": [
+      {
+        "case_id": "business-courtesy-gift",
+        "input_bytes": 1042,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "business-courtesy-gift",
+        "input_bytes": 1017,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "business-courtesy-gift",
+        "input_bytes": 1114,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "children-picture-book-shelf",
+        "input_bytes": 1048,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "children-picture-book-shelf",
+        "input_bytes": 1023,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "children-picture-book-shelf",
+        "input_bytes": 1120,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "camping-cookware",
+        "input_bytes": 1036,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "camping-cookware",
+        "input_bytes": 1011,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "camping-cookware",
+        "input_bytes": 1108,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "pet-funeral-service",
+        "input_bytes": 1048,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "pet-funeral-service",
+        "input_bytes": 1023,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "pet-funeral-service",
+        "input_bytes": 1120,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "maternity-pillow",
+        "input_bytes": 1030,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "maternity-pillow",
+        "input_bytes": 1005,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "maternity-pillow",
+        "input_bytes": 1102,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "tea-ware",
+        "input_bytes": 1024,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "tea-ware",
+        "input_bytes": 999,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "tea-ware",
+        "input_bytes": 1096,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "murder-mystery-shop",
+        "input_bytes": 1036,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "murder-mystery-shop",
+        "input_bytes": 1011,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "murder-mystery-shop",
+        "input_bytes": 1108,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "hiking-pole",
+        "input_bytes": 1030,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "hiking-pole",
+        "input_bytes": 1005,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "hiking-pole",
+        "input_bytes": 1102,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "memorial-flowers",
+        "input_bytes": 1036,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "memorial-flowers",
+        "input_bytes": 1011,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "memorial-flowers",
+        "input_bytes": 1108,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "couple-lung-slices-guard",
+        "input_bytes": 1054,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "couple-lung-slices-guard",
+        "input_bytes": 1029,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "couple-lung-slices-guard",
+        "input_bytes": 1126,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "mandarin-duck-hotpot-guard",
+        "input_bytes": 1036,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "mandarin-duck-hotpot-guard",
+        "input_bytes": 1011,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "mandarin-duck-hotpot-guard",
+        "input_bytes": 1108,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      },
+      {
+        "case_id": "lion-head-food-guard",
+        "input_bytes": 1048,
+        "model_calls": 0,
+        "reader_kind": "open_recall"
+      },
+      {
+        "case_id": "lion-head-food-guard",
+        "input_bytes": 1023,
+        "model_calls": 0,
+        "reader_kind": "object_activity"
+      },
+      {
+        "case_id": "lion-head-food-guard",
+        "input_bytes": 1120,
+        "model_calls": 0,
+        "reader_kind": "human_practice"
+      }
+    ],
+    "model_calls": 0
+  },
+  "promotion_status": "offline_only",
+  "schema_version": "content-root-recall-receipt-v1",
+  "started_at": "2026-08-18T19:17:03.582521+00:00",
+  "temperature": 0,
+  "thinking_enabled": false
+}
