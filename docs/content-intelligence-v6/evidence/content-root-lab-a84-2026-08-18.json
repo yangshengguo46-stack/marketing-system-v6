@@ -1,0 +1,1259 @@
+{
+  "arms": {
+    "dspy_compiled_selector": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "badminton-hall",
+            "final_acceptance": true,
+            "matched_candidate_alias": "羽毛球运动",
+            "matched_selected_alias": "羽毛球运动",
+            "selected_rejected_label": false
+          },
+          "case_id": "badminton-hall",
+          "duration_seconds": 6.967,
+          "inference_calls": 1,
+          "rationale": "羽毛球运动本身可长期展开技术、战术、训练、规则演变、器材发展、伤病防护、职业与业余赛事、球员故事等丰富内容，且与球馆经营有天然返回路径。球馆经营属卖方运营，受众受限；羽毛球馆作为物理场馆内容较窄；爱好者社群与业余竞技虽可展开，但容量不及运动本身广阔。",
+          "selected_candidate_id": "candidate-a993ea6a217cb89d",
+          "selected_label": "羽毛球运动",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1875,
+            "output_tokens": 107,
+            "total_tokens": 1982
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "child-safety-seat",
+            "final_acceptance": false,
+            "matched_candidate_alias": "儿童出行安全",
+            "matched_selected_alias": null,
+            "selected_rejected_label": false
+          },
+          "case_id": "child-safety-seat",
+          "duration_seconds": 5.801,
+          "inference_calls": 1,
+          "rationale": "儿童成长与发育是最大有效世界。它可长期展开身体发育、认知发展、行为特点与亲子关系变化，且安全座椅按年龄体重身高分段，天然回连产品。儿童出行安全偏窄，家庭育儿决策偏窄，法规标准偏窄，起号运营是卖方行为。",
+          "selected_candidate_id": "candidate-36e9b6a06620fe61",
+          "selected_label": "儿童成长与发育",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 2476,
+            "output_tokens": 96,
+            "total_tokens": 2572
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "marriage-counselling",
+            "final_acceptance": true,
+            "matched_candidate_alias": "亲密关系",
+            "matched_selected_alias": "亲密关系",
+            "selected_rejected_label": false
+          },
+          "case_id": "marriage-counselling",
+          "duration_seconds": 5.519,
+          "inference_calls": 1,
+          "rationale": "亲密关系是婚姻咨询的核心对象，能长期展开吸引、承诺、冲突、修复、依恋类型、沟通模式、权力动态等具体的人、场景、事件与关系变化，内容容量极大且与业务有直接语义路径。婚姻咨询本身受隐私与伦理约束，案例需脱敏，难以独立成为最大内容世界；个人成长与情绪沟通是亲密关系中的子议题；婚姻制度偏文化社会视角，离个体体验较远；获客经营属卖方运营，排除。",
+          "selected_candidate_id": "candidate-1f6aa69496e49427",
+          "selected_label": "亲密关系",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 2059,
+            "output_tokens": 137,
+            "total_tokens": 2196
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "coffee-beans",
+            "final_acceptance": false,
+            "matched_candidate_alias": null,
+            "matched_selected_alias": null,
+            "selected_rejected_label": false
+          },
+          "case_id": "coffee-beans",
+          "duration_seconds": 4.053,
+          "inference_calls": 1,
+          "rationale": "咖啡产地是最大有效世界。咖啡豆作为商品参数深度有限，冲煮和品鉴是技法而非世界，日常咖啡生活偏泛。产地能展开埃塞俄比亚、哥伦比亚、云南等咖啡带上的庄园、农户、微气候、处理传统与历史变迁，有具体的人、地方、时间、事件与变化，且通过\"产地风土决定豆子风味\"的语义路径自然回连到卖豆人的商业对象。",
+          "selected_candidate_id": "candidate-905112f824f0df2c",
+          "selected_label": "咖啡产地",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1962,
+            "output_tokens": 126,
+            "total_tokens": 2088
+          }
+        }
+      ],
+      "compile_calls": 3,
+      "compile_usage": {
+        "input_tokens": 2815,
+        "output_tokens": 163,
+        "total_tokens": 2978
+      },
+      "compiled_state_sha256": "a6283f2167e7f2d47683174f2ec6a97d63f3b2015d81ed44ccfc0ece978e6bb4",
+      "duration_seconds": 32.377,
+      "status": "completed",
+      "summary": {
+        "candidate_recall": 3,
+        "case_count": 4,
+        "final_acceptance": 2,
+        "selected_rejected_label": 0,
+        "succeeded": 4
+      }
+    },
+    "production_baseline": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "badminton-hall",
+            "final_acceptance": false,
+            "matched_candidate_alias": "羽毛球",
+            "matched_selected_alias": null,
+            "selected_rejected_label": false
+          },
+          "candidate_labels": [
+            "羽毛球馆",
+            "馆",
+            "羽毛球",
+            "场地使用",
+            "人员聚集活动",
+            "提供物理空间供人员聚集与活动",
+            "人们聚在一起打羽毛球这件事",
+            "场馆经营"
+          ],
+          "case_id": "badminton-hall",
+          "duration_seconds": 118.779,
+          "model_calls": 6,
+          "root_rationale": "比较各候选的内容容量与长期编辑价值：\n\n1. \"馆\"（候选1）是去修饰后的词法主词，但脱离\"羽毛球\"后只剩泛指场所，缺少可反复研究的具体人事，过于空泛。\n\n2. \"羽毛球馆\"（候选0）是完整商业对象，但作为经营容器，其进货、陈列、维护、结算等卖方运营流程只是店务，不构成比打球本身更大的内容世界。馆内每件事都依赖\"打羽毛球\"这一活动而存在。\n\n3. \"羽毛球\"（候选2）作为 served_object 是中间实现物所服务的完整对象，有赛事、球员、技术、装备等展开能力，内容容量确实大。但它更偏向物品/运动项目本身，而非\"人们围绕它发生的聚集与关系\"。\n\n4. \"场地使用\"（候选3）和\"人员聚集活动\"（候选4）是去修饰主词后推导出的活动，前者过于窄（只是使用场地的动作），后者过于泛（缺少具体事由）。\n\n5. \"提供物理空间供人员聚集与活动\"（候选5）是功能描述，不是可独立命名的人类实践。\n\n6. \"人们聚在一起打羽毛球这件事\"（候选6）将羽毛球这一具体事由与人员聚集这一社会行为结合，形成可独立命名、反复发生的人类实践。它能持续长出真实的人、事、关系与共同经验：对局组织、轮换上场、球友关系、俱乐部活动、业余赛事、技术水平切磋、社交网络等。它既比\"羽毛球馆\"（经营容器）拥有更大的人类活动容量，又比\"羽毛球\"（物品/项目）更贴近\"人们围绕它做什么\"的关系世界，同时比\"场地使用\"和\"人员聚集活动\"更具体、更有长期编辑价值。\n\n因此选择候选6同时作为语义进入点和内容地图展开根。",
+          "selected_label": "人们聚在一起打羽毛球这件事",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 8939,
+            "output_tokens": 3779,
+            "total_tokens": 12718
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "child-safety-seat",
+            "final_acceptance": false,
+            "matched_candidate_alias": null,
+            "matched_selected_alias": null,
+            "selected_rejected_label": true
+          },
+          "candidate_labels": [
+            "儿童安全座椅",
+            "座椅",
+            "坐",
+            "供人坐靠",
+            "日常起居坐具使用"
+          ],
+          "case_id": "child-safety-seat",
+          "duration_seconds": 144.103,
+          "model_calls": 6,
+          "root_rationale": "比较四个候选的内容容量与长期编辑价值：\n\n候选1「儿童安全座椅」是完整商业对象，拥有独立且庞大的内容世界：各国法规标准（ECE R129、i-Size等）、碰撞测试机构与历史（ADAC、IIHS）、品牌竞争格局与技术路线（ISOFIX vs LATCH、支撑腿 vs 顶部拉带）、儿童成长阶段对应分组（0/0+/1/2/3）、安装错误与安全知识、召回事件、行业人物与机构演变。这些人事、事件、地域、知识可反复研究且持续更新。\n\n候选2「座椅」是去修饰词法主词，外延虽宽但过于泛化——办公椅、餐椅、沙发、飞机座椅等各自属于不同品类世界，缺乏统一的、可反复深入的人事与事件脉络，作为内容根会失去聚焦力。\n\n候选3「坐」作为活动过于抽象，无法独立命名一个持续发生的人类实践领域，缺少可反复研究的具体人物、事件与关系。\n\n候选4「供人坐靠」是功能描述，同样缺少可独立命名的内容世界，只是对象地图中的一条功能路径。\n\n候选1完整包含候选2-4的内容分支（座椅的通用知识、坐的行为、供人坐靠的功能都是儿童安全座椅世界中的子路径），同时仍拥有大量候选2-4无法覆盖的特异性人事与长期编辑容量。因此选择候选1作为语义进入点和内容地图展开根。",
+          "selected_label": "儿童安全座椅",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 10112,
+            "output_tokens": 4743,
+            "total_tokens": 14855
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "marriage-counselling",
+            "final_acceptance": false,
+            "matched_candidate_alias": null,
+            "matched_selected_alias": null,
+            "selected_rejected_label": true
+          },
+          "candidate_labels": [
+            "婚姻咨询",
+            "咨询",
+            "咨",
+            "问题分析与探讨",
+            "建议与指导",
+            "提供专业建议与指导",
+            "帮助来访者识别问题并探索解决方案",
+            "提供信息支持与决策辅助",
+            "专业咨询服务",
+            "信息与建议支持"
+          ],
+          "case_id": "marriage-counselling",
+          "duration_seconds": 141.794,
+          "model_calls": 6,
+          "root_rationale": "比较各候选的内容容量与长期编辑价值。\n\n「咨」(index 2) 虽然在词法上保留了\"商议、征询意见\"的核心含义，但作为单字 bound form，它缺少可独立命名、反复研究的具体人事世界，无法支撑持续的内容展开。\n\n「咨询」(index 1) 作为去修饰后的词法主词，外延过于宽泛——涵盖法律咨询、财务咨询、管理咨询、技术咨询等众多领域，缺少聚焦的人物、事件与关系网络，属于空泛上位词。\n\n三个 subject_activity 候选（问题分析与探讨、建议与指导）和三个 subject_function_or_use 候选，都是婚姻咨询这一完整对象内部的一条活动路径或功能结果。它们完整包含于「婚姻咨询」的一个具体分支中，而「婚姻咨询」仍有它们无法覆盖的具体人事：伴侣关系动力学、婚姻中的权力与亲密、家庭系统理论、离婚决策、婚姻中的创伤与修复、跨文化婚姻冲突、婚外情处理等。这些活动与功能不能脱离婚姻关系这一具体情境独立长出更大的内容世界。\n\n「婚姻咨询」(index 0) 作为完整对象，拥有最大且最具体的有效内容容量：它围绕伴侣关系这一人类核心关系展开，涉及具体的人物角色（咨询师、伴侣双方、家庭成员）、反复发生的事件类型（冲突调解、危机干预、关系评估）、丰富的理论流派（Gottman 方法、情绪聚焦治疗 EFT、家庭系统治疗）、可持续挖掘的案例维度与跨时间空间的展开能力。它比竞争的活动或功能候选拥有更大、更具体且不失真的长期内容容量。",
+          "selected_label": "婚姻咨询",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 11610,
+            "output_tokens": 4771,
+            "total_tokens": 16381
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "coffee-beans",
+            "final_acceptance": false,
+            "matched_candidate_alias": null,
+            "matched_selected_alias": null,
+            "selected_rejected_label": true
+          },
+          "candidate_labels": [
+            "咖啡豆",
+            "冲泡咖啡",
+            "日常咖啡消费",
+            "冲泡咖啡饮品",
+            "作为日常咖啡消费的原料",
+            "咖啡消费文化"
+          ],
+          "case_id": "coffee-beans",
+          "duration_seconds": 105.673,
+          "model_calls": 6,
+          "root_rationale": "咖啡豆是本次候选中内容容量最大、最具体且最具长期编辑价值的内容根。它拥有独立于任何单一消费场景的庞大内容世界：产地（埃塞俄比亚、哥伦比亚、巴西等）、品种（阿拉比卡、罗布斯塔）、处理法（水洗、日晒、蜜处理）、烘焙曲线、杯测体系、人物（庄园主、烘焙师、杯测师）、历史事件（咖啡起源传说、波士顿倾茶事件后咖啡崛起、精品咖啡运动）、地域文化与贸易网络。冲泡咖啡、日常咖啡消费、冲泡咖啡饮品、作为日常咖啡消费的原料这四个候选，均完整包含于咖啡豆内容地图中的具体分支路径——冲泡只是使用方式之一，日常消费只是消费场景之一，饮品只是结果形态之一，原料功能只是用途之一。每条较窄路径中出现的每件事仍然依赖咖啡豆这个对象本身。冲泡咖啡虽是可独立命名的人类实践，但其内容（器具、手法、参数）本质上是咖啡豆地图中的一条萃取路径，无法脱离咖啡豆独立长出同等规模的人事与跨时空展开能力。日常咖啡消费更偏向场景复述，缺少可反复研究的独立知识体系。因此咖啡豆作为最大有效内容世界胜出，同时它也是语义进入点：用户商业表达中的完整对象即咖啡豆本身。",
+          "selected_label": "咖啡豆",
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 9949,
+            "output_tokens": 3698,
+            "total_tokens": 13647
+          }
+        }
+      ],
+      "status": "completed",
+      "summary": {
+        "candidate_recall": 1,
+        "case_count": 4,
+        "final_acceptance": 0,
+        "selected_rejected_label": 3,
+        "succeeded": 4
+      }
+    },
+    "relation_candidate_graph": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "badminton-hall",
+            "final_acceptance": false,
+            "matched_candidate_alias": "羽毛球运动",
+            "matched_selected_alias": null,
+            "selected_rejected_label": false
+          },
+          "candidate_labels": [
+            "羽毛球馆",
+            "羽毛球运动",
+            "羽毛球爱好者社群",
+            "业余羽毛球竞技",
+            "球馆经营"
+          ],
+          "case_id": "badminton-hall",
+          "duration_seconds": 53.609,
+          "graph": {
+            "candidates": [
+              {
+                "candidate_id": "candidate-a593cb8c4301f4d6",
+                "candidate_kind": "commercial_object",
+                "content_capacity": "场馆日常运营、场地预约、会员服务、赛事承办、教练课程等可长期展开的人、事、关系与变化",
+                "label": "羽毛球馆",
+                "limitations": [],
+                "relation_path": [],
+                "return_path": "用户直接经营的对象，所有内容可由此出发"
+              },
+              {
+                "candidate_id": "candidate-a993ea6a217cb89d",
+                "candidate_kind": "human_practice",
+                "content_capacity": "技术动作、战术体系、训练方法、规则演变、器材发展、伤病防护——可长期产出具体的人、赛事、事件与变化",
+                "label": "羽毛球运动",
+                "limitations": [],
+                "relation_path": [
+                  "relation-c1a63f2bab902f61"
+                ],
+                "return_path": "用户经营羽毛球馆，天然可以围绕羽毛球运动本身展开技术、规则、训练、装备等内容"
+              },
+              {
+                "candidate_id": "candidate-662ece28ece704df",
+                "candidate_kind": "social_relation",
+                "content_capacity": "球友关系、约球文化、水平分层、社群活动、人情故事——可长期展开具体的人、互动与变化",
+                "label": "羽毛球爱好者社群",
+                "limitations": [],
+                "relation_path": [
+                  "relation-99a24b56a2a5ba4b",
+                  "relation-0e707e6aeb336528"
+                ],
+                "return_path": "球馆天然聚集了一批固定打球的人，用户可以讲述这个社群里的人、关系与故事"
+              },
+              {
+                "candidate_id": "candidate-41c9e4841a34f0bc",
+                "candidate_kind": "human_practice",
+                "content_capacity": "业余赛事、俱乐部联赛、双打搭档、晋级故事、水平争议——可长期展开具体的比赛、人物与事件",
+                "label": "业余羽毛球竞技",
+                "limitations": [],
+                "relation_path": [
+                  "relation-9bfcbe44acab5bd9",
+                  "relation-f13561186e03c5d4"
+                ],
+                "return_path": "球馆常组织或见证业余比赛，用户可以围绕业余竞技的赛制、选手、故事展开内容"
+              },
+              {
+                "candidate_id": "candidate-1e7eae93fc6da0ec",
+                "candidate_kind": "seller_operation",
+                "content_capacity": "选址决策、装修踩坑、获客渠道、会员体系、员工管理、收支结构——可长期展开具体的经营事件与决策",
+                "label": "球馆经营",
+                "limitations": [
+                  "经营内容面向的是同行或潜在创业者，与面向打球爱好者的内容方向不同，需区分受众"
+                ],
+                "relation_path": [
+                  "relation-4a60d6bb2ac2160e"
+                ],
+                "return_path": "用户作为球馆经营者，可以分享开店、选址、装修、获客、会员管理等经营经验"
+              }
+            ],
+            "commercial_object": "羽毛球馆",
+            "relations": [
+              {
+                "basis": "羽毛球馆的核心功能就是提供羽毛球运动场地",
+                "relation": "是供人进行羽毛球运动的场所",
+                "relation_id": "relation-c1a63f2bab902f61",
+                "source": "羽毛球馆",
+                "status": "lexical_observation",
+                "target": "羽毛球运动"
+              },
+              {
+                "basis": "球馆是球友聚集的物理空间",
+                "relation": "聚集了定期来打球的羽毛球爱好者",
+                "relation_id": "relation-99a24b56a2a5ba4b",
+                "source": "羽毛球馆",
+                "status": "commonsense_hypothesis",
+                "target": "羽毛球爱好者"
+              },
+              {
+                "basis": "共同运动场所与爱好自然形成社群关系",
+                "relation": "因共同爱好形成持续互动的社群",
+                "relation_id": "relation-0e707e6aeb336528",
+                "source": "羽毛球爱好者",
+                "status": "commonsense_hypothesis",
+                "target": "羽毛球爱好者社群"
+              },
+              {
+                "basis": "球馆是业余赛事的常见举办场地",
+                "relation": "经常举办或承载业余羽毛球比赛",
+                "relation_id": "relation-9bfcbe44acab5bd9",
+                "source": "羽毛球馆",
+                "status": "commonsense_hypothesis",
+                "target": "业余羽毛球比赛"
+              },
+              {
+                "basis": "比赛是竞技实践的集中体现",
+                "relation": "是业余羽毛球竞技的核心活动形式",
+                "relation_id": "relation-f13561186e03c5d4",
+                "source": "业余羽毛球比赛",
+                "status": "commonsense_hypothesis",
+                "target": "业余羽毛球竞技"
+              },
+              {
+                "basis": "开羽毛球馆必然涉及经营",
+                "relation": "需要持续的经营行为来维持运转",
+                "relation_id": "relation-4a60d6bb2ac2160e",
+                "source": "羽毛球馆",
+                "status": "lexical_observation",
+                "target": "球馆经营"
+              }
+            ],
+            "subject_expression": "我是开羽毛球馆的，我要怎么起号",
+            "unknowns": [
+              "用户球馆的具体定位（高端/社区/校园周边）、规模、城市、目标客群等细节未知",
+              "用户希望起号面向的受众是打球爱好者还是同行创业者，方向未明确"
+            ]
+          },
+          "graph_id": "root-graph-cca252cb2bff1173f5ed",
+          "model_calls": 2,
+          "selected_label": "羽毛球馆",
+          "selection": {
+            "assessments": [
+              {
+                "candidate_id": "candidate-a593cb8c4301f4d6",
+                "limitation": "用户球馆的具体定位、规模、城市等细节未知，但这不影响内容根的选择，只影响后续展开方向。",
+                "reason": "羽毛球馆是用户直接经营的对象，拥有最完整的语义路径回到用户的商业现实。它天然包含场地运营、会员服务、教练课程、赛事承办、球友社群、日常维护等多条内容线，每条线都能长期展开具体的人、事件、关系与变化。作为内容根，它可以自然向下包含羽毛球运动、爱好者社群、业余竞技等更窄候选的有效内容，而不泛化为任何行业通用的大词。"
+              },
+              {
+                "candidate_id": "candidate-a993ea6a217cb89d",
+                "limitation": "作为内容根时，内容容易泛化为通用羽毛球知识，与用户'开球馆起号'的商业场景关联度弱于球馆本身。",
+                "reason": "羽毛球运动本身内容容量极大——技术动作、战术体系、训练方法、规则演变、器材发展、伤病防护等均可长期展开。它与用户的商业对象有清晰的语义路径（球馆的核心功能就是提供羽毛球运动场地）。但它更偏向运动知识本身，缺少与用户经营实体的直接绑定，内容容易脱离'球馆'这个具体场景而变成通用体育知识。"
+              },
+              {
+                "candidate_id": "candidate-662ece28ece704df",
+                "limitation": "内容维度偏窄，主要聚焦人际互动，无法覆盖球馆运营的完整图景。",
+                "reason": "球馆天然聚集固定打球的人，社群内容（球友关系、约球文化、水平分层、人情故事）有很强的人情味和长期可展开性。但社群是球馆运营的衍生现象，而非球馆本身的全部内容容量。以社群为根会收窄到人际互动维度，丢失场地运营、课程、赛事等其他重要内容线。"
+              },
+              {
+                "candidate_id": "candidate-41c9e4841a34f0bc",
+                "limitation": "内容聚焦于竞技赛事维度，无法覆盖球馆日常运营的完整内容世界。",
+                "reason": "业余羽毛球竞技（赛事、联赛、搭档、晋级故事）内容丰富且可长期展开，球馆也常组织或见证业余比赛。但竞技只是球馆内容的一个切面，无法涵盖日常运营、会员服务、教练课程等更基础的内容领域。以竞技为根会过度聚焦赛事维度。"
+              },
+              {
+                "candidate_id": "candidate-1e7eae93fc6da0ec",
+                "limitation": "已标注受众区分问题：经营内容面向同行/创业者，与面向打球爱好者的内容方向不同。",
+                "reason": "球馆经营（选址、装修、获客、会员体系、员工管理、收支结构）可长期展开具体的经营事件与决策，且与用户身份直接相关。但这是典型的 seller_operation——内容面向的是同行或潜在创业者，而非打球爱好者。用户说'起号'，其受众更可能是球馆的潜在客户而非同行。经营内容可以作为补充线，但作为内容根会偏离受众预期。"
+              }
+            ],
+            "comparison_order": [
+              "candidate-a593cb8c4301f4d6",
+              "candidate-a993ea6a217cb89d",
+              "candidate-662ece28ece704df",
+              "candidate-41c9e4841a34f0bc",
+              "candidate-1e7eae93fc6da0ec"
+            ],
+            "graph_id": "root-graph-cca252cb2bff1173f5ed",
+            "pairwise_preferences": [
+              {
+                "left_candidate_id": "candidate-a593cb8c4301f4d6",
+                "preferred_candidate_id": "candidate-a593cb8c4301f4d6",
+                "reason": "球馆可以自然包含羽毛球运动相关内容（球馆有教练课程、技术培训、器材推荐等），但反过来羽毛球运动无法包含球馆的运营、会员、场地等内容。球馆作为内容根拥有更大的有效内容世界。",
+                "right_candidate_id": "candidate-a993ea6a217cb89d"
+              },
+              {
+                "left_candidate_id": "candidate-a593cb8c4301f4d6",
+                "preferred_candidate_id": "candidate-a593cb8c4301f4d6",
+                "reason": "球馆是社群的物理载体和形成原因，球馆内容可以自然包含球友社群的故事和互动，但社群无法反向包含球馆的场地运营、课程、赛事等内容。球馆的内容容量更大。",
+                "right_candidate_id": "candidate-662ece28ece704df"
+              },
+              {
+                "left_candidate_id": "candidate-a593cb8c4301f4d6",
+                "preferred_candidate_id": "candidate-a593cb8c4301f4d6",
+                "reason": "球馆经常举办业余比赛，竞技内容是球馆内容的子集。以球馆为根可以自然展开业余竞技，但以竞技为根无法覆盖球馆的日常运营、会员服务、教练课程等更广泛的内容。",
+                "right_candidate_id": "candidate-41c9e4841a34f0bc"
+              },
+              {
+                "left_candidate_id": "candidate-a593cb8c4301f4d6",
+                "preferred_candidate_id": "candidate-a593cb8c4301f4d6",
+                "reason": "球馆经营是 seller_operation，面向同行而非打球爱好者。球馆作为内容根可以自然包含经营经验作为一条内容线，同时还能展开面向爱好者的运动、社群、赛事等内容。球馆的内容世界更大且受众更匹配'起号'的常见预期。",
+                "right_candidate_id": "candidate-1e7eae93fc6da0ec"
+              }
+            ],
+            "rationale": "羽毛球馆是用户直接经营的商业对象，拥有最完整的语义路径回到用户的商业现实。它作为内容根可以自然向下包含羽毛球运动（教练课程、技术培训）、爱好者社群（球友关系、约球文化）、业余竞技（赛事承办、选手故事）以及经营经验（选址、获客、会员管理）等多条内容线，形成最大的有效内容世界。其他候选要么是球馆内容的子集（运动、社群、竞技），要么是面向不同受众的运营活动（球馆经营），都无法像球馆本身那样同时覆盖如此丰富的内容维度。用户说'我是开羽毛球馆的，我要怎么起号'，球馆本身就是最自然、最可展开的内容根。",
+            "selected_candidate_id": "candidate-a593cb8c4301f4d6",
+            "unknowns": [
+              "用户球馆的具体定位（高端/社区/校园周边）、规模、城市、目标客群等细节未知",
+              "用户希望起号面向的受众是打球爱好者还是同行创业者，方向未明确"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 3227,
+            "output_tokens": 2440,
+            "total_tokens": 5667
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "child-safety-seat",
+            "final_acceptance": true,
+            "matched_candidate_alias": "儿童出行安全",
+            "matched_selected_alias": "儿童出行安全",
+            "selected_rejected_label": false
+          },
+          "candidate_labels": [
+            "儿童安全座椅",
+            "儿童",
+            "安全",
+            "儿童出行安全",
+            "儿童成长与发育",
+            "家庭育儿决策",
+            "儿童乘车法规与标准",
+            "账号起号与获客运营"
+          ],
+          "case_id": "child-safety-seat",
+          "duration_seconds": 81.241,
+          "graph": {
+            "candidates": [
+              {
+                "candidate_id": "candidate-390ebbea018de152",
+                "candidate_kind": "commercial_object",
+                "content_capacity": "可展开产品选购指南、安装教程、法规标准解读、碰撞测试科普、品牌对比、使用体验分享、不同年龄段适配等具体内容。",
+                "label": "儿童安全座椅",
+                "limitations": [
+                  "产品品类内容容易同质化，需找到差异化切入角度。"
+                ],
+                "relation_path": [],
+                "return_path": "用户直接经营此产品，是商业对象本身。"
+              },
+              {
+                "candidate_id": "candidate-d591c8615d09ce8f",
+                "candidate_kind": "target_user_modifier",
+                "content_capacity": "可长期展开儿童不同年龄段的成长需求、心理与认知发展、日常活动场景、家庭中的角色变化等。",
+                "label": "儿童",
+                "limitations": [
+                  "'儿童'本身范围极广，需进一步聚焦到与出行安全相关的子领域才有实际内容产出方向。"
+                ],
+                "relation_path": [
+                  "relation-e3d44e6b83477608"
+                ],
+                "return_path": "用户经营儿童安全座椅，产品直接服务于儿童群体，因此天然有资格进入儿童世界。"
+              },
+              {
+                "candidate_id": "candidate-776b91992a2707e4",
+                "candidate_kind": "core_function_modifier",
+                "content_capacity": "可长期展开出行安全、儿童意外伤害预防、家庭安全意识、安全标准与法规、不同场景下的安全风险等。",
+                "label": "安全",
+                "limitations": [],
+                "relation_path": [
+                  "relation-150a7322c5d9ffc4"
+                ],
+                "return_path": "用户的产品核心功能就是安全防护，因此天然有资格进入安全这一实践世界。"
+              },
+              {
+                "candidate_id": "candidate-5f555f66a3d8913e",
+                "candidate_kind": "human_practice",
+                "content_capacity": "可长期展开不同出行场景（自驾、打车、飞机）中的儿童安全需求、不同年龄段的安全策略、出行安全装备演进、家长安全意识变化、交通事故案例与教训等。",
+                "label": "儿童出行安全",
+                "limitations": [],
+                "relation_path": [
+                  "relation-593f6b30db651d80"
+                ],
+                "return_path": "用户的产品是儿童出行安全的核心装备，因此有天然资格讲出行安全这一实践世界。"
+              },
+              {
+                "candidate_id": "candidate-36e9b6a06620fe61",
+                "candidate_kind": "complete_world",
+                "content_capacity": "可长期展开儿童不同阶段的身体发育（身高、体重、骨骼）、认知发展、行为特点、亲子关系变化等，并与产品适配形成自然连接。",
+                "label": "儿童成长与发育",
+                "limitations": [],
+                "relation_path": [
+                  "relation-a6bbd7f5cfb59b17",
+                  "relation-207f6b64287d130b"
+                ],
+                "return_path": "安全座椅按儿童年龄、体重、身高分段，直接关联儿童成长阶段，用户有资格从产品视角进入儿童成长世界。"
+              },
+              {
+                "candidate_id": "candidate-d5f4353a831a122b",
+                "candidate_kind": "social_relation",
+                "content_capacity": "可长期展开家庭中谁决策、如何决策、代际观念差异（如老人不认同安全座椅）、消费心理、育儿焦虑、家庭分工等具体关系与变化。",
+                "label": "家庭育儿决策",
+                "limitations": [],
+                "relation_path": [
+                  "relation-2de324c3125b48de"
+                ],
+                "return_path": "安全座椅的购买和使用本质上是家庭育儿决策的一部分，用户作为产品经营者有资格进入这一决策世界。"
+              },
+              {
+                "candidate_id": "candidate-408f0404fb14eb2b",
+                "candidate_kind": "long_term_concern",
+                "content_capacity": "可长期展开各国/地区法规差异、标准演进历史、立法推动过程、执法现状、公众认知变化、行业自律等。",
+                "label": "儿童乘车法规与标准",
+                "limitations": [
+                  "法规内容需准确引用，不可编造具体条文。"
+                ],
+                "relation_path": [
+                  "relation-420addfda40f43d0"
+                ],
+                "return_path": "用户的产品受法规和标准直接约束，有天然资格讲法规与标准这一长期关切。"
+              },
+              {
+                "candidate_id": "candidate-5f4dcb433fefd363",
+                "candidate_kind": "seller_operation",
+                "content_capacity": "可展开账号定位、内容策略、平台规则、流量获取、粉丝转化等运营操作，但属于卖方经营行为而非观众内容世界。",
+                "label": "账号起号与获客运营",
+                "limitations": [
+                  "此候选为卖方运营方向，不构成观众侧内容世界。"
+                ],
+                "relation_path": [
+                  "relation-0045c1a39d7d4476"
+                ],
+                "return_path": "用户明确提出起号需求，这是卖方自身的运营活动。"
+              }
+            ],
+            "commercial_object": "儿童安全座椅",
+            "relations": [
+              {
+                "basis": "去掉'安全座椅'后，'儿童'仍独立命名一个完整的人群世界——儿童的发展阶段、成长需求、日常生活、教育、健康等都是可长期展开的对象。",
+                "relation": "contains_meaning_bearing_complete_component",
+                "relation_id": "relation-e3d44e6b83477608",
+                "source": "儿童安全座椅",
+                "status": "commonsense_hypothesis",
+                "target": "儿童"
+              },
+              {
+                "basis": "去掉'儿童'和'座椅'后，'安全'仍独立命名一个完整的人类实践与长期关切——安全意识、风险管理、防护行为、事故预防等都是可长期研究的领域。",
+                "relation": "contains_meaning_bearing_complete_component",
+                "relation_id": "relation-150a7322c5d9ffc4",
+                "source": "儿童安全座椅",
+                "status": "commonsense_hypothesis",
+                "target": "安全"
+              },
+              {
+                "basis": "安全座椅的功能就是在车辆出行中保护儿童",
+                "relation": "是儿童出行安全的核心防护装备",
+                "relation_id": "relation-593f6b30db651d80",
+                "source": "儿童安全座椅",
+                "status": "commonsense_hypothesis",
+                "target": "儿童出行安全"
+              },
+              {
+                "basis": "安全座椅产品按儿童成长阶段分类是行业常识",
+                "relation": "按儿童年龄体重身高分段适配",
+                "relation_id": "relation-a6bbd7f5cfb59b17",
+                "source": "儿童安全座椅",
+                "status": "commonsense_hypothesis",
+                "target": "儿童成长阶段"
+              },
+              {
+                "basis": "成长阶段反映发育过程",
+                "relation": "是儿童成长与发育的外在分期",
+                "relation_id": "relation-207f6b64287d130b",
+                "source": "儿童成长阶段",
+                "status": "commonsense_hypothesis",
+                "target": "儿童成长与发育"
+              },
+              {
+                "basis": "安全座椅选购涉及家庭成员协商与决策",
+                "relation": "其购买与使用是家庭育儿决策的一个具体场景",
+                "relation_id": "relation-2de324c3125b48de",
+                "source": "儿童安全座椅",
+                "status": "commonsense_hypothesis",
+                "target": "家庭育儿决策"
+              },
+              {
+                "basis": "安全座椅的生产销售和使用受法规标准约束",
+                "relation": "受儿童乘车法规与强制标准直接约束",
+                "relation_id": "relation-420addfda40f43d0",
+                "source": "儿童安全座椅",
+                "status": "commonsense_hypothesis",
+                "target": "儿童乘车法规与标准"
+              },
+              {
+                "basis": "用户原话'我要怎么起号'",
+                "relation": "经营者需要通过起号获客来销售",
+                "relation_id": "relation-0045c1a39d7d4476",
+                "source": "儿童安全座椅",
+                "status": "lexical_observation",
+                "target": "账号起号与获客运营"
+              }
+            ],
+            "subject_expression": "我是做儿童安全座椅的，我要怎么起号",
+            "unknowns": [
+              "用户的具体销售渠道（自有品牌/代理/工厂直营）未知，影响内容定位。",
+              "用户的目标平台（抖音/小红书/视频号等）未知，影响起号策略。",
+              "用户是否已有内容积累或品牌资产未知。"
+            ]
+          },
+          "graph_id": "root-graph-57e46e3ba07ce2fc90c7",
+          "model_calls": 2,
+          "selected_label": "儿童出行安全",
+          "selection": {
+            "assessments": [
+              {
+                "candidate_id": "candidate-5f555f66a3d8913e",
+                "limitation": "需要持续产出真实、有信息量的出行安全内容，避免沦为产品广告。",
+                "reason": "儿童出行安全是一个完整的人类实践世界：它天然包含不同出行场景（自驾、打车、飞机）、不同年龄段的安全策略、装备演进、家长意识变化、事故案例与教训等长期可展开的内容。它与用户商业对象（儿童安全座椅）有直接、可解释的语义路径——安全座椅正是儿童出行安全的核心防护装备。这个世界足够大，能容纳产品选购、使用体验、法规解读等更窄候选的有效内容，又不泛化为任何行业都能套用的大词。"
+              },
+              {
+                "candidate_id": "candidate-36e9b6a06620fe61",
+                "limitation": "与产品使用场景的连接需额外桥接，内容容易偏向纯育儿科普而非出行安全实践。",
+                "reason": "儿童成长与发育是一个内容丰富的长期世界，且安全座椅按年龄体重身高分段与成长阶段直接关联。但它偏向科普知识层面，与产品使用场景的连接稍间接——成长发育本身不必然导向安全座椅话题，容易脱离用户商业对象的核心语境。"
+              },
+              {
+                "candidate_id": "candidate-d5f4353a831a122b",
+                "limitation": "内容方向偏家庭关系与消费心理，对产品功能和使用场景的覆盖有限。",
+                "reason": "家庭育儿决策是一个有深度的社会关系世界，安全座椅的购买和使用确实是育儿决策的具体场景。它能展开代际观念差异、消费心理、育儿焦虑等内容。但这个世界更偏决策心理与家庭关系，对产品本身的功能、使用、场景覆盖较弱，作为内容根会偏向家庭关系议题而非产品相关实践。"
+              },
+              {
+                "candidate_id": "candidate-408f0404fb14eb2b",
+                "limitation": "法规内容需准确引用，内容产出频率和丰富度受政策更新节奏制约。",
+                "reason": "儿童乘车法规与标准是一个有长期关切的领域，产品受法规直接约束。但法规内容相对窄，长期展开容易受限于政策更新频率，且需要准确引用不可编造，内容产出节奏和丰富度受限。"
+              },
+              {
+                "candidate_id": "candidate-390ebbea018de152",
+                "limitation": "产品品类内容容易同质化，作为内容根的展开空间有限。",
+                "reason": "儿童安全座椅作为商业对象本身，可展开选购指南、安装教程、品牌对比等内容。但作为内容根，它本质是产品品类而非一个可长期展开的人-事-关系世界，内容容易同质化，且无法自然容纳成长、家庭决策、出行场景等更广阔的内容。"
+              },
+              {
+                "candidate_id": "candidate-776b91992a2707e4",
+                "limitation": "过于宽泛，缺乏与儿童安全座椅的独占性语义连接。",
+                "reason": "安全是一个过于宽泛的概念，去掉'儿童'和'座椅'后虽然独立成立，但泛化为任何行业都能套用的大词——食品安全、网络安全、家居安全等均可归入，缺乏与用户商业对象的独特语义锚点。"
+              },
+              {
+                "candidate_id": "candidate-d591c8615d09ce8f",
+                "limitation": "范围过广，需大量聚焦才能产出与产品相关的内容。",
+                "reason": "儿童作为目标人群范围极广，涵盖教育、健康、娱乐、心理等无数子领域，与安全座椅的连接需要多重桥接才能聚焦到出行安全，作为内容根过于发散。"
+              },
+              {
+                "candidate_id": "candidate-5f4dcb433fefd363",
+                "limitation": "此候选为卖方运营方向，不构成观众侧内容世界。",
+                "reason": "账号起号与获客运营是卖方经营行为，描述的是怎么卖而非观众长期要看什么。它不构成观众侧的内容世界，不符合内容根的选择标准。"
+              }
+            ],
+            "comparison_order": [
+              "candidate-5f555f66a3d8913e",
+              "candidate-36e9b6a06620fe61",
+              "candidate-d5f4353a831a122b",
+              "candidate-408f0404fb14eb2b",
+              "candidate-390ebbea018de152",
+              "candidate-776b91992a2707e4",
+              "candidate-d591c8615d09ce8f",
+              "candidate-5f4dcb433fefd363"
+            ],
+            "graph_id": "root-graph-57e46e3ba07ce2fc90c7",
+            "pairwise_preferences": [
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "出行安全实践世界能自然包含成长发育中与出行相关的阶段适配内容，同时直接锚定产品使用场景；成长发育世界虽丰富但与产品的连接更间接，且容易脱离出行安全语境。",
+                "right_candidate_id": "candidate-36e9b6a06620fe61"
+              },
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "出行安全能自然包含家庭决策中与安全座椅相关的场景（如老人不认同安全座椅），同时覆盖更广的产品使用、场景、装备内容；家庭育儿决策更偏关系心理，对产品功能场景覆盖不足。",
+                "right_candidate_id": "candidate-d5f4353a831a122b"
+              },
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "出行安全世界可以自然包含法规标准内容（法规是出行安全的一部分），但法规标准世界无法反向包含出行场景、装备使用、事故案例等丰富内容，展开空间更窄。",
+                "right_candidate_id": "candidate-408f0404fb14eb2b"
+              },
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "出行安全实践世界能自然包含产品选购、安装、使用体验等内容（这些是出行安全实践的具体环节），而产品品类本身无法反向包含出行场景、事故案例、家长意识变化等更广阔的内容。",
+                "right_candidate_id": "candidate-390ebbea018de152"
+              },
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "儿童出行安全是安全的一个具体且丰富的子领域，有明确的场景、人物、行为和事件；而'安全'过于宽泛，泛化为任何行业都能套用的大词，缺乏与用户商业对象的独占语义锚点。",
+                "right_candidate_id": "candidate-776b91992a2707e4"
+              },
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "儿童出行安全聚焦于儿童在出行场景中的安全实践，内容方向明确且与产品直接相关；'儿童'范围过广，涵盖教育、健康、娱乐等无数无关子领域，作为内容根过于发散。",
+                "right_candidate_id": "candidate-d591c8615d09ce8f"
+              },
+              {
+                "left_candidate_id": "candidate-5f555f66a3d8913e",
+                "preferred_candidate_id": "candidate-5f555f66a3d8913e",
+                "reason": "出行安全是观众侧的内容世界，有长期可展开的人、场景、事件和行为；账号起号与获客运营是卖方经营行为，不构成观众要长期消费的内容世界。",
+                "right_candidate_id": "candidate-5f4dcb433fefd363"
+              }
+            ],
+            "rationale": "儿童出行安全作为内容根，满足\"最大有效内容世界\"的全部标准：1）与用户商业对象有直接、可解释、可返回的语义路径——安全座椅正是儿童出行安全的核心防护装备；2）能长期展开具体的人（不同年龄段儿童、家长、老人）、地方（自驾车、出租车、飞机）、时间（不同成长阶段）、事件（交通事故案例、法规出台）、行为（安装、使用、选购）、关系（家庭决策冲突）与变化（装备演进、安全意识提升）；3）它能自然包含产品选购指南、法规解读、成长阶段适配、家庭决策等更窄候选的有效内容，却不泛化为任何行业都能套用的\"安全\"大词；4）它比纯产品品类、纯成长发育、纯家庭决策等候选有更完整的世界结构和更直接的语义锚点。卖方运营方向不构成观众侧内容世界，正确排除。",
+            "selected_candidate_id": "candidate-5f555f66a3d8913e",
+            "unknowns": [
+              "用户的具体销售渠道（自有品牌/代理/工厂直营）未知，影响内容定位。",
+              "用户的目标平台（抖音/小红书/视频号等）未知，影响起号策略。",
+              "用户是否已有内容积累或品牌资产未知。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 3958,
+            "output_tokens": 3581,
+            "total_tokens": 7539
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "marriage-counselling",
+            "final_acceptance": true,
+            "matched_candidate_alias": "亲密关系",
+            "matched_selected_alias": "亲密关系",
+            "selected_rejected_label": false
+          },
+          "candidate_labels": [
+            "婚姻咨询",
+            "亲密关系",
+            "婚姻制度与家庭结构",
+            "个人成长与自我认知",
+            "情绪管理与冲突沟通",
+            "婚姻咨询师的获客与个人品牌经营"
+          ],
+          "case_id": "marriage-counselling",
+          "duration_seconds": 59.71,
+          "graph": {
+            "candidates": [
+              {
+                "candidate_id": "candidate-29a2f08f6013f785",
+                "candidate_kind": "commercial_object",
+                "content_capacity": "可长期展开咨询案例中的关系模式、冲突类型、修复路径、专业方法与伦理边界，但受隐私保护与职业伦理约束，具体案例需脱敏处理",
+                "label": "婚姻咨询",
+                "limitations": [
+                  "咨询案例涉及客户隐私，公开讲述需严格脱敏",
+                  "专业心理咨询/婚姻家庭咨询有资质要求，内容需避免越界提供线上诊断"
+                ],
+                "relation_path": [],
+                "return_path": "用户直接经营的业务本身"
+              },
+              {
+                "candidate_id": "candidate-1f6aa69496e49427",
+                "candidate_kind": "human_practice",
+                "content_capacity": "可长期展开恋爱、婚姻、家庭中的吸引、承诺、冲突、修复、依恋类型、沟通模式、权力动态、情感变迁等具体的人、场景、事件与关系变化",
+                "label": "亲密关系",
+                "limitations": [],
+                "relation_path": [
+                  "relation-52cdd62e7063e41d"
+                ],
+                "return_path": "婚姻咨询的核心对象就是亲密关系中的互动模式与情感联结，用户的专业视角天然能讲透这个世界的复杂性"
+              },
+              {
+                "candidate_id": "candidate-e3a74193f97bc53e",
+                "candidate_kind": "cultural_world",
+                "content_capacity": "可长期展开不同时代与地域的婚姻观念、家庭结构变迁、法律与习俗对婚姻的规约、离婚制度、生育决策、代际关系等具体历史与社会变化",
+                "label": "婚姻制度与家庭结构",
+                "limitations": [],
+                "relation_path": [
+                  "relation-41071a56042f8f2e"
+                ],
+                "return_path": "婚姻咨询发生在婚姻制度框架内，用户可从专业实践中观察制度对个体关系的塑造，具备讲述制度与个体张力的合理视角"
+              },
+              {
+                "candidate_id": "candidate-7642c20f0bab71d5",
+                "candidate_kind": "long_term_concern",
+                "content_capacity": "可长期展开自我价值感、原生家庭影响、依恋模式形成、人格特质、情绪调节、自我觉察等具体的人、阶段、事件与心理变化",
+                "label": "个人成长与自我认知",
+                "limitations": [],
+                "relation_path": [
+                  "relation-38f765b291780c3e"
+                ],
+                "return_path": "婚姻问题常根源于个体的自我认知与成长历程，咨询过程中必然触及个人议题，用户有专业基础将其作为独立内容方向展开"
+              },
+              {
+                "candidate_id": "candidate-be10bab7f624e0bb",
+                "candidate_kind": "human_practice",
+                "content_capacity": "可长期展开情绪识别与调节、非暴力沟通、冲突升级与降级、谈判与妥协、愤怒管理、共情训练等具体方法、场景、练习与效果变化",
+                "label": "情绪管理与冲突沟通",
+                "limitations": [],
+                "relation_path": [
+                  "relation-ac1513d1ca925a2d"
+                ],
+                "return_path": "婚姻咨询的核心技能之一就是帮助来访者改善情绪管理与冲突沟通，用户具备专业方法与实操经验来系统讲述这一领域"
+              },
+              {
+                "candidate_id": "candidate-562198d968aae06d",
+                "candidate_kind": "seller_operation",
+                "content_capacity": "可展开咨询师如何通过内容获客、建立专业信任、设计服务产品、管理客户关系等经营实践，但属于卖方运营而非观众内容世界",
+                "label": "婚姻咨询师的获客与个人品牌经营",
+                "limitations": [
+                  "属于卖方运营活动，不是观众可独立探索的内容世界",
+                  "具体获客策略与数据涉及商业机密"
+                ],
+                "relation_path": [
+                  "relation-437fdb9adc8bbd7d"
+                ],
+                "return_path": "用户本人作为婚姻咨询师需要获客与建立专业形象，这是其经营活动的直接组成部分"
+              }
+            ],
+            "commercial_object": "婚姻咨询",
+            "relations": [
+              {
+                "basis": "婚姻咨询的定义性功能即为处理亲密关系问题",
+                "relation": "以亲密关系为咨询与干预的核心对象",
+                "relation_id": "relation-52cdd62e7063e41d",
+                "source": "婚姻咨询",
+                "status": "commonsense_hypothesis",
+                "target": "亲密关系"
+              },
+              {
+                "basis": "婚姻咨询的对象'婚姻'本身是婚姻制度的具体体现",
+                "relation": "在婚姻制度框架内提供服务",
+                "relation_id": "relation-41071a56042f8f2e",
+                "source": "婚姻咨询",
+                "status": "commonsense_hypothesis",
+                "target": "婚姻制度与家庭结构"
+              },
+              {
+                "basis": "婚姻问题的深层原因常可追溯到个体的自我认知与成长经历",
+                "relation": "在咨询中常触及个体心理根源",
+                "relation_id": "relation-38f765b291780c3e",
+                "source": "婚姻咨询",
+                "status": "commonsense_hypothesis",
+                "target": "个人成长与自我认知"
+              },
+              {
+                "basis": "婚姻咨询的常规工作内容即包含情绪与沟通干预",
+                "relation": "以情绪管理与冲突沟通为核心干预手段",
+                "relation_id": "relation-ac1513d1ca925a2d",
+                "source": "婚姻咨询",
+                "status": "commonsense_hypothesis",
+                "target": "情绪管理与冲突沟通"
+              },
+              {
+                "basis": "任何咨询服务都需要获客与品牌建设来维持业务",
+                "relation": "需要咨询师进行获客与品牌经营才能持续运营",
+                "relation_id": "relation-437fdb9adc8bbd7d",
+                "source": "婚姻咨询",
+                "status": "commonsense_hypothesis",
+                "target": "婚姻咨询师的获客与个人品牌经营"
+              }
+            ],
+            "subject_expression": "我是做婚姻咨询的，我要怎么起号",
+            "unknowns": [
+              "用户是否持有心理咨询/婚姻家庭咨询的专业资质，影响内容的专业定位与合规边界",
+              "用户的目标平台与目标受众尚未明确",
+              "用户的服务形式（线上/线下/一对一/课程）未说明"
+            ]
+          },
+          "graph_id": "root-graph-6b82e8525e68f6b71094",
+          "model_calls": 2,
+          "selected_label": "亲密关系",
+          "selection": {
+            "assessments": [
+              {
+                "candidate_id": "candidate-1f6aa69496e49427",
+                "limitation": null,
+                "reason": "亲密关系是婚姻咨询的定义性核心对象，用户的专业视角天然能讲透恋爱、婚姻、家庭中的吸引、承诺、冲突、修复、依恋类型、沟通模式、权力动态与情感变迁。这个世界可以长期展开具体的人、场景、事件与关系变化，内容容量极大且与用户业务有直接可返回的语义路径。同时它不泛化为任何行业都能套用的大词，而是聚焦于人类最核心的关系实践领域。"
+              },
+              {
+                "candidate_id": "candidate-29a2f08f6013f785",
+                "limitation": "咨询案例涉及客户隐私，公开讲述需严格脱敏；专业资质要求限制内容边界",
+                "reason": "婚姻咨询是用户直接经营的业务本身，语义路径最短。但作为内容根，它受隐私保护与职业伦理的严格约束——具体案例需脱敏处理，且不能越界提供线上诊断。这使其内容展开空间被职业规范大幅压缩，更适合作为商业身份锚定而非内容世界的根。"
+              },
+              {
+                "candidate_id": "candidate-e3a74193f97bc53e",
+                "limitation": null,
+                "reason": "婚姻制度与家庭结构是一个有深度的文化世界，可展开历史变迁、法律规约、代际关系等。但它偏向宏观社会分析，与用户作为咨询师的日常专业实践距离较远，且容易滑向学术科普而非可体验的内容世界。它更适合作为亲密关系内容中的背景议题而非根。"
+              },
+              {
+                "candidate_id": "candidate-7642c20f0bab71d5",
+                "limitation": null,
+                "reason": "个人成长与自我认知可展开自我价值感、原生家庭、依恋模式形成等，与婚姻咨询有深层关联。但它过于宽泛——任何心理咨询、教练、教育领域都可以此为根，缺乏与婚姻咨询业务的特异性绑定。它更像是亲密关系议题的一个子集或深层维度。"
+              },
+              {
+                "candidate_id": "candidate-be10bab7f624e0bb",
+                "limitation": null,
+                "reason": "情绪管理与冲突沟通是婚姻咨询的核心干预手段之一，用户有专业方法可系统讲述。但它本质上是技能方法论，内容形态偏向教学与训练，缺乏足够丰富的人、地方、时间、事件等叙事要素来独立支撑一个内容世界。它更适合作为亲密关系内容中的方法工具箱。"
+              },
+              {
+                "candidate_id": "candidate-562198d968aae06d",
+                "limitation": "属于卖方运营活动而非观众内容世界；具体获客策略与数据涉及商业机密",
+                "reason": "这是典型的卖方运营活动——咨询师如何获客、建品牌、设计服务产品。它不是观众长期要看的内容世界，而是经营者的操作手册。具体策略还涉及商业机密，内容展开受限。"
+              }
+            ],
+            "comparison_order": [
+              "candidate-1f6aa69496e49427",
+              "candidate-29a2f08f6013f785",
+              "candidate-e3a74193f97bc53e",
+              "candidate-7642c20f0bab71d5",
+              "candidate-be10bab7f624e0bb",
+              "candidate-562198d968aae06d"
+            ],
+            "graph_id": "root-graph-6b82e8525e68f6b71094",
+            "pairwise_preferences": [
+              {
+                "left_candidate_id": "candidate-1f6aa69496e49427",
+                "preferred_candidate_id": "candidate-1f6aa69496e49427",
+                "reason": "婚姻咨询作为业务本身受隐私与伦理约束，案例需脱敏且不能线上诊断，内容展开空间被压缩。亲密关系则是咨询的核心对象，可以自由展开具体的人、场景、事件与关系变化，不受职业规范限制，同时通过专业视角自然返回用户的咨询业务。",
+                "right_candidate_id": "candidate-29a2f08f6013f785"
+              },
+              {
+                "left_candidate_id": "candidate-1f6aa69496e49427",
+                "preferred_candidate_id": "candidate-1f6aa69496e49427",
+                "reason": "亲密关系聚焦于个体间的互动与情感，内容世界更具体、更有代入感，且与用户日常咨询实践直接对应。婚姻制度与家庭结构偏宏观社会分析，与咨询师的专业实践距离较远，更适合作为背景议题嵌入亲密关系内容中。",
+                "right_candidate_id": "candidate-e3a74193f97bc53e"
+              },
+              {
+                "left_candidate_id": "candidate-1f6aa69496e49427",
+                "preferred_candidate_id": "candidate-1f6aa69496e49427",
+                "reason": "个人成长与自我认知过于宽泛，任何心理相关行业都可套用，缺乏与婚姻咨询的特异性绑定。亲密关系则精准锚定婚姻咨询的定义性对象，既包含个人成长维度（如依恋模式、原生家庭影响），又有更丰富的关系互动叙事。",
+                "right_candidate_id": "candidate-7642c20f0bab71d5"
+              },
+              {
+                "left_candidate_id": "candidate-1f6aa69496e49427",
+                "preferred_candidate_id": "candidate-1f6aa69496e49427",
+                "reason": "情绪管理与冲突沟通是技能方法论，内容形态偏教学训练，缺乏足够的人物、场景、事件等叙事要素独立支撑内容世界。亲密关系天然包含冲突与沟通议题，同时还有吸引、承诺、依恋、权力动态等更丰富的维度，内容容量远大于纯方法论。",
+                "right_candidate_id": "candidate-be10bab7f624e0bb"
+              },
+              {
+                "left_candidate_id": "candidate-1f6aa69496e49427",
+                "preferred_candidate_id": "candidate-1f6aa69496e49427",
+                "reason": "获客与品牌经营是卖方运营活动，不是观众要探索的内容世界，且涉及商业机密。亲密关系是观众有持续兴趣的内容领域，且用户的专业视角能自然建立信任并返回业务，无需直接以运营活动为内容根。",
+                "right_candidate_id": "candidate-562198d968aae06d"
+              }
+            ],
+            "rationale": "亲密关系是婚姻咨询的定义性核心对象，与用户业务有最直接、可返回的语义路径。它能长期展开具体的人、场景、事件、行为、关系与变化——从吸引到承诺、从冲突到修复、从依恋类型到权力动态——内容容量极大且不受职业隐私伦理的严格约束。它同时能包含个人成长（原生家庭、依恋模式）、情绪管理与冲突沟通（作为关系中的方法工具箱）、婚姻制度（作为关系发生的制度背景）等更窄候选的有效内容，却不泛化为任何行业都能套用的大词。婚姻咨询本身因隐私与伦理约束更适合作为商业身份锚定而非内容根；其他候选要么过于宽泛（个人成长）、要么过于宏观（婚姻制度）、要么过于方法论化（情绪管理）、要么属于卖方运营（获客经营）。亲密关系在内容容量、语义路径、与业务的可返回性三个维度上同时最优。",
+            "selected_candidate_id": "candidate-1f6aa69496e49427",
+            "unknowns": [
+              "用户是否持有心理咨询/婚姻家庭咨询的专业资质，影响内容的专业定位与合规边界",
+              "用户的目标平台与目标受众尚未明确",
+              "用户的服务形式（线上/线下/一对一/课程）未说明"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 3424,
+            "output_tokens": 2782,
+            "total_tokens": 6206
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "coffee-beans",
+            "final_acceptance": false,
+            "matched_candidate_alias": null,
+            "matched_selected_alias": null,
+            "selected_rejected_label": false
+          },
+          "candidate_labels": [
+            "咖啡豆",
+            "咖啡冲煮",
+            "咖啡品鉴",
+            "咖啡产地",
+            "咖啡文化",
+            "日常咖啡生活"
+          ],
+          "case_id": "coffee-beans",
+          "duration_seconds": 70.149,
+          "graph": {
+            "candidates": [
+              {
+                "candidate_id": "candidate-93df48c4b63a0e00",
+                "candidate_kind": "commercial_object",
+                "content_capacity": "咖啡豆本身作为商品，可围绕产地、品种、处理法、烘焙度、风味等长期展开，但若仅停留在产品参数层面，内容深度有限",
+                "label": "咖啡豆",
+                "limitations": [
+                  "用户未说明具体品类（单品/拼配、产地、烘焙度等），无法进一步细化"
+                ],
+                "relation_path": [],
+                "return_path": "用户直接经营的商品对象"
+              },
+              {
+                "candidate_id": "candidate-4f0adc92cac2b919",
+                "candidate_kind": "human_practice",
+                "content_capacity": "手冲、意式、冷萃、虹吸等多种器具与方法，每种都有技法、参数、流派、人物和器具文化，可长期展开",
+                "label": "咖啡冲煮",
+                "limitations": [],
+                "relation_path": [
+                  "relation-83647838734f43a1"
+                ],
+                "return_path": "卖咖啡豆的人天然可以讲消费者如何把豆子变成一杯咖啡，冲煮方式直接决定豆子风味的呈现"
+              },
+              {
+                "candidate_id": "candidate-f2392b9494a7092a",
+                "candidate_kind": "human_practice",
+                "content_capacity": "风味轮、杯测方法、感官训练、产区风味地图等，涉及感官科学和咖啡文化，可长期展开",
+                "label": "咖啡品鉴",
+                "limitations": [],
+                "relation_path": [
+                  "relation-cf2c2068091cc246"
+                ],
+                "return_path": "卖咖啡豆的人需要帮助消费者理解和评价风味，品鉴能力直接影响购买决策和复购"
+              },
+              {
+                "candidate_id": "candidate-905112f824f0df2c",
+                "candidate_kind": "world",
+                "content_capacity": "咖啡带上的埃塞俄比亚、哥伦比亚、云南等产区，各有庄园、农户、微气候、处理传统和历史变迁，可长期展开",
+                "label": "咖啡产地",
+                "limitations": [],
+                "relation_path": [
+                  "relation-9b52c4e53c21956a"
+                ],
+                "return_path": "咖啡豆的风味和价值根本上来自产地，卖豆人可以从产地故事建立产品的差异化认知"
+              },
+              {
+                "candidate_id": "candidate-8d9b83ecb5207b3d",
+                "candidate_kind": "world",
+                "content_capacity": "从奥斯曼帝国到第三波咖啡浪潮，涉及贸易史、社交仪式、宗教关系、审美变迁等，可长期展开",
+                "label": "咖啡文化",
+                "limitations": [],
+                "relation_path": [
+                  "relation-e10ba001bf14b85b"
+                ],
+                "return_path": "卖咖啡豆的人可以讲述咖啡作为人类饮品的历史与社会意义，让产品连接更广阔的文化世界"
+              },
+              {
+                "candidate_id": "candidate-119246e0b89a22a0",
+                "candidate_kind": "world",
+                "content_capacity": "晨间咖啡、办公咖啡、周末手冲仪式等生活场景，涉及生活方式、时间节奏、情绪与社交，可长期展开",
+                "label": "日常咖啡生活",
+                "limitations": [],
+                "relation_path": [
+                  "relation-c38282077f859f9b"
+                ],
+                "return_path": "卖咖啡豆的人可以围绕消费者每天喝咖啡的场景和习惯做内容，豆子是日常生活的组成部分"
+              }
+            ],
+            "commercial_object": "咖啡豆",
+            "relations": [
+              {
+                "basis": "咖啡豆是冲煮咖啡的原料，冲煮是将其转化为饮品的必要环节",
+                "relation": "需要经过冲煮才能被饮用",
+                "relation_id": "relation-83647838734f43a1",
+                "source": "咖啡豆",
+                "status": "commonsense_hypothesis",
+                "target": "咖啡冲煮"
+              },
+              {
+                "basis": "不同咖啡豆有不同风味，品鉴是识别和欣赏这些风味的活动",
+                "relation": "其风味特征需要通过品鉴来感知和评价",
+                "relation_id": "relation-cf2c2068091cc246",
+                "source": "咖啡豆",
+                "status": "commonsense_hypothesis",
+                "target": "咖啡品鉴"
+              },
+              {
+                "basis": "咖啡豆是农作物，其品质与产地风土直接相关",
+                "relation": "生长于特定的产地环境",
+                "relation_id": "relation-9b52c4e53c21956a",
+                "source": "咖啡豆",
+                "status": "commonsense_hypothesis",
+                "target": "咖啡产地"
+              },
+              {
+                "basis": "咖啡豆作为咖啡饮品的核心原料，承载了数百年的咖啡饮用文化",
+                "relation": "是咖啡文化的物质载体",
+                "relation_id": "relation-e10ba001bf14b85b",
+                "source": "咖啡豆",
+                "status": "commonsense_hypothesis",
+                "target": "咖啡文化"
+              },
+              {
+                "basis": "消费者购买咖啡豆用于日常饮用，豆子嵌入其生活节奏",
+                "relation": "被消费者融入日常饮用习惯中",
+                "relation_id": "relation-c38282077f859f9b",
+                "source": "咖啡豆",
+                "status": "commonsense_hypothesis",
+                "target": "日常咖啡生活"
+              }
+            ],
+            "subject_expression": "我是卖咖啡豆的，我要怎么起号",
+            "unknowns": [
+              "用户未说明是零售还是批发，面向C端消费者还是B端咖啡馆",
+              "用户未说明咖啡豆的具体品类定位（单品/拼配、产地、烘焙度等）",
+              "用户未说明经营形式（自有品牌/代理/烘焙工作室等）",
+              "用户未说明目标平台和目标受众"
+            ]
+          },
+          "graph_id": "root-graph-762e1948f39224c348cd",
+          "model_calls": 2,
+          "selected_label": "咖啡产地",
+          "selection": {
+            "assessments": [
+              {
+                "candidate_id": "candidate-905112f824f0df2c",
+                "limitation": "用户未说明具体经营哪些产区的豆子，但产地作为内容根可以随产品线逐步展开，不预设单一产区。",
+                "reason": "咖啡产地是内容容量最大的候选：咖啡带上的每个产区都有庄园、农户、微气候、处理传统和历史变迁，可以自然展开具体的人、地方、时间、事件和关系。它直接解释了咖啡豆的风味差异和价值来源，为卖豆人提供了最强的产品差异化叙事根基。产地既是商品属性（风土），又是故事世界，语义路径清晰且可返回商业对象。"
+              },
+              {
+                "candidate_id": "candidate-4f0adc92cac2b919",
+                "limitation": null,
+                "reason": "咖啡冲煮内容容量丰富，涵盖多种器具、技法、参数和流派，且与豆子直接相关。但它更偏向操作技能教学，人物和地方维度较弱，长期展开时容易陷入技法重复，不如产地那样能持续产生新的故事对象。"
+              },
+              {
+                "candidate_id": "candidate-f2392b9494a7092a",
+                "limitation": null,
+                "reason": "咖啡品鉴涉及风味轮、杯测、感官训练和产区风味地图，内容深度可观，且直接服务于消费者的购买决策。但其内容展开依赖产区和冲煮作为素材来源，自身作为根的独立展开能力略弱于产地。"
+              },
+              {
+                "candidate_id": "candidate-8d9b83ecb5207b3d",
+                "limitation": null,
+                "reason": "咖啡文化从奥斯曼帝国到第三波浪潮，涉及贸易史、社交仪式和审美变迁，内容容量很大。但它与具体卖豆的商业对象距离较远，容易泛化为文化科普，返回产品销售的路径较长且间接。"
+              },
+              {
+                "candidate_id": "candidate-119246e0b89a22a0",
+                "limitation": null,
+                "reason": "日常咖啡生活围绕生活场景和习惯展开，有情绪和社交维度，但内容容易停留在生活方式分享层面，缺乏咖啡豆本身的差异化锚点，容易泛化为任何饮品都能套用的生活美学。"
+              },
+              {
+                "candidate_id": "candidate-93df48c4b63a0e00",
+                "limitation": "用户未说明具体品类定位，无法进一步细化产品参数内容。",
+                "reason": "咖啡豆作为商品对象是用户直接经营的核心，但仅停留在产品参数层面（产地、品种、烘焙度、风味）内容深度有限，缺乏自主展开人物、事件和变化的能力，更适合作为商业锚点而非内容根。"
+              }
+            ],
+            "comparison_order": [
+              "candidate-905112f824f0df2c",
+              "candidate-4f0adc92cac2b919",
+              "candidate-f2392b9494a7092a",
+              "candidate-8d9b83ecb5207b3d",
+              "candidate-119246e0b89a22a0",
+              "candidate-93df48c4b63a0e00"
+            ],
+            "graph_id": "root-graph-762e1948f39224c348cd",
+            "pairwise_preferences": [
+              {
+                "left_candidate_id": "candidate-905112f824f0df2c",
+                "preferred_candidate_id": "candidate-905112f824f0df2c",
+                "reason": "产地能自然包含冲煮中涉及的豆子来源故事（不同产区的豆子适合不同冲煮方式），且产地拥有更丰富的人、地方和事件维度；冲煮更偏操作技能，长期展开的叙事广度不及产地。",
+                "right_candidate_id": "candidate-4f0adc92cac2b919"
+              },
+              {
+                "left_candidate_id": "candidate-905112f824f0df2c",
+                "preferred_candidate_id": "candidate-905112f824f0df2c",
+                "reason": "品鉴的核心素材——产区风味特征——本身就来自产地；产地可以包含品鉴内容（杯测不同产区的豆子），而品鉴难以反向包含产地的庄园、农户和历史叙事。",
+                "right_candidate_id": "candidate-f2392b9494a7092a"
+              },
+              {
+                "left_candidate_id": "candidate-905112f824f0df2c",
+                "preferred_candidate_id": "candidate-905112f824f0df2c",
+                "reason": "文化虽然内容容量大，但与卖豆的商业对象距离远，返回路径长且间接；产地既具备故事深度，又直接解释产品价值，商业可返回性更强。",
+                "right_candidate_id": "candidate-8d9b83ecb5207b3d"
+              },
+              {
+                "left_candidate_id": "candidate-905112f824f0df2c",
+                "preferred_candidate_id": "candidate-905112f824f0df2c",
+                "reason": "日常咖啡生活容易泛化为任何饮品都能套用的生活方式内容，缺乏咖啡豆的差异化锚点；产地内容天然围绕咖啡豆的风土展开，不可替代性更强。",
+                "right_candidate_id": "candidate-119246e0b89a22a0"
+              },
+              {
+                "left_candidate_id": "candidate-905112f824f0df2c",
+                "preferred_candidate_id": "candidate-905112f824f0df2c",
+                "reason": "咖啡豆作为商品参数层内容深度有限，难以自主展开人物和事件；产地是商品的核心属性来源，能将产品参数转化为有故事的世界，内容容量远大于纯商品对象。",
+                "right_candidate_id": "candidate-93df48c4b63a0e00"
+              }
+            ],
+            "rationale": "咖啡产地是最大有效内容世界。它直接解释了咖啡豆的风味差异和价值来源（风土），语义路径清晰可返回商业对象。产地世界拥有最丰富的展开维度——具体的人（庄园主、农户）、地方（埃塞俄比亚、哥伦比亚、云南等产区）、时间（采收季、处理周期）、事件（产区历史变迁、气候影响）、关系（庄园与贸易商、处理法传承）和变化（微气候年际差异、产区兴衰）。它能自然包含品鉴（产区风味地图）和冲煮（不同产区豆子的冲煮适配）的有效内容，却不泛化为任何行业都能套用的大词。相比之下，冲煮和品鉴是技能维度，文化距离商业对象太远，日常咖啡生活容易泛化，而咖啡豆本身作为商品参数层缺乏自主展开能力。",
+            "selected_candidate_id": "candidate-905112f824f0df2c",
+            "unknowns": [
+              "用户未说明是零售还是批发，面向C端消费者还是B端咖啡馆",
+              "用户未说明咖啡豆的具体品类定位（单品/拼配、产地、烘焙度等）",
+              "用户未说明经营形式（自有品牌/代理/烘焙工作室等）",
+              "用户未说明目标平台和目标受众"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 3320,
+            "output_tokens": 2585,
+            "total_tokens": 5905
+          }
+        }
+      ],
+      "status": "completed",
+      "summary": {
+        "candidate_recall": 3,
+        "case_count": 4,
+        "final_acceptance": 2,
+        "selected_rejected_label": 0,
+        "succeeded": 4
+      }
+    }
+  },
+  "completed_at": "2026-08-18T17:25:40.002152+00:00",
+  "dataset_id": "content-root-held-out-v1",
+  "dataset_status": "frozen_before_live_run",
+  "experiment_id": "A84-content-root-lab-v1",
+  "git_commit": "82c273a8d6b94078e028e779247f1107167ec0d3",
+  "manual_review_status": "pending",
+  "model_name": "glm-5-2-260617",
+  "network_evidence_enabled": false,
+  "promotion_status": "offline_only",
+  "schema_version": "content-root-lab-receipt-v1",
+  "started_at": "2026-08-18T17:12:11.729855+00:00",
+  "temperature": 0,
+  "thinking_enabled": false
+}

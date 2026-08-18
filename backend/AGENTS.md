@@ -206,7 +206,11 @@ experiment-only DSPy compiler, but production packages must never import it. Sem
 only add inspectable candidates; they are not mandatory root labels or hard gates. Do not register
 the lab as a Tool, Skill, MCP server, middleware, or Lead prompt, and do not tune its frozen held-out
 cases after the unique run. Promotion requires the preregistered automatic checks plus manual path
-review; a locally valid contract is not production approval.
+review; a locally valid contract is not production approval. The unique A84 run reached 3/4 candidate
+recall but only 2/4 final selection; DSPy moved the errors without improving the total. ADR-023 rejects
+runtime promotion. Those four held-out cases are now development evidence: do not rerun, tune, register,
+or stack the lab. A successor must use new cases and separately replace candidate recall or frozen-graph
+selection.
 
 ## Development Workflow
 
