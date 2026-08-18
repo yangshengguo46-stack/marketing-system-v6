@@ -1,0 +1,34 @@
+{
+  "dataset_id": "content-root-held-out-v1",
+  "status": "frozen_before_live_run",
+  "cases": [
+    {
+      "case_id": "badminton-hall",
+      "subject_expression": "我是开羽毛球馆的，我要怎么起号",
+      "accepted_aliases": ["羽毛球", "羽毛球运动"],
+      "rejected_exact_labels": ["羽毛球馆经营", "球馆经营", "场馆经营"],
+      "review_rationale": "经营容器应回到用户进入场馆所参与的完整活动，而不是停在卖方运营。"
+    },
+    {
+      "case_id": "child-safety-seat",
+      "subject_expression": "我是做儿童安全座椅的，我要怎么起号",
+      "accepted_aliases": ["儿童乘车安全", "孩子乘车安全", "儿童出行安全", "孩子出行安全"],
+      "rejected_exact_labels": ["儿童安全座椅", "安全座椅知识", "座椅工艺"],
+      "review_rationale": "产品首先解决儿童乘车风险，长期世界应进入孩子出行安全，而不是产品参数目录。"
+    },
+    {
+      "case_id": "marriage-counselling",
+      "subject_expression": "我是做婚姻咨询的，我要怎么起号",
+      "accepted_aliases": ["亲密关系", "伴侣关系", "婚姻中的相处", "夫妻相处"],
+      "rejected_exact_labels": ["婚姻咨询", "咨询服务", "咨询机构经营"],
+      "review_rationale": "咨询是服务方式，观众长期面对的是伴侣如何相处、冲突、修复和共同生活。"
+    },
+    {
+      "case_id": "coffee-beans",
+      "subject_expression": "我是卖咖啡豆的，我要怎么起号",
+      "accepted_aliases": ["咖啡", "咖啡世界", "咖啡生活与文化"],
+      "rejected_exact_labels": ["咖啡豆", "咖啡豆销售", "咖啡豆知识"],
+      "review_rationale": "咖啡豆是进入咖啡世界的具体对象，咖啡可以继续展开产区、品种、人物、贸易、历史与饮用习惯。"
+    }
+  ]
+}

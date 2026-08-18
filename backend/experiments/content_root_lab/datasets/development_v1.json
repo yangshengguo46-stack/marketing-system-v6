@@ -1,0 +1,85 @@
+{
+  "dataset_id": "content-root-development-v1",
+  "status": "development",
+  "examples": [
+    {
+      "case_id": "golden-gift",
+      "subject_expression": "我是做黄金礼品的",
+      "candidates": [
+        {"candidate_id": "gold", "label": "黄金知识与工艺", "candidate_kind": "object"},
+        {"candidate_id": "gift", "label": "礼品与馈赠", "candidate_kind": "activity"},
+        {"candidate_id": "wedding", "label": "婚礼馈赠", "candidate_kind": "event"},
+        {"candidate_id": "human-affairs", "label": "礼如何组织人与人相处", "candidate_kind": "social_relation"}
+      ],
+      "preferred_candidate_id": "human-affairs",
+      "preference_reason": "黄金只是材质，婚礼只是馈赠的一种场景；礼与人情关系能包含更多长期发生的人、事、规则与变化。"
+    },
+    {
+      "case_id": "fruit-store",
+      "subject_expression": "我是开水果店的",
+      "candidates": [
+        {"candidate_id": "store", "label": "水果店经营与买卖", "candidate_kind": "seller_operation"},
+        {"candidate_id": "fruit", "label": "水果", "candidate_kind": "object"},
+        {"candidate_id": "health", "label": "健康生活", "candidate_kind": "human_concern"}
+      ],
+      "preferred_candidate_id": "fruit",
+      "preference_reason": "店是经营容器，健康生活又过泛；水果自身已经能展开品种、产地、季节、人物、历史和饮食文化。"
+    },
+    {
+      "case_id": "seafood",
+      "subject_expression": "我是做海鲜的",
+      "candidates": [
+        {"candidate_id": "seafood", "label": "海鲜", "candidate_kind": "object"},
+        {"candidate_id": "freshness", "label": "鲜活供应与保鲜", "candidate_kind": "seller_operation"},
+        {"candidate_id": "diet", "label": "饮食生活", "candidate_kind": "human_concern"}
+      ],
+      "preferred_candidate_id": "seafood",
+      "preference_reason": "海鲜本身就是完整而丰富的世界，可继续拆到物种、海域、捕捞、历史、文学与各地饮食习惯。"
+    },
+    {
+      "case_id": "hotpot-base",
+      "subject_expression": "我是卖重庆火锅底料的",
+      "candidates": [
+        {"candidate_id": "base", "label": "重庆火锅底料", "candidate_kind": "object"},
+        {"candidate_id": "chongqing-food", "label": "重庆饮食", "candidate_kind": "culture"},
+        {"candidate_id": "hotpot", "label": "火锅", "candidate_kind": "object"},
+        {"candidate_id": "seasoning", "label": "调味料制作", "candidate_kind": "seller_operation"}
+      ],
+      "preferred_candidate_id": "hotpot",
+      "preference_reason": "底料是完成火锅的中间载体，重庆是地域修饰；火锅才是可跨时间、空间、民族和饮食习惯展开的完整世界。"
+    },
+    {
+      "case_id": "watch",
+      "subject_expression": "我是做腕表的",
+      "candidates": [
+        {"candidate_id": "watch", "label": "腕表", "candidate_kind": "object"},
+        {"candidate_id": "sales", "label": "腕表选购与销售", "candidate_kind": "seller_operation"},
+        {"candidate_id": "time", "label": "时间与人生", "candidate_kind": "human_concern"}
+      ],
+      "preferred_candidate_id": "watch",
+      "preference_reason": "腕表本身已经连接工艺、人物、品牌史、收藏、影视与社会身份；时间与人生若无具体路径会过度抽象。"
+    },
+    {
+      "case_id": "medical-aesthetics",
+      "subject_expression": "我是做医美的",
+      "candidates": [
+        {"candidate_id": "projects", "label": "医美项目知识", "candidate_kind": "object"},
+        {"candidate_id": "beauty", "label": "人如何变美与保持美", "candidate_kind": "human_concern"},
+        {"candidate_id": "clinic", "label": "机构经营", "candidate_kind": "seller_operation"}
+      ],
+      "preferred_candidate_id": "beauty",
+      "preference_reason": "医美是实现方式，人持续关心的是变美、审美和保养；机构经营不属于观众长期内容世界。"
+    },
+    {
+      "case_id": "cigar-lounge",
+      "subject_expression": "我是开雪茄馆的",
+      "candidates": [
+        {"candidate_id": "venue", "label": "雪茄馆经营", "candidate_kind": "seller_operation"},
+        {"candidate_id": "cigar", "label": "雪茄", "candidate_kind": "object"},
+        {"candidate_id": "elite-life", "label": "精英生活方式", "candidate_kind": "human_concern"}
+      ],
+      "preferred_candidate_id": "cigar",
+      "preference_reason": "馆是经营容器，精英生活方式既刻板又过泛；雪茄本身能连接人物、政治、历史、产区与文化。"
+    }
+  ]
+}

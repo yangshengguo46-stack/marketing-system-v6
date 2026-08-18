@@ -200,6 +200,14 @@ ADR-018 through ADR-022 for full contracts and status.
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
+`experiments/content_root_lab` is the A84 offline generalization comparison. It may use an open
+relation graph, optional semantic-component recall, frozen-candidate preference selection, and an
+experiment-only DSPy compiler, but production packages must never import it. Semantic components
+only add inspectable candidates; they are not mandatory root labels or hard gates. Do not register
+the lab as a Tool, Skill, MCP server, middleware, or Lead prompt, and do not tune its frozen held-out
+cases after the unique run. Promotion requires the preregistered automatic checks plus manual path
+review; a locally valid contract is not production approval.
+
 ## Development Workflow
 
 ### Test-Driven Development (TDD) — MANDATORY
