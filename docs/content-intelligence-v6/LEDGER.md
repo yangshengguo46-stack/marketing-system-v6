@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A97 evidence + method + outcome self-evolving architecture reviewed; runtime unchanged`
+- 当前结论状态：`A98 existing modules minimally rewired on paper; runtime unchanged`
 
 ## A01 第五版与第六版边界
 
@@ -1994,3 +1994,17 @@ LearningClaim -> 离线候选版本 -> 全新冻结评测`。禁止运行中自�
 爆款或模型自评分提升为规则。当前只是架构候选；仓颉与创作者图谱尚未迁入第六版运行时，抖音真实凭据、
 MediaKit 广义感知与 HLLM 真实推理仍有未验收断点。详见
 `audits/A97-skill-evidence-self-evolving-system.md`。
+
+## A98 现有模块最小接线
+
+2026-08-19 对第六版现役工具和领域合同逐项复核后，确认不需要新增总编排器、固定多 Agent、向量数据库
+或第二套营销领域包。`develop_account_strategy` 已经串联项目自举、语义、候选内容地图、正式对标/受众
+证据、路线提案和用户确认；内容工具也已串联网页/抖音选题证据、`TopicBrief`、`MessagePlan`、基础文案、
+本条表现形式和适配稿。
+
+最小缺口被压缩为三个薄连接件：`AccountPatternEvidence` 将抖音账号作品、MediaKit 时序观察与仓颉式
+五层分析接入现有证据中心；`MechanismUseRecord` 保存本轮按需采用的金枪大叔、薛辉或文案三把刀方法
+及其可观察预测；反馈入口分别保存用户纠错 `RootFeedbackRecord` 和后续真实运营
+`LearningClaim`。MediaKit 仅在有视频时启动，HLLM 仅在有合格逐受众行为和真实推理回执时启动，缺少
+对标或平台账号均不阻断初步孵化。当前只完成接线审计，运行时未修改。详见
+`audits/A98-existing-modules-minimal-wiring.md`。
