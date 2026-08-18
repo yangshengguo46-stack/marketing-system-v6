@@ -317,6 +317,23 @@ def test_shared_world_schema_normalizes_provider_null_strings() -> None:
     assert draft.world_label is None
 
 
+def test_shared_world_schema_normalizes_provider_null_collections() -> None:
+    draft = SharedWorldSynthesisDraft.model_validate(
+        {
+            "world_label": None,
+            "constitutive_contexts": None,
+            "semantic_path": "null",
+            "covered_frames": None,
+            "limitations": "None",
+        }
+    )
+
+    assert draft.constitutive_contexts == ()
+    assert draft.semantic_path == ()
+    assert draft.covered_frames == ()
+    assert draft.limitations == ()
+
+
 def test_lexical_roles_do_not_promote_places_goods_or_consumables_to_human_worlds() -> None:
     prompt = SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT
 
@@ -1634,14 +1651,94 @@ def test_shared_world_contract_records_its_independent_constitutive_context_choi
 
 
 def test_shared_world_cannot_accept_a_constitutive_context_then_erase_it_from_the_label() -> None:
-    with pytest.raises(ValidationError, match="constitutive context"):
-        SharedWorldSynthesisDraft.model_validate(
-            {
-                "world_label": "影像记录",
-                "constitutive_contexts": ["儿童"],
-                "semantic_path": ["儿童", "家庭成长记录", "影像记录"],
-            }
-        )
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "儿童纪念册",
+            "lexical_head": "纪念册",
+            "modifiers": [
+                {
+                    "term": "儿童",
+                    "relation": "人物与生命周期限定",
+                    "modifies": "纪念册",
+                    "removal_counterfactual": "去掉儿童后，记录对象和成长阶段都会改变。",
+                    "world_scope_effect": "constitutive_context",
+                }
+            ],
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "儿童限定了人物与生命周期。",
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "world_label": "影像记录",
+            "constitutive_contexts": ["儿童"],
+            "semantic_path": ["儿童", "家庭成长记录", "影像记录"],
+        }
+    )
+
+    reconciled = _normalize_shared_world_contexts(semantic, shared_world)
+
+    assert reconciled.world_label is None
+    assert reconciled.constitutive_contexts == ()
+    assert reconciled.semantic_path == ()
+    assert any("儿童" in limitation for limitation in reconciled.limitations)
+
+
+def test_shared_world_drops_branch_specific_context_without_discarding_the_world() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "黄金礼品",
+            "lexical_head": "礼品",
+            "modifiers": [
+                {
+                    "term": "黄金",
+                    "relation": "材质",
+                    "modifies": "礼品",
+                    "removal_counterfactual": "去掉黄金后仍是礼品，只改变材质。",
+                    "world_scope_effect": "branch_specificity",
+                }
+            ],
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "黄金只限定材质。",
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "world_label": "礼如何规范人与人之间的相处",
+            "constitutive_contexts": ["黄金"],
+            "semantic_path": ["礼", "礼节与礼制", "人与人之间的相处"],
+        }
+    )
+
+    reconciled = _normalize_shared_world_contexts(semantic, shared_world)
+
+    assert reconciled.world_label == "礼如何规范人与人之间的相处"
+    assert reconciled.constitutive_contexts == ()
+    assert reconciled.semantic_path == ("礼", "礼节与礼制", "人与人之间的相处")
+
+
+def test_shared_world_without_a_semantic_path_is_withheld_after_parsing() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "礼品",
+            "lexical_head": "礼品",
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "礼品是完整对象。",
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "world_label": "人与人如何相处",
+            "semantic_path": [],
+            "covered_frames": ["职场往来"],
+        }
+    )
+
+    reconciled = _normalize_shared_world_contexts(semantic, shared_world)
+
+    assert reconciled.world_label is None
+    assert reconciled.covered_frames == ()
+    assert any("缺少可检查的语义路径" in limitation for limitation in reconciled.limitations)
 
 
 def test_shared_world_is_withheld_when_workers_disagree_on_constitutive_context() -> None:

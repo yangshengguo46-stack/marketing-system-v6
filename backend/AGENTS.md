@@ -170,6 +170,12 @@ competitor evidence. Weak evidence remains a limitation. `explore_content_world`
 opportunities or one shootable topic, but cannot decide account positioning, audience, persona,
 account presentation, or monetization.
 
+Shared-world provider payloads are parsed before semantic reconciliation. Normalize explicit null
+collections and discard misplaced non-constitutive modifier terms without dropping an otherwise valid
+world. Deterministic reconciliation must still withdraw a world with no semantic path, a missing required
+constitutive context, or a context erased from its label; do not move those semantic invariants back into
+the provider-facing Pydantic parser.
+
 `deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
 `develop_account_strategy` alone creates those long-lived judgments from a candidate map, Brief,
 and formal evidence. Its model-facing contract is a flat 2-5 route proposal: each route combines

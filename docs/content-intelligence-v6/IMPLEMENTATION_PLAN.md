@@ -50,6 +50,11 @@
 `proposed`，不能被具体选题读取。用户明确选择后，`confirm_account_strategy` 才生成紧邻后继的
 `confirmed` 版本。该项目级初步孵化不要求平台账号登录或绑定；缺少正式对标只降低置信度。
 
+2026-08-18 A81 又发现共同世界的可选结构调用失败时，系统会静默少掉最大候选并退化到较窄活动根。
+当前合同先容纳供应商 `null` 集合和可清洗的构成语境误填，再由确定性归一化执行语义路径与真正
+构成语境约束。同一黄金礼品隐藏答案复跑已进入“礼如何规范人与人相处和做事的共同秩序”，并形成
+职场、权力差异、礼与利及越界后果等地图分支；具体人物反转仍属于下游选题，不进入内容根。
+
 发布回执之前仍必须完成的主链为：
 
 ```text
@@ -88,7 +93,7 @@
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
-| 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; one real pass and one held-out failure` | 使用 ADR-020 顺序链与单根裁决；地图不拥有账号定位权 | 全新留出集真实质量/延迟与候选地图审阅 |
+| 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; provider-drift recovery and one golden-gift live pass` | 使用 ADR-020 顺序链与单根裁决；先解析供应商结构，再由确定性代码约束语义路径和构成语境；地图不拥有账号定位权 | 全新留出集真实质量、稳定率、延迟与候选地图审阅 |
 | 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented; multi-route proposal, user confirmation and two live model cases verified` | `develop_account_strategy` 给出 2 至 5 条完整路线并推荐；`confirm_account_strategy` 只按用户选择写入确认版本；具体选题只读精确地图的已确认版本 | 降低首轮约四分钟延迟，增加可视化选择卡片、正式对标连接器与复盘修订；平台账号绑定延期 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
@@ -350,6 +355,11 @@ ADR-020 恢复顺序语义链，根裁决新增“消费场景不是自动上位
 当前主要未通过项为首轮约四分钟延迟；平台账号、可视化卡片和正式对标连接器延期。详见
 `audits/A80-account-route-proposal-and-confirmation.md` 与
 `decisions/ADR-022-propose-account-routes-before-confirmation.md`。
+
+2026-08-18 A81 内容根恢复回执：同一隐藏答案黄金礼品输入先因共同世界结构校验失败退化到“人际
+赠予”，协议归一化修复后复跑进入“礼如何规范人与人相处和做事的共同秩序”，并形成职场、权力差异、
+礼与利及越界后果等具体地图分支。该修复不含行业关键词；小王与小张式完整反转仍由后续 TopicBrief
+负责。详见 `audits/A81-shared-world-provider-drift-and-human-affairs-root.md`。
 
 ### W04 MediaKit 制作路由
 

@@ -207,19 +207,20 @@ class SharedWorldSynthesisDraft(ContractModel):
                 return None
         return value
 
-    @model_validator(mode="after")
-    def bind_world_to_semantic_path(self) -> SharedWorldSynthesisDraft:
-        if self.world_label is not None and not self.semantic_path:
-            raise ValueError("shared world requires an explicit semantic path")
-        if self.world_label is None and self.semantic_path:
-            raise ValueError("semantic path requires a proposed shared world")
-        if self.world_label is None and self.constitutive_contexts:
-            raise ValueError("constitutive contexts require a proposed shared world")
-        if self.world_label is not None:
-            missing_contexts = tuple(context for context in self.constitutive_contexts if context not in self.world_label)
-            if missing_contexts:
-                raise ValueError("constitutive context terms must remain explicit in the shared-world label")
-        return self
+    @field_validator(
+        "constitutive_contexts",
+        "semantic_path",
+        "covered_frames",
+        "limitations",
+        mode="before",
+    )
+    @classmethod
+    def normalize_provider_null_collections(cls, value: Any) -> Any:
+        if value is None:
+            return ()
+        if isinstance(value, str) and value.strip().casefold() in {"", "null", "none"}:
+            return ()
+        return value
 
 
 class SharedWorldReviewDraft(ContractModel):
@@ -1415,16 +1416,44 @@ def _normalize_shared_world_contexts(
     semantic: SemanticReadingDraft,
     shared_world: SharedWorldSynthesisDraft,
 ) -> SharedWorldSynthesisDraft:
-    known_terms = {modifier.term for modifier in semantic.modifiers}
+    required_by_semantic_reading = {modifier.term for modifier in semantic.modifiers if modifier.world_scope_effect == "constitutive_context"}
     accepted: list[str] = []
     for term in shared_world.constitutive_contexts:
-        if term not in known_terms or term in accepted:
+        if term not in required_by_semantic_reading or term in accepted:
             continue
         accepted.append(term)
-    required_by_semantic_reading = {modifier.term for modifier in semantic.modifiers if modifier.world_scope_effect == "constitutive_context"}
+
+    if shared_world.world_label is None:
+        return shared_world.model_copy(
+            update={
+                "constitutive_contexts": (),
+                "semantic_path": (),
+                "covered_frames": (),
+            }
+        )
+
+    if not shared_world.semantic_path:
+        return shared_world.model_copy(
+            update={
+                "world_label": None,
+                "constitutive_contexts": (),
+                "covered_frames": (),
+                "limitations": tuple(
+                    dict.fromkeys(
+                        (
+                            *shared_world.limitations,
+                            "共同世界缺少可检查的语义路径；暂不采用该候选。",
+                        )
+                    )
+                ),
+            }
+        )
+
     missing_required = tuple(sorted(required_by_semantic_reading - set(accepted)))
-    if shared_world.world_label is not None and missing_required:
-        missing_terms = "、".join(missing_required)
+    erased_contexts = tuple(context for context in accepted if context not in shared_world.world_label)
+    if missing_required or erased_contexts:
+        missing_or_erased = tuple(dict.fromkeys((*missing_required, *erased_contexts)))
+        missing_terms = "、".join(missing_or_erased)
         return shared_world.model_copy(
             update={
                 "world_label": None,

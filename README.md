@@ -775,6 +775,10 @@ Shared-world synthesis first sees the independent meaning family without the com
 use inside the original compound. A separate reviewer receives that compound relation only
 afterward and verifies the path back to the user's expression. This keeps expansion open
 without allowing a same-character association to become an unchecked semantic jump.
+Provider null collections and misplaced non-constitutive modifiers are normalized before
+semantic reconciliation. The deterministic reconciler still withdraws a world that lacks an
+inspectable path or erases a modifier that truly changes its people, relationship, shared event,
+or lifecycle context.
 The frozen map is a content-addressed **candidate content opportunity**, not adopted
 account positioning. It describes rooted directions that may be researched and turned
 into topics. It does not decide positioning, audience, persona, account-level presentation,
