@@ -1591,10 +1591,22 @@ def _build_root_candidate_set(
         )
 
     if shared_world.world_label is not None:
+        shared_world_scope_role: Literal["root_candidate", "example_branch"] = "root_candidate"
+        unmodified_container_practices = {
+            *(semantic.unmodified_subject_activities or ()),
+            *(semantic.unmodified_subject_functions_or_uses or ()),
+        }
+        has_served_object_world = semantic.offering_role == "operating_container" and bool(semantic.served_objects)
+        repeats_container_practice = shared_world.common_action_or_relation in unmodified_container_practices
+        if has_served_object_world and shared_world.constitutive_contexts and repeats_container_practice:
+            # A venue's generic operation with its category modifier restored is
+            # still one scene around the served object, not a larger world that
+            # contains the object's history, regions, people, works and events.
+            shared_world_scope_role = "example_branch"
         add(
             level="social_or_cultural_world",
             label=shared_world.world_label,
-            scope_role="root_candidate",
+            scope_role=shared_world_scope_role,
             relation=" -> ".join(shared_world.semantic_path),
         )
 

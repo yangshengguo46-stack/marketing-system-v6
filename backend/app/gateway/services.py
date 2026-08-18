@@ -35,7 +35,7 @@ from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONT
 from deerflow.agents.middlewares.view_image_middleware import _IMAGE_CONTEXT_MESSAGE_MARKER_KEY
 from deerflow.config.app_config import get_app_config
 from deerflow.config.database_config import resolve_checkpoint_graph_cache_max
-from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ProjectRef
+from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ProjectRef, implicit_thread_project_ref
 from deerflow.runtime import (
     END_SENTINEL,
     HEARTBEAT_SENTINEL,
@@ -513,7 +513,23 @@ async def resolve_bound_incubation_project_id(
     metadata = thread.get("metadata") if thread is not None else None
     project_id = metadata.get(INCUBATION_PROJECT_ID_KEY) if isinstance(metadata, dict) else None
     if not isinstance(project_id, str) or not project_id:
-        return None
+        ledger = getattr(request.app.state, "incubation_ledger_repo", None)
+        if ledger is None:
+            return None
+        implicit_project = implicit_thread_project_ref(
+            owner_user_id=owner_user_id,
+            thread_id=thread_id,
+        )
+        project = await ledger.get_project(implicit_project)
+        if project is None:
+            return None
+        await thread_store.update_metadata(
+            thread_id,
+            {INCUBATION_PROJECT_ID_KEY: implicit_project.project_id},
+            touch=False,
+            user_id=owner_user_id,
+        )
+        return implicit_project.project_id
 
     ledger = getattr(request.app.state, "incubation_ledger_repo", None)
     if ledger is None:

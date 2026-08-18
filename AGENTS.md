@@ -184,8 +184,9 @@ These apply repo-wide; module guides own the module-specific detail.
   frontend tests live in `frontend/tests/`.
 - **V6 content core** — ADR-020 owns semantic order. Candidate maps are not account strategy.
   `develop_account_strategy` proposes 2-5 routes; only `confirm_account_strategy` records the
-  user's choice. Topics read confirmed exact-map strategy, initial proposals need no platform
-  login, and competitor evidence stays read-only. See `docs/content-intelligence-v6/` and
-  `backend/AGENTS.md`.
+  user's choice. A trusted thread may lazily create its internal project on the first strategy
+  request; no project UI or platform login is required. A generic container transaction restored
+  with its served category stays a map branch. Topics read confirmed exact-map strategy, and
+  competitor evidence stays read-only. See `docs/content-intelligence-v6/` and `backend/AGENTS.md`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

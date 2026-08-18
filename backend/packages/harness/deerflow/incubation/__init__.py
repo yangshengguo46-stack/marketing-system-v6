@@ -151,6 +151,10 @@ from deerflow.incubation.production_runtime import (
     StructuredProductionPlanModel,
     generate_production_plan,
 )
+from deerflow.incubation.project_bootstrap import (
+    implicit_project_display_name,
+    implicit_thread_project_ref,
+)
 from deerflow.incubation.project_evidence import (
     MAX_AUDIENCE_JUDGMENT_EVIDENCE,
     MAX_BENCHMARK_JUDGMENT_EVIDENCE,
@@ -351,6 +355,8 @@ __all__ = [
     "generate_adapted_draft",
     "generate_format_decision",
     "generate_production_plan",
+    "implicit_project_display_name",
+    "implicit_thread_project_ref",
     "execute_local_media_operation",
     "seal_adapted_draft",
     "validate_production_plan_parents",

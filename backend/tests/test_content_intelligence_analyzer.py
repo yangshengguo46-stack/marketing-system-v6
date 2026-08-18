@@ -31,6 +31,7 @@ from deerflow.content_intelligence.analyzer import (
     SEMANTIC_FAMILY_EXPANSION_SYSTEM_PROMPT,
     SHARED_WORLD_SYNTHESIS_SYSTEM_PROMPT,
     SemanticModifierDraft,
+    _build_root_candidate_set,
     _invoke_structured,
     _normalize_semantic_family,
     _normalize_shared_world_contexts,
@@ -1280,6 +1281,89 @@ def test_root_selection_rejects_a_narrow_example_branch_as_the_content_root() ->
 
     with pytest.raises(ValidationError, match="example branch cannot be selected"):
         ContentRootSelectionDraft.model_validate(payload)
+
+
+def test_container_transaction_echo_is_a_branch_beside_the_served_object() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "药店",
+            "lexical_head": "店",
+            "modifiers": [
+                {
+                    "term": "药",
+                    "relation": "品类限定",
+                    "modifies": "店",
+                    "world_scope_effect": "constitutive_context",
+                    "removal_counterfactual": "去掉药后只剩泛化经营容器。",
+                }
+            ],
+            "offering_role": "operating_container",
+            "role_rationale": "药店承载药品零售。",
+            "served_objects": ["药品"],
+            "served_activities": ["选购药品", "销售药品"],
+            "defining_functions_or_uses": ["提供药品零售空间"],
+            "social_or_cultural_frames": ["社区购药"],
+            "unmodified_subject_activities": ["经营", "买卖"],
+            "unmodified_subject_functions_or_uses": ["提供经营空间"],
+            "unmodified_subject_frames": ["零售经营"],
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "common_action_or_relation": "买卖",
+            "participant_relationship": "卖方与买方",
+            "world_label": "人们在固定场所买卖药品",
+            "constitutive_contexts": ["药"],
+            "semantic_path": ["提供经营空间", "买卖", "药品零售"],
+            "covered_frames": ["药品零售"],
+        }
+    )
+
+    candidate_set = _build_root_candidate_set(
+        semantic,
+        SemanticFamilyExpansionDraft(),
+        shared_world,
+    )
+
+    candidates = {candidate.label: candidate for candidate in candidate_set.candidates}
+    assert candidates["药品"].scope_role == "root_candidate"
+    assert candidates["人们在固定场所买卖药品"].scope_role == "example_branch"
+
+
+def test_activity_venue_world_remains_a_root_candidate() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "KTV",
+            "lexical_head": "KTV",
+            "offering_role": "operating_container",
+            "role_rationale": "KTV让参与者进入唱歌和聚会活动。",
+            "served_objects": [],
+            "served_activities": ["唱歌", "聚会"],
+            "defining_functions_or_uses": ["情绪表达", "社交互动"],
+            "social_or_cultural_frames": ["朋友聚会"],
+            "unmodified_subject_activities": ["唱歌", "聚会"],
+            "unmodified_subject_functions_or_uses": ["情绪表达", "社交互动"],
+            "unmodified_subject_frames": ["朋友聚会"],
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "common_action_or_relation": "唱歌与情绪表达",
+            "participant_relationship": "共同娱乐的人",
+            "world_label": "人们如何借歌声社交和释放情绪",
+            "semantic_path": ["唱歌", "情绪表达", "社交和释放情绪"],
+            "covered_frames": ["朋友聚会"],
+        }
+    )
+
+    candidate_set = _build_root_candidate_set(
+        semantic,
+        SemanticFamilyExpansionDraft(),
+        shared_world,
+    )
+
+    candidate = next(item for item in candidate_set.candidates if item.label == shared_world.world_label)
+    assert candidate.scope_role == "root_candidate"
 
 
 @pytest.mark.asyncio

@@ -180,11 +180,15 @@ the provider-facing Pydantic parser.
 `develop_account_strategy` alone creates those long-lived judgments from a candidate map, Brief,
 and formal evidence. Its model-facing contract is a flat 2-5 route proposal: each route combines
 content subject, business connection, audience, persona, presentation, monetization, resources,
-and tradeoffs. It may recommend one but cannot confirm it. `confirm_account_strategy` is the only
-writer for the user's exact route choice and creates the linked `confirmed` successor; neither
-operation requires a platform account. Topic delivery may read only the latest confirmed exact-map
-strategy and cannot create, confirm, or revise one. `MessagePlan` and `BaseDraft` stay format-neutral
-and cannot invent facts, materials, sales, experiments, quantities, or publishing decisions.
+and tradeoffs. It may recommend one but cannot confirm it. When no explicit project is selected, a
+trusted owner/thread lazily receives a deterministic internal project on the first strategy request;
+later runs rehydrate it from the ledger. An explicitly selected stale project still fails closed.
+`confirm_account_strategy` is the only writer for the user's exact route choice and creates the
+linked `confirmed` successor; neither operation requires a platform account. Topic delivery may read
+only the latest confirmed exact-map strategy and cannot create, confirm, or revise one. A current
+account-starting request must not be silently reinterpreted as topic continuation merely because a
+confirmed strategy exists. `MessagePlan` and `BaseDraft` stay format-neutral and cannot invent facts,
+materials, sales, experiments, quantities, or publishing decisions.
 
 Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
 formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post

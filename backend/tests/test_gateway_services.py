@@ -1538,6 +1538,55 @@ async def test_start_run_rehydrates_thread_project_and_overrides_client_forgery(
 
 
 @pytest.mark.asyncio
+async def test_start_run_binds_an_existing_implicit_thread_project(
+    _stub_app_config,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, patch
+
+    from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
+    from app.gateway.services import start_run
+    from deerflow.incubation import implicit_thread_project_ref
+
+    request, _run_store, thread_store = _make_start_run_persistence_context()
+    request.state.user = SimpleNamespace(
+        id="user-1",
+        system_role="user",
+        oauth_provider=None,
+        oauth_id=None,
+    )
+    request.state.auth_source = AUTH_SOURCE_SESSION
+    thread_id = "thread-implicit-project"
+    await thread_store.create(thread_id, user_id="user-1", metadata={})
+    expected_project = implicit_thread_project_ref(owner_user_id="user-1", thread_id=thread_id)
+    ledger = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    request.app.state.incubation_ledger_repo = ledger
+    captured = {}
+
+    async def fake_run_agent(*_args, **kwargs):
+        captured["config"] = kwargs["config"]
+
+    with (
+        patch("app.gateway.services.resolve_agent_factory", return_value=object()),
+        patch("app.gateway.services._ensure_thread_metadata", new=AsyncMock()),
+        patch("app.gateway.services.run_agent", side_effect=fake_run_agent),
+    ):
+        record = await start_run(
+            _run_create_request(),
+            thread_id,
+            request,
+        )
+        assert record.task is not None
+        await record.task
+
+    assert captured["config"]["context"]["incubation_project_id"] == expected_project.project_id
+    assert captured["config"]["configurable"]["incubation_project_id"] == expected_project.project_id
+    thread = await thread_store.get(thread_id, user_id="user-1")
+    assert thread["metadata"]["incubation_project_id"] == expected_project.project_id
+    ledger.get_project.assert_awaited_once_with(expected_project)
+
+
+@pytest.mark.asyncio
 async def test_start_run_rejects_stale_thread_project_before_agent_execution(
     _stub_app_config,
 ):

@@ -14,7 +14,13 @@ from deerflow.content_intelligence import (
     ContentIntelligenceRequest,
     analyze_content_intelligence,
 )
-from deerflow.incubation import ProjectRef, confirm_account_strategy, prepare_account_strategy
+from deerflow.incubation import (
+    ProjectRef,
+    confirm_account_strategy,
+    implicit_project_display_name,
+    implicit_thread_project_ref,
+    prepare_account_strategy,
+)
 from deerflow.incubation.account_strategy_presentation import render_account_strategy
 from deerflow.tools.builtins.incubation_tool_support import (
     create_content_intelligence_model,
@@ -61,7 +67,7 @@ async def develop_account_strategy_tool(
     runtime: Runtime,
     user_request: str,
 ) -> Command:
-    """Create or revise the selected project's long-lived account incubation strategy.
+    """Create or revise the current thread project's long-lived account incubation strategy.
 
     This is the only high-level tool that decides positioning, audience,
     persona, account-level presentation, and monetization hypotheses. It uses a
@@ -73,21 +79,47 @@ async def develop_account_strategy_tool(
         user_request: The user's current account-starting or positioning request, copied verbatim.
     """
 
-    project_id = runtime_context_text(runtime, "incubation_project_id")
     owner_user_id = runtime_context_text(runtime, "user_id")
     thread_id = runtime_context_text(runtime, "thread_id")
     run_id = runtime_context_text(runtime, "run_id")
-    if project_id is None or owner_user_id is None or thread_id is None or run_id is None:
+    if owner_user_id is None or thread_id is None or run_id is None:
         return _terminal_account_strategy_command(
-            "要生成可持续复盘和修订的账号定位，需要先创建或选择一个项目。当前没有把一次内容地图冒充成账号定位。",
+            "当前对话缺少可验证的用户或运行身份，因此没有生成账号定位。",
             tool_call_id=runtime.tool_call_id,
         )
 
-    project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    project_id = runtime_context_text(runtime, "incubation_project_id")
+    if project_id is not None:
+        project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    else:
+        project = implicit_thread_project_ref(owner_user_id=owner_user_id, thread_id=thread_id)
     repository = get_incubation_repository()
-    if repository is None or await repository.get_project(project) is None:
+    if repository is None:
         return _terminal_account_strategy_command(
-            "当前选择的孵化项目不可用，因此没有生成临时定位。",
+            "账号孵化台账暂时不可用，因此没有生成无法延续的临时定位。",
+            tool_call_id=runtime.tool_call_id,
+        )
+    try:
+        project_record = await repository.get_project(project)
+        if project_record is None and project_id is not None:
+            return _terminal_account_strategy_command(
+                "当前选择的孵化项目不可用，因此没有生成临时定位。",
+                tool_call_id=runtime.tool_call_id,
+            )
+        if project_record is None:
+            try:
+                await repository.create_project(
+                    project,
+                    display_name=implicit_project_display_name(user_request),
+                )
+            except Exception:
+                # A concurrent first request may have created the deterministic project.
+                if await repository.get_project(project) is None:
+                    raise
+    except Exception as exc:
+        logger.warning("Account strategy project bootstrap was unavailable: %s", type(exc).__name__)
+        return _terminal_account_strategy_command(
+            "账号孵化台账暂时不可用，因此没有生成无法延续的临时定位。",
             tool_call_id=runtime.tool_call_id,
         )
 
@@ -133,7 +165,7 @@ async def develop_account_strategy_tool(
         tool_call_id=runtime.tool_call_id,
         persistence={
             "status": "reused" if strategy.reused else "stored",
-            "project_id": project_id,
+            "project_id": project.project_id,
             "artifact_type": artifact.artifact_type,
             "artifact_id": artifact.artifact_id,
             "content_sha256": artifact.content_sha256,
@@ -146,7 +178,7 @@ async def confirm_account_strategy_tool(
     runtime: Runtime,
     option_id: str,
 ) -> Command:
-    """Confirm one route from the selected project's latest account proposal.
+    """Confirm one route from the current thread project's latest account proposal.
 
     This records the user's choice and projects that exact route into the
     versioned account strategy. It does not require a platform account login,
@@ -156,18 +188,21 @@ async def confirm_account_strategy_tool(
         option_id: The exact route identifier the user selected from the latest proposal.
     """
 
-    project_id = runtime_context_text(runtime, "incubation_project_id")
     owner_user_id = runtime_context_text(runtime, "user_id")
     thread_id = runtime_context_text(runtime, "thread_id")
     run_id = runtime_context_text(runtime, "run_id")
-    if project_id is None or owner_user_id is None or thread_id is None or run_id is None:
+    if owner_user_id is None or thread_id is None or run_id is None:
         return _terminal_account_strategy_command(
-            "当前没有可用的孵化项目，因此没有记录这次路线选择。",
+            "当前对话缺少可验证的用户或运行身份，因此没有记录这次路线选择。",
             tool_call_id=runtime.tool_call_id,
             tool_name="confirm_account_strategy",
         )
 
-    project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    project_id = runtime_context_text(runtime, "incubation_project_id")
+    if project_id is not None:
+        project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    else:
+        project = implicit_thread_project_ref(owner_user_id=owner_user_id, thread_id=thread_id)
     repository = get_incubation_repository()
     if repository is None or await repository.get_project(project) is None:
         return _terminal_account_strategy_command(
@@ -207,7 +242,7 @@ async def confirm_account_strategy_tool(
         tool_name="confirm_account_strategy",
         persistence={
             "status": "reused" if confirmed.reused else "stored",
-            "project_id": project_id,
+            "project_id": project.project_id,
             "artifact_type": artifact.artifact_type,
             "artifact_id": artifact.artifact_id,
             "content_sha256": artifact.content_sha256,

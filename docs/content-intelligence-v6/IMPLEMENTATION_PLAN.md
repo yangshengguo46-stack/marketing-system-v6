@@ -55,6 +55,13 @@
 构成语境约束。同一黄金礼品隐藏答案复跑已进入“礼如何规范人与人相处和做事的共同秩序”，并形成
 职场、权力差异、礼与利及越界后果等地图分支；具体人物反转仍属于下游选题，不进入内容根。
 
+2026-08-18 A82 修复了真实首次入口的两个接线问题。未显式选择项目的可信线程可在第一次账号孵化
+请求时惰性创建 owner-scoped 隐式项目，后续由 Gateway 重水化；平台登录仍非前置条件。经营容器若
+只是把无修饰容器的泛化交易动作重新加上被服务品类，该长场景只能是分支，不能压过完整被服务对象。
+水果店真实复跑因此选择“水果”并生成具体品种选题。但同会话已有确认路线时，Lead 将重复起号请求
+错误续写为完整内容交付，产生 `103380` Token 和 `18` 次调用。下一断点先区分首次起号、明确续写与
+重新评估，并固定各自停止边界；在此之前不把该样本记为首次起号通过。
+
 发布回执之前仍必须完成的主链为：
 
 ```text
@@ -92,9 +99,9 @@
 | 模块 | 当前来源 | 真实状态 | 第六版决定 | 下一验收 |
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
-| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
-| 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; provider-drift recovery and one golden-gift live pass` | 使用 ADR-020 顺序链与单根裁决；先解析供应商结构，再由确定性代码约束语义路径和构成语境；地图不拥有账号定位权 | 全新留出集真实质量、稳定率、延迟与候选地图审阅 |
-| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented; multi-route proposal, user confirmation and two live model cases verified` | `develop_account_strategy` 给出 2 至 5 条完整路线并推荐；`confirm_account_strategy` 只按用户选择写入确认版本；具体选题只读精确地图的已确认版本 | 降低首轮约四分钟延迟，增加可视化选择卡片、正式对标连接器与复盘修订；平台账号绑定延期 |
+| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime, implicit thread bootstrap and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API、隐式线程项目与重水化 | 正式项目管理 UI、产物查询与真实多账号验收 |
+| 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; golden-gift and fruit container live root recovery` | 使用 ADR-020 顺序链与单根裁决；先解析供应商结构，再由确定性代码约束语义路径和构成语境；泛化容器交易回声只作分支；地图不拥有账号定位权 | 全新留出集真实质量、稳定率、延迟与候选地图审阅 |
+| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented routes and confirmation; first-run intent orchestration failed` | `develop_account_strategy` 给出 2 至 5 条完整路线并推荐；`confirm_account_strategy` 只按用户选择写入确认版本；具体选题只读精确地图的已确认版本 | 区分首次起号、明确续写与重新评估并固定停止边界；再降延迟、接可视化路线和正式对标；平台账号绑定延期 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
@@ -144,7 +151,7 @@
 
 ### W01 共享产物脊柱
 
-状态：`implemented; server project selection, hydration, and content-run lineage verified; frontend selector deferred to W07`
+状态：`implemented; server selection, implicit thread bootstrap, hydration, and content-run lineage verified; formal project UI deferred to W07`
 
 目标：在不修改 Lead 核心提示词的前提下，建立项目、账号、产物包装、父子谱系、内容哈希和
 证据角色的最小合同。
@@ -360,6 +367,11 @@ ADR-020 恢复顺序语义链，根裁决新增“消费场景不是自动上位
 赠予”，协议归一化修复后复跑进入“礼如何规范人与人相处和做事的共同秩序”，并形成职场、权力差异、
 礼与利及越界后果等具体地图分支。该修复不含行业关键词；小王与小张式完整反转仍由后续 TopicBrief
 负责。详见 `audits/A81-shared-world-provider-drift-and-human-affairs-root.md`。
+
+2026-08-18 A82 首次入口回执：无显式项目的可信线程可惰性创建隐式项目；水果店的泛化门店交易
+场景已降为“水果”根下的分支，真实复跑选择水果并形成具体品种选题。同会话已有确认路线时仍会把
+重复起号请求错误续写到完整成稿，造成 `103380` Token 和 `18` 次调用，故首次编排与速度均未通过。
+详见 `audits/A82-thread-project-bootstrap-and-container-root.md`。
 
 ### W04 MediaKit 制作路由
 
