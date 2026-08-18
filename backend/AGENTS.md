@@ -200,14 +200,11 @@ ADR-018 through ADR-022 for full contracts and status.
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
-A84/A86/A88/A90 are rejected, consumed experiments; never rerun, tune, stack, import, or register them.
-A92's thin single reader improved manual recall to 13/16, contracts to 12/12, root-level quality to
-39/41, and cut tokens to 11,689, but missed its 14/16 and 10/12 production gates. Retain that direction
-offline only; do not register or rerun A92, or add dictionaries, Douyin, maps, positioning, or agents.
-A successor needs new cases and may target only semantic-core retention, larger-world recall, and
-product-adjacency rejection. A92's RV label `self-driving travel` is contested: the missing leap is
-RV travel to travel, while freedom/outdoors are lenses and Europe travel is a topic. Freeze future
-labels only after user review and allow valid alternatives. Dictionaries remain optional lookup evidence.
+A84/A86/A88/A90/A92 are consumed offline experiments; never rerun, tune, stack, import, or register
+them. A92 improved contracts and cost but failed production gates, and A94-A95 show that its RV and
+hearing-aid hidden labels were narrow or incomplete. Future labels require user-reviewed alternatives;
+contracts must allow no strong root or a conditional IP. Keep dictionaries optional and do not add
+Douyin, maps, positioning, or agents to root recall.
 
 ## Development Workflow
 

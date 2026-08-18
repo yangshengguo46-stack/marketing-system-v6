@@ -12,13 +12,16 @@ Deferred for production，Retained as preferred research direction，2026-08-19�
 ## 理由
 
 - A92 合同成功 `12/12`，高于 A90 单工作者的 `8/12`，没有调用后路径绑定报废。
-- 人工概念召回由 A90 的 `9/16` 提高到 `13/16`；人工完整案例由 `8/12` 提高到 `9/12`。
+- 原标签下的人工概念召回为 `13/16`、完整案例为 `9/12`；A94-A95 的用户复核证明部分隐藏标签过窄或
+  不完整，因此这些数字只作为历史审计结果，不再代表可靠的业务泛化成绩。
 - 39/41 候选具备最终长期内容根资格，没有系统性滑入人物、事件、地点、作品、热点或具体选题。
 - 三个词汇化对照的禁止标签均为零，没有把佛跳墙、叫花鸡和鱼香肉丝按字面误拆。
 - 总 Token 从 A90 单工作者的 24,144 降到 11,689，且只需十二次初始请求。
 - 但冻结门槛是 `14/16` 和 `10/12`；人工复核仍缺旅行、咖啡世界、佛跳墙或闽菜，不能生产晋级。
 - A92 把房车案例的更大世界预标为“自驾旅行”，用户复核后判定该标注过窄。正确缺失跃迁是
   “房车旅行 -> 旅行”；原冻结标注保留为有争议的历史证据，详见 A94。
+- A92 把老年助听器预标为“听力健康 / 老年沟通”，遗漏孝亲敬老、陪父母老去等关系世界，也没有允许
+  “该品类不足以独立支撑 IP”。原标签保留为不完整且有争议的历史证据，详见 A95。
 
 ## 后果
 
@@ -28,6 +31,7 @@ Deferred for production，Retained as preferred research direction，2026-08-19�
 - 任何后续实验必须使用新案例，只针对三个已知缺口：对象语义核心、大世界上探、产品邻接误判。
 - 后续隐藏答案必须在冻结前经过用户复核，并允许多个有效根；评分器不能把载体、视角或开发者偏好冒充
   唯一业务答案。
+- 后续候选合同必须允许无强根、条件成立和仅适合产品内容，并把 IP 可行性与语义相关性分开表达。
 - 在未来通过前，用户确认仍是内容根最终选择边界，搜索和内容地图只能接收已经确认的根。
 
 ## 证据
@@ -35,4 +39,5 @@ Deferred for production，Retained as preferred research direction，2026-08-19�
 - `docs/content-intelligence-v6/audits/A92-thin-single-agent-content-root-preregistration.md`
 - `docs/content-intelligence-v6/audits/A93-thin-single-agent-content-root-result.md`
 - `docs/content-intelligence-v6/audits/A94-rv-travel-content-root-correction.md`
+- `docs/content-intelligence-v6/audits/A95-senior-hearing-aid-root-and-ip-viability-correction.md`
 - `docs/content-intelligence-v6/evidence/thin-content-root-a92-2026-08-19.json`
