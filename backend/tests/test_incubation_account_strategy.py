@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 
 import pytest
@@ -63,6 +64,51 @@ def _bundle() -> ContentIntelligenceBundle:
     return ContentIntelligenceBundle(record=record, content_world=world)
 
 
+def _route_payload(
+    option_id: str,
+    name: str,
+    form: str,
+    *,
+    basis_ids: tuple[str, ...],
+) -> dict[str, object]:
+    return {
+        "option_id": option_id,
+        "name": name,
+        "content_subject": f"{name}视角下的人情、礼节和关系判断",
+        "business_connection": "礼品从业位置提供观察角度，不把产品当成内容主体。",
+        "long_term_promise": "用具体人物与事件理解人情与礼。",
+        "audience_people": "关心人情与礼节的人",
+        "recurring_interest": "人与人如何相处",
+        "account_role": "从礼品生意观察人情的从业者",
+        "primary_forms": [form],
+        "supporting_forms": [],
+        "monetization_path": None,
+        "monetization_trust_required": None,
+        "rationale": "与已知业务和候选地图相符。",
+        "basis_artifact_ids": list(basis_ids),
+        "confidence": "low",
+        "unknowns": ["持续产能未确认。"],
+        "resource_requirements": [],
+        "tradeoffs": [],
+    }
+
+
+def _proposal_payload(
+    *,
+    map_version: str,
+    basis_ids: tuple[str, ...],
+) -> dict[str, object]:
+    return {
+        "content_map_version_id": map_version,
+        "route_options": [
+            _route_payload("route_a", "真人故事", "真人出镜口述", basis_ids=basis_ids),
+            _route_payload("route_b", "AI情境叙事", "AI情景剧", basis_ids=basis_ids),
+        ],
+        "recommended_option_id": "route_a",
+        "unknowns": ["尚未取得真实受众反馈。"],
+    }
+
+
 @pytest.mark.asyncio
 async def test_account_strategy_reuses_identical_inputs_and_versions_real_changes() -> None:
     repository = _MemoryRepository()
@@ -74,19 +120,12 @@ async def test_account_strategy_reuses_identical_inputs_and_versions_real_change
     async def structured_model(schema, messages):
         nonlocal model_calls
         model_calls += 1
+        model_input = json.loads(messages[1].content)
+        basis_ids = tuple(model_input["allowed_basis_artifact_ids"][:2])
         if model_calls == 1:
-            return {
-                "content_map_version_id": map_version,
-                "unknowns": ["尚未取得真实受众反馈。"],
-            }
+            return _proposal_payload(map_version=map_version, basis_ids=basis_ids)
         assert first_artifact_id is not None
-        return {
-            "revision_number": 2,
-            "supersedes_judgment_artifact_id": first_artifact_id,
-            "revision_reason": "用户补充了账号希望长期建立信任的目标。",
-            "content_map_version_id": map_version,
-            "unknowns": ["仍需用真实发布结果校正。"],
-        }
+        return _proposal_payload(map_version=map_version, basis_ids=basis_ids)
 
     first = await prepare_account_strategy(
         project=PROJECT,

@@ -45,13 +45,19 @@
 可修订的项目策略版本；对标账号只提供正式证据。下一步质量验收必须分别检查“候选内容机会是否好”
 和“账号是否采用及如何长期运营”，不能再用一份地图同时回答两个问题。
 
+2026-08-18 A80 补上首次起号的用户决策边界：`develop_account_strategy` 现在生成 2 至 5 条把定位、
+受众、人设、表现形式、业务连接、变现、资源和代价绑在一起的路线，并推荐其中一条；推荐仍是
+`proposed`，不能被具体选题读取。用户明确选择后，`confirm_account_strategy` 才生成紧邻后继的
+`confirmed` 版本。该项目级初步孵化不要求平台账号登录或绑定；缺少正式对标只降低置信度。
+
 发布回执之前仍必须完成的主链为：
 
 ```text
 项目事实
 -> 语义理解 / 内容入口 / 候选内容机会地图
 对标与受众证据（独立只读）
--> 账号孵化判断 vN：定位 / 受众 / 人设 / 账号级表现方向 / 变现
+-> 账号路线提案：2 至 5 条完整路线 + Agent 推荐
+-> 用户选择 -> 已确认账号孵化判断 vN
 -> 具体 TopicBrief
 -> MessagePlan / BaseDraft
 -> 本条 FormatDecision / AdaptedDraft
@@ -83,7 +89,7 @@
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
 | 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; one real pass and one held-out failure` | 使用 ADR-020 顺序链与单根裁决；地图不拥有账号定位权 | 全新留出集真实质量/延迟与候选地图审阅 |
-| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented; project-level version chain verified offline` | `develop_account_strategy` 独占定位、受众、人设、账号级表现方向和变现判断；相同父输入复用，变化生成后继版本 | 增加平台账号绑定、用户采用/切换界面和真实复盘修订 |
+| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented; multi-route proposal, user confirmation and two live model cases verified` | `develop_account_strategy` 给出 2 至 5 条完整路线并推荐；`confirm_account_strategy` 只按用户选择写入确认版本；具体选题只读精确地图的已确认版本 | 降低首轮约四分钟延迟，增加可视化选择卡片、正式对标连接器与复盘修订；平台账号绑定延期 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
@@ -336,6 +342,14 @@ ADR-020 恢复顺序语义链，根裁决新增“消费场景不是自动上位
 `benchmark_account_candidate`，正式 `BenchmarkSnapshot` 连接器待后续实现。详见
 `audits/A79-content-opportunity-account-strategy-boundary.md` 与
 `decisions/ADR-021-separate-content-opportunity-account-strategy.md`。
+
+2026-08-18 A80 用户确认回执：账号初步孵化改为“候选地图 -> 2 至 5 条完整路线 -> Agent 推荐 ->
+用户选择 -> 确认版本”。模型只填写扁平提案，代码拥有版本、证据父级和确认状态；长期内容主体与
+业务连接分字段，避免黄金礼品等商业对象再次挤回长期内容中心。真实黄金礼品路线已进入“礼与人际
+关系”，全新旧家具修复完整链给出真人纪实、无人素材和 AI 情景叙事三条候选，均未替用户确认。
+当前主要未通过项为首轮约四分钟延迟；平台账号、可视化卡片和正式对标连接器延期。详见
+`audits/A80-account-route-proposal-and-confirmation.md` 与
+`decisions/ADR-022-propose-account-routes-before-confirmation.md`。
 
 ### W04 MediaKit 制作路由
 

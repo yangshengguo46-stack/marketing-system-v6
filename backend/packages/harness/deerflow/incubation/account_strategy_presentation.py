@@ -3,9 +3,87 @@ from __future__ import annotations
 from deerflow.incubation.judgment import IncubationJudgment
 
 
-def render_account_strategy(judgment: IncubationJudgment) -> str:
+def _render_route_proposal(judgment: IncubationJudgment) -> str:
     confidence_labels = {"low": "低", "medium": "中", "high": "高"}
-    lines = ["# 账号孵化判断", "", f"**定位版本：** v{judgment.revision_number}"]
+    lines = [
+        "# 账号路线候选",
+        "",
+        f"**提案版本：** v{judgment.revision_number}（待你确认）",
+    ]
+    for index, route in enumerate(judgment.route_options, start=1):
+        recommended = "（推荐）" if route.option_id == judgment.recommended_option_id else ""
+        lines.extend(
+            (
+                "",
+                f"## {index}. {route.name}{recommended}",
+                "",
+                f"**路线编号：** `{route.option_id}`",
+                "",
+                f"**账号定位：** {route.positioning.decision}",
+                "",
+                f"**给观众的长期承诺：** {route.positioning.audience_promise}",
+                "",
+                f"**与业务如何连接：** {route.business_connection}",
+                "",
+                f"**受众假设：** {route.audience.people}",
+                "",
+                f"**账号人设：** {route.persona.account_role}",
+                "",
+                "**主要表现形式：** " + "；".join(route.presentation.primary_forms),
+            )
+        )
+        if route.presentation.supporting_forms:
+            lines.extend(("", "**辅助表现形式：** " + "；".join(route.presentation.supporting_forms)))
+        if route.monetization:
+            lines.extend(("", "**变现假设：** " + "；".join(item.path for item in route.monetization)))
+        lines.extend(
+            (
+                "",
+                f"**为什么适合：** {route.recommendation_rationale}",
+                "",
+                f"**当前置信度：** {confidence_labels[route.positioning.confidence]}",
+            )
+        )
+        if route.resource_requirements:
+            lines.extend(("", "**需要的资源：** " + "；".join(route.resource_requirements)))
+        if route.tradeoffs:
+            lines.extend(("", "**代价与风险：** " + "；".join(route.tradeoffs)))
+        route_unknowns = tuple(
+            dict.fromkeys(
+                (
+                    *route.positioning.unknowns,
+                    *route.audience.unknowns,
+                    *route.persona.unknowns,
+                    *route.presentation.unknowns,
+                    *(unknown for item in route.monetization for unknown in item.unknowns),
+                )
+            )
+        )
+        if route_unknowns:
+            lines.extend(("", "**仍需确认：** " + "；".join(route_unknowns)))
+    if judgment.unknowns:
+        lines.extend(("", "## 共同未知", ""))
+        lines.extend(f"- {unknown}" for unknown in judgment.unknowns)
+    lines.extend(
+        (
+            "",
+            "## 等你选择",
+            "",
+            "请回复路线编号，或者直接说你想要哪条。推荐只是建议，在你确认之前不会进入下一步。",
+        )
+    )
+    return "\n".join(lines).strip()
+
+
+def render_account_strategy(judgment: IncubationJudgment) -> str:
+    if judgment.decision_status == "proposed":
+        return _render_route_proposal(judgment)
+
+    confidence_labels = {"low": "低", "medium": "中", "high": "高"}
+    lines = ["# 已确认的账号路线", "", f"**定位版本：** v{judgment.revision_number}"]
+    if judgment.selected_option_id is not None:
+        selected = next(route for route in judgment.route_options if route.option_id == judgment.selected_option_id)
+        lines.extend(("", f"**已选路线：** {selected.name}（`{selected.option_id}`）"))
     if judgment.revision_reason is not None:
         lines.extend(("", f"**本版为什么调整：** {judgment.revision_reason}"))
 

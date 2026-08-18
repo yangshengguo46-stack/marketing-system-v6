@@ -280,6 +280,7 @@ async def _load_current_account_strategy(
     return select_current_account_strategy(
         artifacts,
         content_map_version_id=world.content_map_version_id(),
+        require_confirmed=True,
     )
 
 

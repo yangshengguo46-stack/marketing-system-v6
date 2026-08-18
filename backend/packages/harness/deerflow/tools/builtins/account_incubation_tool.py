@@ -14,7 +14,7 @@ from deerflow.content_intelligence import (
     ContentIntelligenceRequest,
     analyze_content_intelligence,
 )
-from deerflow.incubation import ProjectRef, prepare_account_strategy
+from deerflow.incubation import ProjectRef, confirm_account_strategy, prepare_account_strategy
 from deerflow.incubation.account_strategy_presentation import render_account_strategy
 from deerflow.tools.builtins.incubation_tool_support import (
     create_content_intelligence_model,
@@ -32,6 +32,7 @@ def _terminal_account_strategy_command(
     content: str,
     *,
     tool_call_id: str,
+    tool_name: str = "develop_account_strategy",
     persistence: dict[str, Any] | None = None,
 ) -> Command:
     additional_kwargs: dict[str, Any] = {
@@ -47,7 +48,7 @@ def _terminal_account_strategy_command(
                     id=f"{tool_call_id}:result",
                     content=content,
                     tool_call_id=tool_call_id,
-                    name="develop_account_strategy",
+                    name=tool_name,
                     additional_kwargs=additional_kwargs,
                 )
             ]
@@ -140,4 +141,78 @@ async def develop_account_strategy_tool(
     )
 
 
-__all__ = ["develop_account_strategy_tool"]
+@tool("confirm_account_strategy", parse_docstring=True, return_direct=True)
+async def confirm_account_strategy_tool(
+    runtime: Runtime,
+    option_id: str,
+) -> Command:
+    """Confirm one route from the selected project's latest account proposal.
+
+    This records the user's choice and projects that exact route into the
+    versioned account strategy. It does not require a platform account login,
+    and it does not create a topic, script, production plan, or publication.
+
+    Args:
+        option_id: The exact route identifier the user selected from the latest proposal.
+    """
+
+    project_id = runtime_context_text(runtime, "incubation_project_id")
+    owner_user_id = runtime_context_text(runtime, "user_id")
+    thread_id = runtime_context_text(runtime, "thread_id")
+    run_id = runtime_context_text(runtime, "run_id")
+    if project_id is None or owner_user_id is None or thread_id is None or run_id is None:
+        return _terminal_account_strategy_command(
+            "当前没有可用的孵化项目，因此没有记录这次路线选择。",
+            tool_call_id=runtime.tool_call_id,
+            tool_name="confirm_account_strategy",
+        )
+
+    project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    repository = get_incubation_repository()
+    if repository is None or await repository.get_project(project) is None:
+        return _terminal_account_strategy_command(
+            "当前选择的孵化项目不可用，因此没有记录这次路线选择。",
+            tool_call_id=runtime.tool_call_id,
+            tool_name="confirm_account_strategy",
+        )
+
+    try:
+        confirmed = await confirm_account_strategy(
+            project=project,
+            repository=repository,
+            option_id=option_id,
+            created_at=datetime.now(UTC),
+            source_thread_id=thread_id,
+            source_run_id=run_id,
+        )
+    except ValueError as exc:
+        logger.warning("Account strategy confirmation was rejected: %s", str(exc))
+        return _terminal_account_strategy_command(
+            "这个路线编号不属于当前待确认提案，因此没有替你选择。请从最新候选中重新选一条。",
+            tool_call_id=runtime.tool_call_id,
+            tool_name="confirm_account_strategy",
+        )
+    except Exception as exc:
+        logger.warning("Account strategy confirmation was unavailable: %s", type(exc).__name__)
+        return _terminal_account_strategy_command(
+            "这次账号路线确认暂时未能封存，原提案保持不变。",
+            tool_call_id=runtime.tool_call_id,
+            tool_name="confirm_account_strategy",
+        )
+
+    artifact = confirmed.judgment_artifact
+    return _terminal_account_strategy_command(
+        render_account_strategy(confirmed.judgment) + "\n\n这条路线已经由你确认。接下来可以沿它生成第一条具体可拍选题。",
+        tool_call_id=runtime.tool_call_id,
+        tool_name="confirm_account_strategy",
+        persistence={
+            "status": "reused" if confirmed.reused else "stored",
+            "project_id": project_id,
+            "artifact_type": artifact.artifact_type,
+            "artifact_id": artifact.artifact_id,
+            "content_sha256": artifact.content_sha256,
+        },
+    )
+
+
+__all__ = ["confirm_account_strategy_tool", "develop_account_strategy_tool"]

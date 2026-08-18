@@ -271,7 +271,7 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
         "render_shooting_delivery",
         Mock(return_value="# 今日建议拍摄\n\n## 一条具体选题"),
     )
-    render_judgment = Mock(return_value="# 账号孵化判断\n\n已形成项目级判断")
+    render_judgment = Mock(return_value="# 已确认的账号路线\n\n已形成项目级判断")
     monkeypatch.setattr(content_intelligence_tool_module, "render_account_strategy", render_judgment)
 
     result = await explore_content_world_tool.ainvoke(
@@ -293,7 +293,7 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
     assert delivery.await_args.kwargs["incubation_judgment"] is judgment
     assert persistence.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
     assert persistence.await_args.kwargs["include_production_plan"] is False
-    assert "# 账号孵化判断" in result.update["messages"][0].content
+    assert "# 已确认的账号路线" in result.update["messages"][0].content
     assert "# 本条表现形式" in result.update["messages"][0].content
     assert "_answer_appendix" not in result.update["messages"][0].additional_kwargs["incubation_persistence"]
     render_judgment.assert_called_once_with(judgment)
@@ -609,7 +609,7 @@ def test_incubation_renderer_keeps_position_audience_persona_form_and_monetizati
 
     rendered = content_intelligence_tool_module.render_account_strategy(judgment)
 
-    assert rendered.startswith("# 账号孵化判断")
+    assert rendered.startswith("# 已确认的账号路线")
     assert "**定位版本：** v1" in rendered
     for heading in (
         "## 定位",
@@ -1457,7 +1457,9 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "sole owner of positioning, audience, persona, account-level presentation, and monetization hypotheses" in normalized_section
     assert "Use `develop_account_strategy` for account-starting or positioning requests" in normalized_section
     assert "A candidate content map is input evidence, not an adopted account position" in normalized_section
-    assert "never creates or revises account strategy" in normalized_section
+    assert "never creates, confirms, or revises account strategy" in normalized_section
+    assert "call `confirm_account_strategy` with that exact option id" in normalized_section
+    assert "does not block a first proposal" in normalized_section
     assert "BenchmarkSnapshot" in normalized_section
     assert "cannot decide positioning" in normalized_section
     assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section

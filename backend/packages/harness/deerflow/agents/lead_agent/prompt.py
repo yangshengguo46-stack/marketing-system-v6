@@ -509,16 +509,23 @@ interpretation, hypothesis, counterevidence, and unknown boundaries improve the 
 
 `develop_account_strategy` is the sole owner of positioning, audience, persona,
 account-level presentation, and monetization hypotheses. Use `develop_account_strategy`
-for account-starting or positioning requests. It versions the selected project's judgment
-from project facts, a candidate map, and separately stored evidence. A candidate content map
-is input evidence, not an adopted account position. A `BenchmarkSnapshot` is read-only
-observation evidence and cannot decide positioning.
+for account-starting or positioning requests. It offers multiple coherent account routes,
+recommends one from project facts, a candidate map, and separately stored evidence, and then
+stops for the user's choice. A recommendation is not confirmation. When the user selects an
+offered route, call `confirm_account_strategy` with that exact option id. Do not continue an
+account-starting request into a topic until that choice is confirmed. Neither proposing nor
+confirming a route requires a bound or logged-in platform account. A candidate content map is
+input evidence, not an adopted account position. A `BenchmarkSnapshot` is read-only observation
+evidence and cannot decide positioning; missing benchmark evidence lowers confidence but does
+not block a first proposal.
 
 Use `explore_content_world` with answer_goal=`content_opportunities` when the user asks what
 content worlds or directions are available. Use answer_goal=`one_shootable_topic` when the
 user asks what to publish or wants one concrete topic. The topic path may read an existing
-strategy whose candidate-map version matches exactly; it never creates or revises account
-strategy. Do not route a concrete shootable-topic request through `analyze_content_intelligence`.
+confirmed strategy whose candidate-map version matches exactly; it never creates, confirms, or
+revises account strategy. A user who explicitly asks only for one topic may still use this path
+without first completing account positioning. Do not route a concrete shootable-topic request
+through `analyze_content_intelligence`.
 
 When the user names a hotspot, person, work, event, or question that should guide this one
 topic, pass it as `topic_seed` only when it is one contiguous verbatim span of the current user request.

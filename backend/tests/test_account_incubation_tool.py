@@ -9,7 +9,10 @@ from langchain.tools import ToolRuntime
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from deerflow.tools.builtins.account_incubation_tool import develop_account_strategy_tool
+from deerflow.tools.builtins.account_incubation_tool import (
+    confirm_account_strategy_tool,
+    develop_account_strategy_tool,
+)
 from deerflow.tools.tools import BUILTIN_TOOLS
 
 tool_module = importlib.import_module("deerflow.tools.builtins.account_incubation_tool")
@@ -40,6 +43,11 @@ def test_account_strategy_tool_is_a_separate_lead_capability() -> None:
     assert develop_account_strategy_tool.return_direct is True
     schema = develop_account_strategy_tool.tool_call_schema.model_json_schema()
     assert set(schema["properties"]) == {"user_request"}
+    assert confirm_account_strategy_tool in BUILTIN_TOOLS
+    assert confirm_account_strategy_tool.name == "confirm_account_strategy"
+    assert confirm_account_strategy_tool.return_direct is True
+    confirm_schema = confirm_account_strategy_tool.tool_call_schema.model_json_schema()
+    assert set(confirm_schema["properties"]) == {"option_id"}
 
 
 @pytest.mark.asyncio
@@ -92,7 +100,7 @@ async def test_account_strategy_tool_routes_candidate_map_and_project_evidence_t
     monkeypatch.setattr(tool_module, "analyze_content_intelligence", analysis)
     prepare = AsyncMock(return_value=prepared)
     monkeypatch.setattr(tool_module, "prepare_account_strategy", prepare)
-    monkeypatch.setattr(tool_module, "render_account_strategy", Mock(return_value="# 账号孵化判断\n\n**定位版本：** v1"))
+    monkeypatch.setattr(tool_module, "render_account_strategy", Mock(return_value="# 账号路线候选\n\n**提案版本：** v1"))
 
     result = await develop_account_strategy_tool.ainvoke(
         {
@@ -110,5 +118,45 @@ async def test_account_strategy_tool_routes_candidate_map_and_project_evidence_t
     assert prepare.await_args.kwargs["bundle"] is bundle
     assert prepare.await_args.kwargs["verbatim_user_request"] == "我是做黄金礼品的，我要怎么起号？"
     message = result.update["messages"][0]
-    assert message.content.startswith("# 账号孵化判断")
+    assert message.content.startswith("# 账号路线候选")
     assert message.additional_kwargs["incubation_persistence"]["artifact_id"] == "artifact-strategy-1"
+
+
+@pytest.mark.asyncio
+async def test_account_strategy_confirmation_does_not_require_a_platform_account(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    judgment = object()
+    artifact = SimpleNamespace(
+        artifact_type="incubation_judgment",
+        artifact_id="artifact-strategy-2",
+        content_sha256="b" * 64,
+    )
+    confirmed = SimpleNamespace(
+        judgment=judgment,
+        judgment_artifact=artifact,
+        reused=False,
+    )
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    confirm = AsyncMock(return_value=confirmed)
+    monkeypatch.setattr(tool_module, "confirm_account_strategy", confirm)
+    monkeypatch.setattr(tool_module, "render_account_strategy", Mock(return_value="# 已确认的账号路线"))
+
+    result = await confirm_account_strategy_tool.ainvoke(
+        {
+            "name": "confirm_account_strategy",
+            "args": {
+                "option_id": "route_b",
+                "runtime": _runtime(project_id="golden-gift"),
+            },
+            "id": "account-strategy-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert confirm.await_args.kwargs["option_id"] == "route_b"
+    assert "account" not in confirm.await_args.kwargs
+    message = result.update["messages"][0]
+    assert message.name == "confirm_account_strategy"
+    assert "已经由你确认" in message.content

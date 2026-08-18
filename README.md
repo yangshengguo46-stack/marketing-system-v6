@@ -783,14 +783,20 @@ its path at the frozen root. A wedding, purchase, store visit, banquet, or other
 scene cannot silently become the whole account strategy.
 
 Long-lived account judgment belongs to the separate `develop_account_strategy` tool. It
-requires a selected project and combines the candidate map with project facts and formally
-accepted benchmark or audience evidence. Its `IncubationJudgment` versions positioning,
-audience hypotheses, persona, account-level presentation, and monetization hypotheses.
-Identical parents reuse the current version; changed inputs create a successor with the
-previous judgment as a parent and an explicit revision reason. A `BenchmarkSnapshot` is
-read-only observation, never positioning authority. The topic path may read an existing
-strategy only when it binds the exact candidate-map version, and it never creates or
-revises strategy as a side effect of producing one topic.
+requires a selected project, but not a bound or logged-in platform account. It combines the
+candidate map with project facts and any formally accepted benchmark or audience evidence,
+then proposes two to five coherent account routes. Each route joins the long-term content
+subject, audience promise, persona, primary and supporting presentation forms, business
+connection, monetization hypothesis, resources, and tradeoffs. The Agent recommends one route,
+but recommendation remains `proposed`; it is not user consent. Only
+`confirm_account_strategy`, called after the user chooses an offered option, creates a
+`confirmed` successor and projects that exact route into positioning, audience, persona,
+account-level presentation, and monetization. The user may choose a non-recommended route.
+A `BenchmarkSnapshot` is read-only observation, never positioning authority, and missing
+formal benchmark evidence lowers confidence rather than blocking a cold start. The topic path
+may read a confirmed strategy only when it binds the exact candidate-map version, and it never
+creates, confirms, or revises strategy as a side effect of producing one topic. An explicit
+one-topic request can still proceed without completing account positioning first.
 The semantic chain runs in dependency order. It separates the verbatim business object,
 lexical head, modifiers, offering role, served objects, activities, candidate semantic
 families, and a nullable shared human world before one adjudicator freezes the root.
@@ -869,8 +875,8 @@ injected through `ToolRuntime` and stay out of the model-facing tool schema. The
 candidate map excludes run-specific named candidates, so later research does not silently
 rewrite an adopted account strategy. Running without a selected project remains valid, and a
 redacted ledger or post-draft adaptation failure does not discard the generated answer.
-Project history UI, confirmation/version switching, and production fact review remain
-later V6 work.
+Project history UI, visual route-selection cards, version switching, and production fact
+review remain later V6 work. Chat-based exact-route confirmation is implemented.
 
 Audience intelligence now has a formal observation boundary. Authorized official
 demographic, interest, activity, or commerce slices retain their exact population scope

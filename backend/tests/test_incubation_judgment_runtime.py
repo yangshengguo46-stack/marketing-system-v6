@@ -24,13 +24,12 @@ from deerflow.incubation.evidence import (
 )
 from deerflow.incubation.judgment import (
     IncubationBrief,
-    IncubationJudgment,
-    MonetizationHypothesis,
     seal_incubation_brief,
 )
 from deerflow.incubation.judgment_runtime import (
     INCUBATION_JUDGMENT_SYSTEM_PROMPT,
     MAX_JUDGMENT_MODEL_INPUT_BYTES,
+    AccountStrategyProposalDraft,
     IncubationJudgmentModelError,
     generate_incubation_judgment,
 )
@@ -163,23 +162,36 @@ def _evidence_artifact(
 
 
 def _judgment_payload(*, basis_ids: tuple[str, ...]) -> dict[str, Any]:
+    def route(option_id: str, name: str, form: str) -> dict[str, Any]:
+        return {
+            "option_id": option_id,
+            "name": name,
+            "content_subject": f"{name}视角下的人情、礼节和关系判断",
+            "business_connection": "礼品从业位置提供观察角度，不把产品当成内容主体。",
+            "long_term_promise": "每次借一件具体人情事件讲清人怎样相处。",
+            "audience_people": "关心人情、礼节和关系判断的人",
+            "recurring_interest": "具体关系如何被安排",
+            "account_role": "从礼品生意观察人情的从业者",
+            "primary_forms": [form],
+            "supporting_forms": [],
+            "monetization_path": "先建立长期内容信任，再承接用户已有的礼品服务。",
+            "monetization_trust_required": "观众先确认账号懂礼与关系。",
+            "rationale": "与已冻结的内容根一致。",
+            "basis_artifact_ids": list(basis_ids),
+            "confidence": "low",
+            "unknowns": ["仍需真实反馈校正。"],
+            "resource_requirements": [f"持续生产{form}所需素材"],
+            "tradeoffs": [f"{form}的成本待确认"],
+        }
+
     return {
         "content_map_version_id": "map-gift-relations-v1",
-        "positioning": {
-            "decision": "从礼品生意观察人情与关系秩序",
-            "audience_promise": "每次借一件具体人情事件讲清人怎样相处。",
-            "rationale": "与已冻结的内容根一致。",
-            "basis_artifact_ids": basis_ids,
-            "confidence": "medium",
-            "unknowns": [],
-            "boundaries": ["不把黄金产品介绍当成内容主轴。"],
-        },
-        "audience": None,
-        "persona": None,
-        "presentation": None,
-        "monetization": [],
+        "route_options": [
+            route("route_a", "真人故事", "真人出镜口述"),
+            route("route_b", "无人素材", "无人素材旁白"),
+        ],
+        "recommended_option_id": "route_a",
         "unknowns": ["尚无真实受众反馈。"],
-        "alternatives": ["可先保留图文与口述两种账号级形式。"],
     }
 
 
@@ -214,7 +226,7 @@ async def test_runtime_binds_exact_brief_world_and_optional_evidence_parents() -
         source_run_id="run-2",
     )
 
-    assert seen["schema"] is IncubationJudgment
+    assert seen["schema"] is AccountStrategyProposalDraft
     assert sealed.artifact_type == "incubation_judgment"
     assert set(sealed.parents) == {
         brief.to_parent_ref(),
@@ -235,6 +247,8 @@ async def test_runtime_binds_exact_brief_world_and_optional_evidence_parents() -
 
 @pytest.mark.asyncio
 async def test_runtime_uses_bounded_evidence_projection_instead_of_full_snapshot() -> None:
+    brief = _brief_artifact()
+    world = _content_world_artifact()
     audience = _evidence_artifact(
         artifact_type="evidence_snapshot",
         evidence_role="owned_audience_observation",
@@ -246,15 +260,12 @@ async def test_runtime_uses_bounded_evidence_projection_instead_of_full_snapshot
     async def structured_model(schema, messages):
         nonlocal seen_input
         seen_input = messages[1].content
-        return {
-            "content_map_version_id": "map-gift-relations-v1",
-            "unknowns": ["仍需真实内容反馈校正。"],
-        }
+        return _judgment_payload(basis_ids=(brief.artifact_id, world.artifact_id, audience.artifact_id))
 
     await generate_incubation_judgment(
         project=PROJECT,
-        brief_artifact=_brief_artifact(),
-        content_world_artifact=_content_world_artifact(),
+        brief_artifact=brief,
+        content_world_artifact=world,
         structured_model=structured_model,
         audience_evidence_artifacts=(audience,),
         created_at=NOW,
@@ -345,7 +356,7 @@ async def test_runtime_surfaces_structured_model_failure_without_sealing() -> No
 
 
 @pytest.mark.asyncio
-async def test_runtime_allows_an_unknown_only_judgment() -> None:
+async def test_runtime_rejects_an_unknown_only_result_instead_of_hiding_missing_routes() -> None:
     async def unknown_only_model(schema, messages):
         return {
             "content_map_version_id": "map-gift-relations-v1",
@@ -353,22 +364,16 @@ async def test_runtime_allows_an_unknown_only_judgment() -> None:
             "alternatives": ["待资源确认后再在口述与图文之间判断。"],
         }
 
-    sealed = await generate_incubation_judgment(
-        project=PROJECT,
-        brief_artifact=_brief_artifact(),
-        content_world_artifact=_content_world_artifact(),
-        structured_model=unknown_only_model,
-        created_at=NOW,
-        source_thread_id="thread-1",
-        source_run_id="run-2",
-    )
-
-    assert sealed.payload["positioning"] is None
-    assert sealed.payload["audience"] is None
-    assert sealed.payload["persona"] is None
-    assert sealed.payload["presentation"] is None
-    assert sealed.payload["monetization"] == []
-    assert sealed.payload["unknowns"] == ["用户可持续投入的出镜与制作资源仍未知。"]
+    with pytest.raises(IncubationJudgmentModelError, match="invalid incubation judgment"):
+        await generate_incubation_judgment(
+            project=PROJECT,
+            brief_artifact=_brief_artifact(),
+            content_world_artifact=_content_world_artifact(),
+            structured_model=unknown_only_model,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-2",
+        )
 
 
 @pytest.mark.asyncio
@@ -379,17 +384,7 @@ async def test_monetization_stays_in_judgment_and_cannot_rewrite_content_map() -
 
     async def monetization_model(schema, messages):
         assert "变现路径不属于内容地图" in messages[0].content
-        return IncubationJudgment(
-            content_map_version_id="map-gift-relations-v1",
-            monetization=(
-                MonetizationHypothesis(
-                    path="先建立对礼与关系的信任，再由用户实际可承接的礼品服务转化。",
-                    trust_required="观众先确认账号能持续提供有用的关系判断。",
-                    rationale="这是待验证的商业承接假设，不是内容根。",
-                    basis_artifact_ids=(brief.artifact_id, world.artifact_id),
-                ),
-            ),
-        )
+        return _judgment_payload(basis_ids=(brief.artifact_id, world.artifact_id))
 
     sealed = await generate_incubation_judgment(
         project=PROJECT,

@@ -16,6 +16,7 @@ from deerflow.incubation.contracts import (
 
 FactProvenance = Literal["user_stated", "authorized_observation"]
 Confidence = Literal["low", "medium", "high"]
+AccountStrategyStatus = Literal["proposed", "confirmed"]
 
 
 def _canonical_ids(value: tuple[str, ...]) -> tuple[str, ...]:
@@ -112,6 +113,32 @@ class MonetizationHypothesis(JudgmentBasis):
     preconditions: tuple[NonEmptyStr, ...] = ()
 
 
+class AccountRouteOption(IncubationContract):
+    """One coherent account route offered for explicit user selection."""
+
+    option_id: NonEmptyStr = Field(max_length=80, pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    name: NonEmptyStr = Field(max_length=200)
+    positioning: PositioningDecision
+    audience: AudienceHypothesis
+    persona: PersonaDecision
+    presentation: AccountPresentationPlan
+    monetization: tuple[MonetizationHypothesis, ...] = ()
+    business_connection: NonEmptyStr = Field(max_length=3000)
+    recommendation_rationale: NonEmptyStr = Field(max_length=3000)
+    resource_requirements: tuple[NonEmptyStr, ...] = ()
+    tradeoffs: tuple[NonEmptyStr, ...] = ()
+
+    def basis_artifact_ids(self) -> frozenset[str]:
+        facets: tuple[JudgmentBasis, ...] = (
+            self.positioning,
+            self.audience,
+            self.persona,
+            self.presentation,
+            *self.monetization,
+        )
+        return frozenset(artifact_id for facet in facets for artifact_id in facet.basis_artifact_ids)
+
+
 class IncubationJudgment(IncubationContract):
     """A versionable proposal. Missing facets remain unknown rather than gates."""
 
@@ -119,6 +146,10 @@ class IncubationJudgment(IncubationContract):
     supersedes_judgment_artifact_id: NonEmptyStr | None = None
     revision_reason: NonEmptyStr | None = Field(default=None, max_length=3000)
     content_map_version_id: NonEmptyStr = Field(max_length=80)
+    decision_status: AccountStrategyStatus = "confirmed"
+    route_options: tuple[AccountRouteOption, ...] = Field(default=(), max_length=5)
+    recommended_option_id: NonEmptyStr | None = Field(default=None, max_length=80)
+    selected_option_id: NonEmptyStr | None = Field(default=None, max_length=80)
     positioning: PositioningDecision | None = None
     audience: AudienceHypothesis | None = None
     persona: PersonaDecision | None = None
@@ -137,6 +168,28 @@ class IncubationJudgment(IncubationContract):
             raise ValueError("a revised judgment requires a previous judgment and revision reason")
         return self
 
+    @model_validator(mode="after")
+    def validate_route_choice(self) -> IncubationJudgment:
+        option_ids = tuple(option.option_id for option in self.route_options)
+        if len(set(option_ids)) != len(option_ids):
+            raise ValueError("route_options must use unique option_id values")
+        if self.decision_status == "proposed":
+            if len(self.route_options) < 2:
+                raise ValueError("a proposed judgment requires at least two route_options")
+            if self.recommended_option_id not in option_ids:
+                raise ValueError("a proposed judgment requires a valid recommended_option_id")
+            if self.selected_option_id is not None:
+                raise ValueError("a proposed judgment cannot select an option for the user")
+            return self
+        if self.route_options:
+            if self.recommended_option_id not in option_ids:
+                raise ValueError("a routed judgment requires a valid recommended_option_id")
+            if self.selected_option_id not in option_ids:
+                raise ValueError("a confirmed routed judgment requires a valid selected_option_id")
+        elif self.recommended_option_id is not None or self.selected_option_id is not None:
+            raise ValueError("route choice ids require route_options")
+        return self
+
     def basis_artifact_ids(self) -> frozenset[str]:
         facets: list[JudgmentBasis] = []
         for facet in (
@@ -148,7 +201,9 @@ class IncubationJudgment(IncubationContract):
             if facet is not None:
                 facets.append(facet)
         facets.extend(self.monetization)
-        return frozenset(artifact_id for facet in facets for artifact_id in facet.basis_artifact_ids)
+        direct_ids = frozenset(artifact_id for facet in facets for artifact_id in facet.basis_artifact_ids)
+        route_ids = frozenset(artifact_id for route in self.route_options for artifact_id in route.basis_artifact_ids())
+        return direct_ids | route_ids
 
 
 def _require_project(
@@ -265,6 +320,8 @@ def seal_incubation_judgment(
 
 __all__ = [
     "AccountPresentationPlan",
+    "AccountRouteOption",
+    "AccountStrategyStatus",
     "AudienceHypothesis",
     "BriefFact",
     "Confidence",

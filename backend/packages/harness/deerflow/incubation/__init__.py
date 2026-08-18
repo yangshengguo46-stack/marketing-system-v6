@@ -1,6 +1,7 @@
 from deerflow.incubation.account_strategy import (
     AccountStrategyRepository,
     PreparedAccountStrategy,
+    confirm_account_strategy,
     prepare_account_strategy,
     select_current_account_strategy,
 )
@@ -88,6 +89,8 @@ from deerflow.incubation.format_runtime import (
 )
 from deerflow.incubation.judgment import (
     AccountPresentationPlan,
+    AccountRouteOption,
+    AccountStrategyStatus,
     AudienceHypothesis,
     BriefFact,
     IncubationBrief,
@@ -101,6 +104,8 @@ from deerflow.incubation.judgment import (
 from deerflow.incubation.judgment_runtime import (
     INCUBATION_JUDGMENT_SYSTEM_PROMPT,
     MAX_JUDGMENT_MODEL_INPUT_BYTES,
+    AccountRouteOptionDraft,
+    AccountStrategyProposalDraft,
     IncubationJudgmentModelError,
     StructuredJudgmentModel,
     generate_incubation_judgment,
@@ -214,6 +219,10 @@ __all__ = [
     "ApprovalKind",
     "AssemblyStep",
     "AccountPresentationPlan",
+    "AccountRouteOption",
+    "AccountRouteOptionDraft",
+    "AccountStrategyProposalDraft",
+    "AccountStrategyStatus",
     "AccountStrategyRepository",
     "AdaptedDraft",
     "AdaptedDraftDraft",
@@ -322,6 +331,7 @@ __all__ = [
     "build_hllm_inference_request",
     "pseudonymize_audience_actor",
     "prepare_account_strategy",
+    "confirm_account_strategy",
     "seal_content_run_artifacts",
     "select_used_topic_evidence_snapshots",
     "select_project_judgment_evidence",

@@ -172,17 +172,20 @@ account presentation, or monetization.
 
 `deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
 `develop_account_strategy` alone creates those long-lived judgments from a candidate map, Brief,
-and formal evidence. Identical parents reuse a version; changed inputs create a linked successor
-with a revision reason. Topic delivery may read only the latest exact-map strategy and cannot write
-one. `MessagePlan` and `BaseDraft` stay format-neutral and cannot invent facts, materials, sales,
-experiments, quantities, or publishing decisions.
+and formal evidence. Its model-facing contract is a flat 2-5 route proposal: each route combines
+content subject, business connection, audience, persona, presentation, monetization, resources,
+and tradeoffs. It may recommend one but cannot confirm it. `confirm_account_strategy` is the only
+writer for the user's exact route choice and creates the linked `confirmed` successor; neither
+operation requires a platform account. Topic delivery may read only the latest confirmed exact-map
+strategy and cannot create, confirm, or revise one. `MessagePlan` and `BaseDraft` stay format-neutral
+and cannot invent facts, materials, sales, experiments, quantities, or publishing decisions.
 
 Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
 formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post
 coverage, remains read-only, and cannot write strategy. Credentials, raw pages, local paths, and
 temporary URLs never enter projections or business artifacts. Production, MediaKit, approvals,
 publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/` and
-ADR-018 through ADR-021 for full contracts and status.
+ADR-018 through ADR-022 for full contracts and status.
 
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.

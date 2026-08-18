@@ -13,9 +13,12 @@
 flowchart LR
     USER["用户或定时任务"] --> LEAD["DeerFlow Lead"]
     LEAD --> OPPORTUNITY["语义 / 候选内容机会地图"]
-    BENCH["对标账号只读证据"] --> STRATEGY["账号孵化判断 vN"]
-    FACTS["项目 / 账号 / 受众 / 复盘事实"] --> STRATEGY
-    OPPORTUNITY --> STRATEGY
+    BENCH["可选对标账号只读证据"] --> PROPOSAL["2 至 5 条账号路线提案"]
+    FACTS["项目 / 可选账号 / 受众 / 复盘事实"] --> PROPOSAL
+    OPPORTUNITY --> PROPOSAL
+    PROPOSAL --> RECOMMEND["Agent 推荐并说明依据"]
+    RECOMMEND --> CHOICE["用户选择"]
+    CHOICE --> STRATEGY["已确认账号孵化判断 vN"]
     STRATEGY --> CONTENT["内容循环"]
     OPPORTUNITY --> CONTENT
     TOPIC_EVIDENCE["热点 / 人物 / 事件 / 作品资料"] --> CONTENT
@@ -30,8 +33,10 @@ flowchart LR
 
 上图是产物之间的可能谱系，不是一条每次必须走完的流水线。Lead 按用户当前目标读取有界上下文，
 只调用产生所需业务产物的能力。候选内容地图没有账号定位权；对标、MediaKit、平台 API、预演和
-复盘也不得自行重选内容根或修改共享业务真相。只有账号孵化判断层能形成长期定位，并通过新版本
-响应新证据。完整决策、产物合同、硬门边界和迁移原则见
+复盘也不得自行重选内容根或修改共享业务真相。只有账号孵化判断层能形成长期路线，并通过新版本
+响应新证据。首次起号先给 2 至 5 条完整候选路线；Agent 的推荐不是用户确认，只有用户选择后
+才形成可供后续选题读取的 `confirmed` 版本。项目级提案和确认都不要求先绑定或登录平台账号。
+完整决策、产物合同、硬门边界和迁移原则见
 [`ADR-018`](decisions/ADR-018-artifact-graph-orchestration.md)；工作包与验收顺序见
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)。
 
@@ -121,7 +126,10 @@ flowchart LR
     USR["用户原话"] --> LEAD["DeerFlow Lead"]
     LEAD -->|"内容机会或具体选题请求"| TOOL["explore_content_world"]
     LEAD -->|"起号、定位或长期账号策略"| ACCOUNT["develop_account_strategy"]
-    ACCOUNT --> STRATEGY["IncubationJudgment vN"]
+    ACCOUNT --> ROUTES["多条 AccountRouteOption + 推荐"]
+    ROUTES --> WAIT["等待用户选择"]
+    WAIT -->|"精确 option_id"| CONFIRM["confirm_account_strategy"]
+    CONFIRM --> STRATEGY["confirmed IncubationJudgment vN"]
     TOOL --> SEM["业务语义专家"]
     TOOL --> LEX["词义世界专家"]
     SEM -->|"lexical_head"| EVIDENCE["可选本地词义证据"]
@@ -159,6 +167,12 @@ flowchart LR
     DECIDE --> WORLD["ContentWorldView"]
     MAP --> WORLD
 ```
+
+每条账号路线必须是一套连在一起的判断：长期内容主体、给受众的承诺、账号人设、主要与辅助
+表现形式、业务连接、变现假设、资源要求和代价。真人出镜口述、无人素材旁白、数字人、AI 情景剧、
+AI 微电影、MV 等只是可选表现方式，模型应按用户业务、已知资源、候选内容地图和可选对标证据
+组合路线；不能把同一个定位仅换三种拍法冒充三条路线。缺少对标或用户资源信息时保留未知并降低
+置信度，不形成冷启动硬门。显式要求单条选题时可以不先完成定位；宽泛起号请求必须停在路线选择。
 
 ## 共享记录
 

@@ -1,4 +1,4 @@
-from .account_incubation_tool import develop_account_strategy_tool
+from .account_incubation_tool import confirm_account_strategy_tool, develop_account_strategy_tool
 from .clarification_tool import ask_clarification_tool
 from .content_intelligence_tool import content_intelligence_tool, explore_content_world_tool
 from .douyin_benchmark_tool import douyin_benchmark_candidate_tool
@@ -16,6 +16,7 @@ __all__ = [
     "present_file_tool",
     "review_skill_package",
     "ask_clarification_tool",
+    "confirm_account_strategy_tool",
     "develop_account_strategy_tool",
     "content_intelligence_tool",
     "explore_content_world_tool",

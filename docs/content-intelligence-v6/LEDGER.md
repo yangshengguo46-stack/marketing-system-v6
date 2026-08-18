@@ -1870,3 +1870,29 @@ Skill 策略、孵化路由和事实边界均保留；提示模板新增 `9,000`
 现役抖音对标采集只生成候选证据，正式 `BenchmarkSnapshot` 的稳定身份、多作品一致性与覆盖连接器
 尚未生产接通。详见 `audits/A79-content-opportunity-account-strategy-boundary.md` 和
 `decisions/ADR-021-separate-content-opportunity-account-strategy.md`。
+
+## A80 账号路线提案与用户确认
+
+2026-08-18 用户进一步明确，首次起号不应要求先登录平台账号，也不能由模型只给一条定位后默认
+采用。它至少应展示几条把长期讲什么、受众、人设、真人出镜、无人素材、数字人、AI 情景剧、
+AI 微电影或 MV 等表现形式、变现假设、资源和代价连成一体的路线；Agent 根据项目、产品和可选
+对标证据推荐，用户确认后才能进入下一步。
+
+本轮先以失败测试固定“推荐不等于确认、候选不得少于两条、未确认策略不得进入选题、无需
+`PlatformAccountRef`、用户可选择非推荐路线”。实现中发现深嵌套持久化合同使真实 GLM 连续返回
+畸形工具参数，因此改为扁平 `AccountStrategyProposalDraft`，再由代码编译为有父级、版本和哈希的
+`IncubationJudgment`。模型合同没有版本号、确认状态或已选路线，不能自行替用户点头。
+
+真实黄金礼品薄合同第一次虽技术通过，三条路线仍围着产品打转。继续追踪发现一个定位字段混合了
+“账号长期讲什么”和“业务如何承接”。拆为 `content_subject` 与 `business_connection` 后，同一封存
+内容根得到“礼的田野观察者”和“礼的场景档案馆”，黄金礼品只作为从业观察位置和后续承接。全新
+“旧家具修复”完整链得到真人匠人纪实、无人素材影像志和 AI“家具前世今生”三条路线；系统推荐
+真人纪实，但 `selected_option_id` 仍为空。
+
+黄金拆字段后的路线调用为 `117.57s`；旧家具完整链语义/地图 `127.13s`、路线 `97.67s`，合计
+`224.80s`。因此业务边界通过、交互速度未通过。平台账号绑定、正式对标连接器和可视化路线卡片
+延期，不作为初步孵化硬门。聚焦回归 `85 passed`；首次全量回归只因根级 Agent 指南超过软预算
+93 字节失败，压缩固定上下文后预算测试 `12 passed`，最终完整后端非 live 回归为
+`12099 passed, 76 skipped, 17 warnings in 496.05s`。完整证据见
+`audits/A80-account-route-proposal-and-confirmation.md`，决策由
+`decisions/ADR-022-propose-account-routes-before-confirmation.md` 固定。

@@ -182,10 +182,10 @@ These apply repo-wide; module guides own the module-specific detail.
 - **Test-driven development** — features and bug fixes ship with tests. Backend tests live
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
-- **V6 content core** — use ADR-020's dependency-ordered semantic chain; A58's concurrent
-  root gates are retired. Topics bind the frozen account map. Expression may continue through
-  `FormatDecision` and `AdaptedDraft`; production is server-gated and off by default.
-  Competitor observations stay project-scoped, author-consistent, capped at 24, and make no
-  audience or success claims. See `docs/content-intelligence-v6/` and `backend/AGENTS.md`.
+- **V6 content core** — ADR-020 owns semantic order. Candidate maps are not account strategy.
+  `develop_account_strategy` proposes 2-5 routes; only `confirm_account_strategy` records the
+  user's choice. Topics read confirmed exact-map strategy, initial proposals need no platform
+  login, and competitor evidence stays read-only. See `docs/content-intelligence-v6/` and
+  `backend/AGENTS.md`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.
