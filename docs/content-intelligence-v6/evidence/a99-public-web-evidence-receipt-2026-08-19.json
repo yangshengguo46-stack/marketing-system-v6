@@ -1,0 +1,2450 @@
+{
+  "artifact_hashes": {
+    "experiments/benchmark_first_incubation_lab/contracts.py": "4f22ca08ff57bffb4e741e72756f4ec48976b7f4da2988d7e6d97ae688c59a3e",
+    "experiments/benchmark_first_incubation_lab/datasets/held_out_v1.json": "0eda6984a7b2b5ad771e8524fe9c8770e7f946efca57d4d78c9f6ffb5ebed87b",
+    "experiments/benchmark_first_incubation_lab/datasets/review_labels_v1.json": "cdc7fed2c6d68aa370c9e4ceca47520ff4e64bd641417aaaf3b1761fd01ecfb9",
+    "experiments/benchmark_first_incubation_lab/evaluation.py": "e2ee18c36023ef98fadcc18ab071119aa5f97efc1b8c5a3a9c8485dbed32ccda",
+    "experiments/benchmark_first_incubation_lab/lab.py": "64a807c0ca1ba77b2c0ff0d966a3c3b30fd56a44292da0d96f5a9593d64d9188",
+    "experiments/benchmark_first_incubation_lab/run.py": "bebdcd5a06eb5fef25f0efaf1cd4e2b111bde42b5554ca47d67552f5df30d3ea",
+    "experiments/benchmark_first_incubation_lab/search.py": "48d40c3086ba88371a47c7d958a4465c26f522bcce2806ea1ba9bebedbc69301"
+  },
+  "collection_method": "public_web_benchmark_discovery",
+  "completed_at": "2026-08-18T22:12:54.645633+00:00",
+  "dataset_id": "benchmark-first-incubation-held-out-v1",
+  "dataset_status": "frozen_before_implementation_evidence_collection_and_live_run",
+  "evidence": {
+    "automatic_preflight": {
+      "all_cases_ready": true,
+      "case_count": 7,
+      "cases": [
+        {
+          "case_id": "pet-funeral-service",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        },
+        {
+          "case_id": "old-photo-restoration",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        },
+        {
+          "case_id": "children-photography",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        },
+        {
+          "case_id": "corporate-team-building",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        },
+        {
+          "case_id": "industrial-anticorrosion-coating",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        },
+        {
+          "case_id": "outdoor-power-station",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        },
+        {
+          "case_id": "sliced-beef-and-offal-seasoning",
+          "coverage": [
+            {
+              "accepted_result_count": 5,
+              "query_kind": "direct",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "demand",
+              "status": "succeeded"
+            },
+            {
+              "accepted_result_count": 5,
+              "query_kind": "mechanism",
+              "status": "succeeded"
+            }
+          ],
+          "missing_query_kinds": [],
+          "ready": true
+        }
+      ],
+      "model_calls": 0,
+      "search_attempt_count": 21
+    },
+    "manual_relevance_review": "pending",
+    "packs": {
+      "children-photography": {
+        "case_id": "children-photography",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "儿童摄影服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "儿童摄影服务 客户需求 家长为什么拍",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "儿童摄影 起号 新手怎么做",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-fbb3691a2fa399941acb795eb591c51f0d933620a7147f981c90ffe0d4c964ce",
+        "items": [
+          {
+            "content_hash": "4252649b760e5389eb874fad649f4978e4af2a849cc1171b8d0b8d098584afc7",
+            "evidence_id": "benchmark-evidence-3882b75de19c0a559c1b",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "儿童摄影服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "Jun 29, 2026 · cc贝贝专业儿童摄影官方号，商家认证账号。cc贝贝专业儿童摄影官方号的抖音主页、视频、合集以及作品的粉丝量、点赞量 ...",
+            "title": "cc贝贝专业儿童摄影官方号的抖音 - 抖音",
+            "url": "https://www.douyin.com/user/MS4wLjABAAAANqBTNjHMNmii6g12L99hlHO00e_LsrPdzfK--sBo-Pg"
+          },
+          {
+            "content_hash": "c2c5a7f0a813bacce4a746733727312c4596f5cf726760e86cbb3d77bb8dfc68",
+            "evidence_id": "benchmark-evidence-2363014633a0d9d705d0",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "儿童摄影服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "Jun 2, 2025 · 4套方案，打造摄影师抖音账号，每天都有新订单，不管你是婚纱摄影，儿童摄影，还是其他摄影店都可以#刘文运营模式 #影楼运营管理 #影楼运营模式 #影楼抖音运营 #影楼短视频 #摄影培训 #礼服馆短视频 #婚纱摄影培训 #影楼活动方案 #影楼引流方案 00:00 / 00:00 连播",
+            "title": "儿童摄影抖音运营 - 抖音",
+            "url": "https://www.douyin.com/zhuanti/7243501393422845952"
+          },
+          {
+            "content_hash": "c85eddb5a4b57bdb402bb941ede3a69c07abff4c201214485388a58bc45f0c1c",
+            "evidence_id": "benchmark-evidence-a6d2c2226acc0e458f8e",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "儿童摄影服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "哈喽,大家好,今天媒介盒子小编又来跟大家分享软文推广的干货知识了,本篇分享的主要内容是:儿童写真行业如何通过抖音快速获客? 随着三胎的开放，儿童的数量一直在不断的增长，儿童摄影每年以大约16%的发展速度不断…",
+            "title": "儿童写真行业如何通过抖音快速获客? - 知乎专栏",
+            "url": "https://zhuanlan.zhihu.com/p/550202425"
+          },
+          {
+            "content_hash": "e29b94fd2493718772047fa4b3108deb5b77d1959b35d8bc2a63d7e620ece42e",
+            "evidence_id": "benchmark-evidence-8c2477bda8464e77d6a3",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              }
+            ],
+            "query": "儿童摄影服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "商业摄影常见的摄影服务类型有产品画册、服装形象、电商广告等内容,它比人像摄影更复杂,没有统一的拍摄技巧或规律,需要具备扎实的基本功外,更需要灵活的应变能力和解决问题的能力。",
+            "title": "儿童写真行业如何通过抖音快速获客?摄影品牌知名度不高怎么做推广?",
+            "url": "https://zhuanlan.zhihu.com/p/550239676"
+          },
+          {
+            "content_hash": "f5eddffddaa43a76c88b545bf49103e91a1d0c7fa1812b9d6e9afd57bccf6951",
+            "evidence_id": "benchmark-evidence-1051a76113a319841d5a",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "儿童摄影服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "当用户对儿童摄影有了一点初步的兴趣之后，搜索广告的投放促成最后一步的转化。 专注为大家解决短视频投放难题，想要了解更多营销干货,请移步到【ml.zgwelface.com】查看，这里有海量自媒体新闻源优势资源，欢迎您的咨询。",
+            "title": "儿童摄影行业如何用抖音推广？ - 知乎",
+            "url": "https://www.zhihu.com/question/381335083"
+          },
+          {
+            "content_hash": "62b40bcb862818dfe6d4d744678e243944c04ac0a99b7dc828b363faf47d764a",
+            "evidence_id": "benchmark-evidence-d34be08792255197effc",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 客户需求 家长为什么拍",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "儿童摄影服务 客户需求 家长为什么拍",
+            "query_kind": "demand",
+            "snippet": "而现在，越来越多的家长开始注重照片的情感价值，希望记录的是真实的互动和家庭的日常氛围，不再满足于千篇一律的摆拍。 目前国内的亲子摄影服务，可以按照拍摄场景和服务主体分为多个类型。",
+            "title": "# 亲子摄影行业实测：从行业现状到实用避坑指南_家长_孩子_宝宝",
+            "url": "https://www.sohu.com/a/1010983226_122722907"
+          },
+          {
+            "content_hash": "98bc971c9a24127e85bd6d45c621740541b02ce9280ff3586c78cbcc62bf9972",
+            "evidence_id": "benchmark-evidence-4f33bc851a0ebee24d96",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 客户需求 家长为什么拍",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "儿童摄影服务 客户需求 家长为什么拍",
+            "query_kind": "demand",
+            "snippet": "Dec 8, 2025 · 小森林儿童摄影用专业的技术、用心的服务、自然的方式，为临沂家庭记录下这些不可复制的珍贵时刻。 1000平方米的专业场地、2000多套造型服装、7年以上经验的摄影师团队——这些数字背后，是对儿童摄影艺术的执着追求，更是对家庭情感的深刻理解。",
+            "title": "小森林儿童摄影：用自然光影记录0-12岁孩子的成长瞬间_服务_情感化_行...",
+            "url": "https://www.sohu.com/a/962720717_122511288"
+          },
+          {
+            "content_hash": "bd2d4ce56d71f8e00a3329dee1d12e751ed3864dc536f75f720f48c01c70bc3f",
+            "evidence_id": "benchmark-evidence-0c371edb392de876affe",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 客户需求 家长为什么拍",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "儿童摄影服务 客户需求 家长为什么拍",
+            "query_kind": "demand",
+            "snippet": "Jun 23, 2026 · 具体而言，一家值得信赖的儿童摄影机构，至少应具备以下特征： 品类覆盖全面。 能够提供从新生儿、百天、周岁到儿童写真、亲子照、全家福的全周期服务，家长无需在不同门店之间切换。 风格多元且持续更新。",
+            "title": "儿童摄影行业观察：从“流水线拍照”到“家庭记忆留存”，家长该如何选择...",
+            "url": "https://www.cnblogs.com/1699-m-20260616/articles/20738659"
+          },
+          {
+            "content_hash": "53a3ae68d1ab555083b760670e3e93f5566c3a0476a5568fdd7b9c8888bc91d6",
+            "evidence_id": "benchmark-evidence-996f940598e1f48b0c0c",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 客户需求 家长为什么拍",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "儿童摄影服务 客户需求 家长为什么拍",
+            "query_kind": "demand",
+            "snippet": "3 days ago · 5.1市场定位与差异化 精准定位：摄影机构应根据自身优势和市场调研，精准定位目标客户群体，如多孩家庭、高端消费群体等。 差异化服务：针对不同客户群体，提供差异化服务，如高端定制化服务、亲子活动策划等，满足多样化需求。",
+            "title": "2026年儿童摄影市场分析报告：多孩家庭亲子消费趋势与一站式服务-2026...",
+            "url": "https://max.book118.com/html/2026/0814/5203222141013304.shtm"
+          },
+          {
+            "content_hash": "e52219fa646fa766a70df15cd51d7de96b629d9a8abfd7283bb5a807fe241bcc",
+            "evidence_id": "benchmark-evidence-804adbb9da2a75bd5cc2",
+            "memberships": [
+              {
+                "query": "儿童摄影服务 客户需求 家长为什么拍",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "儿童摄影服务 客户需求 家长为什么拍",
+            "query_kind": "demand",
+            "snippet": "Nov 5, 2021 · 为什么要去拍儿童摄影？ 儿童摄影真的有意义吗？ 对于很多家长来说，面对某些儿童摄影店颇高的价格，父母们总会望而却步，然后问问自己这些照片真的有拍的必要吗？ 会不会只是白花钱？",
+            "title": "儿童摄影流淌出的亲子之情 - 知乎专栏",
+            "url": "https://zhuanlan.zhihu.com/p/430076600"
+          },
+          {
+            "content_hash": "7a46c0239586ff2bc6c4825bd5425af7e47de077ed2d04c13d0ca817675646fe",
+            "evidence_id": "benchmark-evidence-9c029109529091481686",
+            "memberships": [
+              {
+                "query": "儿童摄影 起号 新手怎么做",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "儿童摄影 起号 新手怎么做",
+            "query_kind": "mechanism",
+            "snippet": "•适用儿童的光比. 你会经常看到儿童摄影中几乎都用2:1到3.5:1这样中低比例的光比。 2:1的光比，将是你采用的最低光比。超大的光源(或许大过许多儿童)是儿童摄影中比较流行的选择。",
+            "title": "小鬼当佳 留住永恒童真——儿童摄影技法全攻略_技法学院-蜂鸟网",
+            "url": "https://academy.fengniao.com/297/2971386_all.html"
+          },
+          {
+            "content_hash": "658fa1f57d027ce02f65441d58c2dfc37d1fc497c82b497ac0f711a9d8c6fdd6",
+            "evidence_id": "benchmark-evidence-8d46ae63ed9677d519a7",
+            "memberships": [
+              {
+                "query": "儿童摄影 起号 新手怎么做",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "儿童摄影 起号 新手怎么做",
+            "query_kind": "mechanism",
+            "snippet": "如何提高儿童摄影利润，儿童摄影怎么做活动？ 发布时间：2018-10-08 发布人：万福娃儿童摄影. 跟所有其他行业一样，儿童摄影也有着自己的淡旺季，尤其是冬天寒冷的时候，很少有人愿意出去拍照，这就需要投资者想出办法，举办活动来吸引消费者。",
+            "title": "如何提高儿童摄影利润，儿童摄影怎么做活动？ -第一加盟网",
+            "url": "https://dyjm.com/article/682.html"
+          },
+          {
+            "content_hash": "040f3e2b40fab39bdcf673fc3c26012d6b6d97686443ea2db09d9dbef8d2557f",
+            "evidence_id": "benchmark-evidence-d4edf72bf66b0b226ef5",
+            "memberships": [
+              {
+                "query": "儿童摄影 起号 新手怎么做",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "儿童摄影 起号 新手怎么做",
+            "query_kind": "mechanism",
+            "snippet": "2026年度合肥儿童摄影怎么选择不踩坑？ 优质服务品牌深度推荐排名.综合评分：9.0分. 乖乖兔儿童摄影是合肥本土起步较早、规模较大的连锁儿童摄影品牌，深耕本地儿童摄影市场十余年，在合肥政务区、包河区、蜀山区等核心商圈均开设直.",
+            "title": "2026...",
+            "url": "https://post.smzdm.com/p/ad7xznkz/"
+          },
+          {
+            "content_hash": "5808a34eefd985990a137363631f564c6fab4122de9b85edad39fecafc62661c",
+            "evidence_id": "benchmark-evidence-43282407fa1f3276cd38",
+            "memberships": [
+              {
+                "query": "儿童摄影 起号 新手怎么做",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "儿童摄影 起号 新手怎么做",
+            "query_kind": "mechanism",
+            "snippet": "对于儿童摄影技巧我们在之前已经介绍过了，那么关于儿童摄影户外技巧我们还是要具体介绍下，在户外拍摄前，做些户外拍摄准备工作，让您在人来人.",
+            "title": "三分钟了解儿童户外摄影技巧-兔子摄影网",
+            "url": "https://www.tuzier.com/3800.html"
+          },
+          {
+            "content_hash": "312a674d8e0b154bbc80bf51f3c0e1ae4eb9c89055da850d033b60ed751a24a7",
+            "evidence_id": "benchmark-evidence-0d0def8ba58508488816",
+            "memberships": [
+              {
+                "query": "儿童摄影 起号 新手怎么做",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "儿童摄影 起号 新手怎么做",
+            "query_kind": "mechanism",
+            "snippet": "儿童摄影系列技巧——2-6岁儿童摄影美姿的构图指南. 儿童摄影技巧——儿童化妆造型的注意事项. 儿童摄影技巧——儿童摄影中如何搭配道具. 儿童摄影技巧——不同年龄段儿童该如何选择搭配的服装及化妆.",
+            "title": "k.sina.com.cn/article_7857141524_1d452771401903m7k6.html",
+            "url": "https://k.sina.com.cn/article_7857141524_1d452771401903m7k6.html"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "children-photography",
+          "demand_query": "儿童摄影服务 客户需求 家长为什么拍",
+          "direct_query": "儿童摄影服务 抖音 账号 视频",
+          "mechanism_query": "儿童摄影 起号 新手怎么做",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "家长选择儿童摄影服务的核心动机与决策路径",
+            "儿童摄影行业起号的可借鉴跨行业注意力机制"
+          ]
+        }
+      },
+      "corporate-team-building": {
+        "case_id": "corporate-team-building",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "企业团建服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-ff1c3021024502272972d1e70a5277f0042f9d84d1ae927fc2ccce7083a049a2",
+        "items": [
+          {
+            "content_hash": "4dc26d178887ffcae25e8fb671ebcfccf9cf72512e9ba743aa8fc5c1ed169858",
+            "evidence_id": "benchmark-evidence-986a719b5f7438032058",
+            "memberships": [
+              {
+                "query": "企业团建服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "企业团建服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "专业技术团队，从文案策划、视频制作、运营推广等各个方面，服务技术一步到位。 ... 小投入高回报的抖音代运营千川投放，帮助企业快速变现，企业发展无压力。",
+            "title": "哈密抖音代运营-专业抖音外包服务公司-易亚电商",
+            "url": "https://www.yiyaweb.com/dy/hami.html"
+          },
+          {
+            "content_hash": "0ec327fd5613f1d4478ee5d00c95db7285361cbfea65c477cd58535671778d65",
+            "evidence_id": "benchmark-evidence-c65454331e1c16af7dbb",
+            "memberships": [
+              {
+                "query": "企业团建服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "企业团建服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "April 23, 2023 - 知乎，让每一次点击都充满意义 —— 欢迎来到知乎，发现问题背后的世界。",
+            "title": "抖音企业号最全详解！新手必学的抖音运营5步方法论",
+            "url": "https://zhuanlan.zhihu.com/p/624224948"
+          },
+          {
+            "content_hash": "d1678ef0289ba9629b7a9ee30b672fc773850491e120179d01b9d312e0f33c89",
+            "evidence_id": "benchmark-evidence-235606f1aa77c18b0544",
+            "memberships": [
+              {
+                "query": "企业团建服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "企业团建服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "December 22, 2025 - 加载中 · 精选 · 推荐 · 关注 · 朋友 · 我的 · 搜索 · 充值 · 客户端 · 壁纸",
+            "title": "0-3岁儿童视频在线观看",
+            "url": "https://www.iesdouyin.com/search/0-3岁儿童视频在线观看"
+          },
+          {
+            "content_hash": "4ebb7c812c5cdae5778faabde73700887a0f5033993821cdd7e32cac88af4c5a",
+            "evidence_id": "benchmark-evidence-3cee41e72bd4437858a4",
+            "memberships": [
+              {
+                "query": "企业团建服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              }
+            ],
+            "query": "企业团建服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "需要注意的是： 环节有先后顺序，比如在申请开通团购和认领门店之前，必须要先完成普通企业号Plus的审核才可以哦！ 2、简单六步，拥有自己的企业号 拥有抖音企业号，是本地生活企业在抖音营销的第一步，那么如何才能快速拥有自己的抖音企业号呢？今天我们以手机端为例，来学习如何操作！ 第一步：打开抖音App，从我-右上角导航栏-创作者服务中心-免费开企业号，点击“去认证” 【注意】这里我们登录的抖音个人账号，即为将认证的账号，提交申请后无法更换账号",
+            "title": "抖音团购是怎么上架的？ - 知乎",
+            "url": "https://www.zhihu.com/question/545595739"
+          },
+          {
+            "content_hash": "6d98e4b5d267763218d06217c9a6d00cc212befc9ec56da0779333d8f0ace292",
+            "evidence_id": "benchmark-evidence-63eae30eb7057f74516b",
+            "memberships": [
+              {
+                "query": "企业团建服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "企业团建服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "We cannot provide a description for this page right now",
+            "title": "抖音创作者中心 - Douyin",
+            "url": "https://creator.douyin.com/"
+          },
+          {
+            "content_hash": "627ac70313ce6ba150fcb8c2151fe75040db8bad1741f852324d3f4fa20664b5",
+            "evidence_id": "benchmark-evidence-a52c7641b29e347b6f3a",
+            "memberships": [
+              {
+                "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+            "query_kind": "demand",
+            "snippet": "为什么要团建？1. 提升团队凝聚力：通过团建活动，员工之间可以更好地了解彼此，增强彼此的信任和合作意愿2. 提高团队协作能力：团建活动通常需要员工协作完成，这有助于提高员工的团队协作能力",
+            "title": "团建、活动、线路定制 - 去玩团建",
+            "url": "https://gotaketrip.com/"
+          },
+          {
+            "content_hash": "d970b63aa55fdd94af16ddc69ff66600a3f2375b8ab4a42d1a308093e3593422",
+            "evidence_id": "benchmark-evidence-c24e210c7429f87abad4",
+            "memberships": [
+              {
+                "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+            "query_kind": "demand",
+            "snippet": "团队服装定制的意义是什么？ 团队服装定制的意义是什么？ 【企业内部团建活动】.团队服装定制的意义是什么？ 【企业内部团建活动】.",
+            "title": "团队服装定制的意义是什么？ -定制牛",
+            "url": "https://www.crazy.design/newsinfo/2733227.html"
+          },
+          {
+            "content_hash": "e83904cad33c0128d49f0c38de5fcea8a328d5f2d832c6c6adab1d8ee65dbc79",
+            "evidence_id": "benchmark-evidence-ba1e56a3e6dd3f9ff696",
+            "memberships": [
+              {
+                "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+            "query_kind": "demand",
+            "snippet": "全新 Kimi K3 现已上线：构建可玩的多人与3D游戏，生成咨询级PPT，用 Swarm 智能体集群与 Goal 模式并行执行任务，知识工作更高效。",
+            "title": "Kimi AI 官网 - K3 上线，专为智能体编程与知识工作打造",
+            "url": "https://www.kimi.com/"
+          },
+          {
+            "content_hash": "610ac5226a2b874382366d28ba13db81b5fd4c0444aea7508175ba3539a0229e",
+            "evidence_id": "benchmark-evidence-2875dbb46dbc88e615d9",
+            "memberships": [
+              {
+                "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+            "query_kind": "demand",
+            "snippet": "邓 鑫 女 士 , 为 FESCO HRA 协 会 会 员 企业 带 来 了 一 堂 关 于 企 业 高 效 行 为 管 理 的 精 彩 讲 座 。",
+            "title": "天津FESCO-HR 要闻通讯改版方案",
+            "url": "https://www.yumpu.com/xx/document/view/50174528/fesco-hr-"
+          },
+          {
+            "content_hash": "65cf6889db44ff9096786c7f8b54cee572250af90c82c59611781050c5b7bbc2",
+            "evidence_id": "benchmark-evidence-2bcd941007f4c16810aa",
+            "memberships": [
+              {
+                "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+            "query_kind": "demand",
+            "snippet": "объясняет. wèishéme. 为什么. почему. fǎnyìng.осознать. guǎnlǐ. 管理. управление. zhòngyào.",
+            "title": "7 простых китайских текстов — Мой Лангугаге",
+            "url": "https://e-ham.ru/2025/02/01/7-простых-китайских-текстов/"
+          },
+          {
+            "content_hash": "89c1b76316252a1f662136709fb5659aab044da17279630d1242e6b1b1823a02",
+            "evidence_id": "benchmark-evidence-cca1dfa15fa255d05cbd",
+            "memberships": [
+              {
+                "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Apr 20, 2026 · 第一部分：行业趋势与焦虑制造——当传统获客模式遭遇“降维打击”工业领域正经历一场静默的营销革命。 据IDC最新报告，2026年全球工业品采购决策中，73%的决策者将短视频内容作为关键信息源，而传统线下展会、搜索引擎的权重首次跌破40%。",
+            "title": "工业短视频营销革命：2026年B2B企业如何通过短视频重构获客体系 - 今...",
+            "url": "https://www.toutiao.com/article/7629063033880412707/"
+          },
+          {
+            "content_hash": "27d07d09723d5f34337e3e68eaba6e49960f0882dd9894293121fc7f4ccf3be7",
+            "evidence_id": "benchmark-evidence-0ef57645159d987643fe",
+            "memberships": [
+              {
+                "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Apr 25, 2026 · 第一部分：行业趋势与焦虑制造——当工业品采购决策链开始刷短视频 在制造业数字化转型的深水区，一个颠覆性现象正在发生：某工程机械集团2026年Q1数据显示，其抖音企业号带来的询盘量已超过传统展会渠道的3.2倍；某化工企业通过短视频内容营销，使新客户开发周期从90天缩短至37天。这些 ...",
+            "title": "工业短视频营销革命：2026年B2B企业如何借力抖音实现精准获客？",
+            "url": "https://www.toutiao.com/article/7632614073087132179/"
+          },
+          {
+            "content_hash": "ad3b897f6639d83c7e84eb8a1e330d8b5d2048887e08d8f30147d0bda4d8f8a5",
+            "evidence_id": "benchmark-evidence-450f9892750b882754d8",
+            "memberships": [
+              {
+                "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Feb 7, 2026 · 传统B2B营销推广正面临流量枯竭。 本文提供一套实战指南，揭示如何通过抖音、小红书等短视频平台构建全网营销矩阵，结合SEO优化与内容结构化策略，实现从公域流量到私域询盘的高效转化，重塑公司推广的ROI模型。",
+            "title": "B2B获客实战：用短视频矩阵+SEO优化打造全网营销闭环 | 泽塔视界",
+            "url": "https://zettavision.com/news/b2b-lead-generation-video-matrix-strategy-guide-9zx8"
+          },
+          {
+            "content_hash": "e1cc2a264ea883e71fa23d9aaeff7cae4ae03e79150381d8897acd0f1306b264",
+            "evidence_id": "benchmark-evidence-9053e30b9c88e3134282",
+            "memberships": [
+              {
+                "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Aug 4, 2026 · 企业主普遍陷入\"选择困难症\"：报价从几千到几十万，承诺从\"保证询盘\"到\"粉丝破万\"，到底谁靠谱？ 本文将以 10年B2B短视频获客实战视角，结合行业数据与真实案例，帮你拆解这个行业的底层逻辑，并推荐几家在特定领域真正有建树的正规服务商。",
+            "title": "B2B企业抖音短视频获客哪家强？2026年服务商选择指南与深度解析_照明b...",
+            "url": "https://blog.csdn.net/qq_36518531/article/details/162058712"
+          },
+          {
+            "content_hash": "5382bbba37a69800ec6b09f6880c140132dcd357bef7c4dfe8e523e8e57eefd3",
+            "evidence_id": "benchmark-evidence-91b1ff65f5236b0c1705",
+            "memberships": [
+              {
+                "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Sep 3, 2025 · 特别是微信视频号、抖音、快手等短视频及直播平台的兴起，为B2B企业打开了前所未有的内容传播和客户互动新空间。 如何结合不同平台特性，创新内容分发和营销策略，成为B2B企业提升品牌影响力和业务增长的关键命题。 短…",
+            "title": "B2B企业如何玩转短视频与直播新渠道_内容_客户_平台",
+            "url": "https://www.sohu.com/a/931574679_120578258"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "corporate-team-building",
+          "demand_query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+          "direct_query": "企业团建服务 抖音 账号 视频",
+          "mechanism_query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "目标客户企业规模和行业分布未明确",
+            "团建服务具体形式（户外/室内/拓展/旅行）未明确",
+            "起号平台未明确（抖音/视频号/小红书等）"
+          ]
+        }
+      },
+      "industrial-anticorrosion-coating": {
+        "case_id": "industrial-anticorrosion-coating",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "工业防腐涂料 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-9c76cb82fb5c122ce9656e8844eef049a6cfd251c2b6b505a083e104eec46a97",
+        "items": [
+          {
+            "content_hash": "52db87eae7136653ec7c3ae82ef36c4b09a262260b0317f6624bf0dbf1ca7f8c",
+            "evidence_id": "benchmark-evidence-53499ebb89ed515b421d",
+            "memberships": [
+              {
+                "query": "工业防腐涂料 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "工业防腐涂料 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "五大优势十大特性： 安全，环保无voc，省时，高性能，重防腐。 附着力强、质密度高、延展性好、 耐候性强、耐磨性高、耐压性好、 斥水性强、防腐期长、无边缘性、 施工简单。",
+            "title": "工业防腐涂料我们走在行业前列_哔哩哔哩_bilibili",
+            "url": "https://www.bilibili.com/video/BV1mp5rzUEKH/"
+          },
+          {
+            "content_hash": "ed1a435a20c380b744fb3added7250d824469af8bfd0f137d137802f6a2fa883",
+            "evidence_id": "benchmark-evidence-7f59d1b743932e45bfc3",
+            "memberships": [
+              {
+                "query": "工业防腐涂料 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "工业防腐涂料 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "Oct 18, 2023 · 关注抖音，更加精彩 涂料&应用 涂料产品 第二代重防腐油漆 第三代重防腐油漆 第四代重防腐油漆 特殊底材油漆 耐高温油漆 自喷漆系列 工业防腐涂料方案 钢结构防腐涂料 化工厂防腐涂料 造纸厂防腐涂料 矿山设备防腐涂料 污水处理防腐涂料 火电厂防腐涂料",
+            "title": "官宣！官方抖音账号，快来关注！ - MENGNENG",
+            "url": "https://www.mengneng.cn/companynewsinfo_347_6232.html"
+          },
+          {
+            "content_hash": "efc8342b05f2a5b5d768a18990fa5b4967d381fd1bb5002a513a5f1478355c65",
+            "evidence_id": "benchmark-evidence-1060929844f12ec5ac51",
+            "memberships": [
+              {
+                "query": "工业防腐涂料 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "工业防腐涂料 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "Apr 15, 2026 · 梦能工业重防腐涂料，湖南梦能科技有限公司。梦能工业重防腐涂料的抖音主页、视频、合集以及作品的粉丝量、点赞量。来 ...",
+            "title": "梦能工业重防腐涂料的抖音 - 抖音",
+            "url": "https://www.douyin.com/user/MS4wLjABAAAARw1diyGlzcBUvXTDG-1c8-1EZiFe5Z9rlP_9Qr79X4P1TmmcEGJ1ZU-mefhC6fEO"
+          },
+          {
+            "content_hash": "e5056f11c96d4022a63f6167f225e26d26d3a5db87f002ffb4a37b9024bbc998",
+            "evidence_id": "benchmark-evidence-88df8969a3310ca0a148",
+            "memberships": [
+              {
+                "query": "工业防腐涂料 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              }
+            ],
+            "query": "工业防腐涂料 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "防腐防锈钢结构涂料！ 你以为钢涂是 “颜料 + 水” 随便混？ No！ 从原料筛选烘干除杂，到精准配比高速分散，再经砂磨机细化至微米级，每步都配 3 重实验检测（细度 / 粘度 / 耐腐蚀性）。",
+            "title": "防腐涂料宣传视频 - 抖音",
+            "url": "https://www.douyin.com/search/防腐涂料宣传视频"
+          },
+          {
+            "content_hash": "afae30501d9699aa5c10a2461212956d93533ef055354f3b5106134e3e31d387",
+            "evidence_id": "benchmark-evidence-f11beb41a3a5e9008442",
+            "memberships": [
+              {
+                "query": "工业防腐涂料 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "工业防腐涂料 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "蝉妈妈数据为您提供抖音“重防腐工业涂料”账号数据查询与分析，包括抖音号34276518023个人资料、粉丝数、视频与直播等数据查询。 想了解抖音“重防腐工业涂料”是谁？ 有多少粉丝？ 抖音号是多少？ 就找蝉妈妈数据！",
+            "title": "重防腐工业涂料_抖音号个人资料与粉丝数据查询与分析 - 蝉妈妈数据",
+            "url": "https://www.chanmama.com/bloggerRank/aR2suISMMpWGAUtjIHVVX4ZG3oY1VBa6.html"
+          },
+          {
+            "content_hash": "1b2c8a1c037efd096429b86b23678ed207405f1647b8709d0afc03d3945e6f4a",
+            "evidence_id": "benchmark-evidence-66a22e9d87efe5edfbbf",
+            "memberships": [
+              {
+                "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+            "query_kind": "demand",
+            "snippet": "不少负责采购及工程管理的从业者都有过类似困惑：市面上工业防腐涂料品牌繁多，参数各异，到底该怎么选？",
+            "title": "工业防腐涂料哪家推荐？ - 中媒介 - 企业博客",
+            "url": "https://www.cnblogs.com/xbgeo/p/21432858"
+          },
+          {
+            "content_hash": "50ae6a7477b139b6dd63d632abcf8d99aeb3f44881e385078d0abe0ad2c3ba52",
+            "evidence_id": "benchmark-evidence-66c462e307542bf60858",
+            "memberships": [
+              {
+                "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+            "query_kind": "demand",
+            "snippet": "行业 工程机械 汽车配件 设备仪器 工业机床.2026年靠谱的改性聚氨酯防腐涂料/防腐涂料可靠供应商推荐.",
+            "title": "2026...",
+            "url": "https://www.okmao.com/News/Info_718488_102_0.html"
+          },
+          {
+            "content_hash": "5ffc418c2b567214b9533d6820c8a57141e987f4f1b336ac2d971d2a6b41ff4e",
+            "evidence_id": "benchmark-evidence-8ed3aa808d4e50b41611",
+            "memberships": [
+              {
+                "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+            "query_kind": "demand",
+            "snippet": "聚硅氧烷防腐涂料采购指南：为什么能做到30年防护、什么工程值得选.不需要选聚硅氧烷的场景：设计寿命15～20年、无耐热要求、腐蚀等级C3～C4的一般重防腐工程——FEVE氟碳完全满足，额外的聚硅氧烷溢价无对应工程价.",
+            "title": "聚硅氧烷防腐涂料采购指南：为什么能做到30年防护、什么工程值得选",
+            "url": "https://www.jsbzpaint.com/cases/聚硅氧烷防腐涂料采购指南：为什么能做到30年防护"
+          },
+          {
+            "content_hash": "6e5f799bea92174b4643dafe01d31a4f4d2e799762d2ef2caaaef3cf237f74cd",
+            "evidence_id": "benchmark-evidence-ad652e35e1b35fb44355",
+            "memberships": [
+              {
+                "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+            "query_kind": "demand",
+            "snippet": "型重防腐涂料，成为工程领域的主流选择之一。 工业腐蚀不仅会导致设备运行效率下降，还可能引发安全事故，增加后期维护成本，因此选择靠谱的无溶剂重防腐涂料生产厂家，对保障工业设施安全稳.",
+            "title": "2026...",
+            "url": "http://tscn.allzhan.com/996569.html"
+          },
+          {
+            "content_hash": "f3160523fd9ae0c1e6b7389bc43b06e4cef7fad5d0a808f3065ccfb4eb091875",
+            "evidence_id": "benchmark-evidence-35d58b4082b1209911bc",
+            "memberships": [
+              {
+                "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+            "query_kind": "demand",
+            "snippet": "1. 佐敦涂料的特点. 佐敦涂料是一种高效的防腐涂料，具有以下特点。 佐敦涂料采用先进的防腐技术，能够有效地防止金属材料的腐蚀。 佐敦涂料具有优异的耐候性和耐腐蚀性，能够在恶劣的环境条件下长时间保持良好的性能。",
+            "title": "防腐佐敦涂料经销中心 – 安信实业",
+            "url": "https://www.runshuo.cn/turbo/12232"
+          },
+          {
+            "content_hash": "0b86caf7e5be3b528ce99dd3bdcea20dd0e120a171e7ca2b81ac30b943d94baa",
+            "evidence_id": "benchmark-evidence-03582031616b5c5767e6",
+            "memberships": [
+              {
+                "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "Facebook 广告代投行业案例库搭建 不同行业 不同目标 参考借鉴提升效果. DK跨境一站式出海技术服务商.1. 案例库的维度划分：行业、目标与阶段. 2. 深度案例解构：从策略到数据复盘. 3. 跨行业策略迁移与创新. 4. 工具化与动态更新机制.",
+            "title": "Facebook...",
+            "url": "https://www.dk8899.com/facebook-1078/"
+          },
+          {
+            "content_hash": "584c488ba6be2ac8d11ce9d04733091e5c29cedaaa77073a7b6c78b469380f92",
+            "evidence_id": "benchmark-evidence-e871a3065211b9dba279",
+            "memberships": [
+              {
+                "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "特許内容.",
+            "title": "j-platpat",
+            "url": "https://www.j-platpat.inpit.go.jp/?uri=%2Fp0200"
+          },
+          {
+            "content_hash": "48541d8b756f4fdab0a2d1356f5d419822245ecca5200c004a7c56b121ab25be",
+            "evidence_id": "benchmark-evidence-72156564c41514544bd7",
+            "memberships": [
+              {
+                "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "对于成长型优质商家：商品扶持、内容素材支持、新商加速计划等权益，解决了“从0到1”冷启动阶段的核心痛点——曝光与内容生产力。 平台提供的1000条免费短视频素材等支持，能有效帮助商家渡过初期的内容摸索期。",
+            "title": "2026跨境新主场：头部品牌如何在TikTok Shop...",
+            "url": "https://www.topromax.com/article/2026-cross-border-tiktok-shop-brand-growth-performance"
+          },
+          {
+            "content_hash": "cc9dee77f577a6412adf76c94069cd4e7126d2b92a9c082991ad0f4c0bea4237",
+            "evidence_id": "benchmark-evidence-3d4d86068d81ce00f35a",
+            "memberships": [
+              {
+                "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "第一类是 MCN 要启动一批达人号或内容号，需要统一账号资料、内容方向和发布节奏。 第二类是跨境卖家要测试不同市场或产品线，需要用 TikTok 内容验证用户反馈。 第三类是品牌出海团队已经有素材和负责人，希望把账号从零启动到可持续运营。",
+            "title": "TikTok 养号怎么做？ MCN 和跨境团队的账号启动流程 - Jumei.ai",
+            "url": "https://www.jumei.ai/article/tiktok-account-warm-up-mcn-cross-border-launch-workflow.html"
+          },
+          {
+            "content_hash": "9946e3131cbd55a279dd8f3e59455c7f2dc06f3de6b5a6699a8dd1c1a8642fb1",
+            "evidence_id": "benchmark-evidence-5b7e136952adde03f1a5",
+            "memberships": [
+              {
+                "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "Twitter/x浏览量官方广告冷启动解决方案：快速突破粉丝瓶颈. 作者： @Fansoso营销专家发布时间：2026/01/20.",
+            "title": "blog.fansoso.com/blog/twitter-x-views-official-ad-cold-start-solution...",
+            "url": "https://blog.fansoso.com/blog/twitter-x-views-official-ad-cold-start-solution-breakthrough-follower-bottleneck"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "industrial-anticorrosion-coating",
+          "demand_query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+          "direct_query": "工业防腐涂料 抖音 账号 视频",
+          "mechanism_query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "工业防腐涂料的目标客户细分行业分布",
+            "当前主流获客渠道与起号平台偏好",
+            "防腐涂料行业的内容合规与资质展示要求"
+          ]
+        }
+      },
+      "old-photo-restoration": {
+        "case_id": "old-photo-restoration",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "老照片修复服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-3d172ec3c567bd872fbbc534a878dce2d3efc98867df2713c0cf8d6b4cd8983a",
+        "items": [
+          {
+            "content_hash": "f52ea93f78419ea9ff41614acb38d900a9343893d35e6fb16b41eca0606355b2",
+            "evidence_id": "benchmark-evidence-b93618f9b767f525981b",
+            "memberships": [
+              {
+                "query": "老照片修复服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "老照片修复服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "February 10, 2022 - 这2个是前期起号阶段的做法，等到账号做起来了，也有稳定客源了，这时候就可以用顾客的照片来制作视频了； · 当然，你拿顾客的照片去当做引流素材，是需要提前跟顾客沟通好的； · 关于老照片修复这个项目，表面上看修复的是老照片，其实它修复的是记忆，完善的是亲情！",
+            "title": "抖音老照片修复，如何变现？详细操作步骤！ - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/465682838"
+          },
+          {
+            "content_hash": "72268fd4c7561aade5ad04921e6df8b137ead762b04192babe7f4debf5a1335d",
+            "evidence_id": "benchmark-evidence-fc4512f11b57c8ebb193",
+            "memberships": [
+              {
+                "query": "老照片修复服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "老照片修复服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "账号(企业认证号):匠人老照片修复，获631.2W赞和56.1W粉丝，作品数222。于2020年4月3日开始。 · 名字里面都带有“老照片修复”，让别人一看就知道你是干什么的。我们可以看到他们的评论引导，都是把流量导向私信和主页，通过在首页留V和私信把客户导向微信号。 · 也可以去搜索几个短视频...",
+            "title": "抖音上最适合普通人玩的项目，老照片修复一般多少钱，月入3万人人可做-个人经验技术分享",
+            "url": "https://www.klmcy.com/161.html"
+          },
+          {
+            "content_hash": "472322eb54e2bebbb66e6ee56359a9b32fe25f44ac3a4b0564cecdde4525318a",
+            "evidence_id": "benchmark-evidence-76bea6fd056f225366cc",
+            "memberships": [
+              {
+                "query": "老照片修复服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "老照片修复服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "今天给大家介绍一个抖音小众项目，这个项目做的人不多，但是需求量还是可以的，那就是老照片修复项目，我也是在刷抖音的时候无意中刷到的视频。就把这个项目拆解了一下，发现是几乎没有任何门槛的。 · 目前做的好的，我看已经用矩阵在做了20个左右的账号，因为老照片修复视频，制作简单，容易复制。一单最少50，一天500不成问题。",
+            "title": "日赚600+的抖音老照片修复项目，居然没有门槛！ - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/114644320"
+          },
+          {
+            "content_hash": "6079a4ef1bfb5407d59c8760a04bc77076b46da5be8e9bf09e1fd082b84ac499",
+            "evidence_id": "benchmark-evidence-6e169e9bc05a7704e582",
+            "memberships": [
+              {
+                "query": "老照片修复服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              },
+              {
+                "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "老照片修复服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "飞翔结语：飞翔操作了这么多的项目，感觉很多项目往往原理很简单，一说就懂，但是最难的部分就在于前期的准备工作！比如这个抖音老照片修复的项目，我们前期需要准备好抖音号，新的微信号，以及大量的视频素材和朋友圈素材，这些准备工作可能就会耗费掉我们一段时间。所以我常说，能不能吃的了这份寂寞，能不能坚持去执行，是一个项目成功与否的关键！",
+            "title": "四千字良心拆解淘宝抖音冷门类目-老照片修复赚钱项目 - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/114669888"
+          },
+          {
+            "content_hash": "208bcaf5958ec3fd2b1b344b42e5027cfb81ba98621b0ecc69e09e5b3fb2e3df",
+            "evidence_id": "benchmark-evidence-8ee12e10c0aed5e84db6",
+            "memberships": [
+              {
+                "query": "老照片修复服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "老照片修复服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "May 8, 2021 - 案例二，账号（企业认证号）：老照片修复（拾忆），获赞96.9W、6.6W粉丝、作品数54个，开始操作的时间2020.1.21。 · 我们再来看他们的视频账号内容和评论区引导。 · 从上述案例中我们可以看出抖音老照片修复账号的业务流程，即通过发布老照片修复视频>评论区引导私信(主页留微)>微信成交，玩法简单。",
+            "title": "抖音快手老照片修复项目，一单几十块一天稳赚几百的赚钱玩法 - A5站长网",
+            "url": "https://m.admin5.com/article/20210508/994779.shtml"
+          },
+          {
+            "content_hash": "3e8c4c728de035328d239bc5901fbf02a3506fd2a82b6c583c8087afa89389d1",
+            "evidence_id": "benchmark-evidence-345b50730865a44de230",
+            "memberships": [
+              {
+                "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+            "query_kind": "demand",
+            "snippet": "June 5, 2024 - 老照片修复服务的崛起也为许多从业者带来了商机。专业的修复师通过技术手段和艺术修复，可以将受损的老照片恢复到原本的光彩。而随着社交媒体的流行，一张修复后的老照片往往能引起许多人的共鸣和关注，成为一种具有情感共鸣的传播方式。",
+            "title": "老照片修复，同样有很多市场需求_老照片修复有市场吗-CSDN博客",
+            "url": "https://blog.csdn.net/gapjun0722/article/details/139468546"
+          },
+          {
+            "content_hash": "d205cc8916196f7e8b37f8ecb11e47b72e8516ae393c03a0713cbfb96da9e165",
+            "evidence_id": "benchmark-evidence-974afc2f4787ea8fc367",
+            "memberships": [
+              {
+                "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+            "query_kind": "demand",
+            "snippet": "当时，还有点纳闷，这个年代手机拍照这么方便，还需要老照片干嘛啊?思来想去，想到了一点，那就是怀旧情怀吧。特别是对于上了年龄的人来说，已经不缺钱也不缺穿了，唯独就是怀念起以前的一些人和事来。像我自己，有的时候也会回想起，小时候的一些往事。01我在想，既然有人在销售老照片修复这个，肯定还是有需求的。作为营销人的第一视角，就是具体分析一下这个市场的具体情况。从指数，啦了2011年-2022年的数据发现，每天有800左右的指数。",
+            "title": "老照片修复，同样有很多市场需求 - 金色旋风网赚论坛",
+            "url": "https://axing360.com/10533.html"
+          },
+          {
+            "content_hash": "1c3b4d38c8af1be57c0e2ab2ce465e5f10df2a6b722dc5906e06c51eaf01dad6",
+            "evidence_id": "benchmark-evidence-a94db91cb8f16b8fbbfd",
+            "memberships": [
+              {
+                "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+            "query_kind": "demand",
+            "snippet": "July 15, 2020 - 这些修复照片的视频内容，很容易打动用户，每家每户都有一两张老照片，这使得我们有非常大的市场，这就使我们可以获得更多利益，毕竟，大多数的人们都愿意为自己的情怀买单。 百度指数：每天有460人对老照片修复...",
+            "title": "一单几十元的抖音老照片修复项目是怎么做的？_抖音短视频老图片-CSDN博客",
+            "url": "https://blog.csdn.net/Mr_xiaozhe/article/details/107369800"
+          },
+          {
+            "content_hash": "ee2d671e3c2171787d27961052eb683ae77c00fe2b010f1b3a53d29cf6fbfee0",
+            "evidence_id": "benchmark-evidence-8e245e4a87c73f9cda04",
+            "memberships": [
+              {
+                "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+            "query_kind": "demand",
+            "snippet": "April 18, 2024 - 最能触动人心的一定是情感因素。我们可以利用老人痛哭的画面来吸引观众的注意力。在三秒钟后，展示老照片修复前后的对比效果，这样既能唤起用户对亲人的思念之情，也能激发他们对修复老照片的需求。 · 通过这种方式，我们可以在某音平台上迅速吸引观众的目光，提高视频的播放量和互动率，从而为我们的老照片修复项目带来更多的潜在客户。",
+            "title": "老项目新玩法，老照片修复项目，配合新技术快速变现-CSDN博客",
+            "url": "https://blog.csdn.net/ZZJCPT/article/details/137938090"
+          },
+          {
+            "content_hash": "6ba95533ef0e7a3fd309bd04a6ba2882df39cf9adff31f04bbf8e10e31cd1874",
+            "evidence_id": "benchmark-evidence-c73c690e8ec6e935f5ee",
+            "memberships": [
+              {
+                "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "方毅认为，“病毒式传播与病毒传播间有非常重要的共性。一是要有感染源，二是有易感人群，中间就是传播链，大家讨论的无非是怎么样加强这个传播的过程。”因此，一场成功的“病毒式传播”，概括起来就是“高效利用品牌传染源，增强其传染力；并优先触达品牌易感人群，提升转化效果”。",
+            "title": "每日互动CEO方毅：做好品牌“病毒式传播”，找到你的营销杠杆",
+            "url": "https://www.getui.com/news/2020082840"
+          },
+          {
+            "content_hash": "484e360942ed825f8a2cfb1dc2fd9e6b197b9783d4e94987d2276b69c6528fe9",
+            "evidence_id": "benchmark-evidence-3f4db2556befa28053f3",
+            "memberships": [
+              {
+                "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "June 1, 2023 - 最近几年我们常听到的爆款产品、爆款内容其实就是病毒式传播的另一种表达，病毒式内容的基本标志是它在互联网上快速传播并在短时间内吸引了广泛的受众。产品要如何才能做到病毒式传播呢？本文作者从八个维度展...",
+            "title": "运营策略：影响内容病毒式传播的 8 个维度 | 人人都是产品经理",
+            "url": "https://www.woshipm.com/operate/5838820.html"
+          },
+          {
+            "content_hash": "20ff3a01176e29cba995b5a12dcf2edac57a4a29ff5ecad213ce6b698202f60f",
+            "evidence_id": "benchmark-evidence-7ce436e6e7caeb193e81",
+            "memberships": [
+              {
+                "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "扫描,分享朋友圈 · 翻一翻朋友圈，你不难在里面发现几个曾被广泛传播过的“新闻”。每当有重大事件发生，我们便纷纷在微信朋友圈里进行着一场场自知或不自知的“病毒式传播”。那么，借着这最后一天，让我们来总...",
+            "title": "2015年，那些刷爆过你朋友圈的十大病毒式传播 - 数英",
+            "url": "https://www.digitaling.com/articles/22099.html"
+          },
+          {
+            "content_hash": "c8f07d1d293fc65eb9432d788d0a4607f9e1835b4a6121c09f39fe2ea40c5020",
+            "evidence_id": "benchmark-evidence-14682fbbbd4bb15287dd",
+            "memberships": [
+              {
+                "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "此工具可帮助您在视项目中制作前后对比动画。对于任何想要以简单而令人印象深刻的方式突出变化、改进或转变的人来说，它都是完美的选择。 · 安装方法：打开达芬奇软件，然后双击Before-After Toolkit (LLmotion).drfx文件安...",
+            "title": "达芬奇插件-视频划像前后对比动画特效 Before After Toolkit-LookAE.com",
+            "url": "https://www.lookae.com/before-after-toolkit/"
+          },
+          {
+            "content_hash": "a81c7e5bb5ab803d4e221f5c9aca5c44b977175400dd02636f52854490f0df3b",
+            "evidence_id": "benchmark-evidence-e3d76b13cca273af0b03",
+            "memberships": [
+              {
+                "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "before after 对比修复效果 病毒式传播 跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "October 5, 2021 - Before And After Viewing是一组很棒的PREMIERE预设工具，可以用来比较照片或视频之前和之后特效/调色变化。您可以比较线条、线条和文本，以及转场过渡。该项目有一个用于过渡的编辑器，您可以通过选择线条和箭头的宽度来创建所需的过渡。预设是多功能的，非常适合设计师、摄影师、建筑商、商业、旅游等。",
+            "title": "中文汉化PR预设-照片或视频特效/调色之前和之后分屏前后对比prfpset预设Before And After Viewing | C4DSKY",
+            "url": "https://c4dsky.com/104279.html"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "old-photo-restoration",
+          "demand_query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+          "direct_query": "老照片修复服务 抖音 账号 视频",
+          "mechanism_query": "before after 对比修复效果 病毒式传播 跨行业案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "老照片修复服务的典型客单价和复购率",
+            "该行业在短视频平台上的头部账号运营数据"
+          ]
+        }
+      },
+      "outdoor-power-station": {
+        "case_id": "outdoor-power-station",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "户外移动电源 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-0996ca82d90181dd7672ffa6dc00a5769c494c54d7e495c53be83ebf71609d74",
+        "items": [
+          {
+            "content_hash": "d707adcac27c03c19b072279e1abec29f6af88df6f0886412d95a7a7fd68fa84",
+            "evidence_id": "benchmark-evidence-3c225071eabf606df1eb",
+            "memberships": [
+              {
+                "query": "户外移动电源 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "户外移动电源 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "2000W移动电源使用教程 #户外电源 #源头工厂 #移动电源户外220v #户外爱好者必备神器 想要了解更多户外移动电源相关信息，欢迎咨询 00:00 / 01:14",
+            "title": "户外移动电源使用视频 - 抖音",
+            "url": "https://www.douyin.com/search/户外移动电源使用视频"
+          },
+          {
+            "content_hash": "9335aa89064d8ed8193722cd1af5cd4f5b7c7637f5543f6f19e19619c57446a3",
+            "evidence_id": "benchmark-evidence-dd4c6d9196cdf6962ee9",
+            "memberships": [
+              {
+                "query": "户外移动电源 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "户外移动电源 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "22 hours ago · 后台不少朋友问，户外移动电源到底怎么选，容量看着都一样但续航差挺多，功率又分额定和峰值，看参数真容易看晕。 更别说还有人纠结：要不要太阳能板、能不能车充边走边补、220V够不够带小家电。",
+            "title": "【超实用】2026年15款户外移动电源推荐！选购指南包含正浩、电小二等...",
+            "url": "https://www.bilibili.com/video/BV1Msbr6uE14/"
+          },
+          {
+            "content_hash": "01da941fe0811bd777ae744c94d69cd9185175d683ffb9d288bafa406bfbea64",
+            "evidence_id": "benchmark-evidence-b18f7b0ff9c49173b4e1",
+            "memberships": [
+              {
+                "query": "户外移动电源 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "户外移动电源 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "蝉妈妈数据为您提供抖音达人“鑫洲大力神户外移动电源”账号数据查询与分析，包括抖音号87047391158资料、粉丝数量等信息，以及近期达人直播数据、带货数据、粉丝画像等数据分析供您查询。",
+            "title": "鑫洲大力神户外移动电源|抖音直播带货与账号粉丝数据分析 - 蝉妈妈数...",
+            "url": "https://www.chanmama.com/open/authorRank/IxT2064d_cZstVLTlNNc_g.html"
+          },
+          {
+            "content_hash": "853ea692abe48c606d85a100805a96ecf61faa4246c4377078aef3308f0e2c1e",
+            "evidence_id": "benchmark-evidence-cf1d82a792d77bb1e573",
+            "memberships": [
+              {
+                "query": "户外移动电源 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              }
+            ],
+            "query": "户外移动电源 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "Sep 2, 2025 · 今天专门给刚入坑的露营小白，还有踩过坑的老玩家，整理了一期「闭眼入不亏」的户外移动电源推荐！, 视频播放量 7781、弹幕量 58、点赞数 711、投硬币枚数 1024、收藏人数 735、转发人数 557, 视频作者 小白玩机社, 作者简介 大白话解读科技参数｜小白也能快速 ... 欢迎来到DJI大疆户外电源授权直播间的抖音直播间，DJI大疆户外电源授权直播间与大家一起记录美好生活 - 抖音直播 今日热榜提供各站热榜聚合：微信、今日头条、百度、知乎、V2EX、微博、贴吧、豆瓣、天涯、虎扑、Github、抖音...追踪全网热点、简单高效阅读。",
+            "title": "【露营季户外移动电源推荐】户外移动电源多大的容量才适合？露营/摆摊...DJI大疆户外电源授权直播间的抖音直播间 - 抖音直播抖音 ‧ 户外榜 - 今日热榜",
+            "url": "https://www.bilibili.com/video/BV1iZawzPEpt/"
+          },
+          {
+            "content_hash": "a01b9bb891199880a4baaf22fbb587ab900de693aba13b3fb995d9e3a50d4459",
+            "evidence_id": "benchmark-evidence-1c5e6573bd1640860413",
+            "memberships": [
+              {
+                "query": "户外移动电源 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "户外移动电源 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "22 hours ago · 真正玩户外的人，选户外电源从来不将就#汽车应急移动电源 #新手露营 #露营#户外移动电源#自驾游 - UDPOWER官方旗舰店于20260818发布在抖音，已经收获了2.0万个喜欢，来抖音，记录美好生活！",
+            "title": "真正玩户外的人，选户外电源从来不将就#汽车应急移动电源 #新手露营 #...",
+            "url": "https://www.douyin.com/video/7675238609032711466"
+          },
+          {
+            "content_hash": "7819559e10f9431eb024e2e0dd1f02cf1a50639849dd8c7742ac8d53b26ddbf2",
+            "evidence_id": "benchmark-evidence-783d17862033d7bada7c",
+            "memberships": [
+              {
+                "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+            "query_kind": "demand",
+            "snippet": "估计几乎每个人都用过公牛的电源插座、接线板等产品，它家的产品品质过硬，口碑颇高。现在公牛也生产户外电源，掌握多项核心专利，荣获国内外多个产品认证，在中高端产品领域也是领头羊的存在。 [wptao _title=\"公牛（BULL）大功率户外电源220V移动便携式超大容量充电宝摆摊自驾露营停电应急备用电池 1800W高能版户外电源+200W太阳能板+豪礼\" price=\"8399\" url=\"https://item.jd.com/10053169475673.html\" _url=\"https://union-click.jd.com/jdc?e=&p=JF8BAQYJK1olXwQFXFlcDkoUAV8IGloRXwYFXFtbD",
+            "title": "户外移动电源哪个牌子质量好 4款耐用户外移动电源推荐 - 优品评测",
+            "url": "https://www.ntxen.com/8352.html"
+          },
+          {
+            "content_hash": "8431eb4d820be23d802731ebec06d1b687d08e0f9bcd60f849b425dd54964ee0",
+            "evidence_id": "benchmark-evidence-d9a954d8136118eb3f5e",
+            "memberships": [
+              {
+                "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+            "query_kind": "demand",
+            "snippet": "这款公牛户外电源采用超容电芯，电量高达1843Wh，相当于1.8度电，满足露营用电需求，自驾出行电力持久在线。得益于公牛多年的技术沉淀，让它的AC口正弦波输出安全、稳定，不伤电器，内含触电保护门设计可以有效防触电，使用也更安心。 · USB-C接口支持双向60W PD快充，兼容多种数码快充设备，应急充电也能快人一步；给设备充电时，也可以实现60W PD快充，自充电方式多一种选择。",
+            "title": "2025年户外电源/露营电源怎么选？露营、钓鱼再也不怕没电！十款高性价比户外电源推荐 - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/634619641"
+          },
+          {
+            "content_hash": "0a463b7162b9d0ef886b0607d5b2bb468ab97c0278a5e689b8d293c1ad0a98d1",
+            "evidence_id": "benchmark-evidence-aa28f7aa1502ebe46afe",
+            "memberships": [
+              {
+                "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+            "query_kind": "demand",
+            "snippet": "July 8, 2022 - 12、诺希 户外电源600w大...驾旅游露营笔记本电脑充电宝应急停电备用储能电池 特卖价：2099元 · 诺希是一个主要做手机配套电池的企业，这次也是推出了自己的户外移动电源品牌，只是暂时可供选择产品比较少。估计在不就的将来能推出更多的产品。 · 13、ZENDURE 征拓户外电源2000W大功率220v储能电源大容量自驾游露营备用...",
+            "title": "解决户外用电焦虑——20款户外移动电源推荐__财经头条__新浪财经",
+            "url": "https://t.cj.sina.com.cn/articles/view/1823348853/6cae1875020013d4b"
+          },
+          {
+            "content_hash": "d66d3c634c9e8cd366bbaf020d0c88a10c86a5e5c20a5e717a6fc042cc6862cf",
+            "evidence_id": "benchmark-evidence-cc929a5dc783eb344b5e",
+            "memberships": [
+              {
+                "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+            "query_kind": "demand",
+            "snippet": "August 24, 2022 - 使用场景：户外旅行、自驾游、家中停电应急 ... 睿Pro是Ecoflow正浩科技的家庭露营旗舰款，功率600w，容量720wh。并且搭载了Ecoflow正浩科技引以为傲的智能真快充技术，市电1.6小时充满。在外旅行时，可为投影仪、营地灯、电水壶、车载冰箱、专业摄影航拍器材、数码相机供电。家中停电可以带动电视机和电冰箱，充满电的情况下能够为智能手机充电48次。",
+            "title": "户外电源使用场景深度分析，按需购买才能买对 - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/557339953"
+          },
+          {
+            "content_hash": "9a8b1f4a52ba1cccd98cadac29a6f69e21db516b0d83d51f7ee5e3c31006238f",
+            "evidence_id": "benchmark-evidence-75c462ccaeef26db4c8b",
+            "memberships": [
+              {
+                "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "户外移动电源购买需求场景 露营自驾游应急用电",
+            "query_kind": "demand",
+            "snippet": "应急照明：配备 LED 强光灯，支持多种模式（如照明、SOS 求救、爆闪），夜间故障或紧急情况下提供照明支持。 · 卡片显示价格虚高，获取最低活动价格↓↓↓ ... 2400W 额定功率：支持高功率电器运行，如电吹风（1600W）、电陶炉、电饭煲等，满足露营、自驾游中烹饪、取暖等需求。",
+            "title": "这些户外电源千万别买！2026推荐5款品牌高性价比户外电源/移动电源 - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/702090823"
+          },
+          {
+            "content_hash": "9b2866c0aee3d1f1f534d0015bfb84c91312da3a3b1a6d29729bc4e3a7666c0b",
+            "evidence_id": "benchmark-evidence-c9807950789fba92877d",
+            "memberships": [
+              {
+                "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+            "query_kind": "mechanism",
+            "snippet": "这个简单的场景吸引了众多询问产品链接的评论——储能产品已成为这种生活方式不可或缺的一部分。 从欧洲的露营地到北美的后院派对，从应急备灾到日常家用，中国的便携储能品牌正在全球市场书写着新的出海故事。",
+            "title": "储能开始带货了！一场直播卖出5000台，谁在刷爆TikTok？|电源|光伏|太...",
+            "url": "https://www.163.com/dy/article/KD1JLPO505119VAC.html"
+          },
+          {
+            "content_hash": "49737598908702dc833ef93325a862c27ea867e26f37af2106c090377d231c16",
+            "evidence_id": "benchmark-evidence-45e1734b4ec93419b67e",
+            "memberships": [
+              {
+                "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Aug 31, 2022 · 在OneSight近日发布的2022Q2《BrandOSTOP100出海品牌社媒影响力榜单》中，华宝新能旗下面向海外市场的DTC便携储能品牌——Jackery作为新上榜品牌，进入不限行业总榜TOP100的第66名，及工业制造类细分榜单中的第7名。",
+            "title": "逆袭Anker、获批上市，便携储能DTC品牌Jackery出海社媒营销案例_产品_...",
+            "url": "https://www.sohu.com/a/581326263_100298852"
+          },
+          {
+            "content_hash": "243369ab1bb9e40e5b479f1136f185ccc44397a5016452e83c839ebfa334dd18",
+            "evidence_id": "benchmark-evidence-3e2ea52283ddc9aec249",
+            "memberships": [
+              {
+                "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Jul 16, 2024 · 通过不断优化产品，满足用户需求，Jackery 在全球便携储能市场中脱颖而出。 其在社交媒体上的深耕与节日营销的巧妙结合，展示了品牌如何通过多渠道、多形式的营销策略，成功赢得消费者的心。 Jackery的经验，为其他品牌的跨境出海提供了宝贵的借鉴。",
+            "title": "海外网红营销案例：Jackery如何在社交媒体上掀起“储能风暴”？ - 海外...",
+            "url": "https://www.insmarkmcn.com/sys-nd/951.html"
+          },
+          {
+            "content_hash": "b0cb249de054a7634b004b0e65dc4ecc8dcba7b5f2260982abe0e7dbb3028c66",
+            "evidence_id": "benchmark-evidence-effe584ba66a11e82057",
+            "memberships": [
+              {
+                "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Aug 10, 2025 · 新能源产业家｜产业家一线你会拍储能小视频吗？储能开始带点电商味了。越来越多便携式储能厂家直接跑TikTok开直播卖货。卖的不是啥大电站设备 ...",
+            "title": "一场直播卖出5000台，中国的便携式储能正刷爆TikTok｜产业家一线",
+            "url": "https://news.qq.com/rain/a/20250810A04MDN00"
+          },
+          {
+            "content_hash": "784b138863dd69143cb47135959810295d5a81db11a28a21d37b783a616a387a",
+            "evidence_id": "benchmark-evidence-54fa3373279a1cb83fa8",
+            "memberships": [
+              {
+                "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+            "query_kind": "mechanism",
+            "snippet": "Sep 2, 2024 · 海玛观品牌 Jackery是海外储能产品的模范品牌。 Jackery团队内部不断研发,开发出各种迎合用户需求的优秀储能产品。 同时向外积极进行海外推广，注重网红营销与社媒平台营销，Jackery因地制宜，成功实现了品牌文化的本土化，更有效地触达了海外消费者。",
+            "title": "海外网红营销：“小电站大能量”Jackery在海外社媒营销中做对了什么？_...",
+            "url": "https://www.sohu.com/a/805737212_121818644"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "outdoor-power-station",
+          "demand_query": "户外移动电源购买需求场景 露营自驾游应急用电",
+          "direct_query": "户外移动电源 抖音 账号 视频",
+          "mechanism_query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "户外移动电源目标人群画像与价格带分布",
+            "该品类在抖音/小红书的内容竞争烈度与头部账号现状"
+          ]
+        }
+      },
+      "pet-funeral-service": {
+        "case_id": "pet-funeral-service",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "宠物殡葬服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-243c2836884e7c3307e2d3b1f17c2d3cd4fd173ca28d2484b60d241800f66ff1",
+        "items": [
+          {
+            "content_hash": "408e668a11b53342ddebab31828f7a809619654c6c99d499885e315b24c80b5a",
+            "evidence_id": "benchmark-evidence-76ecc6b70242318358f5",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "宠物殡葬服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "宠物生命纪念馆（天津宠物殡葬善终）是注册于天津的抖音创作者账号，专注于宠物殡葬领域，标签为宠物殡葬服务师。 截至2025年04月，该账号累计发布6部作品，拥有约40.0万粉丝，获赞约300.0万次。",
+            "title": "宠物生命纪念馆（天津宠物殡葬善终）_百度百科",
+            "url": "https://baike.baidu.com/item/宠物生命纪念馆（天津宠物殡葬善终）/66124614"
+          },
+          {
+            "content_hash": "d2fe597b67d11beb51a584358ff920bb22bca352ef3abcde959e14a8c7e49eb2",
+            "evidence_id": "benchmark-evidence-8ac53505505b84e51494",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "宠物殡葬服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "最新作品发布时间：2026-05-05 11:00 综合视频用户直播 多列 单列 筛选 宠物殡葬师嘉欣 · 5天前 一生十三年，治愈主人半生风雨 Ta不懂人间疾苦，却陪主人扛过所有艰难 #宠物殡葬师嘉欣#vlog#人间观察计划#闪光职人#青年创作者成长计划 00:00/02:03 宠物殡葬师英俊 · 2 ...",
+            "title": "宠物殡葬网红视频 - 抖音",
+            "url": "https://www.douyin.com/search/宠物殡葬网红视频"
+          },
+          {
+            "content_hash": "01eb14e3fcb71a855a4ad67a5f3f706cf7bb3e86a2a35ef2afb1d08d1133764d",
+            "evidence_id": "benchmark-evidence-94c4403226ee0d6d3e58",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "宠物殡葬服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "宠物殡葬师的故事，以最深的敬意，送走最爱的家人。 拍摄人员：武汉体育学院-董馨忆 #宠物殡葬 葬#宠物火化 #宠物善终 终 #宠物殡葬加盟#宠物殡葬师 00:00/06:31 新疆宠物殡葬师−NANA · 3月前",
+            "title": "宠物殡葬专题短片 - 抖音",
+            "url": "https://www.douyin.com/search/宠物殡葬专题短片"
+          },
+          {
+            "content_hash": "42c64bd8dcb630938065fd74899084716c08bae944d73b9a4b1a1675e217e1c4",
+            "evidence_id": "benchmark-evidence-cd8636879042f03ab561",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              }
+            ],
+            "query": "宠物殡葬服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "95后宠物殡葬师｜第一视角搬砖日记🧱,于2025年10月5日上线。抖音精选为您提供高清视频，画面清晰、播放流畅，看丰富、高质量视频就上抖音精选。",
+            "title": "95后宠物殡葬师｜第一视角搬砖日记 -抖音精选",
+            "url": "https://jingxuan.douyin.com/m/video/7557636391325322556"
+          },
+          {
+            "content_hash": "98f2681f1b7664ec6237382b7460f3fb35429e8fd2088401909346905304273a",
+            "evidence_id": "benchmark-evidence-fdf8310a9d7cb9b29211",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "宠物殡葬服务 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "宠物殡葬店老板｜早10晚10的一天💰,于2025年4月27日上线。抖音精选为您提供高清视频，画面清晰、播放流畅，看丰富、高质量视频就上抖音精选。",
+            "title": "宠物殡葬店老板｜早10晚10的一天 -抖音精选",
+            "url": "https://jingxuan.douyin.com/m/video/7497861971837127945"
+          },
+          {
+            "content_hash": "ea2339e661baf2201d8c2feec9298fdd631db76bd7151c140d517be4c2c24b1f",
+            "evidence_id": "benchmark-evidence-346d12d779556b1442d9",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+            "query_kind": "demand",
+            "snippet": "QYResearch信息咨询是全球...业细分市场的调研。挖掘出各个行业的国家级“专精特新”企业，以全球视角，深度洞察行业竞争态势、发展现状及未来趋势。 ... 宠物殡葬服务是指在宠物去世后，为宠物及其主人提供的一系列处理和纪念服务。这些服务旨在帮助宠物主人妥善处理失去宠物后的情感需求，同时也...",
+            "title": "宠物殡葬服务2024-2030全球及中国行业竞争格局分析报告（十五五规划）",
+            "url": "https://m.gelonghui.com/p/1147450"
+          },
+          {
+            "content_hash": "51cc64b6f22c922f29a33ca4d77c9fdbf8398b89c6e93fdcbdaa687c092113f6",
+            "evidence_id": "benchmark-evidence-2a5b42bebccea8eba052",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+            "query_kind": "demand",
+            "snippet": "随着养宠家庭的增多以及宠物数量的增长，宠物死亡数压在不断增长。例如2022年我国宠物数量达11655万只，按照8%死亡率计算，每年有超过800万只宠物去世。而宠物作为人类的朋友，无论在情感羁绊、角色转换、市场消费升级等层面，都在直观的向我们表明，“它经济”确实处在一个空前爆发的阶段，除了宠物生前需要得到悉心照料之外，宠物离世的善后事务也受到越来越多宠物主的关注，主人希望宠物在死后也能有一个体面的告别。拿成都这座“宠物之都”来说，据统计，成都市每年去世的宠物达10万余只，其中每年有超过2万只宠物由主人进行殡葬处置。可见宠物殡葬的需求越发明显。 · 2、当前我国宠物殡葬服务处于专业化阶段，市场逐渐专业化和规范化",
+            "title": "中国宠物殡葬服务行业发展深度分析与投资前景研究报告（2024-2031年）_观研报告网",
+            "url": "https://www.chinabaogao.com/detail/699439.html"
+          },
+          {
+            "content_hash": "c3fe4bf4c62020b74ee0c25f8fa26a1bde3254d5f562850fdf2319c5e5a65daa",
+            "evidence_id": "benchmark-evidence-3f53673eeb96f17bb8b6",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+            "query_kind": "demand",
+            "snippet": "宠物殡葬服务是指在宠物去世后，为宠物及其主人提供的一系列处理和纪念服务。这些服务旨在帮助宠物主人妥善处理失去宠物后的情感需求，同时也提供对宠物的尊重和纪念。宠物殡葬服务通常包括火化服务、埋葬服务、纪念服务以及为主人提供咨询与支持。 2024年10月QYReserach（恒州博智）研究中心调研发布了【2024-2030全球与中国宠物殡葬服务市场现状及未来发展趋势】本文研究全球及中国市场宠物殡葬服务现状及未来发展趋势，侧重分析全球及中国",
+            "title": "2024年全球宠物殡葬服务市场：现状、趋势及主要厂商分析",
+            "url": "https://m.gelonghui.com/p/1175728"
+          },
+          {
+            "content_hash": "88914b1fd4c21a45668be6fbed38b012360a908f0f543cd6d78231c51c94bffc",
+            "evidence_id": "benchmark-evidence-6493110fe12bfa72a3f0",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+            "query_kind": "demand",
+            "snippet": "我国随着经济的迅猛发...的宠物殡葬服务，是顺应目前宠物行业发展的必然，也是顺应广大爱宠人士的强烈需求，既能够使动物尸体无害化处理保护环境防治疾病的传播，又能够实现人们对死去动物的精神寄托，与此同时还能够能产生客观的经济效益，随着中国经济的不断增长，人们的...",
+            "title": "中国宠物殡葬服务行业市场发展分析及发展趋势与投资前景研究报告(2026-2031版)_51行业报告网",
+            "url": "https://www.51baogao.cn/baogao/20211221/235787.shtml"
+          },
+          {
+            "content_hash": "5bfd814b4b2eae91ee5d96a5e1b5842b2e72262df867c72979364f26af2dd38a",
+            "evidence_id": "benchmark-evidence-4ff211943b8ab6addafe",
+            "memberships": [
+              {
+                "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+            "query_kind": "demand",
+            "snippet": "September 10, 2025 - 科技正重新定义“告别”的形式。领先企业已推出“数字生命档案”：通过 AI 复原宠物声音与习性、AR 技术让爱宠在虚拟场景中“重现”，VR 虚拟墓园供远程祭扫。这类服务不仅缓解了物理空间限制，更契合年轻一代的数字化情感表达习惯，成为高附加值增长点。但需注意数据隐私与伦理边界，避免技术应用过度商业化而削弱情感真实性。 · 04 建立宠物主人社群，提供持续情感支持服务 · 宠物殡葬的核心是“情感经济”，而非一次性交易。成功的品",
+            "title": "宠物经济的“最后一公里”：海外宠物殡葬市场悄然兴起 - 知乎",
+            "url": "https://zhuanlan.zhihu.com/p/1949151232838042899"
+          },
+          {
+            "content_hash": "bf21d811f5df83e653ccc1ad18ef490987d3eedbd27a31e3c06bdaed85305027",
+            "evidence_id": "benchmark-evidence-918c28d41d5fcdec7db7",
+            "memberships": [
+              {
+                "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+            "query_kind": "mechanism",
+            "snippet": "合肥淡然殡葬成立于2024年，隶属于合肥淡然殡葬服务有限公司，已持续稳定运行多年。 将殡葬这个古老的行业，融合全新的互联网+的思维，让殡葬不再冰冷恐惧，而是对生命的一种感悟、对逝者的一种关怀。",
+            "title": "关于我们_合肥殡葬服务_合肥殡葬服务一条龙-合肥淡然殡葬服务有限公司",
+            "url": "https://www.hfdanran.com/guanyuwomen/"
+          },
+          {
+            "content_hash": "65c0b34efa306e8078768123ca25fc938f05ef74fb5a03ab68c2c021fd35a79b",
+            "evidence_id": "benchmark-evidence-448135de33d64d9bb108",
+            "memberships": [
+              {
+                "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+            "query_kind": "mechanism",
+            "snippet": "（二）社会工作介入殡葬服务，极乐殡葬网为家属和殡葬职工提供情感关怀. 社会工作介入殡葬服务就是让社会工作人员参与到殡葬服务之中。",
+            "title": "疫情下的辽宁殡葬服务保障能力建设非常重要_极乐殡葬网",
+            "url": "https://www.jilebinzang.com/qiyehuodong/330.html"
+          },
+          {
+            "content_hash": "4197ad5d5d913f2868ca84a60b435004830f4b172f3de134b8a7607741f2d1fd",
+            "evidence_id": "benchmark-evidence-6dd08f8d113491fb3d47",
+            "memberships": [
+              {
+                "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+            "query_kind": "mechanism",
+            "snippet": "一、济南殡葬服务现状分析. 1.1 殡葬服务的基本情况.殡葬服务人员的素质直接影响服务质量。",
+            "title": "济南陵园殡葬服务质量管理研究-济南龙穴宝地公墓网",
+            "url": "https://jinan.cctv08.cn/binzangbaike/shengmingwenhua/72.html"
+          },
+          {
+            "content_hash": "b274162e16291183a31961194bf30a91ee529fee3e3d26463bcc847374170cc7",
+            "evidence_id": "benchmark-evidence-d1e0324cfba10bc061e1",
+            "memberships": [
+              {
+                "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+            "query_kind": "mechanism",
+            "snippet": "江夏区殡葬服务包括哪些.殡葬服务中是否提供心理咨询服务？",
+            "title": "江夏区殡葬服务包括哪些－青岛金勾岛农副食品有限公司",
+            "url": "https://www.jingoudao.cn/news/131.html"
+          },
+          {
+            "content_hash": "859be2a364c7e6e15f3855de2c2a1eb26983e7fe2f425c31f3036e6ae7d98c3d",
+            "evidence_id": "benchmark-evidence-46a3cfe213baf3f73136",
+            "memberships": [
+              {
+                "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+            "query_kind": "mechanism",
+            "snippet": "殡葬服务复盘会：90%家属不知道的温暖秘密.一、复盘会的本质：殡葬服务的“人文显微镜”. 殡葬行业有个悖论：最需要标准化的服务，却最不能容忍机械化执行。",
+            "title": "殡葬服务复盘会：90...",
+            "url": "https://www.endingtop.com/list/post/3300401/"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "pet-funeral-service",
+          "demand_query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+          "direct_query": "宠物殡葬服务 抖音 账号 视频",
+          "mechanism_query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "目标用户在宠物离世后的具体决策路径与信息获取渠道",
+            "宠物殡葬行业在不同城市的准入门槛与合规要求差异",
+            "现有宠物殡葬头部账号的内容策略与获客方式"
+          ]
+        }
+      },
+      "sliced-beef-and-offal-seasoning": {
+        "case_id": "sliced-beef-and-offal-seasoning",
+        "collection_method": "public_web_benchmark_discovery",
+        "coverage": [
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "夫妻肺片调料包 抖音 账号 视频",
+            "query_kind": "direct",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+            "query_kind": "demand",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          },
+          {
+            "accepted_result_count": 5,
+            "error": null,
+            "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+            "query_kind": "mechanism",
+            "raw_result_count": 5,
+            "status": "succeeded"
+          }
+        ],
+        "evidence_hash": "benchmark-pack-234ca81db10e5b7b749946ee9c39c0c2c16ff45b80aacd3db05c8c1bd7907c5d",
+        "items": [
+          {
+            "content_hash": "fd6ff6add93bc1e9e04ae103a965b0af58fe9747370ec01810a825fb473cbed3",
+            "evidence_id": "benchmark-evidence-20896971df856d818614",
+            "memberships": [
+              {
+                "query": "夫妻肺片调料包 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 1
+              }
+            ],
+            "query": "夫妻肺片调料包 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "March 5, 2022 - 学得会用得着的家常菜、今天教大家做“夫妻肺片”, 视频播放量 139383、弹幕量 133、点赞数 4000、投硬币枚数 798、收藏人数 2158、转发人数 327, 视频作者 美食强, 作者简介 靠谱实用接地气、纯粹的美食教学、不说废话直切...",
+            "title": "想吃\"夫妻肺片\"就自己在家做、做法易学实用、步骤清晰详细_哔哩哔哩_bilibili",
+            "url": "https://www.bilibili.com/video/BV1r34y1b7u3/"
+          },
+          {
+            "content_hash": "b6ec774a47c1a00d38338e30c6a5aba22a897c2c321d584f9ec199440f3aa53d",
+            "evidence_id": "benchmark-evidence-ec17828b4c17cd08cee6",
+            "memberships": [
+              {
+                "query": "夫妻肺片调料包 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 2
+              }
+            ],
+            "query": "夫妻肺片调料包 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "We cannot provide a description for this page right now",
+            "title": "廖记夫妻肺片新华家园",
+            "url": "https://www.douyin.com/search/廖记夫妻肺片新华家园"
+          },
+          {
+            "content_hash": "430d77cb6b70cea94ee4db482032d3cad900d670595f2b76608c67b9960cefd4",
+            "evidence_id": "benchmark-evidence-58c6048a409474f5ec7c",
+            "memberships": [
+              {
+                "query": "夫妻肺片调料包 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 3
+              }
+            ],
+            "query": "夫妻肺片调料包 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "We cannot provide a description for this page right now",
+            "title": "万美人川渝拌菜夫妻肺片",
+            "url": "https://www.douyin.com/search/万美人川渝拌菜夫妻肺片"
+          },
+          {
+            "content_hash": "d1678ef0289ba9629b7a9ee30b672fc773850491e120179d01b9d312e0f33c89",
+            "evidence_id": "benchmark-evidence-235606f1aa77c18b0544",
+            "memberships": [
+              {
+                "query": "夫妻肺片调料包 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 4
+              }
+            ],
+            "query": "夫妻肺片调料包 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "December 22, 2025 - 加载中 · 精选 · 推荐 · 关注 · 朋友 · 我的 · 搜索 · 充值 · 客户端 · 壁纸",
+            "title": "0-3岁儿童视频在线观看",
+            "url": "https://www.iesdouyin.com/search/0-3岁儿童视频在线观看"
+          },
+          {
+            "content_hash": "4a94b863de3987e19e07305db0c2f6d28908cf422e87b99b11ea4f542a219f98",
+            "evidence_id": "benchmark-evidence-4699570b3771eb154965",
+            "memberships": [
+              {
+                "query": "夫妻肺片调料包 抖音 账号 视频",
+                "query_kind": "direct",
+                "rank": 5
+              }
+            ],
+            "query": "夫妻肺片调料包 抖音 账号 视频",
+            "query_kind": "direct",
+            "snippet": "加载中 · 精选 · 推荐 · 关注 · 朋友 · 我的 · 搜索 · 充值 · 客户端 · 壁纸",
+            "title": "鱼动态视频高级感",
+            "url": "https://www.iesdouyin.com/search/鱼动态视频高级感"
+          },
+          {
+            "content_hash": "0a085c613489a100a9767034885ce8fcbccf1094e2870e82a1efccf13e6f7c48",
+            "evidence_id": "benchmark-evidence-8947a527ace658d64056",
+            "memberships": [
+              {
+                "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+                "query_kind": "demand",
+                "rank": 1
+              }
+            ],
+            "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+            "query_kind": "demand",
+            "snippet": "德阳凉拌菜调味料加工哪家好.四川新涪蓉食品科技有限公司批发，贴牌牛肉酱，肥肠酱，鸡汤酱等面馆调料。 德阳凉拌菜调味料加工哪家好.",
+            "title": "德阳凉拌菜调味料加工哪家好-湖南省天和建筑节能科技有限公司",
+            "url": "https://www.hnreb.com/news/73.html"
+          },
+          {
+            "content_hash": "e5f307666be6efd73753fb6da95fb08a80795d503ed3045a5fe45e66af87bf4b",
+            "evidence_id": "benchmark-evidence-182e62868f45a131e99b",
+            "memberships": [
+              {
+                "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+                "query_kind": "demand",
+                "rank": 2
+              }
+            ],
+            "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+            "query_kind": "demand",
+            "snippet": "很多人拌凉菜总差一口气，其实问题根本不在辣椒，而在第一步就错了。你是不是习惯把所有调料一股脑倒进碗里？那味道能融合才怪。开了十五年社区川菜馆，我调过.",
+            "title": "川味凉拌的底层逻辑：三样定基调，三层出层次_调味品_什么值得买",
+            "url": "https://post.smzdm.com/p/a82n2436/"
+          },
+          {
+            "content_hash": "f5a2d2b6fad94f9ea3c52c4cf4d971e909a1def4afe3d6bb43cbd123a5a36784",
+            "evidence_id": "benchmark-evidence-8b2dfd489996a3f647fe",
+            "memberships": [
+              {
+                "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+                "query_kind": "demand",
+                "rank": 3
+              }
+            ],
+            "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+            "query_kind": "demand",
+            "snippet": "四川香宝宝食品有限公司（品牌名：香饱饱）针对这一痛点，提供了多款复合型卤料和凉拌菜专用调料，以源头工厂直供的方式，帮助商家快速实现标准化出.现代复合调料则将这个过程大大简化。 香饱饱提供的系列调味品中，就包含了多种风味的卤料和凉拌菜专用的红油、调味酱。",
+            "title": "2026...",
+            "url": "https://www.moer.cn/articleDetails.htm?articleId=533619"
+          },
+          {
+            "content_hash": "692e42b3f2141a5c37d48667f1f44eddafc9d295478acd3dcb8d9be5e7e8efe3",
+            "evidence_id": "benchmark-evidence-daabdc4178482e2163f3",
+            "memberships": [
+              {
+                "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+                "query_kind": "demand",
+                "rank": 4
+              }
+            ],
+            "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+            "query_kind": "demand",
+            "snippet": "凉拌卤菜的调料怎么配？ 30年卤菜店实战配方与判断标准 凉拌卤菜的调料怎么配？原因二：对“蒜”的处理方式错误。 蒜是凉拌菜的灵魂之一，但99%的家庭做法都是把蒜拍碎或切成末直接放进去。",
+            "title": "凉拌卤菜的调料怎么配？ 30年卤菜店实战配方与判断标准 - 做菜网",
+            "url": "https://www.myygk.cn/g/liang-ban-lu-cai-de-diao-liao-zen-yao-pei-30nian-l-rp9v.html"
+          },
+          {
+            "content_hash": "4361201787c1fb9fa7199f4e5b1f9f942923a1ff24d0719291efbe31f7e5c1cb",
+            "evidence_id": "benchmark-evidence-fda1c58f677c3869a85a",
+            "memberships": [
+              {
+                "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+                "query_kind": "demand",
+                "rank": 5
+              }
+            ],
+            "query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+            "query_kind": "demand",
+            "snippet": "有些集贸市场的熟食、凉菜档口未配备低温冷藏柜，成品凉拌菜长时间在室温下摆放，即便加盖防尘纱罩、观感整洁，也无法避免微生物侵入。 同时，凉拌菜应尽量当餐吃完，不宜长时间存放。",
+            "title": "三伏天慎买常温凉菜熟食",
+            "url": "https://www.msn.com/zh-cn/news/other/三伏天慎买常温凉菜熟食/ar-AA28ukMx"
+          },
+          {
+            "content_hash": "1ae5bbf5293f1d7505a5d198fa990c88fe78aeee144f8c4c8d6a35a00687f4da",
+            "evidence_id": "benchmark-evidence-0be83e40b3e2a340f7fc",
+            "memberships": [
+              {
+                "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 1
+              }
+            ],
+            "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "EZ Bombs品牌创始人Tina Castaneda 图源：网络.图源：Instagram. 与此同时，EZ Bombs品牌也在Facebook上发布了关于产品的用户评价以及品牌动态等相关内容，吸引了4300多位粉丝。",
+            "title": "美国老干妈”EZ Bombs：靠TikTok创业，一颗调味料球如何狂揽750...",
+            "url": "https://tkbaohe.com/tiktok-anli/1374.html"
+          },
+          {
+            "content_hash": "973fa2c2938ece1767fbd94373a978fc83bc1c7664cfd34ca509e92a8ac6cf6e",
+            "evidence_id": "benchmark-evidence-6ef6e87eb72652a4cc6b",
+            "memberships": [
+              {
+                "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 2
+              }
+            ],
+            "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "对于调味品品牌来说，他们需要争取的不是用户的厨房份额，而是用户的胃部份额。3. Sherry，《调味品品牌「加点滋味」获首轮数百万元融资，让年轻人的每餐有滋有味》，FBIF食品饮料创新，2020年11月11日。",
+            "title": "调味品品牌要成功，贵就对了吗？ - 21经济网",
+            "url": "https://www.21jingji.com/article/20210131/herald/29512490f037cc1fef6165d7657375d0.html"
+          },
+          {
+            "content_hash": "69c71c444063b94183ad4bc95c6d800e11cdd90250aac27e4050c44b89b79437",
+            "evidence_id": "benchmark-evidence-745ecf05bdf5a36b99d9",
+            "memberships": [
+              {
+                "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 3
+              }
+            ],
+            "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "忘记用户名或密码？ 没有收到确认EMAIL？搜尋類型. A漫 本子 CG COS 套图 韩漫日漫 里番搜索 3D搜索 同人搜索 会员画廊搜索 会员视频搜索.",
+            "title": "[VikLodn] Tea Party",
+            "url": "https://www.susmeat.com/showinfo-20-16339-0.html"
+          },
+          {
+            "content_hash": "584c488ba6be2ac8d11ce9d04733091e5c29cedaaa77073a7b6c78b469380f92",
+            "evidence_id": "benchmark-evidence-e871a3065211b9dba279",
+            "memberships": [
+              {
+                "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 4
+              }
+            ],
+            "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "特許内容.",
+            "title": "j-platpat",
+            "url": "https://www.j-platpat.inpit.go.jp/?uri=%2Fp0200"
+          },
+          {
+            "content_hash": "61b60b68f94e79d75e5c534d5a495c244fffd29bd0a64a21cf741a7291e37e26",
+            "evidence_id": "benchmark-evidence-611be21c28ad58193e06",
+            "memberships": [
+              {
+                "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+                "query_kind": "mechanism",
+                "rank": 5
+              }
+            ],
+            "query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+            "query_kind": "mechanism",
+            "snippet": "排名前6位的回答：1.餐后收拾麻烦 2.没有擅长的菜式 3.烹饪麻烦 4.烹饪很难 5.烹饪后收拾用具很麻烦 6.烹饪的时候手会沾上鱼腥味。2、家庭厨房食品. 在9个获奖产品中，有4款属于家庭烹饪用到的原料。",
+            "title": "管窥日本食品“经久不衰”的奥秘——2020... | Foodaily每日食品",
+            "url": "https://www.foodaily.com/articles/22151"
+          }
+        ],
+        "provider": "a99_typed_ddg_search",
+        "schema_version": "benchmark-evidence-pack-v1",
+        "search_plan": {
+          "case_id": "sliced-beef-and-offal-seasoning",
+          "demand_query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+          "direct_query": "夫妻肺片调料包 抖音 账号 视频",
+          "mechanism_query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "夫妻肺片调料包的具体目标人群画像",
+            "该调料包的品牌定位与价格区间",
+            "现有销售渠道与竞争格局"
+          ]
+        }
+      }
+    }
+  },
+  "experiment_id": "A99-benchmark-first-incubation-pilot-v1",
+  "git_commit": "c47ab1c445b91a0c24679e7eba5d74af69c40693",
+  "model_name": "glm-5-2-260617",
+  "official_douyin_openapi_used": false,
+  "planner": {
+    "cases": [
+      {
+        "case_id": "pet-funeral-service",
+        "duration_seconds": 5.11,
+        "failed_calls": 0,
+        "model_calls": 1,
+        "plan": {
+          "case_id": "pet-funeral-service",
+          "demand_query": "宠物殡葬服务 宠物主人 情感需求 市场增长",
+          "direct_query": "宠物殡葬服务 抖音 账号 视频",
+          "mechanism_query": "殡葬服务 情感营销 跨行业 悲伤关怀 品牌信任建立",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "目标用户在宠物离世后的具体决策路径与信息获取渠道",
+            "宠物殡葬行业在不同城市的准入门槛与合规要求差异",
+            "现有宠物殡葬头部账号的内容策略与获客方式"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 396,
+          "output_tokens": 109,
+          "total_tokens": 505
+        },
+        "usage_reported_calls": 1,
+        "usage_unreported_calls": 0
+      },
+      {
+        "case_id": "old-photo-restoration",
+        "duration_seconds": 3.452,
+        "failed_calls": 0,
+        "model_calls": 1,
+        "plan": {
+          "case_id": "old-photo-restoration",
+          "demand_query": "老照片修复 客户为什么愿意付费 情感需求 怀念亲人",
+          "direct_query": "老照片修复服务 抖音 账号 视频",
+          "mechanism_query": "before after 对比修复效果 病毒式传播 跨行业案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "老照片修复服务的典型客单价和复购率",
+            "该行业在短视频平台上的头部账号运营数据"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 395,
+          "output_tokens": 86,
+          "total_tokens": 481
+        },
+        "usage_reported_calls": 1,
+        "usage_unreported_calls": 0
+      },
+      {
+        "case_id": "children-photography",
+        "duration_seconds": 7.867,
+        "failed_calls": 0,
+        "model_calls": 2,
+        "plan": {
+          "case_id": "children-photography",
+          "demand_query": "儿童摄影服务 客户需求 家长为什么拍",
+          "direct_query": "儿童摄影服务 抖音 账号 视频",
+          "mechanism_query": "儿童摄影 起号 新手怎么做",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "家长选择儿童摄影服务的核心动机与决策路径",
+            "儿童摄影行业起号的可借鉴跨行业注意力机制"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 821,
+          "output_tokens": 159,
+          "total_tokens": 980
+        },
+        "usage_reported_calls": 2,
+        "usage_unreported_calls": 0
+      },
+      {
+        "case_id": "corporate-team-building",
+        "duration_seconds": 4.185,
+        "failed_calls": 0,
+        "model_calls": 1,
+        "plan": {
+          "case_id": "corporate-team-building",
+          "demand_query": "企业HR为什么需要团建服务 团队管理痛点 员工凝聚力需求",
+          "direct_query": "企业团建服务 抖音 账号 视频",
+          "mechanism_query": "B2B服务类企业如何通过短视频获客 企业服务内容营销案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "目标客户企业规模和行业分布未明确",
+            "团建服务具体形式（户外/室内/拓展/旅行）未明确",
+            "起号平台未明确（抖音/视频号/小红书等）"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 395,
+          "output_tokens": 106,
+          "total_tokens": 501
+        },
+        "usage_reported_calls": 1,
+        "usage_unreported_calls": 0
+      },
+      {
+        "case_id": "industrial-anticorrosion-coating",
+        "duration_seconds": 3.259,
+        "failed_calls": 0,
+        "model_calls": 1,
+        "plan": {
+          "case_id": "industrial-anticorrosion-coating",
+          "demand_query": "工业防腐涂料采购决策流程 工厂设备防腐需求痛点",
+          "direct_query": "工业防腐涂料 抖音 账号 视频",
+          "mechanism_query": "B2B工业品冷启动账号 内容信任建立机制 跨行业案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "工业防腐涂料的目标客户细分行业分布",
+            "当前主流获客渠道与起号平台偏好",
+            "防腐涂料行业的内容合规与资质展示要求"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 399,
+          "output_tokens": 88,
+          "total_tokens": 487
+        },
+        "usage_reported_calls": 1,
+        "usage_unreported_calls": 0
+      },
+      {
+        "case_id": "outdoor-power-station",
+        "duration_seconds": 3.499,
+        "failed_calls": 0,
+        "model_calls": 1,
+        "plan": {
+          "case_id": "outdoor-power-station",
+          "demand_query": "户外移动电源购买需求场景 露营自驾游应急用电",
+          "direct_query": "户外移动电源 抖音 账号 视频",
+          "mechanism_query": "便携储能电源品牌冷启动 社交媒体种草营销案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "户外移动电源目标人群画像与价格带分布",
+            "该品类在抖音/小红书的内容竞争烈度与头部账号现状"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 395,
+          "output_tokens": 83,
+          "total_tokens": 478
+        },
+        "usage_reported_calls": 1,
+        "usage_unreported_calls": 0
+      },
+      {
+        "case_id": "sliced-beef-and-offal-seasoning",
+        "duration_seconds": 3.374,
+        "failed_calls": 0,
+        "model_calls": 1,
+        "plan": {
+          "case_id": "sliced-beef-and-offal-seasoning",
+          "demand_query": "家庭自制川菜凉拌菜调料包购买需求与使用场景",
+          "direct_query": "夫妻肺片调料包 抖音 账号 视频",
+          "mechanism_query": "调味料包品牌通过短视频内容吸引家庭烹饪用户的跨行业案例",
+          "schema_version": "benchmark-search-plan-v1",
+          "unknowns": [
+            "夫妻肺片调料包的具体目标人群画像",
+            "该调料包的品牌定位与价格区间",
+            "现有销售渠道与竞争格局"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 403,
+          "output_tokens": 82,
+          "total_tokens": 485
+        },
+        "usage_reported_calls": 1,
+        "usage_unreported_calls": 0
+      }
+    ],
+    "failed_calls": 0,
+    "initial_call_count": 7,
+    "model_calls": 8,
+    "repair_call_count": 1,
+    "usage": {
+      "input_tokens": 3204,
+      "output_tokens": 713,
+      "total_tokens": 3917
+    },
+    "usage_complete": true,
+    "usage_reported_calls": 8,
+    "usage_unreported_calls": 0
+  },
+  "planner_preflight": {
+    "all_within_budget": true,
+    "case_count": 7,
+    "max_input_bytes": 1216,
+    "max_repair_input_bytes": 1383,
+    "max_schema_bytes": 449,
+    "message_count": 7,
+    "messages": [
+      {
+        "case_id": "pet-funeral-service",
+        "initial_input_bytes": 1198,
+        "message_bytes": 749,
+        "model_calls": 0,
+        "repair_input_bytes": 1365,
+        "schema_bytes": 449
+      },
+      {
+        "case_id": "old-photo-restoration",
+        "initial_input_bytes": 1200,
+        "message_bytes": 751,
+        "model_calls": 0,
+        "repair_input_bytes": 1367,
+        "schema_bytes": 449
+      },
+      {
+        "case_id": "children-photography",
+        "initial_input_bytes": 1193,
+        "message_bytes": 744,
+        "model_calls": 0,
+        "repair_input_bytes": 1360,
+        "schema_bytes": 449
+      },
+      {
+        "case_id": "corporate-team-building",
+        "initial_input_bytes": 1202,
+        "message_bytes": 753,
+        "model_calls": 0,
+        "repair_input_bytes": 1369,
+        "schema_bytes": 449
+      },
+      {
+        "case_id": "industrial-anticorrosion-coating",
+        "initial_input_bytes": 1211,
+        "message_bytes": 762,
+        "model_calls": 0,
+        "repair_input_bytes": 1378,
+        "schema_bytes": 449
+      },
+      {
+        "case_id": "outdoor-power-station",
+        "initial_input_bytes": 1200,
+        "message_bytes": 751,
+        "model_calls": 0,
+        "repair_input_bytes": 1367,
+        "schema_bytes": 449
+      },
+      {
+        "case_id": "sliced-beef-and-offal-seasoning",
+        "initial_input_bytes": 1216,
+        "message_bytes": 767,
+        "model_calls": 0,
+        "repair_input_bytes": 1383,
+        "schema_bytes": 449
+      }
+    ],
+    "model_calls": 0
+  },
+  "promotion_status": "offline_only",
+  "route_model_calls": 0,
+  "schema_version": "benchmark-evidence-stage-v1",
+  "stage": "evidence_collection",
+  "started_at": "2026-08-18T22:11:57.945405+00:00",
+  "temperature": 0,
+  "thinking_enabled": false
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": "benchmark-evidence-review-v1",
+  "evidence_receipt_sha256": "2a2da2072dd8058f6c872079aac395b5c60c1e68fc2de443e2a377a3bb1ee0e5",
+  "status": "rejected",
+  "reviewed_at": "2026-08-19",
+  "review_basis": "Manual review of the frozen titles, canonical URLs, snippets, and query memberships. A case is relevant only when direct-peer, underlying-demand, and transferable-mechanism evidence are all distinguishable and usable.",
+  "cases": [
+    {
+      "case_id": "pet-funeral-service",
+      "relevant": true,
+      "streams": {"direct": true, "demand": true, "mechanism": true},
+      "notes": "Found identifiable Douyin creators and videos, grief and memorial demand, and an adjacent human-funeral care mechanism. Source authority is mixed, but the three evidence roles remain distinguishable."
+    },
+    {
+      "case_id": "old-photo-restoration",
+      "relevant": true,
+      "streams": {"direct": true, "demand": true, "mechanism": true},
+      "notes": "Found multiple account-pattern observations, memory and kinship demand, and before-after or emotional-transformation mechanisms. Many sources are low-authority project tutorials, so later account validation remains mandatory."
+    },
+    {
+      "case_id": "children-photography",
+      "relevant": false,
+      "streams": {"direct": true, "demand": true, "mechanism": false},
+      "notes": "Direct and family-memory evidence exists, but the repaired mechanism query collapsed into generic startup and photography-technique pages. It did not produce a distinguishable transferable content mechanism."
+    },
+    {
+      "case_id": "corporate-team-building",
+      "relevant": false,
+      "streams": {"direct": false, "demand": false, "mechanism": false},
+      "notes": "Direct results were mostly generic Douyin operations, unrelated pages, or empty platform surfaces. Demand results contained substantial noise, and mechanism results were generic B2B promotion claims rather than grounded account mechanisms."
+    },
+    {
+      "case_id": "industrial-anticorrosion-coating",
+      "relevant": false,
+      "streams": {"direct": true, "demand": true, "mechanism": false},
+      "notes": "Direct product accounts and procurement concerns were visible, but the mechanism stream returned unrelated patents, TikTok warm-up pages, and generic cold-start promotion. It cannot support a fair transfer comparison."
+    },
+    {
+      "case_id": "outdoor-power-station",
+      "relevant": false,
+      "streams": {"direct": true, "demand": true, "mechanism": false},
+      "notes": "Direct content and use scenarios were strong, but the mechanism stream stayed inside portable-energy brand promotion. It did not isolate a cross-industry mechanism from a second peer set, so it fails the preregistered distinction."
+    },
+    {
+      "case_id": "sliced-beef-and-offal-seasoning",
+      "relevant": false,
+      "streams": {"direct": false, "demand": false, "mechanism": false},
+      "notes": "Only one generic cooking video was usable; several direct results were empty or unrelated. Demand and mechanism streams mixed SEO pages, unsafe food snippets, unrelated pages, and broad condiment articles. The lexical trap was avoided by the planner, but usable benchmark evidence was not recovered."
+    }
+  ],
+  "decision": "Do not invoke B/C intermediate calls, A/B/C route calls, or blind review. The frozen public-web evidence failed the preregistered all-seven manual relevance gate."
+}

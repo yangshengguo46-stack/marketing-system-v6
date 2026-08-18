@@ -206,7 +206,7 @@ hearing-aid hidden labels were narrow or incomplete. Future labels require user-
 contracts must allow no strong root or a conditional IP. Keep dictionaries optional and do not add
 Douyin, maps, positioning, or agents to root recall.
 
-A99 is a new isolated benchmark-first incubation pilot, not a runtime component. It compares a weak
+A99 is a consumed isolated benchmark-first incubation pilot, not a runtime component. It compares a weak
 direct-peer baseline with two equal-call broad-evidence arms: a neutral evidence digest and a frozen
 thin content world. Search plans, public-web evidence, intermediates, common route outputs, and blind
 reviews are separate receipts. The typed DDG adapter fixes five results and preserves failed versus
@@ -217,6 +217,11 @@ budgets include messages, schemas, and repair text. Evidence collection and rout
 separate hash-bound stages with a manual relevance review between them. A99 can only nominate a
 candidate for later real-account OpenAPI + MediaKit validation; never import or register it in Lead,
 and never infer that public search snippets constitute account analysis.
+Its one frozen evidence run completed all search plans but failed the manual relevance gate: only two
+of seven cases had distinguishable direct, demand, and transferable-mechanism evidence. No A/B/C route
+or blind-review calls were made. Do not add searches after the fact, tune, or rerun these seven cases. A successor must use new
+industries and qualified multi-post Douyin account evidence; this result neither rejects nor removes the
+current semantic, content-root, or content-map runtime.
 
 ## Development Workflow
 
