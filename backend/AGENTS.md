@@ -205,7 +205,9 @@ A92's thin single reader improved manual recall to 13/16, contracts to 12/12, ro
 39/41, and cut tokens to 11,689, but missed its 14/16 and 10/12 production gates. Retain that direction
 offline only; do not register or rerun A92, or add dictionaries, Douyin, maps, positioning, or agents.
 A successor needs new cases and may target only semantic-core retention, larger-world recall, and
-product-adjacency rejection. Dictionaries remain optional lookup evidence.
+product-adjacency rejection. A92's RV label `self-driving travel` is contested: the missing leap is
+RV travel to travel, while freedom/outdoors are lenses and Europe travel is a topic. Freeze future
+labels only after user review and allow valid alternatives. Dictionaries remain optional lookup evidence.
 
 ## Development Workflow
 
