@@ -206,10 +206,11 @@ rerun, tune, or stack it; its four cases are consumed development data. Semantic
 inspectable candidate hints, never labels or gates. Successors need new cases and must separate recall
 from frozen-graph selection.
 
-`experiments/lexical_candidate_lab` is rejected A86 evidence. Dictionary substrings recalled 7/7 but
-split `马桶`; model source self-report broke 3 contracts, and real relation payloads exceeded the input
-budget in 8 cases. Its ten cases are consumed: never rerun, tune, import, or register it. A successor
-needs new cases, compact exact-sense evidence, deterministic provenance, and preflighted byte budgets.
+A86 `experiments/lexical_candidate_lab` is rejected: raw substrings split `马桶`, model provenance
+broke 3 contracts, and 8 relation payloads exceeded budget. Its cases are consumed; never rerun,
+import, or register it. A88 `experiments/compact_lexical_candidate_lab` uses new cases, compact exact
+senses, code-bound provenance, and byte preflight. It gets one committed offline run only; never
+register it, select a root with it, or infer production approval from candidate recall.
 
 ## Development Workflow
 

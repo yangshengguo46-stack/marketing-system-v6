@@ -1,0 +1,96 @@
+{
+  "dataset_id": "compact-lexical-candidate-held-out-v1",
+  "status": "frozen_before_live_run",
+  "cases": [
+    {
+      "case_id": "basketball-hoop",
+      "cohort": "transparent",
+      "subject_expression": "我是卖篮球架的",
+      "commercial_object": "篮球架",
+      "accepted_aliases": ["篮球", "篮球运动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "篮球架承载篮球运动；篮球是完整的人物、赛事、历史、技术和文化世界。"
+    },
+    {
+      "case_id": "table-tennis-table",
+      "cohort": "transparent",
+      "subject_expression": "我是做乒乓球桌的",
+      "commercial_object": "乒乓球桌",
+      "accepted_aliases": ["乒乓球", "乒乓球运动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "球桌是乒乓球运动的器具；乒乓球是完整活动世界。"
+    },
+    {
+      "case_id": "oil-painting-frame",
+      "cohort": "transparent",
+      "subject_expression": "我是卖油画画框的",
+      "commercial_object": "油画画框",
+      "accepted_aliases": ["油画", "油画艺术"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "画框承载油画作品；油画可展开作品、画家、流派、历史和技法。"
+    },
+    {
+      "case_id": "guitar-case",
+      "cohort": "transparent",
+      "subject_expression": "我是做吉他琴包的",
+      "commercial_object": "吉他琴包",
+      "accepted_aliases": ["吉他", "吉他音乐"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "琴包保护吉他；吉他本身连接音乐、人物、作品、流派和演奏。"
+    },
+    {
+      "case_id": "cycling-helmet",
+      "cohort": "transparent",
+      "subject_expression": "我是卖骑行头盔的",
+      "commercial_object": "骑行头盔",
+      "accepted_aliases": ["骑行", "骑行运动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "头盔是骑行安全装备；骑行是完整活动和生活实践。"
+    },
+    {
+      "case_id": "diving-tank",
+      "cohort": "transparent",
+      "subject_expression": "我是做潜水氧气瓶的",
+      "commercial_object": "潜水氧气瓶",
+      "accepted_aliases": ["潜水", "潜水运动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "氧气瓶服务于潜水；潜水可展开地点、人物、技能、历史和生态观察。"
+    },
+    {
+      "case_id": "baking-oven",
+      "cohort": "transparent",
+      "subject_expression": "我是卖烘焙烤箱的",
+      "commercial_object": "烘焙烤箱",
+      "accepted_aliases": ["烘焙", "烘焙活动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "烤箱是烘焙工具；烘焙是完整制作实践和饮食文化世界。"
+    },
+    {
+      "case_id": "microphone-loanword-guard",
+      "cohort": "guard",
+      "subject_expression": "我是做麦克风的",
+      "commercial_object": "麦克风",
+      "accepted_aliases": ["麦克风", "声音与录音"],
+      "forbidden_exact_labels": ["麦", "克", "风", "小麦", "克服", "风文化"],
+      "review_rationale": "麦克风是借词，不能拆成麦、克、风。"
+    },
+    {
+      "case_id": "poker-loanword-guard",
+      "cohort": "guard",
+      "subject_expression": "我是做扑克的",
+      "commercial_object": "扑克",
+      "accepted_aliases": ["扑克", "扑克游戏"],
+      "forbidden_exact_labels": ["扑", "克", "扑打", "克服"],
+      "review_rationale": "扑克是借词，不能按单字字面拆解。"
+    },
+    {
+      "case_id": "wife-cake-lexicalized-guard",
+      "cohort": "guard",
+      "subject_expression": "我是做老婆饼的",
+      "commercial_object": "老婆饼",
+      "accepted_aliases": ["老婆饼", "中式糕点"],
+      "forbidden_exact_labels": ["老婆", "夫妻关系", "婚姻", "妻子"],
+      "review_rationale": "老婆是真实多字子串，但老婆饼的当前商品义不能迁移成婚姻关系内容世界。"
+    }
+  ]
+}
