@@ -206,22 +206,12 @@ hearing-aid hidden labels were narrow or incomplete. Future labels require user-
 contracts must allow no strong root or a conditional IP. Keep dictionaries optional and do not add
 Douyin, maps, positioning, or agents to root recall.
 
-A99 is a consumed isolated benchmark-first incubation pilot, not a runtime component. It compares a weak
-direct-peer baseline with two equal-call broad-evidence arms: a neutral evidence digest and a frozen
-thin content world. Search plans, public-web evidence, intermediates, common route outputs, and blind
-reviews are separate receipts. The typed DDG adapter fixes five results and preserves failed versus
-empty attempts; one canonical page may retain direct, demand, and mechanism memberships. Evidence
-packs are content-addressed and case-bound. Hidden review labels live in a sealed dataset and load only
-after outputs are frozen. Shared repair ledgers permit at most two repairs per phase/arm, and preflight
-budgets include messages, schemas, and repair text. Evidence collection and route comparison are
-separate hash-bound stages with a manual relevance review between them. A99 can only nominate a
-candidate for later real-account OpenAPI + MediaKit validation; never import or register it in Lead,
-and never infer that public search snippets constitute account analysis.
-Its one frozen evidence run completed all search plans but failed the manual relevance gate: only two
-of seven cases had distinguishable direct, demand, and transferable-mechanism evidence. No A/B/C route
-or blind-review calls were made. Do not add searches after the fact, tune, or rerun these seven cases. A successor must use new
-industries and qualified multi-post Douyin account evidence; this result neither rejects nor removes the
-current semantic, content-root, or content-map runtime.
+A99 and A101 are consumed offline benchmark-first experiments; never tune, rerun, import, or register
+them. A99's public-web evidence failed relevance. A101's accepted real Douyin pack improved mechanism,
+audience-response, and non-copy analysis, but its routes invented user facts and the model judge missed
+them. ADR-028 therefore keeps account evidence read-only after user facts and a candidate content world:
+it may challenge a conditional route, but cannot select a root, create capabilities, or treat a mature
+account as a cold-start template. Details remain in A99-A101 and ADR-028.
 
 ## Development Workflow
 
