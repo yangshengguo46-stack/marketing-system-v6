@@ -200,17 +200,17 @@ ADR-018 through ADR-022 for full contracts and status.
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
-`experiments/content_root_lab` is the A84 offline generalization comparison. It may use an open
-relation graph, optional semantic-component recall, frozen-candidate preference selection, and an
-experiment-only DSPy compiler, but production packages must never import it. Semantic components
-only add inspectable candidates; they are not mandatory root labels or hard gates. Do not register
-the lab as a Tool, Skill, MCP server, middleware, or Lead prompt, and do not tune its frozen held-out
-cases after the unique run. Promotion requires the preregistered automatic checks plus manual path
-review; a locally valid contract is not production approval. The unique A84 run reached 3/4 candidate
-recall but only 2/4 final selection; DSPy moved the errors without improving the total. ADR-023 rejects
-runtime promotion. Those four held-out cases are now development evidence: do not rerun, tune, register,
-or stack the lab. A successor must use new cases and separately replace candidate recall or frozen-graph
-selection.
+`experiments/content_root_lab` is rejected A84 offline evidence: its unique run reached 3/4 candidate
+recall and 2/4 final selection, while DSPy only moved errors. Production must not import, register,
+rerun, tune, or stack it; its four cases are consumed development data. Semantic components remain
+inspectable candidate hints, never labels or gates. Successors need new cases and must separate recall
+from frozen-graph selection.
+
+`experiments/lexical_candidate_lab` is the A86 recall-only successor. It compares dictionary-only,
+one-call model, and model-plus-bounded-CC-CEDICT arms on ten hidden-label cases without ranking or
+selecting a root. Evaluator labels never enter model messages. Run it once only after a preregistered
+commit; then consume its cases. Never import or register it in production; even a pass permits only a
+new offline candidate-supplement experiment.
 
 ## Development Workflow
 

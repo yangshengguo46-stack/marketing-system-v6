@@ -1,0 +1,96 @@
+{
+  "dataset_id": "lexical-candidate-held-out-v1",
+  "status": "frozen_before_live_run",
+  "cases": [
+    {
+      "case_id": "ski-clothes",
+      "cohort": "transparent",
+      "subject_expression": "我是卖滑雪服的",
+      "commercial_object": "滑雪服",
+      "accepted_aliases": ["滑雪", "滑雪运动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "滑雪服服务于滑雪活动；滑雪是能独立展开人物、地点、赛事、历史和技术的完整世界。"
+    },
+    {
+      "case_id": "surfboard",
+      "cohort": "transparent",
+      "subject_expression": "我是做冲浪板的",
+      "commercial_object": "冲浪板",
+      "accepted_aliases": ["冲浪", "冲浪运动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "冲浪板是参与冲浪的器具；冲浪是完整活动世界。"
+    },
+    {
+      "case_id": "guzheng-strings",
+      "cohort": "transparent",
+      "subject_expression": "我是卖古筝琴弦的",
+      "commercial_object": "古筝琴弦",
+      "accepted_aliases": ["古筝", "古筝艺术"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "琴弦是古筝的部件；古筝可独立连接曲目、人物、流派、历史和演奏。"
+    },
+    {
+      "case_id": "calligraphy-ink",
+      "cohort": "transparent",
+      "subject_expression": "我是做书法墨汁的",
+      "commercial_object": "书法墨汁",
+      "accepted_aliases": ["书法", "书法艺术"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "墨汁是书法创作材料；书法是完整文化与实践世界。"
+    },
+    {
+      "case_id": "go-board",
+      "cohort": "transparent",
+      "subject_expression": "我是卖围棋棋盘的",
+      "commercial_object": "围棋棋盘",
+      "accepted_aliases": ["围棋", "围棋文化"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "棋盘承载围棋活动；围棋本身可展开棋手、赛事、规则、历史和文化。"
+    },
+    {
+      "case_id": "photography-fill-light",
+      "cohort": "transparent",
+      "subject_expression": "我是做摄影补光灯的",
+      "commercial_object": "摄影补光灯",
+      "accepted_aliases": ["摄影", "摄影创作"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "补光灯是摄影手段；摄影是完整创作实践和内容世界。"
+    },
+    {
+      "case_id": "camping-canopy",
+      "cohort": "transparent",
+      "subject_expression": "我是卖露营天幕的",
+      "commercial_object": "露营天幕",
+      "accepted_aliases": ["露营", "露营活动"],
+      "forbidden_exact_labels": [],
+      "review_rationale": "天幕是露营装备；露营是可长期展开地点、人群、历史、技能和事件的完整活动。"
+    },
+    {
+      "case_id": "chocolate-loanword-guard",
+      "cohort": "guard",
+      "subject_expression": "我是做巧克力的",
+      "commercial_object": "巧克力",
+      "accepted_aliases": ["巧克力", "巧克力文化"],
+      "forbidden_exact_labels": ["巧", "克", "力", "巧文化", "克文化", "力量"],
+      "review_rationale": "巧克力是借词，不能按单字字面机械拆解。"
+    },
+    {
+      "case_id": "sofa-loanword-guard",
+      "cohort": "guard",
+      "subject_expression": "我是做沙发的",
+      "commercial_object": "沙发",
+      "accepted_aliases": ["沙发", "沙发与居家生活"],
+      "forbidden_exact_labels": ["沙", "发", "沙文化", "头发"],
+      "review_rationale": "沙发是借词，沙和发不是当前整词中的独立意义成分。"
+    },
+    {
+      "case_id": "toilet-lexicalized-guard",
+      "cohort": "guard",
+      "subject_expression": "我是做马桶的",
+      "commercial_object": "马桶",
+      "accepted_aliases": ["马桶", "如厕与卫生"],
+      "forbidden_exact_labels": ["马", "桶", "马文化", "马术", "容器文化"],
+      "review_rationale": "马桶虽含词典可查的马和桶，但当前词义不能迁移成马或桶的内容世界。"
+    }
+  ]
+}
