@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A82 root recovery; first-run orchestration acceptance pending`
+- 当前结论状态：`A83 content-root solution landscape reviewed; runtime unchanged`
 
 ## A01 第五版与第六版边界
 
@@ -1938,3 +1938,21 @@ AI 微电影或 MV 等表现形式、变现假设、资源和代价连成一体�
 `evidence/fruit-store-bootstrap-root-a82-2026-08-18.md`。
 聚焦联合回归 `230 passed`，开发手册与 Lead 提示预算 `40 passed`，完整后端非 live 回归为
 `12108 passed, 76 skipped, 17 warnings in 499.11s`。
+
+## A83 内容根泛化现成方案与采用边界
+
+2026-08-18 针对“修一个案例、另一个案例又坏，是否需要逐条人工标注或建设向量知识库”完成大厂生产
+系统、论文、中文语义资源、开源优化器、数据反馈工具和营销 Agent 的交叉审计。没有发现可直接安装的
+“中文商业表达 -> 最大有效营销内容世界”成品；现有营销 Agent 普遍从既有商业背景、受众或内容支柱
+开始，不能替代内容根判断。
+
+最接近的成熟路线来自阿里 AliCoCo 和亚马逊 FolkScope/COSMO：商品类目和属性之上另建用户需求、
+意图、功能、事件、受众和社会场景关系，由模型生成候选、人工判断合理性与典型性、模型再扩展判断。
+后续研究又证明固定类别会产生类别僵化和属性歧义，因此第六版只借可空关系图和偏好数据，不把关系
+枚举变成新的硬门。
+
+下一阶段候选方案为隔离 `ContentRootLab`：开放候选生成，可选 OpenHowNet 中文词义证据，可审阅的
+营销常识关系图，成对偏好与反例，再由 DSPy 离线优化选择器；只把通过冻结留出评测的提示/示例工件
+导回现有 DeerFlow。LLooM 延后用于账号语料概念归纳，Distilabel/Argilla 只借数据合同，Agent Lightning
+延后到真实奖励稳定之后。普通向量 RAG 只可检索案例与证据，不拥有根裁决权。本轮没有修改运行时、
+提示词或测试，详见 `audits/A83-existing-content-root-generalization-solutions.md`。
