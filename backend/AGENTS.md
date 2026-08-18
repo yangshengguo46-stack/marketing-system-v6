@@ -206,6 +206,18 @@ hearing-aid hidden labels were narrow or incomplete. Future labels require user-
 contracts must allow no strong root or a conditional IP. Keep dictionaries optional and do not add
 Douyin, maps, positioning, or agents to root recall.
 
+A99 is a new isolated benchmark-first incubation pilot, not a runtime component. It compares a weak
+direct-peer baseline with two equal-call broad-evidence arms: a neutral evidence digest and a frozen
+thin content world. Search plans, public-web evidence, intermediates, common route outputs, and blind
+reviews are separate receipts. The typed DDG adapter fixes five results and preserves failed versus
+empty attempts; one canonical page may retain direct, demand, and mechanism memberships. Evidence
+packs are content-addressed and case-bound. Hidden review labels live in a sealed dataset and load only
+after outputs are frozen. Shared repair ledgers permit at most two repairs per phase/arm, and preflight
+budgets include messages, schemas, and repair text. Evidence collection and route comparison are
+separate hash-bound stages with a manual relevance review between them. A99 can only nominate a
+candidate for later real-account OpenAPI + MediaKit validation; never import or register it in Lead,
+and never infer that public search snippets constitute account analysis.
+
 ## Development Workflow
 
 ### Test-Driven Development (TDD) — MANDATORY
