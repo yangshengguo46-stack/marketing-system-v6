@@ -1,0 +1,127 @@
+{
+  "dataset_id": "split-attention-content-root-recall-held-out-v1",
+  "status": "frozen_before_implementation_and_live_run",
+  "annotation_status": "preregistered_analyst_provisional",
+  "cases": [
+    {
+      "case_id": "business-courtesy-gift",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做商务伴手礼的",
+      "commercial_object": "商务伴手礼",
+      "required_concept_groups": [
+        ["送礼", "商务送礼", "赠礼"],
+        ["商务往来", "商业往来", "商务人情往来", "礼尚往来"]
+      ],
+      "forbidden_exact_labels": ["伴手礼销售", "礼品定制", "供应链"],
+      "review_rationale": "必须至少同时召回送礼行为与商务往来世界，不能只留在商品或销售。"
+    },
+    {
+      "case_id": "children-picture-book-shelf",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做儿童绘本书架的",
+      "commercial_object": "儿童绘本书架",
+      "required_concept_groups": [["儿童阅读", "亲子阅读", "阅读"]],
+      "forbidden_exact_labels": ["书架销售", "儿童家具经营"],
+      "review_rationale": "书架是绘本阅读的承载工具，候选集应包含阅读活动世界。"
+    },
+    {
+      "case_id": "camping-cookware",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖露营炊具的",
+      "commercial_object": "露营炊具",
+      "required_concept_groups": [
+        ["露营", "户外露营"],
+        ["户外烹饪", "露营烹饪", "野外烹饪"]
+      ],
+      "forbidden_exact_labels": ["炊具销售", "露营装备销售"],
+      "review_rationale": "候选应同时保留露营完整活动和其中的户外烹饪实践。"
+    },
+    {
+      "case_id": "pet-funeral-service",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做宠物殡葬服务的",
+      "commercial_object": "宠物殡葬服务",
+      "required_concept_groups": [
+        ["宠物告别", "宠物离世与告别", "告别宠物", "宠物殡葬"],
+        ["人与宠物的关系", "人宠关系", "宠物陪伴"]
+      ],
+      "forbidden_exact_labels": ["门店获客", "宠物殡葬店经营"],
+      "review_rationale": "服务方式背后是告别仪式和人宠关系，两者都应成为可复核候选。"
+    },
+    {
+      "case_id": "maternity-pillow",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖孕妇枕的",
+      "commercial_object": "孕妇枕",
+      "required_concept_groups": [["孕期睡眠", "孕妇睡眠", "孕期休息"]],
+      "forbidden_exact_labels": ["孕妇枕销售", "家纺销售"],
+      "review_rationale": "产品的构成用途是改善孕期睡眠与休息，不应只召回家纺品类。"
+    },
+    {
+      "case_id": "tea-ware",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做茶具的",
+      "commercial_object": "茶具",
+      "required_concept_groups": [
+        ["喝茶", "饮茶", "品茶"],
+        ["茶", "茶世界", "茶文化"]
+      ],
+      "forbidden_exact_labels": ["茶具销售", "茶具店经营"],
+      "review_rationale": "茶具为饮茶而存在，同时可返回更完整的茶对象世界。"
+    },
+    {
+      "case_id": "murder-mystery-shop",
+      "cohort": "world_transfer",
+      "subject_expression": "我是开剧本杀店的",
+      "commercial_object": "剧本杀店",
+      "required_concept_groups": [["剧本杀", "剧本推理游戏"]],
+      "forbidden_exact_labels": ["剧本杀店经营", "门店经营"],
+      "review_rationale": "经营容器承载的完整参与活动是剧本杀，不是门店流程。"
+    },
+    {
+      "case_id": "hiking-pole",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖登山杖的",
+      "commercial_object": "登山杖",
+      "required_concept_groups": [["登山", "徒步", "户外徒步", "徒步登山"]],
+      "forbidden_exact_labels": ["登山杖销售", "户外装备销售"],
+      "review_rationale": "登山杖是参与者进行登山或徒步的工具，必须召回活动世界。"
+    },
+    {
+      "case_id": "memorial-flowers",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做祭祀鲜花的",
+      "commercial_object": "祭祀鲜花",
+      "required_concept_groups": [["祭祀", "祭奠", "悼念", "纪念与哀悼"]],
+      "forbidden_exact_labels": ["鲜花销售", "花店经营"],
+      "review_rationale": "鲜花是祭祀、悼念与纪念实践的载体，候选不应留在花材销售。"
+    },
+    {
+      "case_id": "couple-lung-slices-guard",
+      "cohort": "lexicalized_guard",
+      "subject_expression": "我是做夫妻肺片预制菜的",
+      "commercial_object": "夫妻肺片预制菜",
+      "required_concept_groups": [["夫妻肺片", "川菜"]],
+      "forbidden_exact_labels": ["夫妻", "婚姻", "亲密关系", "夫妻相处"],
+      "review_rationale": "夫妻肺片是词汇化菜名，不能因字面的夫妻生成婚姻关系世界。"
+    },
+    {
+      "case_id": "mandarin-duck-hotpot-guard",
+      "cohort": "lexicalized_guard",
+      "subject_expression": "我是卖鸳鸯锅底的",
+      "commercial_object": "鸳鸯锅底",
+      "required_concept_groups": [["火锅", "鸳鸯锅"]],
+      "forbidden_exact_labels": ["爱情", "婚姻", "夫妻关系", "情侣关系"],
+      "review_rationale": "鸳鸯锅是火锅形态，不能由鸳鸯的象征义跳到爱情或夫妻关系。"
+    },
+    {
+      "case_id": "lion-head-food-guard",
+      "cohort": "lexicalized_guard",
+      "subject_expression": "我是卖狮子头半成品的",
+      "commercial_object": "狮子头半成品",
+      "required_concept_groups": [["狮子头", "淮扬菜"]],
+      "forbidden_exact_labels": ["狮子", "野生动物", "动物世界"],
+      "review_rationale": "狮子头是菜名，不能机械拆成狮子或动物世界。"
+    }
+  ]
+}

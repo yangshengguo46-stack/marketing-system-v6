@@ -200,17 +200,13 @@ ADR-018 through ADR-022 for full contracts and status.
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
-`experiments/content_root_lab` is rejected A84 offline evidence: its unique run reached 3/4 candidate
-recall and 2/4 final selection, while DSPy only moved errors. Production must not import, register,
-rerun, tune, or stack it; its four cases are consumed development data. Semantic components remain
-inspectable candidate hints, never labels or gates. Successors need new cases and must separate recall
-from frozen-graph selection.
-
-A86 `experiments/lexical_candidate_lab` is rejected: substrings split `马桶`, provenance broke 3
-contracts, and 8 payloads exceeded budget. A88 `experiments/compact_lexical_candidate_lab` is also
-rejected: recall fell to 4/7 versus model-only 6/7 while product drift and token use rose. Both case
-sets are consumed; never rerun, import, register, or use them to justify a dictionary vector store.
-Dictionaries remain optional for explicit lookup, not default content-root candidates.
+A84 content-root (3/4 recall, 2/4 selection), A86 lexical (including `马桶` splitting), and A88
+compact lexical (4/7 recall versus model-only 6/7) are rejected, consumed experiments. Never rerun,
+tune, stack, import, or register them; dictionaries remain optional lookup evidence, not default root
+candidates. A90 is a preregistered, isolated recall-only comparison on new cases: one open reader
+versus two parallel, mutually invisible readers. Its code may only round-robin, deduplicate, bind
+provenance, and validate object-rooted paths; it must not rank or select. Until the unique run and ADR,
+do not register A90 or mix in dictionaries, Douyin, content maps, positioning, or production prompts.
 
 ## Development Workflow
 
