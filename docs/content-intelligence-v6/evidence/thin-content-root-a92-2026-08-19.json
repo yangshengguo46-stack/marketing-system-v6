@@ -1,0 +1,892 @@
+{
+  "annotation_status": "preregistered_analyst_provisional",
+  "arm": {
+    "cases": [
+      {
+        "automatic_score": {
+          "candidate_count": 4,
+          "case_id": "baby-food-maker",
+          "cohort": "world_transfer",
+          "complete_recall": true,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "婴儿辅食制作"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "婴儿辅食"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 1
+        },
+        "case_id": "baby-food-maker",
+        "duration_seconds": 15.238,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦于婴儿辅食的制作过程与方法本身，不涉及辅食机品牌评测或购买决策。",
+              "candidate_id": "thin-root-0f2ab6571634fc45",
+              "label": "婴儿辅食制作",
+              "long_term_capacity": "辅食制作涵盖不同月龄、不同食材、不同营养需求、不同口味偏好，可长期持续产出多样化内容。",
+              "relation_to_business": "婴儿辅食机是制作婴儿辅食的核心工具，辅食制作的需求直接驱动辅食机的使用与购买。",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "以喂养行为与喂养知识为范围，不扩展到育儿全领域或母婴产品综合推荐。",
+              "candidate_id": "thin-root-a24ae423c65af19c",
+              "label": "婴儿喂养",
+              "long_term_capacity": "婴儿喂养覆盖从母乳过渡到辅食、从流质到固体的完整喂养历程，涉及营养、习惯、过敏、情绪等多维度话题。",
+              "relation_to_business": "婴儿辅食机服务于婴儿喂养场景，喂养方式与喂养阶段的变化构成辅食机使用的真实需求背景。",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦于宝宝饮食层面的营养问题，不涉及成人营养或医疗级营养干预。",
+              "candidate_id": "thin-root-261c03ce11ad9152",
+              "label": "宝宝饮食营养",
+              "long_term_capacity": "不同月龄、不同体质、不同季节的宝宝有不同营养需求，饮食营养话题可长期展开且持续更新。",
+              "relation_to_business": "辅食机的价值在于帮助家长为宝宝准备营养均衡的食物，营养需求是辅食机使用的根本驱动力。",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限定在厨房场景内的育儿行为，不扩展到家庭育儿全场景或厨房家电综合内容。",
+              "candidate_id": "thin-root-6fdee1d1bdf25ae5",
+              "label": "家庭厨房中的育儿实践",
+              "long_term_capacity": "家庭厨房中的育儿实践涵盖食材选择、烹饪方式、喂养习惯、亲子互动等，可容纳不同家庭、不同阶段、不同场景的内容。",
+              "relation_to_business": "婴儿辅食机是家庭厨房中实现育儿目标的具体工具，厨房场景与育儿需求的交汇点正是辅食机存在的位置。",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "婴儿辅食机",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖婴儿辅食机的",
+          "unknowns": [
+            "subject_expression中'卖'的角色定位是否需要影响内容根的选取方向——是偏向使用价值内容还是购买决策内容，尚不明确"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 618,
+          "output_tokens": 458,
+          "total_tokens": 1076
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 4,
+          "case_id": "business-suit-tailoring",
+          "cohort": "world_transfer",
+          "complete_recall": false,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "商务着装"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "商务着装"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 2
+        },
+        "case_id": "business-suit-tailoring",
+        "duration_seconds": 11.323,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦于商务语境下的穿着，不延伸至纯休闲、运动或艺术时装领域",
+              "candidate_id": "thin-root-ace34dd70c34bdf2",
+              "label": "商务着装",
+              "long_term_capacity": "可涵盖不同行业、职级、场合、文化背景下的着装规范与演变，容纳无数人物与场景",
+              "relation_to_business": "商务西装定制是商务着装体系中的核心环节，商务着装的需求直接驱动定制服务",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦于个人层面的形象构建，不涉及品牌形象、组织形象等非个人维度",
+              "candidate_id": "thin-root-c2f87c42210347a1",
+              "label": "个人形象管理",
+              "long_term_capacity": "可涵盖不同人群、职业阶段、社交需求下的形象策略，持续容纳新的人物与情境",
+              "relation_to_business": "商务西装定制是个人形象管理中视觉呈现的关键手段，定制服务直接服务于形象塑造目标",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦于人与环境之间的恰当关系，不涉及纯粹的美学或功能而脱离社会语境",
+              "candidate_id": "thin-root-89e86925b10c7bfa",
+              "label": "得体",
+              "long_term_capacity": "得体可跨越时代、文化、场合、身份不断重新定义，天然容纳多元人物与事件",
+              "relation_to_business": "商务西装定制的核心价值主张即帮助客户达到得体的状态，定制是实现得体的途径",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦于选择与判断过程本身，不涉及服装的生产制造或穿着后的物理体验",
+              "candidate_id": "thin-root-98f667534d1b4f08",
+              "label": "穿着决策",
+              "long_term_capacity": "穿着决策可涵盖不同场景、预算、认知水平下的选择过程，持续容纳新情境",
+              "relation_to_business": "商务西装定制是穿着决策链条中的高参与环节，定制服务直接影响并塑造决策过程",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "商务西装定制",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是做商务西装定制的",
+          "unknowns": []
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 617,
+          "output_tokens": 354,
+          "total_tokens": 971
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 4,
+          "case_id": "senior-hearing-aid",
+          "cohort": "world_transfer",
+          "complete_recall": false,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "听觉健康"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "听觉健康"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 2
+        },
+        "case_id": "senior-hearing-aid",
+        "duration_seconds": 13.081,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "不涉及视觉、触觉等其他感官健康，不涉及非听觉相关的老年慢病管理",
+              "candidate_id": "thin-root-566ac85f4f55256d",
+              "label": "听觉健康",
+              "long_term_capacity": "可涵盖不同年龄段、不同听力损失程度、不同成因、不同干预手段、不同生活阶段中的听觉议题，人物与事件空间广阔",
+              "relation_to_business": "助听器是听觉健康的核心干预工具之一，听觉健康议题天然包含助听器的使用场景与价值",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "不涉及抗衰老医学干预本身，不涉及非感官系统的衰老议题",
+              "candidate_id": "thin-root-46d27840ed362ea9",
+              "label": "衰老与感官退化",
+              "long_term_capacity": "可容纳衰老过程中不同感官系统的退化体验、适应策略、代偿机制、心理变化与代际互动，时间跨度大、人物多样",
+              "relation_to_business": "老年助听器的需求根源在于衰老带来的听觉退化，二者构成因果与应对关系",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "不涉及技术本身的工程原理，不涉及非老年群体的技术适应议题",
+              "candidate_id": "thin-root-c7cc2f9fa9ad2577",
+              "label": "老年人与技术的关系",
+              "long_term_capacity": "可涵盖不同技术品类、不同代际技术素养、不同家庭支持结构下老年人使用技术的体验与故事",
+              "relation_to_business": "助听器是一种需要老年人学习适应的技术产品，折射出老年群体面对技术时的接受、排斥与依赖",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "不涉及沟通技巧培训本身，不涉及非障碍性沟通议题",
+              "candidate_id": "thin-root-ab32f3a0df83adc2",
+              "label": "沟通障碍与重建",
+              "long_term_capacity": "可容纳不同障碍类型、不同关系中的沟通断裂与修复、不同文化语境下的沟通期待，人物与事件空间丰富",
+              "relation_to_business": "助听器是重建因听力损失而中断的人际沟通的工具，沟通障碍是助听器存在意义的直接语境",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "老年助听器",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖老年助听器的",
+          "unknowns": [
+            "subject_expression 中'卖'的角色定位是否暗示内容需偏向消费决策而非泛健康科普，尚不确定",
+            "commercial_object 是否限定于特定价格带或技术路线的助听器，可能影响内容根的适用范围"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 618,
+          "output_tokens": 436,
+          "total_tokens": 1054
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 4,
+          "case_id": "home-organizer",
+          "cohort": "world_transfer",
+          "complete_recall": false,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [],
+          "recalled_group_count": 0,
+          "required_group_count": 1
+        },
+        "case_id": "home-organizer",
+        "duration_seconds": 19.628,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "限于家庭内部空间，不涉及公共空间、商业空间或纯建筑设计",
+              "candidate_id": "thin-root-a07134502f8d7098",
+              "label": "家庭空间秩序",
+              "long_term_capacity": "可涵盖不同户型、家庭结构、生活习惯、文化偏好下的空间组织方式，持续衍生新议题",
+              "relation_to_business": "收纳师服务的本质是帮助家庭建立和维持空间秩序，空间秩序是收纳师工作的核心对象与成果",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦家庭场景中人与物的互动，不扩展到消费主义批判或物质文化学术研究",
+              "candidate_id": "thin-root-a85cea85c6ab2080",
+              "label": "人与物的关系",
+              "long_term_capacity": "可从情感、心理、行为习惯、代际差异等多维度长期展开，人物事件无限丰富",
+              "relation_to_business": "收纳师在实操中不断处理人对物品的取舍、依恋与整理，这一关系是服务得以成立的底层逻辑",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于家庭日常活动路径，不涉及交通规划或公共动线设计",
+              "candidate_id": "thin-root-8d1ec578cbc0b88c",
+              "label": "家庭生活动线",
+              "long_term_capacity": "不同家庭规模、生活阶段、功能区域组合可产生大量差异化动线议题",
+              "relation_to_business": "收纳师通过优化物品位置与存取逻辑来改善家庭成员的日常动线，动线优化是服务交付的关键环节",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于家庭居住体验范畴，不涉及酒店、办公等非居住舒适标准",
+              "candidate_id": "thin-root-ec3f1ba1b1753ecb",
+              "label": "居家舒适感",
+              "long_term_capacity": "可容纳感官、心理、社交、季节性等多层面舒适议题，持续有新角度",
+              "relation_to_business": "收纳师服务的最终体验目标是提升居住者的舒适感，舒适感是服务价值感知的直接落点",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "家庭收纳师服务",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是做家庭收纳师的",
+          "unknowns": [
+            "收纳师服务的具体交付形式和客户互动方式未明确，可能影响内容根的收敛方向",
+            "subject_expression中'做家庭收纳师的'是否包含培训、加盟等业务延伸未知"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 617,
+          "output_tokens": 407,
+          "total_tokens": 1024
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "rv-rental",
+          "cohort": "world_transfer",
+          "complete_recall": false,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "房车旅行"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "房车旅行"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 2
+        },
+        "case_id": "rv-rental",
+        "duration_seconds": 7.535,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦以房车为载体的旅行体验，不涵盖非房车旅行或房车制造与销售",
+              "candidate_id": "thin-root-1cd9efde6c430d50",
+              "label": "房车旅行",
+              "long_term_capacity": "可长期容纳不同路线、季节、人群、旅行方式和旅途故事",
+              "relation_to_business": "房车租赁是房车旅行得以实现的核心环节，房车旅行的需求直接驱动租赁业务",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦以房车为生活空间的日常与观念，不涵盖固定房产或纯旅游攻略",
+              "candidate_id": "thin-root-a0db7285a2a777b0",
+              "label": "房车生活",
+              "long_term_capacity": "可长期容纳不同生活阶段、居住模式、家庭结构和生活观念的探讨",
+              "relation_to_business": "房车租赁让用户进入房车生活，生活场景的需求定义了租赁产品的形态与价值",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦居住与移动的结合形态，不涵盖固定居住或纯交通工具讨论",
+              "candidate_id": "thin-root-6b94908ca398a405",
+              "label": "移动居住",
+              "long_term_capacity": "可长期容纳不同移动工具、居住理念、政策环境和人群选择",
+              "relation_to_business": "房车租赁是移动居住的一种实现方式，移动居住的需求趋势决定租赁市场的长期空间",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "房车租赁",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是做房车租赁的",
+          "unknowns": []
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 617,
+          "output_tokens": 252,
+          "total_tokens": 869
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 4,
+          "case_id": "wedding-host",
+          "cohort": "world_transfer",
+          "complete_recall": true,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "婚礼仪式感"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "婚礼仪式"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 1
+        },
+        "case_id": "wedding-host",
+        "duration_seconds": 12.668,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦仪式本身的意义与体验，不涉及婚庆供应链或场地经营",
+              "candidate_id": "thin-root-e6d92effccdb8ec8",
+              "label": "婚礼仪式感",
+              "long_term_capacity": "可涵盖不同文化、时代、地域的仪式形式，以及仪式感在人生各阶段的延伸",
+              "relation_to_business": "婚礼主持的核心价值即创造和呈现仪式感，主持是仪式感的执行者与放大器",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于婚礼情境中的情感，不扩展到一般心理学科普或情感咨询",
+              "candidate_id": "thin-root-220230a92e919795",
+              "label": "婚礼上的情感表达",
+              "long_term_capacity": "情感主题可覆盖亲情、爱情、友情等多种关系，以及不同人物在婚礼中的情感角色",
+              "relation_to_business": "主持人的核心技能是引导、承载和转化婚礼现场的情感，二者互为表里",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦现场体验层面，不涉及婚庆策划的整体运营或物料管理",
+              "candidate_id": "thin-root-1d635cd2c349851d",
+              "label": "婚礼现场的氛围营造",
+              "long_term_capacity": "可容纳不同风格、规模、文化背景的婚礼场景，以及氛围设计的多种维度",
+              "relation_to_business": "氛围营造是婚礼主持的直接工作产出，主持能力直接决定现场氛围质量",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于婚礼场景中的人际动态，不扩展到一般社交技巧或关系咨询",
+              "candidate_id": "thin-root-d627fc96c983487a",
+              "label": "婚礼中的人际互动",
+              "long_term_capacity": "可涵盖不同家庭结构、文化习俗、代际关系下的互动模式与冲突化解",
+              "relation_to_business": "主持人是婚礼现场人际互动的枢纽，负责连接新人、家庭与宾客之间的关系",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "婚礼主持",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是做婚礼主持的",
+          "unknowns": [
+            "婚礼主持从业者的具体业务模式（纯主持 vs 含策划）会影响内容根的边界判断",
+            "目标受众是同行从业者还是备婚新人，会影响内容根的抽象方向"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 615,
+          "output_tokens": 379,
+          "total_tokens": 994
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "piano-coaching",
+          "cohort": "world_transfer",
+          "complete_recall": true,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "钢琴学习"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "钢琴学习"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 1
+        },
+        "case_id": "piano-coaching",
+        "duration_seconds": 8.401,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦学钢琴这件事本身，不延伸至其他乐器学习或非学习场景的音乐活动",
+              "candidate_id": "thin-root-1bcdc81da031b6a6",
+              "label": "钢琴学习",
+              "long_term_capacity": "可容纳不同年龄段学习者、学习阶段、教学方法、练习难点、考级路径、心理状态等维度，长期可衍生丰富内容",
+              "relation_to_business": "钢琴陪练是钢琴学习过程中练习环节的服务支撑，学习需求直接驱动陪练需求",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于练习行为及其相关问题，不涵盖演出、创作或音乐欣赏等非练习场景",
+              "candidate_id": "thin-root-0c0c90e284075680",
+              "label": "练琴",
+              "long_term_capacity": "练琴涉及方法、习惯、效率、专注力、曲目攻克、错误纠正、时间管理等，可长期展开多角度内容",
+              "relation_to_business": "陪练的核心场景就是练琴过程，陪练服务直接嵌入练琴环节",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于教育范畴内的讨论，不涉及职业演出、音乐产业或纯审美批评",
+              "candidate_id": "thin-root-f9540e68dd24366a",
+              "label": "音乐教育",
+              "long_term_capacity": "可容纳教育理念、师生关系、家长角色、学习心理、教学争议、教育公平等长期议题",
+              "relation_to_business": "钢琴陪练是音乐教育中器乐学习辅导的细分形态，二者是部分与整体的关系",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "钢琴陪练",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是做钢琴陪练的",
+          "unknowns": []
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 617,
+          "output_tokens": 277,
+          "total_tokens": 894
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "pour-over-coffee-tools",
+          "cohort": "world_transfer",
+          "complete_recall": true,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "手冲咖啡",
+            "咖啡器具"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "手冲咖啡",
+            "咖啡"
+          ],
+          "recalled_group_count": 2,
+          "required_group_count": 2
+        },
+        "case_id": "pour-over-coffee-tools",
+        "duration_seconds": 16.344,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "不涵盖意式咖啡、速溶咖啡等非手冲品类；不涵盖咖啡豆种植与贸易的产业上游",
+              "candidate_id": "thin-root-a6f68fe7b79d84ce",
+              "label": "手冲咖啡",
+              "long_term_capacity": "涵盖不同豆种、产地、烘焙度、冲煮手法、风味探索、器具演进、个人技艺成长等，可长期承载多人物、多场景、多事件",
+              "relation_to_business": "手冲咖啡器具是手冲咖啡实践的核心工具，手冲咖啡的普及与深化直接驱动器具需求",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "不涵盖非咖啡类饮品器具；不涵盖咖啡豆本身的种植与加工",
+              "candidate_id": "thin-root-913720d9c17faa04",
+              "label": "咖啡器具",
+              "long_term_capacity": "可容纳不同器具类型（滤杯、手壶、磨豆机等）、设计哲学、材质工艺、使用对比、历史演变、用户经验等长期话题",
+              "relation_to_business": "器具本身即商业对象，围绕器具的设计、选材、使用体验、比较与演进可自然承载内容",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "不涵盖咖啡馆商业运营；不涵盖非咖啡类居家饮品",
+              "candidate_id": "thin-root-f9aed765cea858ce",
+              "label": "居家咖啡冲煮",
+              "long_term_capacity": "可容纳不同家庭场景、生活节奏、空间布置、冲煮习惯、器具搭配、仪式感营造等长期内容",
+              "relation_to_business": "手冲咖啡器具的核心使用场景之一是居家冲煮，居家场景下的器具选择与使用直接关联销售",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "手冲咖啡器具",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖手冲咖啡器具的",
+          "unknowns": [
+            "commercial_object 是否仅指手冲类器具还是泛指所有咖啡器具",
+            "卖方是否同时经营咖啡豆或其他咖啡相关产品"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 619,
+          "output_tokens": 347,
+          "total_tokens": 966
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "children-balance-bike",
+          "cohort": "world_transfer",
+          "complete_recall": true,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "儿童运动发展"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "儿童运动"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 1
+        },
+        "case_id": "children-balance-bike",
+        "duration_seconds": 9.354,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦于儿童身体与运动能力的发展，不涉及成人运动、非运动类儿童教育、医疗诊断",
+              "candidate_id": "thin-root-1dcc9ecd35d5e560",
+              "label": "儿童运动发展",
+              "long_term_capacity": "可以长期容纳不同年龄段、不同运动项目、不同发展阶段、不同家庭场景下的儿童运动话题",
+              "relation_to_business": "平衡车是儿童运动发展路径上的一个具体工具，而儿童运动发展是平衡车存在的根本理由和长期价值所在",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于骑行类活动，不扩展到非骑行的儿童运动或一般性育儿话题",
+              "candidate_id": "thin-root-fb79bb841f57e5d7",
+              "label": "儿童骑行",
+              "long_term_capacity": "可容纳滑步车、自行车、滑板车等不同骑行工具，覆盖不同年龄、场地、技能阶段",
+              "relation_to_business": "平衡车是儿童骑行序列的起点环节，骑行本身是平衡车最直接的使用场景和延展方向",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于身体协调与运动能力范畴，不涉及认知、语言、社交等非身体领域",
+              "candidate_id": "thin-root-48e00d74e013be6e",
+              "label": "早期身体协调能力培养",
+              "long_term_capacity": "可容纳平衡、协调、核心力量、空间感知等多种身体能力维度，覆盖不同训练方式与成长阶段",
+              "relation_to_business": "平衡车直接服务于儿童平衡感、协调性等早期身体能力的建立，是这一能力培养的典型载体",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "儿童平衡车",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖儿童平衡车的",
+          "unknowns": [
+            "卖方是否仅经营平衡车单一品类，还是覆盖更广的儿童运动/骑行产品线，这会影响内容根的边界宽窄"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 616,
+          "output_tokens": 330,
+          "total_tokens": 946
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "buddha-jumps-over-wall-guard",
+          "cohort": "lexicalized_guard",
+          "complete_recall": false,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [],
+          "recalled_group_count": 0,
+          "required_group_count": 1
+        },
+        "case_id": "buddha-jumps-over-wall-guard",
+        "duration_seconds": 10.254,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦宴席菜从专业厨房到家庭厨房的转化，不涉及普通家常菜的日常烹饪或餐厅经营",
+              "candidate_id": "thin-root-291df6592ddfd8bc",
+              "label": "中式宴席菜的家常化",
+              "long_term_capacity": "可长期容纳不同菜系宴席菜的家常化路径、家庭场景下的还原技巧、食材适配、口味调整等多元人物与事件",
+              "relation_to_business": "佛跳墙预制菜本质上是将传统高端宴席菜转化为家庭可操作的日常菜品，二者是供给与品类的关系",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于预制菜成品到餐桌之间的品质还原环节，不涉及预制菜生产端或原料端",
+              "candidate_id": "thin-root-3c7812be2e545030",
+              "label": "预制菜的品质还原",
+              "long_term_capacity": "可长期覆盖不同品类预制菜的还原方法、复热技术、口感修复、食材保真等跨品类、跨场景话题",
+              "relation_to_business": "佛跳墙预制菜的核心消费障碍在于成品与现制的品质差距，品质还原是产品价值主张的核心",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦传统菜肴的现代化改造路径，不涉及新菜研发或纯创新菜",
+              "candidate_id": "thin-root-2b2382284731d7a8",
+              "label": "传统名菜的现代化改造",
+              "long_term_capacity": "可长期容纳各类传统名菜在工艺、包装、储存、传播等维度的现代化改造故事与讨论",
+              "relation_to_business": "佛跳墙预制菜是传统名菜通过工业化手段实现现代化改造的典型产物，二者是实例与范式的关系",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "佛跳墙预制菜",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖佛跳墙预制菜的",
+          "unknowns": [
+            "佛跳墙预制菜的目标消费场景是家庭日常还是节庆礼赠，影响内容根的侧重方向",
+            "账号是否仅围绕佛跳墙单一品类还是覆盖多品类预制菜，影响内容根的宽窄"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 620,
+          "output_tokens": 369,
+          "total_tokens": 989
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "beggars-chicken-guard",
+          "cohort": "lexicalized_guard",
+          "complete_recall": true,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [
+            "叫花鸡"
+          ],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [
+            "叫花鸡"
+          ],
+          "recalled_group_count": 1,
+          "required_group_count": 1
+        },
+        "case_id": "beggars-chicken-guard",
+        "duration_seconds": 12.828,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "以叫花鸡这道菜为核心展开，不泛化到所有鸡肉菜肴或中式烹饪",
+              "candidate_id": "thin-root-9733ed010ffa6190",
+              "label": "叫花鸡",
+              "long_term_capacity": "叫花鸡作为一道经典中式菜肴，可以长期承载其历史渊源、地域流派、食材选择、烹饪技法、口味变化、文化故事等多元内容",
+              "relation_to_business": "叫花鸡半成品是叫花鸡这道菜的商业化预制形态，账号卖的是叫花鸡的便捷烹饪入口",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "聚焦预制菜本身及其与家庭餐桌的关系，不涉及B端供应链经营或餐饮门店运营",
+              "candidate_id": "thin-root-8a0bdb38996b7d5c",
+              "label": "中式预制菜",
+              "long_term_capacity": "中式预制菜涵盖广泛菜系与品类，可长期讨论菜品还原、家庭烹饪便利、口味评测、行业趋势、消费选择等",
+              "relation_to_business": "叫花鸡半成品属于中式预制菜的一个具体品类，账号处于这一赛道的实际经营中",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "围绕家庭烹饪中主菜这一场景展开，不延伸到日常简餐或零食",
+              "candidate_id": "thin-root-ba3692c830ba2a23",
+              "label": "家庭餐桌上的硬菜",
+              "long_term_capacity": "家庭硬菜可长期容纳不同菜系、不同节日场景、不同人群需求、烹饪难度梯度、食材搭配等丰富内容",
+              "relation_to_business": "叫花鸡半成品的消费场景是家庭餐桌上的一道拿得出手的主菜，账号提供的是这一场景的解决方案",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "叫花鸡半成品",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖叫花鸡半成品的",
+          "unknowns": [
+            "叫花鸡半成品的具体产品形态（冷冻、真空包装、调料包组合等）尚不明确，可能影响内容根的精确度",
+            "账号是否仅卖叫花鸡半成品单一品类，还是涉及多品类预制菜，影响内容根的宽窄选择"
+          ]
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 621,
+          "output_tokens": 380,
+          "total_tokens": 1001
+        }
+      },
+      {
+        "automatic_score": {
+          "candidate_count": 3,
+          "case_id": "fish-fragrant-pork-guard",
+          "cohort": "lexicalized_guard",
+          "complete_recall": false,
+          "contract_success": true,
+          "forbidden_hit": false,
+          "matched_candidate_labels": [],
+          "matched_forbidden_fragments": [],
+          "matched_group_aliases": [],
+          "recalled_group_count": 0,
+          "required_group_count": 1
+        },
+        "case_id": "fish-fragrant-pork-guard",
+        "duration_seconds": 10.157,
+        "model_calls": 1,
+        "record": {
+          "candidates": [
+            {
+              "boundary": "聚焦家庭场景下的川味烹饪，不延伸至餐厅后厨、非川味菜系或食材原产地溯源",
+              "candidate_id": "thin-root-d9dc576012f02840",
+              "label": "家常川味烹饪",
+              "long_term_capacity": "可长期容纳川味菜谱、调味技巧、家庭厨房场景、味型变体、食材搭配等多元内容",
+              "relation_to_business": "鱼香肉丝调料包是家常川味烹饪中的核心调味方案，二者在味型与烹饪场景上直接对应",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于调味料的使用与搭配领域，不涉及调味料的生产工艺或原料贸易",
+              "candidate_id": "thin-root-1e37485e671a158d",
+              "label": "调味料的使用与搭配",
+              "long_term_capacity": "可长期覆盖不同调味料的用法、搭配逻辑、口味调整、复合调味趋势等",
+              "relation_to_business": "调料包本身即是一种复合调味料，其使用与搭配是产品价值的核心体现",
+              "source": "single_thin_reader"
+            },
+            {
+              "boundary": "限于家庭快手烹饪，不延伸至专业烹饪或慢工细作的传统菜系",
+              "candidate_id": "thin-root-4aadc3ec90b3acdf",
+              "label": "快手家常菜",
+              "long_term_capacity": "可长期容纳各类快手菜谱、省时技巧、调味捷径、家庭日常饮食安排等",
+              "relation_to_business": "鱼香肉丝调料包的核心卖点之一是简化家常菜制作流程，与快手家常菜场景高度契合",
+              "source": "single_thin_reader"
+            }
+          ],
+          "commercial_object": "鱼香肉丝调料包",
+          "discarded_commercial_object_duplicate": false,
+          "schema_version": "thin-content-root-v1",
+          "subject_expression": "我是卖鱼香肉丝调料包的",
+          "unknowns": []
+        },
+        "status": "succeeded",
+        "usage": {
+          "input_tokens": 621,
+          "output_tokens": 284,
+          "total_tokens": 905
+        }
+      }
+    ],
+    "duration_seconds": 146.811,
+    "model_calls": 12,
+    "status": "completed",
+    "summary": {
+      "candidate_count": 41,
+      "case_count": 12,
+      "complete_case_recall": 6,
+      "contract_success": 12,
+      "guard_case_count": 3,
+      "guard_forbidden_hit": 0,
+      "recalled_group_count": 10,
+      "required_group_count": 16
+    },
+    "usage": {
+      "input_tokens": 7416,
+      "output_tokens": 4273,
+      "total_tokens": 11689
+    }
+  },
+  "completed_at": "2026-08-18T20:04:55.782073+00:00",
+  "dataset_id": "thin-single-agent-content-root-held-out-v1",
+  "dataset_status": "frozen_before_implementation_and_live_run",
+  "dictionary_evidence_enabled": false,
+  "experiment_id": "A92-thin-single-agent-content-root-v1",
+  "git_commit": "e9d05d284a54679666727120bfbaa9caf6a24539",
+  "manual_review_status": "pending",
+  "model_name": "glm-5-2-260617",
+  "network_evidence_enabled": false,
+  "preflight": {
+    "all_within_budget": true,
+    "case_count": 12,
+    "max_input_bytes": 1405,
+    "message_count": 12,
+    "messages": [
+      {
+        "case_id": "baby-food-maker",
+        "input_bytes": 1393,
+        "model_calls": 0
+      },
+      {
+        "case_id": "business-suit-tailoring",
+        "input_bytes": 1399,
+        "model_calls": 0
+      },
+      {
+        "case_id": "senior-hearing-aid",
+        "input_bytes": 1393,
+        "model_calls": 0
+      },
+      {
+        "case_id": "home-organizer",
+        "input_bytes": 1399,
+        "model_calls": 0
+      },
+      {
+        "case_id": "rv-rental",
+        "input_bytes": 1387,
+        "model_calls": 0
+      },
+      {
+        "case_id": "wedding-host",
+        "input_bytes": 1387,
+        "model_calls": 0
+      },
+      {
+        "case_id": "piano-coaching",
+        "input_bytes": 1387,
+        "model_calls": 0
+      },
+      {
+        "case_id": "pour-over-coffee-tools",
+        "input_bytes": 1399,
+        "model_calls": 0
+      },
+      {
+        "case_id": "children-balance-bike",
+        "input_bytes": 1393,
+        "model_calls": 0
+      },
+      {
+        "case_id": "buddha-jumps-over-wall-guard",
+        "input_bytes": 1399,
+        "model_calls": 0
+      },
+      {
+        "case_id": "beggars-chicken-guard",
+        "input_bytes": 1399,
+        "model_calls": 0
+      },
+      {
+        "case_id": "fish-fragrant-pork-guard",
+        "input_bytes": 1405,
+        "model_calls": 0
+      }
+    ],
+    "model_calls": 0
+  },
+  "promotion_status": "offline_only",
+  "schema_version": "thin-content-root-receipt-v1",
+  "started_at": "2026-08-18T20:02:28.065723+00:00",
+  "temperature": 0,
+  "thinking_enabled": false
+}
