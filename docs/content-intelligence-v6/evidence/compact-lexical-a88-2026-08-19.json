@@ -1,0 +1,2265 @@
+{
+  "arms": {
+    "compact_dictionary_only": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "basketball-hoop",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "篮球",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "basketball-hoop",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "篮球架",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "篮球",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "篮球架",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "bef86d2db4ed49dcd64c3e1d57ac6820893848ec15a1690c0ab503c29e708deb",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖篮球架的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "table-tennis-table",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "乒乓球",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "table-tennis-table",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "乒乓球桌",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "乒乓球",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "乒乓球桌",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "7d2ac3413d1d52ebd5b188cf4f1aa351310e72d499d55f32a68334f87713ff4f",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做乒乓球桌的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "oil-painting-frame",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "油画",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "oil-painting-frame",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "油画画框",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "油画",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "画画",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "画框",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "油画画框",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "6a3c612355c74a07ad7c0afdf9f9d1267bac22cc811fbf20702adbaf6aaf4a3a",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖油画画框的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "guitar-case",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "吉他",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "guitar-case",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "吉他琴包",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "吉他",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "吉他琴包",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "20a1501862571a0839dcc1b3391d51e7d9d6777e0bd83f45079d7c6dd965db69",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做吉他琴包的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "cycling-helmet",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "骑行",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "cycling-helmet",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "骑行头盔",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "骑行",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "行头",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "头盔",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "骑行头盔",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "531ad0c7cba0576dcf5f037e6502833ea0ff4ac598e60de28b34bb40b421f16c",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖骑行头盔的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "diving-tank",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "潜水",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "diving-tank",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "潜水氧气瓶",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "潜水",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "氧气",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "气瓶",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "潜水氧气瓶",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "eb41d46272c7a9ab251386c72dc5642ca835e4a0f0e7d747ab9e474ac44a4dc4",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做潜水氧气瓶的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "baking-oven",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "烘焙",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "baking-oven",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "烘焙烤箱",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "烘焙",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "焙烤",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "烤箱",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "烘焙烤箱",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "6579d9117c2d41f5190018ae977a652aebc9820f6eea1c4611d0c603c038b3f3",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖烘焙烤箱的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "microphone-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "麦克风",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "microphone-loanword-guard",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "麦克风",
+                "relation_from_object": null
+              }
+            ],
+            "commercial_object": "麦克风",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "b868de8d9427ed8d9d70e3dd31a1fda1b0f92c70124bd08b000cc65542436c66",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做麦克风的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "poker-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "扑克",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "poker-loanword-guard",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "扑克",
+                "relation_from_object": null
+              }
+            ],
+            "commercial_object": "扑克",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "b9f59ac33ca9b2061ef54549475b998a2093e56840db7070d385c0a1d18eee0c",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做扑克的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "wife-cake-lexicalized-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": true,
+            "matched_accepted_alias": "老婆饼",
+            "matched_forbidden_labels": [
+              "老婆"
+            ]
+          },
+          "case_id": "wife-cake-lexicalized-guard",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "老婆饼",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "lexical_component_candidate",
+                "label": "老婆",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的最长多字真子串"
+              }
+            ],
+            "commercial_object": "老婆饼",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "048c4ca394c3b15375db91d6fe6ea72b20fb2d1ee6d6767aff5997bb2b4c2ad5",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做老婆饼的",
+            "unknowns": [
+              "词典裸候选没有判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "duration_seconds": 0.0,
+      "model_calls": 0,
+      "status": "completed",
+      "summary": {
+        "case_count": 10,
+        "contract_success": 10,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 1,
+        "transparent_candidate_recall": 7,
+        "transparent_case_count": 7
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    "model_only": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "basketball-hoop",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "篮球",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "basketball-hoop",
+          "duration_seconds": 9.066,
+          "input_bytes": 168,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "篮球架",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "篮球",
+                "relation_from_object": "篮球架是篮球运动的配套器材，篮球是核心使用对象"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "篮球场",
+                "relation_from_object": "篮球架是篮球场的标准设施，场地是安装与使用场景"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "篮球训练",
+                "relation_from_object": "篮球架是投篮、运球等训练动作的直接依赖器材"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "篮球比赛",
+                "relation_from_object": "篮球架是正式比赛的必备设施，规则与赛事围绕篮筐展开"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "街头篮球",
+                "relation_from_object": "户外篮球架是街头篮球文化的核心场景载体"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "篮板",
+                "relation_from_object": "篮板是篮球架的核心组成部件，可独立成为选购与内容话题"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "校园体育设施",
+                "relation_from_object": "篮球架是学校体育场地建设的主要采购品类之一"
+              }
+            ],
+            "commercial_object": "篮球架",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖篮球架的",
+            "unknowns": [
+              "篮球架细分类型（移动式/埋地式/液压式/悬臂式）是否各自构成独立内容世界，需进一步确认",
+              "篮球架品牌、材质（钢材/玻璃钢/亚克力篮板）等规格维度是否需作为独立候选，待确认"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 350,
+            "total_tokens": 957
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "table-tennis-table",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "乒乓球",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "table-tennis-table",
+          "duration_seconds": 10.039,
+          "input_bytes": 174,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "乒乓球桌",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "sport_activity",
+                "label": "乒乓球",
+                "relation_from_object": "乒乓球桌是该项运动的专用器材场地"
+              },
+              {
+                "candidate_kind": "sport_equipment",
+                "label": "乒乓球拍",
+                "relation_from_object": "与乒乓球桌同属乒乓球运动核心器材，常配套使用"
+              },
+              {
+                "candidate_kind": "table_component_accessory",
+                "label": "乒乓球网架",
+                "relation_from_object": "乒乓球桌上的球网及支架，桌体的直接组成部件"
+              },
+              {
+                "candidate_kind": "table_core_component",
+                "label": "乒乓球桌台面",
+                "relation_from_object": "乒乓球桌的桌面板材，决定弹跳性能的核心部件"
+              },
+              {
+                "candidate_kind": "product_variant",
+                "label": "折叠乒乓球桌",
+                "relation_from_object": "乒乓球桌的可折叠形态，面向家用与移动场景"
+              },
+              {
+                "candidate_kind": "product_variant",
+                "label": "户外乒乓球桌",
+                "relation_from_object": "乒乓球桌的户外防雨防晒形态，面向公园社区场景"
+              },
+              {
+                "candidate_kind": "training_activity",
+                "label": "乒乓球训练",
+                "relation_from_object": "以乒乓球桌为场地展开的训练教学活动"
+              }
+            ],
+            "commercial_object": "乒乓球桌",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做乒乓球桌的",
+            "unknowns": [
+              "乒乓球桌品牌众多但无法在不联网条件下确认具体品牌名称与市场数据",
+              "乒乓球桌的材质细分（如密度板、SMC、铝合金等）是否需要作为独立内容世界尚不确定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 333,
+            "total_tokens": 940
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "oil-painting-frame",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "油画",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "oil-painting-frame",
+          "duration_seconds": 9.467,
+          "input_bytes": 174,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "油画画框",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "油画",
+                "relation_from_object": "画框所框装的艺术品类型，画框为油画而存在"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "画框",
+                "relation_from_object": "去掉油画限定后的上位品类，涵盖所有装裱用框"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "装裱",
+                "relation_from_object": "画框所服务的核心活动，装裱是画框的使用场景"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "画材",
+                "relation_from_object": "画框所属的更宽泛品类，与颜料、画布、画笔等并列"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "家居装饰画",
+                "relation_from_object": "画框装裱后的最终消费场景之一，画框作为装饰画的组成部分"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "画廊",
+                "relation_from_object": "画框的批量使用方，画廊是画框的B端消费场景"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "相框",
+                "relation_from_object": "与画框结构同源、功能相近的平行品类，常共享材质与工艺"
+              }
+            ],
+            "commercial_object": "油画画框",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖油画画框的",
+            "unknowns": [
+              "油画画框是否有特定的材质细分（如实木、铝合金、发泡等）构成独立内容世界，需进一步确认",
+              "是否存在针对油画画框的专业细分市场（如博物馆级装裱框、出口外贸框等）作为独立内容世界，需进一步确认"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 609,
+            "output_tokens": 377,
+            "total_tokens": 986
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "guitar-case",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "吉他",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "guitar-case",
+          "duration_seconds": 14.973,
+          "input_bytes": 174,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "吉他琴包",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "instrument",
+                "label": "吉他",
+                "relation_from_object": "琴包所服务的核心乐器，琴包为其提供收纳与保护"
+              },
+              {
+                "candidate_kind": "instrument",
+                "label": "贝斯",
+                "relation_from_object": "与吉他同属弦乐器族，贝斯琴包在尺寸与结构上与吉他琴包高度互通"
+              },
+              {
+                "candidate_kind": "instrument",
+                "label": "尤克里里",
+                "relation_from_object": "小型弦乐器，其琴包与吉他琴包在品类、材质与使用场景上同源"
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "吉他配件",
+                "relation_from_object": "琴包与拨片、背带、变调夹等同属吉他周边配件生态"
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "乐器包",
+                "relation_from_object": "琴包的上位品类，涵盖各类乐器的收纳与运输保护方案"
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "吉他教学",
+                "relation_from_object": "学习者与教学场景是吉他琴包的高频使用人群与使用场景"
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "吉他演出",
+                "relation_from_object": "演出场景对乐器便携与保护有刚需，是琴包的核心使用情境"
+              }
+            ],
+            "commercial_object": "吉他琴包",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做吉他琴包的",
+            "unknowns": [
+              "吉他琴包的具体材质细分（如牛津布、PU皮、碳纤维等）是否构成独立内容世界需进一步确认",
+              "电吉他与木吉他琴包在内容运营上是否需要区分为不同候选世界需进一步确认"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 609,
+            "output_tokens": 372,
+            "total_tokens": 981
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "cycling-helmet",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "骑行运动",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "cycling-helmet",
+          "duration_seconds": 8.985,
+          "input_bytes": 174,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "骑行头盔",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "骑行运动",
+                "relation_from_object": "头盔所服务的核心运动场景"
+              },
+              {
+                "candidate_kind": "equipment",
+                "label": "自行车",
+                "relation_from_object": "骑行头盔配套使用的主要载具"
+              },
+              {
+                "candidate_kind": "gear_category",
+                "label": "骑行装备",
+                "relation_from_object": "头盔所属的装备大类，含手套、骑行服、眼镜等"
+              },
+              {
+                "candidate_kind": "riding_subdiscipline",
+                "label": "公路骑行",
+                "relation_from_object": "头盔的主要细分使用场景之一"
+              },
+              {
+                "candidate_kind": "riding_subdiscipline",
+                "label": "山地骑行",
+                "relation_from_object": "头盔的主要细分使用场景之一，对防护需求更高"
+              },
+              {
+                "candidate_kind": "riding_subdiscipline",
+                "label": "城市通勤骑行",
+                "relation_from_object": "头盔的日常高频使用场景"
+              },
+              {
+                "candidate_kind": "topic",
+                "label": "骑行安全",
+                "relation_from_object": "头盔的核心功能诉求与购买驱动力"
+              }
+            ],
+            "commercial_object": "骑行头盔",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖骑行头盔的",
+            "unknowns": [
+              "电助力自行车(E-bike)骑行场景是否需单独列为候选，尚不确定其与普通骑行在头盔选择上的差异是否构成独立内容世界",
+              "骑行头盔是否存在按材质(如碳纤维、MIPS)划分的独立内容世界，还是仅作为产品属性而非独立对象"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 325,
+            "total_tokens": 932
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "diving-tank",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "潜水",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "diving-tank",
+          "duration_seconds": 30.259,
+          "input_bytes": 180,
+          "model_calls": 2,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "潜水氧气瓶",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "潜水",
+                "relation_from_object": "氧气瓶所服务的核心使用场景与活动"
+              },
+              {
+                "candidate_kind": "equipment_category",
+                "label": "水肺潜水装备",
+                "relation_from_object": "氧气瓶所属的完整装备体系，含面镜、脚蹼、BCD、调节器等"
+              },
+              {
+                "candidate_kind": "component_companion",
+                "label": "潜水调节器",
+                "relation_from_object": "直接连接氧气瓶输出端的关键部件，与气瓶配套使用"
+              },
+              {
+                "candidate_kind": "component_companion",
+                "label": "潜水BCD（浮力调节装置）",
+                "relation_from_object": "与气瓶共同组装在潜水员背上的配套装备"
+              },
+              {
+                "candidate_kind": "supply_equipment",
+                "label": "潜水压缩机",
+                "relation_from_object": "用于给氧气瓶充气的上游设备"
+              },
+              {
+                "candidate_kind": "activity_subdomain",
+                "label": "高气压潜水",
+                "relation_from_object": "使用气瓶进行的技术潜水细分领域，涉及混合气体"
+              },
+              {
+                "candidate_kind": "service_ecosystem",
+                "label": "潜水培训与考证",
+                "relation_from_object": "气瓶使用者的培训体系，如PADI、SSI等课程"
+              }
+            ],
+            "commercial_object": "潜水氧气瓶",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做潜水氧气瓶的",
+            "unknowns": [
+              "氧气瓶在中文语境中常被泛指为潜水气瓶，实际充填气体多为压缩空气或混合气体而非纯氧，是否需要区分潜水气瓶与潜水氧气瓶的术语边界尚不确定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1660,
+            "output_tokens": 978,
+            "total_tokens": 2638
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "baking-oven",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "baking-oven",
+          "duration_seconds": 12.02,
+          "input_bytes": 174,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "烘焙烤箱",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "面包",
+                "relation_from_object": "烘焙烤箱的核心产出物，烤箱直接用于面包烘烤"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "蛋糕",
+                "relation_from_object": "烘焙烤箱的核心产出物，烤箱直接用于蛋糕烘烤"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "饼干",
+                "relation_from_object": "烘焙烤箱的常见产出物，烤箱直接用于饼干烘烤"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "披萨",
+                "relation_from_object": "烘焙烤箱可制作的咸味烘焙食品"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "烤箱菜",
+                "relation_from_object": "以烤箱为主要烹饪工具的菜谱品类，烤箱的烹饪应用场景"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "烘焙原料",
+                "relation_from_object": "烘焙烤箱使用过程中配套的面粉、黄油、酵母等原料"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "烘焙工具",
+                "relation_from_object": "与烘焙烤箱配套使用的模具、烤盘、量具等工具"
+              }
+            ],
+            "commercial_object": "烘焙烤箱",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖烘焙烤箱的",
+            "unknowns": [
+              "具体品牌型号的烤箱对比内容需结合实际产品信息，此处不编造",
+              "商用烤箱与家用烤箱的细分市场差异需实际数据支撑"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 316,
+            "total_tokens": 923
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "microphone-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "麦克风",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "microphone-loanword-guard",
+          "duration_seconds": 9.413,
+          "input_bytes": 168,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "麦克风",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "complementary_hardware",
+                "label": "声卡",
+                "relation_from_object": "麦克风信号需经声卡进行模数转换与处理，常配套销售"
+              },
+              {
+                "candidate_kind": "accessory",
+                "label": "话筒支架",
+                "relation_from_object": "麦克风安装固定所需配件"
+              },
+              {
+                "candidate_kind": "accessory",
+                "label": "防喷罩",
+                "relation_from_object": "录音用麦克风前置配件，用于消除爆破音"
+              },
+              {
+                "candidate_kind": "complementary_equipment",
+                "label": "监听耳机",
+                "relation_from_object": "麦克风收音后实时监听回放所需设备"
+              },
+              {
+                "candidate_kind": "adjacent_live_broadcast_equipment",
+                "label": "直播补光灯",
+                "relation_from_object": "与麦克风同属直播场景常用设备，场景关联"
+              },
+              {
+                "candidate_kind": "upstream_processing_equipment",
+                "label": "调音台",
+                "relation_from_object": "麦克风信号汇聚调音处理的核心设备"
+              },
+              {
+                "candidate_kind": "usage_scenario",
+                "label": "录音棚",
+                "relation_from_object": "麦克风的核心使用场景与专业应用环境"
+              }
+            ],
+            "commercial_object": "麦克风",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做麦克风的",
+            "unknowns": [
+              "麦克风细分品类（电容麦/动圈麦/USB麦/无线麦）是否需作为独立候选展开",
+              "目标用户群体（主播/音乐人/播客/会议）是否需作为内容世界维度展开",
+              "麦克风品牌与供应链上下游具体厂商信息"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 605,
+            "output_tokens": 345,
+            "total_tokens": 950
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "poker-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "扑克",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "poker-loanword-guard",
+          "duration_seconds": 8.715,
+          "input_bytes": 162,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "扑克",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "扑克牌魔术",
+                "relation_from_object": "以扑克为道具的表演艺术"
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "扑克竞技比赛",
+                "relation_from_object": "以扑克为竞赛工具的赛事"
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "扑克教学",
+                "relation_from_object": "传授扑克玩法与技巧的教学活动"
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "扑克牌收藏",
+                "relation_from_object": "以扑克牌为对象的收藏行为"
+              },
+              {
+                "candidate_kind": "activity",
+                "label": "扑克牌设计",
+                "relation_from_object": "对扑克牌面、花色、牌背的视觉设计"
+              },
+              {
+                "candidate_kind": "object",
+                "label": "桌游",
+                "relation_from_object": "扑克所属的更广泛桌面游戏品类"
+              },
+              {
+                "candidate_kind": "object",
+                "label": "魔术道具",
+                "relation_from_object": "扑克在魔术场景中所属的道具品类"
+              }
+            ],
+            "commercial_object": "扑克",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做扑克的",
+            "unknowns": [
+              "扑克是否特指扑克牌制造/批发业务，还是泛指扑克相关文化/娱乐活动，需结合实际经营内容判断",
+              "是否涉及线上扑克游戏或博彩相关领域，存在合规与语义边界不确定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 606,
+            "output_tokens": 321,
+            "total_tokens": 927
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "wife-cake-lexicalized-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "老婆饼",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "wife-cake-lexicalized-guard",
+          "duration_seconds": 7.639,
+          "input_bytes": 168,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "老婆饼",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "ingredient",
+                "label": "冬瓜馅",
+                "relation_from_object": "老婆饼的传统核心馅料"
+              },
+              {
+                "candidate_kind": "food_category",
+                "label": "酥皮点心",
+                "relation_from_object": "老婆饼所属的烘焙品类"
+              },
+              {
+                "candidate_kind": "regional_cuisine",
+                "label": "广式糕点",
+                "relation_from_object": "老婆饼的起源地饮食体系"
+              },
+              {
+                "candidate_kind": "related_food",
+                "label": "潮式月饼",
+                "relation_from_object": "与老婆饼酥皮工艺同源、常被并列的节令食品"
+              },
+              {
+                "candidate_kind": "related_food",
+                "label": "鸡仔饼",
+                "relation_from_object": "同为广式经典伴手饼，常与老婆饼并列销售"
+              },
+              {
+                "candidate_kind": "related_food",
+                "label": "杏仁饼",
+                "relation_from_object": "同为广东传统手信饼食，消费场景重叠"
+              },
+              {
+                "candidate_kind": "related_food",
+                "label": "嫁女饼",
+                "relation_from_object": "与老婆饼同属婚俗礼饼文化，名称和用途互为呼应"
+              }
+            ],
+            "commercial_object": "老婆饼",
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "lexical_source": null,
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做老婆饼的",
+            "unknowns": [
+              "老婆饼名称来源传说众多且无定论，是否与特定历史人物或事件相关无法确认",
+              "各地老婆饼配方差异较大，是否存在统一标准馅料无法确定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 607,
+            "output_tokens": 324,
+            "total_tokens": 931
+          }
+        }
+      ],
+      "duration_seconds": 120.576,
+      "model_calls": 11,
+      "status": "completed",
+      "summary": {
+        "case_count": 10,
+        "contract_success": 10,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 0,
+        "transparent_candidate_recall": 6,
+        "transparent_case_count": 7
+      },
+      "usage": {
+        "input_tokens": 7124,
+        "output_tokens": 4041,
+        "total_tokens": 11165
+      }
+    },
+    "model_with_compact_cedict": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "basketball-hoop",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "篮球",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "basketball-hoop",
+          "duration_seconds": 11.499,
+          "input_bytes": 829,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "篮球架",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "sport_ball_good",
+                "label": "篮球",
+                "relation_from_object": "篮球架是篮球运动的配套器材，篮球是核心运动用球"
+              },
+              {
+                "candidate_kind": "component_part",
+                "label": "篮球板/篮板",
+                "relation_from_object": "篮板是篮球架的核心组成部件，可单独销售或更换"
+              },
+              {
+                "candidate_kind": "component_part",
+                "label": "篮球筐/篮圈",
+                "relation_from_object": "篮圈是篮球架的投篮目标部件，常作为易损件单独销售"
+              },
+              {
+                "candidate_kind": "consumable_accessory",
+                "label": "篮球网",
+                "relation_from_object": "篮网挂在篮圈上，属高频更换的消耗配件"
+              },
+              {
+                "candidate_kind": "sibling_category",
+                "label": "户外健身器材",
+                "relation_from_object": "篮球架常与户外健身器材同属社区/校园体育设施采购品类"
+              },
+              {
+                "candidate_kind": "downstream_service",
+                "label": "体育场地施工与划线",
+                "relation_from_object": "篮球架安装常伴随球场地面施工和场地划线服务"
+              },
+              {
+                "candidate_kind": "product_variant",
+                "label": "移动式篮球架/液压篮球架",
+                "relation_from_object": "移动式和液压式是篮球架按使用场景和升降方式划分的常见产品变体"
+              }
+            ],
+            "commercial_object": "篮球架",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "bef86d2db4ed49dcd64c3e1d57ac6820893848ec15a1690c0ab503c29e708deb",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖篮球架的",
+            "unknowns": [
+              "篮球架的具体材质分类（如钢化玻璃篮板 vs 复合材料篮板）是否构成独立内容世界，需进一步确认市场细分粒度",
+              "篮球架是否有针对儿童/青少年尺寸的独立产品线作为内容世界，尚不确定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 833,
+            "output_tokens": 380,
+            "total_tokens": 1213
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "table-tennis-table",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "乒乓球",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "table-tennis-table",
+          "duration_seconds": 11.44,
+          "input_bytes": 833,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "乒乓球桌",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "sport_activity",
+                "label": "乒乓球",
+                "relation_from_object": "乒乓球桌是该项运动的专用器材"
+              },
+              {
+                "candidate_kind": "sport_equipment",
+                "label": "乒乓球拍",
+                "relation_from_object": "与乒乓球桌配套使用的核心运动器材"
+              },
+              {
+                "candidate_kind": "sport_equipment",
+                "label": "乒乓球网架",
+                "relation_from_object": "安装在乒乓球桌上的球网及支架组件"
+              },
+              {
+                "candidate_kind": "consumable_accessory",
+                "label": "乒乓球台胶贴/台面贴",
+                "relation_from_object": "用于覆盖或修复乒乓球桌台面的贴膜材料"
+              },
+              {
+                "candidate_kind": "product_variant",
+                "label": "折叠式乒乓球桌",
+                "relation_from_object": "乒乓球桌的可折叠移动形态，同属该品类"
+              },
+              {
+                "candidate_kind": "product_variant",
+                "label": "户外乒乓球桌",
+                "relation_from_object": "适用于室外环境的乒乓球桌变体，同属该品类"
+              },
+              {
+                "candidate_kind": "adjacent_product",
+                "label": "多功能折叠训练桌",
+                "relation_from_object": "可兼作乒乓球桌用途的折叠桌类产品，品类相邻"
+              }
+            ],
+            "commercial_object": "乒乓球桌",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "7d2ac3413d1d52ebd5b188cf4f1aa351310e72d499d55f32a68334f87713ff4f",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做乒乓球桌的",
+            "unknowns": [
+              "乒乓球桌的具体材质分类（如SMC、中密度纤维板、铝合金等）是否构成独立内容世界未确定",
+              "乒乓球桌标准尺寸规格（如国际比赛标准、家用迷你尺寸）是否构成独立内容世界未确定",
+              "乒乓球桌品牌生态的具体信息未知"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 821,
+            "output_tokens": 349,
+            "total_tokens": 1170
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "oil-painting-frame",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "油画",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "oil-painting-frame",
+          "duration_seconds": 9.5,
+          "input_bytes": 1086,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "油画画框",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "油画",
+                "relation_from_object": "画框所服务的艺术品类，画框为油画而存在"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "画框",
+                "relation_from_object": "画框是油画画框的上位品类，涵盖所有类型画框"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "装裱",
+                "relation_from_object": "画框是装裱的核心环节，装裱是画框所属的完整活动领域"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "画廊",
+                "relation_from_object": "画廊是画框展示与销售的主要场景，也是画框的批量采购方"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "家居装饰画",
+                "relation_from_object": "带框油画常作为家居装饰品，画框是装饰画成品的组成部分"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "美术用品",
+                "relation_from_object": "画框属于美术用品/画材的配套品类，与画布、颜料等并列"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "艺术品收藏",
+                "relation_from_object": "画框用于保护和展示收藏级油画，是收藏环节的配套需求"
+              }
+            ],
+            "commercial_object": "油画画框",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "6a3c612355c74a07ad7c0afdf9f9d1267bac22cc811fbf20702adbaf6aaf4a3a",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖油画画框的",
+            "unknowns": [
+              "油画画框作为整词的独立词典义项未在CC-CEDICT中收录，whole_word_senses为空，整词语义由'油画'+'画框'组合推断，组合透明度较高"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 897,
+            "output_tokens": 365,
+            "total_tokens": 1262
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "guitar-case",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "吉他",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "guitar-case",
+          "duration_seconds": 11.901,
+          "input_bytes": 850,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "吉他琴包",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "complementary_instrument",
+                "label": "吉他",
+                "relation_from_object": "琴包所服务的核心乐器，琴包为其配件/保护装备"
+              },
+              {
+                "candidate_kind": "sibling_category",
+                "label": "吉他配件",
+                "relation_from_object": "琴包所属的更宽品类，同属吉他周边附件"
+              },
+              {
+                "candidate_kind": "parent_category",
+                "label": "乐器包",
+                "relation_from_object": "琴包的上位品类，涵盖各类乐器的收纳保护包具"
+              },
+              {
+                "candidate_kind": "adjacent_accessory",
+                "label": "吉他背带",
+                "relation_from_object": "同为吉他随身配件，使用场景与琴包高度重叠"
+              },
+              {
+                "candidate_kind": "adjacent_accessory",
+                "label": "吉他拨片",
+                "relation_from_object": "吉他核心小配件，常与琴包一同购买或收纳于琴包内"
+              },
+              {
+                "candidate_kind": "adjacent_consumable",
+                "label": "吉他弦",
+                "relation_from_object": "吉他必备消耗品，琴包用户的高频复购关联品类"
+              },
+              {
+                "candidate_kind": "use_scenario",
+                "label": "乐器收纳与运输",
+                "relation_from_object": "琴包所解决的核心活动场景：乐器的存放、携带与运输保护"
+              }
+            ],
+            "commercial_object": "吉他琴包",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "20a1501862571a0839dcc1b3391d51e7d9d6777e0bd83f45079d7c6dd965db69",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做吉他琴包的",
+            "unknowns": [
+              "词典未收录\"吉他琴包\"整词义项，whole_word_senses 为空，以上候选基于通词语义组合推断",
+              "吉他琴包是否在行业语境中特指软包（gig bag）而非硬壳琴盒（hard case），尚不确定，两者可能分属不同细分品类"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 833,
+            "output_tokens": 383,
+            "total_tokens": 1216
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "cycling-helmet",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "cycling-helmet",
+          "duration_seconds": 11.136,
+          "input_bytes": 1287,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "骑行头盔",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "companion_gear",
+                "label": "骑行服",
+                "relation_from_object": "同为骑行运动配套穿戴装备，常一起购买"
+              },
+              {
+                "candidate_kind": "companion_gear",
+                "label": "骑行手套",
+                "relation_from_object": "同为骑行运动护具，功能互补"
+              },
+              {
+                "candidate_kind": "companion_gear",
+                "label": "骑行眼镜",
+                "relation_from_object": "同为骑行运动头部/面部防护装备"
+              },
+              {
+                "candidate_kind": "core_vehicle",
+                "label": "自行车/公路车/山地车",
+                "relation_from_object": "骑行头盔所服务的核心载具，头盔因骑行自行车而存在"
+              },
+              {
+                "candidate_kind": "companion_gear",
+                "label": "骑行鞋/锁鞋",
+                "relation_from_object": "同为骑行运动专用穿戴装备"
+              },
+              {
+                "candidate_kind": "safety_accessory",
+                "label": "骑行尾灯/车灯",
+                "relation_from_object": "与头盔同属骑行安全防护用品"
+              },
+              {
+                "candidate_kind": "adjacent_category",
+                "label": "摩托车头盔",
+                "relation_from_object": "同属骑行类头盔，使用场景从自行车延伸至摩托车"
+              }
+            ],
+            "commercial_object": "骑行头盔",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "531ad0c7cba0576dcf5f037e6502833ea0ff4ac598e60de28b34bb40b421f16c",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖骑行头盔的",
+            "unknowns": [
+              "骑行头盔整词在词典中无独立义项记录，whole_word_senses 为空，以上候选基于通识中'骑行+头盔'的透明组合语义补充"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 950,
+            "output_tokens": 327,
+            "total_tokens": 1277
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "diving-tank",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "diving-tank",
+          "duration_seconds": 11.602,
+          "input_bytes": 1111,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "潜水氧气瓶",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "related_equipment",
+                "label": "潜水呼吸调节器",
+                "relation_from_object": "与潜水氧气瓶配套使用，将瓶内高压气体降压至呼吸所需压力"
+              },
+              {
+                "candidate_kind": "related_equipment",
+                "label": "潜水BCD浮力背心",
+                "relation_from_object": "潜水员背负气瓶时用于调整浮力的配套装备"
+              },
+              {
+                "candidate_kind": "component",
+                "label": "潜水气瓶阀",
+                "relation_from_object": "潜水氧气瓶瓶口的开关阀门，是气瓶的核心部件"
+              },
+              {
+                "candidate_kind": "related_equipment",
+                "label": "水肺潜水服",
+                "relation_from_object": "潜水员使用气瓶进行水肺潜水时穿着的防护服装"
+              },
+              {
+                "candidate_kind": "related_equipment",
+                "label": "潜水压力表SPG",
+                "relation_from_object": "连接在潜水氧气瓶上用于显示瓶内剩余气体压力的仪表"
+              },
+              {
+                "candidate_kind": "variant_product",
+                "label": "高氧气瓶Nitrox",
+                "relation_from_object": "氧氮比例不同于普通空气的潜水气瓶，属于潜水氧气瓶的细分品类"
+              },
+              {
+                "candidate_kind": "upstream_equipment",
+                "label": "潜水压缩机",
+                "relation_from_object": "用于向潜水氧气瓶内充填高压气体的设备"
+              }
+            ],
+            "commercial_object": "潜水氧气瓶",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "eb41d46272c7a9ab251386c72dc5642ca835e4a0f0e7d747ab9e474ac44a4dc4",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做潜水氧气瓶的",
+            "unknowns": [
+              "潜水氧气瓶的材质（铝合金/钢瓶）是否构成独立内容世界未确定",
+              "潜水氧气瓶的规格容量（如10L/12L等）是否构成独立内容世界未确定",
+              "整词在词典中无独立义项记录，whole_word_senses为空"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 901,
+            "output_tokens": 388,
+            "total_tokens": 1289
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "baking-oven",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "baking-oven",
+          "duration_seconds": 8.653,
+          "input_bytes": 1122,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "烘焙烤箱",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "面包",
+                "relation_from_object": "烘焙烤箱的核心产出物，面包烘焙是最典型的使用场景"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "蛋糕",
+                "relation_from_object": "烘焙烤箱的核心产出物，蛋糕制作是烤箱高频用途"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "曲奇饼干",
+                "relation_from_object": "烘焙烤箱的常见产出物，饼干类烘焙品"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "披萨",
+                "relation_from_object": "烘焙烤箱可制作的烘焙类食物"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "烤箱菜",
+                "relation_from_object": "以烤箱为主要烹饪工具的菜式集合，如烤鸡翅、烤排骨等"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "烘焙原料",
+                "relation_from_object": "烘焙烤箱使用过程中配套消耗的面粉、黄油、酵母、糖等原料"
+              },
+              {
+                "candidate_kind": "content_world",
+                "label": "烘焙模具",
+                "relation_from_object": "烘焙烤箱使用时配套的烤盘、蛋糕模、吐司盒等器具"
+              }
+            ],
+            "commercial_object": "烘焙烤箱",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "6579d9117c2d41f5190018ae977a652aebc9820f6eea1c4611d0c603c038b3f3",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖烘焙烤箱的",
+            "unknowns": [
+              "烘焙烤箱的具体品牌型号、价格区间、市场数据未知",
+              "目标用户群体的具体画像与购买偏好未知",
+              "烘焙烤箱与风炉烤箱、蒸烤箱等细分品类的技术差异细节未知"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 906,
+            "output_tokens": 337,
+            "total_tokens": 1243
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "microphone-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "麦克风",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "microphone-loanword-guard",
+          "duration_seconds": 12.839,
+          "input_bytes": 796,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "麦克风",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "声卡",
+                "relation_from_object": "麦克风常搭配的外置音频接口，负责数模转换与信号处理"
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "调音台",
+                "relation_from_object": "麦克风信号汇聚与混音调度的核心设备"
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "话筒支架",
+                "relation_from_object": "固定和支撑麦克风的配件"
+              },
+              {
+                "candidate_kind": "product_accessory",
+                "label": "防喷罩",
+                "relation_from_object": "安装在麦克风前方的配件，用于抑制爆破音和气流冲击"
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "直播补光灯",
+                "relation_from_object": "与麦克风同属直播场景常用设备，常组合使用"
+              },
+              {
+                "candidate_kind": "product_category",
+                "label": "监听耳机",
+                "relation_from_object": "麦克风使用者实时监听自身声音和返送的配套设备"
+              },
+              {
+                "candidate_kind": "use_scenario",
+                "label": "录音棚",
+                "relation_from_object": "麦克风的核心应用场景之一，专业录音环境"
+              }
+            ],
+            "commercial_object": "麦克风",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "b868de8d9427ed8d9d70e3dd31a1fda1b0f92c70124bd08b000cc65542436c66",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做麦克风的",
+            "unknowns": [
+              "麦克风细分品类（动圈、电容、铝带、USB等）是否需要作为独立候选召回，取决于具体经营方向，当前未做细分",
+              "无线麦克风系统（含接收机、发射器）是否作为独立内容世界，当前未确定",
+              "麦克风品牌生态（如舒尔、罗德、森海塞尔等品牌内容）是否纳入，当前未确定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 810,
+            "output_tokens": 432,
+            "total_tokens": 1242
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "poker-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "扑克",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "poker-loanword-guard",
+          "duration_seconds": 9.601,
+          "input_bytes": 795,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object_self",
+                "label": "扑克",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "physical_product",
+                "label": "扑克牌",
+                "relation_from_object": "扑克游戏所使用的实体牌具"
+              },
+              {
+                "candidate_kind": "game_variant",
+                "label": "德州扑克",
+                "relation_from_object": "扑克的一种流行玩法分支"
+              },
+              {
+                "candidate_kind": "event_activity",
+                "label": "扑克比赛/锦标赛",
+                "relation_from_object": "围绕扑克游戏组织的竞技赛事"
+              },
+              {
+                "candidate_kind": "education_service",
+                "label": "扑克教学/培训",
+                "relation_from_object": "传授扑克技巧与策略的教学活动"
+              },
+              {
+                "candidate_kind": "media_content",
+                "label": "扑克直播/赛事转播",
+                "relation_from_object": "对扑克对局或赛事的实时直播与解说内容"
+              },
+              {
+                "candidate_kind": "performance_art",
+                "label": "魔术扑克牌/花式扑克",
+                "relation_from_object": "以扑克牌为道具的魔术与花式洗牌表演"
+              },
+              {
+                "candidate_kind": "derivative_product",
+                "label": "扑克周边/定制扑克",
+                "relation_from_object": "以扑克牌为载体的文创、收藏与定制产品"
+              }
+            ],
+            "commercial_object": "扑克",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "b9f59ac33ca9b2061ef54549475b998a2093e56840db7070d385c0a1d18eee0c",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做扑克的",
+            "unknowns": [
+              "用户具体从事扑克产业链中的哪个环节（生产、销售、赛事、教学、直播等）尚不明确",
+              "用户是否涉及线上扑克平台或App开发，无法确认"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 816,
+            "output_tokens": 338,
+            "total_tokens": 1154
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "wife-cake-lexicalized-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "老婆饼",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "wife-cake-lexicalized-guard",
+          "duration_seconds": 8.79,
+          "input_bytes": 997,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "candidate_kind": "commercial_object",
+                "label": "老婆饼",
+                "relation_from_object": null
+              },
+              {
+                "candidate_kind": "ingredient",
+                "label": "冬瓜糖馅料",
+                "relation_from_object": "老婆饼的核心传统馅料，由糖渍冬瓜制成"
+              },
+              {
+                "candidate_kind": "component",
+                "label": "酥皮面团",
+                "relation_from_object": "老婆饼外层酥脆口感所依赖的油皮+油酥结构"
+              },
+              {
+                "candidate_kind": "category",
+                "label": "广式糕点",
+                "relation_from_object": "老婆饼所属的糕点品类"
+              },
+              {
+                "candidate_kind": "related_product",
+                "label": "潮式月饼",
+                "relation_from_object": "同样以酥皮和冬瓜馅为标志的粤式糕点，工艺与原料高度相通"
+              },
+              {
+                "candidate_kind": "related_product",
+                "label": "蛋黄酥",
+                "relation_from_object": "同为中式酥皮糕点，常与老婆饼在同一门店或产线共售"
+              },
+              {
+                "candidate_kind": "ingredient",
+                "label": "糖渍冬瓜",
+                "relation_from_object": "老婆饼馅料的前道半成品，将冬瓜加工为可包馅的甜馅"
+              },
+              {
+                "candidate_kind": "related_product",
+                "label": "中式喜饼礼盒",
+                "relation_from_object": "老婆饼常作为婚嫁喜饼或节庆礼盒中的单品出现"
+              }
+            ],
+            "commercial_object": "老婆饼",
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "048c4ca394c3b15375db91d6fe6ea72b20fb2d1ee6d6767aff5997bb2b4c2ad5",
+            "lexical_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "schema_version": "compact-lexical-candidate-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做老婆饼的",
+            "unknowns": [
+              "老婆饼名称来源传说众多且无法考证，不编造具体故事版本",
+              "不同地域老婆饼馅料变体（豆沙、紫薯等）的市场占比无可靠数据"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 872,
+            "output_tokens": 356,
+            "total_tokens": 1228
+          }
+        }
+      ],
+      "duration_seconds": 106.961,
+      "model_calls": 10,
+      "status": "completed",
+      "summary": {
+        "case_count": 10,
+        "contract_success": 10,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 0,
+        "transparent_candidate_recall": 4,
+        "transparent_case_count": 7
+      },
+      "usage": {
+        "input_tokens": 8639,
+        "output_tokens": 3655,
+        "total_tokens": 12294
+      }
+    }
+  },
+  "completed_at": "2026-08-18T18:32:22.906118+00:00",
+  "dataset_id": "compact-lexical-candidate-held-out-v1",
+  "dataset_status": "frozen_before_live_run",
+  "experiment_id": "A88-compact-lexical-candidate-v1",
+  "git_commit": "840a37f2bf5d972f45de66d137dde63cd797cb05",
+  "lexical_source": {
+    "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+    "license": "CC BY-SA 4.0",
+    "name": "CC-CEDICT",
+    "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+    "version": "1.0+2026-08-15T06:33:03Z"
+  },
+  "manual_review_status": "pending",
+  "model_name": "glm-5-2-260617",
+  "network_evidence_enabled": false,
+  "preflight": {
+    "all_within_budget": true,
+    "case_count": 10,
+    "cases": [
+      {
+        "case_id": "basketball-hoop",
+        "component_count": 1,
+        "input_bytes": 829,
+        "model_calls": 0
+      },
+      {
+        "case_id": "table-tennis-table",
+        "component_count": 1,
+        "input_bytes": 833,
+        "model_calls": 0
+      },
+      {
+        "case_id": "oil-painting-frame",
+        "component_count": 3,
+        "input_bytes": 1086,
+        "model_calls": 0
+      },
+      {
+        "case_id": "guitar-case",
+        "component_count": 1,
+        "input_bytes": 850,
+        "model_calls": 0
+      },
+      {
+        "case_id": "cycling-helmet",
+        "component_count": 3,
+        "input_bytes": 1287,
+        "model_calls": 0
+      },
+      {
+        "case_id": "diving-tank",
+        "component_count": 3,
+        "input_bytes": 1111,
+        "model_calls": 0
+      },
+      {
+        "case_id": "baking-oven",
+        "component_count": 3,
+        "input_bytes": 1122,
+        "model_calls": 0
+      },
+      {
+        "case_id": "microphone-loanword-guard",
+        "component_count": 0,
+        "input_bytes": 796,
+        "model_calls": 0
+      },
+      {
+        "case_id": "poker-loanword-guard",
+        "component_count": 0,
+        "input_bytes": 795,
+        "model_calls": 0
+      },
+      {
+        "case_id": "wife-cake-lexicalized-guard",
+        "component_count": 1,
+        "input_bytes": 997,
+        "model_calls": 0
+      }
+    ],
+    "max_input_bytes": 1287
+  },
+  "promotion_status": "offline_only",
+  "schema_version": "compact-lexical-candidate-receipt-v1",
+  "started_at": "2026-08-18T18:28:34.240415+00:00",
+  "temperature": 0,
+  "thinking_enabled": false
+}
