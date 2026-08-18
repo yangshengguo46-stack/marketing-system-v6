@@ -1956,3 +1956,26 @@ AI 微电影或 MV 等表现形式、变现假设、资源和代价连成一体�
 导回现有 DeerFlow。LLooM 延后用于账号语料概念归纳，Distilabel/Argilla 只借数据合同，Agent Lightning
 延后到真实奖励稳定之后。普通向量 RAG 只可检索案例与证据，不拥有根裁决权。本轮没有修改运行时、
 提示词或测试，详见 `audits/A83-existing-content-root-generalization-solutions.md`。
+
+## A84-A96 内容根实验回顾、用户纠错与自举边界
+
+2026-08-19，A84 首次比较现役基线、开放关系候选图和 DSPy 偏好选择器。关系图降低调用与 Token，
+但人工最终选择仅 `2/4`；七条开发偏好使 DSPy 修好羽毛球馆的同时弄坏儿童安全座椅。A90 后续双工作者
+拆分又把候选下钻成具体路径，人工召回低于单工作者，因此多 Agent 和继续堆关系步骤均被拒绝。
+
+A92 改用一次调用的薄候选合同，取得 `12/12` 合同成功和更低成本，但仍未过冻结门槛。更重要的是，
+用户在 A94-A95 发现评测答案本身也有问题：房车租赁不应把“自驾旅行”当终点，缺失跃迁是“房车旅行
+-> 旅行”；老年助听器不能只按听力健康和沟通计分，还应允许孝亲敬老、陪父母老去等关系世界，并允许
+该品类不足以独立支撑 IP。A92 原人工聚合分数因此只保留为历史审计结果，不再冒充业务真值。
+
+A96 据此把下一步从“再次自动改提示词”改为自举数据闭环：显式用户纠错保存为带条件、可争议的
+`RootFeedbackRecord`；模型自动生成跨行业结构变体，确定性代码过滤合同和泄漏，多次独立评审只把分歧、
+新关系、无强根和依赖未知条件的少数案例交给用户。抖音与网页证据只验证候选内容世界的真实容量，不拥有
+语义裁决权。确认数据积累后才允许 DSPy 或小排序器离线优化，并必须通过全新、用户复核、允许多答案和
+弱 IP 的冻结评测后版本化晋级。现役 Lead、提示和运行时均未修改。详见
+`audits/A84-content-root-lab-preregistration.md`、`audits/A85-content-root-lab-result.md`、
+`audits/A92-thin-single-agent-content-root-preregistration.md`、
+`audits/A93-thin-single-agent-content-root-result.md`、
+`audits/A94-rv-travel-content-root-correction.md`、
+`audits/A95-senior-hearing-aid-root-and-ip-viability-correction.md` 与
+`audits/A96-content-root-bootstrapping-loop.md`。
