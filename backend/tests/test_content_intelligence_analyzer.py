@@ -356,8 +356,10 @@ def test_root_decision_separates_the_semantic_entry_from_the_account_territory()
     prompt = CONTENT_ROOT_DECISION_SYSTEM_PROMPT
 
     assert "selected_candidate_index 只选择语义进入点" in prompt
-    assert "audience_territory_candidate_index 选择账号长期占领的内容世界" in prompt
-    assert "两个索引承担不同职责" in prompt
+    assert "map_root_candidate_index 只选择本次候选内容地图的展开根" in prompt
+    assert "候选内容地图不是账号定位" in prompt
+    assert "账号长期占领" not in prompt
+    assert "audience_territory_candidate_index" not in ContentRootDecisionDraft.model_fields
 
 
 def test_root_decision_distinguishes_acquiring_an_object_from_participating_in_an_activity() -> None:
@@ -376,6 +378,15 @@ def test_root_decision_does_not_mistake_one_consumption_scene_for_a_larger_world
     assert "并不会因此拥有更大的外延" in prompt
     assert "对象在该场景之外仍能长出的历史、人物、事件、地域和作品" in prompt
     assert "消费或到店场景只是对象地图中的一条路径" in prompt
+
+
+def test_content_map_is_an_opportunity_input_not_an_account_positioning_decision() -> None:
+    prompt = FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+
+    assert "候选内容机会地图" in prompt
+    assert "不是账号定位" in prompt
+    assert "不决定受众、人设、表现形式或变现" in prompt
+    assert "账号长期占领" not in prompt
 
 
 def _semantic_payload() -> dict[str, Any]:
@@ -444,7 +455,7 @@ def _shared_world_review_payload(*, entry_path_is_explanatory: bool = False) -> 
 def _root_decision_payload() -> dict[str, Any]:
     return {
         "selected_candidate_index": 2,
-        "audience_territory_candidate_index": 2,
+        "map_root_candidate_index": 2,
         "root_rationale": "底料是中间实现物，火锅是完整对象世界。",
         "unknowns": [],
     }
@@ -638,7 +649,7 @@ def _gold_evidence_model() -> SequencedStructuredFakeModel:
             },
             ContentRootDecisionDraft: {
                 "selected_candidate_index": 3,
-                "audience_territory_candidate_index": 3,
+                "map_root_candidate_index": 3,
                 "root_rationale": "礼进入的人际与制度世界比具体礼品更有长期展开能力。",
                 "unknowns": [],
             },
@@ -801,7 +812,7 @@ async def test_system_method_is_domain_neutral_and_has_no_fixed_delivery_quota()
     assert "不能把较窄对象与较宽关系世界拼成折中混合根" in system_text
     assert "不要用抽象的‘XX文化’代替已经识别出的具体活动与关系" in system_text
     assert "逐层拆解复合修饰关系" in system_text
-    assert "输入只包含已冻结的内容根" in system_text
+    assert "输入只包含已冻结的地图根" in system_text
     assert "面向参与者的内容主题" in system_text
     assert "不得把活动改写成组织者的运营流程" in system_text
     assert "定价、获客、会员、排班、供应链、合规或交付管理" in system_text
@@ -1245,7 +1256,7 @@ def test_root_selection_rejects_a_narrow_example_branch_as_the_content_root() ->
             },
         ],
         "selected_candidate_index": 1,
-        "audience_territory_candidate_index": 0,
+        "map_root_candidate_index": 0,
         "root_rationale": "婚嫁内容很丰富。",
         "unknowns": [],
     }
@@ -1288,7 +1299,7 @@ async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_
     }
     decision = {
         "selected_candidate_index": 3,
-        "audience_territory_candidate_index": 3,
+        "map_root_candidate_index": 7,
         "root_rationale": "送礼是从礼品进入关系世界的一个具体语义入口。",
         "unknowns": [],
     }
@@ -1383,7 +1394,7 @@ async def test_gold_gift_reaches_human_relations_world_and_detaches_the_content_
 
     assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
     assert bundle.content_world.content_entry == "送礼"
-    assert bundle.content_world.audience_territory.text == "人与人之间的相处与人情世故"
+    assert bundle.content_world.audience_territory is None
     assert bundle.business_semantics.semantic_family_branches[0].expression == "礼貌与礼节"
     family_input = model.message_batches[1][1].content
     assert '"lexical_head": "礼品"' in family_input
@@ -1486,7 +1497,7 @@ async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_dec
             },
             ContentRootDecisionDraft: {
                 "selected_candidate_index": 7,
-                "audience_territory_candidate_index": 7,
+                "map_root_candidate_index": 7,
                 "root_rationale": "去修饰后的共同人类活动覆盖多个平行场景。",
                 "unknowns": [],
             },
@@ -1688,12 +1699,14 @@ def test_frozen_map_schema_cannot_reselect_the_content_root() -> None:
     assert "presentation_format" not in properties
 
 
-def test_frozen_map_prompt_defines_account_positioning_before_daily_topics() -> None:
-    assert "账号级长期编辑定位" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+def test_frozen_map_prompt_defines_content_opportunities_without_account_positioning() -> None:
+    assert "候选内容机会地图" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "不是账号定位" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "不决定受众、人设、表现形式或变现" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "editorial_promise" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "recurring_lens" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "热点" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
-    assert "不能改写内容根" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "不能改写地图根" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "口播" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "表现形式" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "参与者在资源、环境、价格、规则或技术变化下做出的具体选择" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT

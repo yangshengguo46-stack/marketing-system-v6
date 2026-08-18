@@ -24,7 +24,7 @@ PROJECT = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
 def _world() -> ArtifactEnvelope:
     return ArtifactEnvelope.seal(
         project=PROJECT,
-        artifact_type="content_world",
+        artifact_type="content_map_candidate",
         version=1,
         payload={
             "content_map_version_id": "map-gift-relations-v1",
@@ -200,4 +200,63 @@ def test_incubation_judgment_rejects_unbound_basis_artifacts() -> None:
             created_at=NOW,
             source_thread_id="thread-1",
             source_run_id="run-1",
+        )
+
+
+def test_incubation_judgment_can_supersede_a_previous_positioning_version() -> None:
+    brief = _brief_artifact()
+    world = _world()
+    first = seal_incubation_judgment(
+        project=PROJECT,
+        judgment=_judgment(basis_ids=(brief.artifact_id, world.artifact_id)),
+        brief_artifact=brief,
+        content_world_artifact=world,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+    revised = _judgment(basis_ids=(brief.artifact_id, world.artifact_id)).model_copy(
+        update={
+            "revision_number": 2,
+            "supersedes_judgment_artifact_id": first.artifact_id,
+            "revision_reason": "新一轮真实受众反馈表明，观众更关心礼背后的关系判断。",
+        }
+    )
+
+    second = seal_incubation_judgment(
+        project=PROJECT,
+        judgment=revised,
+        brief_artifact=brief,
+        content_world_artifact=world,
+        previous_judgment_artifact=first,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-2",
+    )
+
+    assert second.payload["revision_number"] == 2
+    assert second.payload["supersedes_judgment_artifact_id"] == first.artifact_id
+    assert first.to_parent_ref() in second.parents
+
+
+def test_incubation_judgment_revision_cannot_claim_an_unbound_predecessor() -> None:
+    brief = _brief_artifact()
+    world = _world()
+    revised = _judgment(basis_ids=(brief.artifact_id, world.artifact_id)).model_copy(
+        update={
+            "revision_number": 2,
+            "supersedes_judgment_artifact_id": "artifact_missing",
+            "revision_reason": "声称已有上一版。",
+        }
+    )
+
+    with pytest.raises(ValueError, match="previous judgment"):
+        seal_incubation_judgment(
+            project=PROJECT,
+            judgment=revised,
+            brief_artifact=brief,
+            content_world_artifact=world,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-2",
         )

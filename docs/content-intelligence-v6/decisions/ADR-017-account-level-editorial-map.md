@@ -2,7 +2,11 @@
 
 ## 状态
 
-`reviewed -> adopted for local canary; persistence pending`
+`superseded by ADR-021 on 2026-08-18`
+
+本文件保留当时“稳定地图版本、防热点漂移、选题绑定地图”的有效经验。内容地图拥有账号定位权、
+直接决定受众承诺并在起号回答中冒充已采用定位的结论已被 ADR-021 撤销；现役地图是候选内容机会，
+账号长期判断由版本化 `IncubationJudgment` 单独负责。
 
 ## 背景
 

@@ -760,26 +760,37 @@ Use it as-is. Or tear it apart and make it yours.
 
 This branch adds an optional, inspectable comprehension workspace for content
 incubation and new-media operations. Business-semantic and topic-specific requests can
-still use the shared `ComprehensionRecord` analysis. Broad account-starting requests use
+still use the shared `ComprehensionRecord` analysis. Content-opportunity requests use
 the direct `explore_content_world` path: bounded semantic reading, optional lexical
 evidence, semantic-family expansion, nullable shared-world synthesis, independent
 counterfactual review, one root adjudication, frozen-root expansion, parallel
 map-direction discovery and named recall,
 bounded public-page reading, evidence reading, creative convergence, and a prose editor.
-Root selection separates a concrete semantic `content_entry` from the durable
-account-level `content_root`. The entry explains how the commercial expression reaches
-the content world; only the reviewed long-term root is given to the map, version hash,
+Root selection separates a concrete semantic `content_entry` from the candidate map's
+`map_root`. The entry explains how the commercial expression reaches
+the content world; only the reviewed map root is given to the map, version hash,
 research, and topics. A nearby product use or scene therefore cannot silently shrink an
 accepted human or social world.
 Shared-world synthesis first sees the independent meaning family without the component's
 use inside the original compound. A separate reviewer receives that compound relation only
 afterward and verifies the path back to the user's expression. This keeps expansion open
 without allowing a same-character association to become an unchecked semantic jump.
-The frozen map is account-level editorial positioning rather than a daily topic list:
-it records the durable audience promise, recurring interpretive lens, drift boundaries,
-and long-term territories. It has a content-addressed version; every downstream
-`TopicBrief` binds that version and starts its path at the frozen root. Trends may supply
-fresh evidence only after this boundary and cannot rewrite the positioning.
+The frozen map is a content-addressed **candidate content opportunity**, not adopted
+account positioning. It describes rooted directions that may be researched and turned
+into topics. It does not decide positioning, audience, persona, account-level presentation,
+or monetization. Every downstream `TopicBrief` binds that candidate-map version and starts
+its path at the frozen root. A wedding, purchase, store visit, banquet, or other example
+scene cannot silently become the whole account strategy.
+
+Long-lived account judgment belongs to the separate `develop_account_strategy` tool. It
+requires a selected project and combines the candidate map with project facts and formally
+accepted benchmark or audience evidence. Its `IncubationJudgment` versions positioning,
+audience hypotheses, persona, account-level presentation, and monetization hypotheses.
+Identical parents reuse the current version; changed inputs create a successor with the
+previous judgment as a parent and an explicit revision reason. A `BenchmarkSnapshot` is
+read-only observation, never positioning authority. The topic path may read an existing
+strategy only when it binds the exact candidate-map version, and it never creates or
+revises strategy as a side effect of producing one topic.
 The semantic chain runs in dependency order. It separates the verbatim business object,
 lexical head, modifiers, offering role, served objects, activities, candidate semantic
 families, and a nullable shared human world before one adjudicator freezes the root.
@@ -810,8 +821,8 @@ replace evidence-backed payoff. Time, place, or situation remains nullable when 
 Code joins the reviewed opening, message beats, and closing into a `BaseDraft` without a
 second free-form rewrite. Before it is sealed, one bounded repair may only delete or
 generalize high-signal names, numbers, or absolute claims that are absent from the fact
-ledger; a remaining violation rejects delivery. Broad account-start runs lead with the account positioning and
-then one map-bound "shoot today" example; the
+ledger; a remaining violation rejects delivery. A shootable run leads with one map-bound
+"shoot today" example and labels the map only as its content-opportunity basis; the
 map prose is a fail-open response when no topic exists or delivery validation fails.
 For a selected project, the completed BaseDraft now enters a separate per-topic
 `FormatDecision` and `AdaptedDraft`. The decision may remain provisional when owned
@@ -852,11 +863,11 @@ rehydrates only the stored, owner-validated binding into runtime context. The pr
 frontend selector and local live Douyin credential acceptance are still pending.
 
 When a thread has a selected project, a successful content-world run now seals the exact
-`content_reading + content_world -> topic_brief -> message_plan -> draft_version -> format_decision -> adapted_draft`
+`content_reading + content_map_candidate -> topic_brief -> message_plan -> draft_version -> format_decision -> adapted_draft`
 lineage into the incubation ledger. Runtime project, user, thread, and run identity are
 injected through `ToolRuntime` and stay out of the model-facing tool schema. The durable
-content world excludes run-specific named candidates, so later research does not silently
-rewrite account positioning. Running without a selected project remains valid, and a
+candidate map excludes run-specific named candidates, so later research does not silently
+rewrite an adopted account strategy. Running without a selected project remains valid, and a
 redacted ledger or post-draft adaptation failure does not discard the generated answer.
 Project history UI, confirmation/version switching, and production fact review remain
 later V6 work.

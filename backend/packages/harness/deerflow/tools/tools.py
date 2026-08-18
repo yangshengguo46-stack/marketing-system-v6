@@ -9,6 +9,7 @@ from deerflow.sandbox.security import is_host_bash_allowed
 from deerflow.tools.builtins import (
     ask_clarification_tool,
     content_intelligence_tool,
+    develop_account_strategy_tool,
     douyin_benchmark_candidate_tool,
     explore_content_world_tool,
     list_uploaded_files,
@@ -26,6 +27,7 @@ BUILTIN_TOOLS = [
     present_file_tool,
     ask_clarification_tool,
     content_intelligence_tool,
+    develop_account_strategy_tool,
     explore_content_world_tool,
     douyin_benchmark_candidate_tool,
     review_skill_package,

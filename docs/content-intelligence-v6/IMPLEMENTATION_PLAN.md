@@ -40,13 +40,18 @@
 验收。下一轮性能优化只针对各认知节点的重复上下文、证据与调用，不得用问候短路冒充 Agent 优化，
 也不得为省 Token 删除核心孵化合同。
 
+2026-08-18 A79 又修正了 A78 的对象归属：A78 找到的“长期根”现在只是一张候选内容机会地图的
+展开根，不再自动成为账号采用的定位。账号定位、受众、人设、账号级表现方向和变现已迁入独立、
+可修订的项目策略版本；对标账号只提供正式证据。下一步质量验收必须分别检查“候选内容机会是否好”
+和“账号是否采用及如何长期运营”，不能再用一份地图同时回答两个问题。
+
 发布回执之前仍必须完成的主链为：
 
 ```text
 项目事实
--> 语义理解 / 内容根 / 账号级内容地图
--> 对标与受众证据
--> 孵化判断：定位 / 受众 / 人设 / 表现形式 / 变现
+-> 语义理解 / 内容入口 / 候选内容机会地图
+对标与受众证据（独立只读）
+-> 账号孵化判断 vN：定位 / 受众 / 人设 / 账号级表现方向 / 变现
 -> 具体 TopicBrief
 -> MessagePlan / BaseDraft
 -> 本条 FormatDecision / AdaptedDraft
@@ -77,7 +82,8 @@
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API 与线程重水化 | 前端选择器、产物查询与真实多账号验收 |
-| 语义、内容根与账号地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; one real pass and one held-out failure` | 使用 ADR-020 顺序链与单根裁决；ADR-019 运行时撤下 | 全新留出集真实质量/延迟、用户确认与版本切换 |
+| 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; one real pass and one held-out failure` | 使用 ADR-020 顺序链与单根裁决；地图不拥有账号定位权 | 全新留出集真实质量/延迟与候选地图审阅 |
+| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented; project-level version chain verified offline` | `develop_account_strategy` 独占定位、受众、人设、账号级表现方向和变现判断；相同父输入复用，变化生成后继版本 | 增加平台账号绑定、用户采用/切换界面和真实复盘修订 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
@@ -224,12 +230,15 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 状态：`core through AdaptedDraft implemented and partially live-verified; ProductionPlan and material execution paused by user`
 
-目标：将 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`
-绑定到项目、地图版本和精确父产物；制作与素材不属于 W03 当前验收。
+目标：将候选 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`
+绑定到项目、地图版本和精确父产物；账号策略由独立 `IncubationJudgment vN` 管理，制作与素材不属于
+W03 当前验收。
 
 退出条件：
 
-- 内容地图不因热点、表现形式、发布或复盘被静默改写。
+- 候选内容地图不因热点、表现形式、发布或复盘被静默改写，也不能冒充账号定位。
+- 对标或受众观察只作为账号策略证据，不能直接改写语义、地图或选题。
+- 每次具体选题不得临时创建或修订账号策略；只可读取与当前地图精确匹配的现有版本。
 - 同一 `TopicBrief` 可以产生不同表现形式，但事情、观点和证据边界保持一致。
 - 非叙事选题不调用编剧方法。
 - 成稿不擅自补造素材、客户案例、数量、周期、成功率或预算。
@@ -317,6 +326,16 @@ ADR-020 恢复顺序语义链，根裁决新增“消费场景不是自动上位
 本轮继续验证了 provisional FormatDecision 与 AdaptedDraft，但不启动 ProductionPlan 或素材制作。
 详见
 `audits/A76-core-e2e-root-and-delivery-recovery.md`。
+
+2026-08-18 A79 架构拆分回执：复盘 Git 与台账后确认，旧主工具把候选内容机会、对标证据、账号
+长期策略和单条选题塞进同一次运行，甚至在 TopicBrief 之后临时生成定位，导致定位无法指导选题，
+婚礼、购买、到店等局部场景又会反复篡位。现已将 `ContentWorldView` 降为
+`content_map_candidate`，新增独立 `develop_account_strategy`，并让 `IncubationJudgment` 支持
+显式后继版本、上一版父级和修改原因。内容工具不再选择对标证据或生成定位；选题只读取精确地图版本
+的现有策略。当前仍是项目级默认策略，线程尚未绑定具体平台账号；抖音生产采集仍只生成
+`benchmark_account_candidate`，正式 `BenchmarkSnapshot` 连接器待后续实现。详见
+`audits/A79-content-opportunity-account-strategy-boundary.md` 与
+`decisions/ADR-021-separate-content-opportunity-account-strategy.md`。
 
 ### W04 MediaKit 制作路由
 

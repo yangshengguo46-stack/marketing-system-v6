@@ -1837,3 +1837,36 @@ Skill 策略、孵化路由和事实边界均保留；提示模板新增 `9,000`
 这只是一条已标注案例的部分验收，且地图仍有一次“礼节博弈”的抽象措辞；不为此新增关键词硬门或
 工作流。详见 `audits/A78-semantic-entry-and-account-world.md` 与
 `evidence/golden-gift-entry-world-a78-2026-08-18.md`。
+
+## A79 内容机会、对标证据与账号策略拆分
+
+2026-08-18 用户指出账号定位是会随账号数据长期修订的业务对象，不应藏在语义与内容地图模块；
+对标账号也不应与当前这一整条内容工具混成一坨。代码、Git 和台账复核确认这不是命名问题：原来的
+`content_intelligence_tool.py` 同时负责候选内容机会、资料和对标证据、账号长期判断、单条选题、
+成稿、形式与制作。更严重的是，每条具体选题先完成 TopicBrief，之后才临时创建
+`IncubationJudgment`。定位没有指导选题，却会在交付阶段倒灌本条文案。
+
+本轮按生命周期和决策权拆分：
+
+- `ContentWorldView` 降为 `content_map_candidate`，只保存候选地图根、方向和边界。它不再宣称账号
+  定位，也不决定受众、人设、账号级表现形式或变现。
+- 根裁决显式分别选择语义入口与候选地图根。删除“已复核共同世界无条件覆盖模型选择”的隐藏改写；
+  窄场景继续以 `example_branch` 约束，婚礼、购买、到店、宴请等不能因人物丰富就自动篡位。
+- 新增独立 `develop_account_strategy`。只有它能读取项目事实、候选地图和正式对标/受众证据，形成
+  定位、受众、人设、账号级表现方向和变现假设。
+- `IncubationJudgment` 增加 `revision_number`、上一版产物 ID 和修改原因。相同父输入复用现有版本；
+  变化必须生成紧邻后继版本并保留上一版，不能覆盖历史。
+- 内容工具不再调用正式对标证据选择器，也不再生成孵化判断。具体选题只能读取与当前候选地图版本
+  精确匹配的现有判断；没有就继续做内容机会和选题，不临时补造定位。
+- `benchmark_account_candidate`、正式 `BenchmarkSnapshot` 和普通 `topic_evidence` 继续隔离。对标
+  快照是只读观察，不拥有定位权，也不能进入语义或内容地图。
+
+聚焦合同、账号策略、工具和架构边界回归为 `112 passed`。首次完整后端回归为
+`12089 passed, 2 failed, 76 skipped`；两项失败均是旧测试仍要求“内容地图就是账号定位”。更新为新
+合同后，聚焦交付回归 `8 passed`；格式与静态检查通过，最终完整后端非 live 回归为
+`12091 passed, 76 skipped, 17 warnings in 439.41s`。
+
+当前仍有两项明确未完成：线程只绑定项目，尚未绑定某个平台账号，所以默认解析的是项目级策略；
+现役抖音对标采集只生成候选证据，正式 `BenchmarkSnapshot` 的稳定身份、多作品一致性与覆盖连接器
+尚未生产接通。详见 `audits/A79-content-opportunity-account-strategy-boundary.md` 和
+`decisions/ADR-021-separate-content-opportunity-account-strategy.md`。

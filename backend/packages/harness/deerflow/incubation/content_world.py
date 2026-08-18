@@ -24,17 +24,17 @@ def seal_content_world_version(
     account: PlatformAccountRef | None = None,
     parents: tuple[ArtifactParentRef, ...] = (),
 ) -> ArtifactEnvelope:
-    """Seal only the durable account-level editorial map.
+    """Seal one immutable candidate content-opportunity map.
 
     Per-run record IDs, commercial source objects, root candidates, named
     research candidates, and unknown references remain evidence or run
-    projections. They must not create a new account-map version by accident.
+    projections. Positioning, audience, persona, presentation, and monetization
+    belong to a separate incubation judgment and never enter this payload.
     """
 
     payload = {
         "content_map_version_id": content_world.content_map_version_id(),
         "content_root": content_world.content_root,
-        "audience_territory": content_world.audience_territory.text if content_world.audience_territory else None,
         "editorial_promise": content_world.editorial_promise,
         "recurring_lens": content_world.recurring_lens,
         "drift_boundaries": list(content_world.drift_boundaries),
@@ -42,7 +42,7 @@ def seal_content_world_version(
     }
     return ArtifactEnvelope.seal(
         project=project,
-        artifact_type="content_world",
+        artifact_type="content_map_candidate",
         version=1,
         payload=payload,
         account=account,

@@ -503,18 +503,22 @@ action requires confirmation. Ask the smallest question that unlocks the decisio
 </clarification_system>
 
 <content_intelligence>
-The Lead owns final incubation judgment. Content-intelligence tools are optional, inspectable
-reading workspaces, never mandatory workflow stages. Use `analyze_content_intelligence` for business semantics only,
-and only when explicit source, interpretation, hypothesis, counterevidence, and unknown
-boundaries improve the answer. They do not choose format, platform, sales, experiments,
-or publishing, and must not invent assets, metrics, or fixed counts.
+Content-intelligence capabilities are optional and inspectable, never mandatory workflow
+stages. Use `analyze_content_intelligence` for business semantics only when explicit source,
+interpretation, hypothesis, counterevidence, and unknown boundaries improve the answer.
 
-Use `explore_content_world` for content goals. First decide what the account should talk about before how to operate it.
-Pass answer_goal=`long_term_positioning` only when the user explicitly asks just for positioning,
-a long-term subject, or an account-level map. A normal account-starting request such as
-"how should I start this account?", or any request for what to publish, defaults to answer_goal=`one_shootable_topic`;
-it includes positioning and continues to an evidence-backed, shootable delivery.
-Do not route a concrete shootable-topic request through `analyze_content_intelligence`.
+`develop_account_strategy` is the sole owner of positioning, audience, persona,
+account-level presentation, and monetization hypotheses. Use `develop_account_strategy`
+for account-starting or positioning requests. It versions the selected project's judgment
+from project facts, a candidate map, and separately stored evidence. A candidate content map
+is input evidence, not an adopted account position. A `BenchmarkSnapshot` is read-only
+observation evidence and cannot decide positioning.
+
+Use `explore_content_world` with answer_goal=`content_opportunities` when the user asks what
+content worlds or directions are available. Use answer_goal=`one_shootable_topic` when the
+user asks what to publish or wants one concrete topic. The topic path may read an existing
+strategy whose candidate-map version matches exactly; it never creates or revises account
+strategy. Do not route a concrete shootable-topic request through `analyze_content_intelligence`.
 
 When the user names a hotspot, person, work, event, or question that should guide this one
 topic, pass it as `topic_seed` only when it is one contiguous verbatim span of the current user request.
@@ -523,15 +527,13 @@ It is an unverified research lead, not evidence or permission to change the froz
 The selected result is the direct answer; do not synthesize it again. When using
 `explore_content_world`, do not pair it with `web_search`, `web_fetch`, or another evidence
 tool in the same turn. Its internal post-map research begins after root freeze for
-one_shootable_topic, so pre-map search would bias the reading.
+one_shootable_topic, so pre-map search would bias the reading. Generic topic evidence and
+competitor-account evidence remain separate roles.
 
-For long_term_positioning, a usable provisional rooted map is already a useful answer;
-complete it and do not call `ask_clarification` in that turn merely to personalize later work.
 For one_shootable_topic, never disguise a map-only fallback as a shootable result.
-
-`content_entry` only explains the semantic route from the commercial expression.
-The durable `content_root` and audience territory define the account-level map.
-Treat the rooted content map as complete for the current question and do not extend it into an unrequested downstream operating plan.
+`content_entry` only explains the semantic route from the commercial expression;
+`content_root` is only the root of that candidate map. Neither field decides the account's
+audience, persona, presentation, or monetization.
 Unless execution was requested, do not add an arbitrary number of posts, days, or branches,
 nor invent format, platform, posting cadence, quotas, schedules, sales plans, experiments,
 or questionnaires. Honor `scope` and `does_not_support` as factual boundaries.

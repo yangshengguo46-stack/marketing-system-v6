@@ -17,6 +17,7 @@ from deerflow.tools.builtins.content_intelligence_tool import content_intelligen
 from deerflow.tools.tools import BUILTIN_TOOLS
 
 content_intelligence_tool_module = importlib.import_module("deerflow.tools.builtins.content_intelligence_tool")
+incubation_tool_support_module = importlib.import_module("deerflow.tools.builtins.incubation_tool_support")
 
 
 def _tool_runtime(tool_call_id: str, *, context: dict[str, str] | None = None) -> ToolRuntime:
@@ -45,7 +46,7 @@ def test_content_intelligence_workers_do_not_inherit_lead_thinking_mode(monkeypa
     )
     monkeypatch.setattr(app_config_module, "get_app_config", lambda: app_config)
     create_model = Mock(return_value=object())
-    monkeypatch.setattr(content_intelligence_tool_module, "create_chat_model", create_model)
+    monkeypatch.setattr(incubation_tool_support_module, "create_chat_model", create_model)
 
     content_intelligence_tool_module._create_content_intelligence_model(
         {
@@ -77,7 +78,7 @@ def test_lexical_evidence_provider_is_disabled_without_a_local_index_env(
     tmp_path,
 ) -> None:
     monkeypatch.delenv("CONTENT_INTELLIGENCE_CEDICT_INDEX", raising=False)
-    monkeypatch.setattr(content_intelligence_tool_module, "runtime_home", lambda: tmp_path)
+    monkeypatch.setattr(incubation_tool_support_module, "runtime_home", lambda: tmp_path)
 
     assert content_intelligence_tool_module._create_lexical_evidence_provider() is None
 
@@ -90,7 +91,7 @@ def test_lexical_evidence_provider_is_created_from_the_untracked_local_index(
     provider_factory = Mock(return_value=provider)
     monkeypatch.setenv("CONTENT_INTELLIGENCE_CEDICT_INDEX", index_path)
     monkeypatch.setattr(
-        content_intelligence_tool_module,
+        incubation_tool_support_module,
         "CedictLexicalEvidenceProvider",
         provider_factory,
     )
@@ -102,7 +103,7 @@ def test_lexical_evidence_provider_is_created_from_the_untracked_local_index(
 
 
 @pytest.mark.asyncio
-async def test_content_world_tool_stops_after_the_frozen_map_for_long_term_positioning(
+async def test_content_world_tool_stops_after_the_candidate_map_for_content_opportunities(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     bundle = object()
@@ -117,8 +118,8 @@ async def test_content_world_tool_stops_after_the_frozen_map_for_long_term_posit
     monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
     delivery = AsyncMock()
     monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
-    positioning = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅")
-    monkeypatch.setattr(content_intelligence_tool_module, "_render_positioning_basis", positioning, raising=False)
+    opportunities = Mock(return_value="# 候选内容机会地图\n\n**地图从哪里展开：** 火锅")
+    monkeypatch.setattr(content_intelligence_tool_module, "_render_content_opportunity_map", opportunities)
     persist = AsyncMock(return_value={"status": "not_selected"})
     monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persist)
 
@@ -127,7 +128,7 @@ async def test_content_world_tool_stops_after_the_frozen_map_for_long_term_posit
             "name": "explore_content_world",
             "args": {
                 "user_request": "我是卖重庆火锅底料的，该怎么起号？",
-                "answer_goal": "long_term_positioning",
+                "answer_goal": "content_opportunities",
                 "runtime": _tool_runtime("content-world-call-1"),
             },
             "id": "content-world-call-1",
@@ -145,7 +146,7 @@ async def test_content_world_tool_stops_after_the_frozen_map_for_long_term_posit
     assert tool_message.tool_call_id == "content-world-call-1"
     assert tool_message.additional_kwargs["hide_from_ui"] is True
     assert tool_message.additional_kwargs["deerflow_direct_response"] is True
-    assert tool_message.content == "# 账号内容定位\n\n**长期讲什么：** 火锅"
+    assert tool_message.content == "# 候选内容机会地图\n\n**地图从哪里展开：** 火锅"
     assert not any(isinstance(message, AIMessage) for message in messages)
     research.assert_not_awaited()
     delivery.assert_not_awaited()
@@ -157,7 +158,7 @@ async def test_content_world_tool_stops_after_the_frozen_map_for_long_term_posit
     assert persist.await_args.kwargs["bundle"] is bundle
     assert persist.await_args.kwargs["delivery"] is None
     assert persist.await_args.kwargs["topic_evidence_snapshots"] == ()
-    positioning.assert_called_once_with(bundle)
+    opportunities.assert_called_once_with(bundle)
 
 
 @pytest.mark.asyncio
@@ -182,7 +183,7 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
     )
     delivery = AsyncMock(return_value=shooting_delivery)
     monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
-    render = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 饮酒与人际礼俗\n\n# 今日建议拍摄\n\n## 为什么当地的酒桌礼数这么重？")
+    render = Mock(return_value="# 内容机会依据\n\n**本题来自哪张地图：** 饮酒与人际礼俗\n\n# 今日建议拍摄\n\n## 为什么当地的酒桌礼数这么重？")
     monkeypatch.setattr(content_intelligence_tool_module, "render_shooting_delivery", render)
 
     result = await explore_content_world_tool.ainvoke(
@@ -199,8 +200,8 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
 
     rendered = result.update["messages"][0].content
     assert rendered.startswith("# 今日建议拍摄")
-    assert "# 长期定位依据" in rendered
-    assert rendered.index("# 今日建议拍摄") < rendered.index("# 长期定位依据")
+    assert "# 内容机会依据" in rendered
+    assert rendered.index("# 今日建议拍摄") < rendered.index("# 内容机会依据")
     delivery.assert_awaited_once()
     assert delivery.await_args.args[0] is enriched_bundle
     assert delivery.await_args.kwargs["user_request"] == user_request
@@ -210,7 +211,7 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
 
 
 @pytest.mark.asyncio
-async def test_selected_project_prepares_incubation_judgment_before_delivery(
+async def test_selected_project_loads_existing_incubation_judgment_before_topic_research(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     bundle = object()
@@ -238,9 +239,13 @@ async def test_selected_project_prepares_incubation_judgment_before_delivery(
         Mock(return_value=SimpleNamespace(snapshots=())),
     )
 
-    async def prepare(**kwargs):
-        order.append("prepare")
+    async def load_current(**kwargs):
+        order.append("load_current")
         return prepared
+
+    async def research(*args, **kwargs):
+        order.append("research")
+        return enriched_bundle
 
     async def deliver(*args, **kwargs):
         order.append("deliver")
@@ -255,7 +260,8 @@ async def test_selected_project_prepares_incubation_judgment_before_delivery(
             "_answer_appendix": "# 本条表现形式\n\n图文",
         }
 
-    monkeypatch.setattr(content_intelligence_tool_module, "_prepare_incubation_judgment", prepare)
+    monkeypatch.setattr(content_intelligence_tool_module, "_load_current_account_strategy", load_current)
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", AsyncMock(side_effect=research))
     delivery = AsyncMock(side_effect=deliver)
     monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
     persistence = AsyncMock(side_effect=persist)
@@ -265,8 +271,8 @@ async def test_selected_project_prepares_incubation_judgment_before_delivery(
         "render_shooting_delivery",
         Mock(return_value="# 今日建议拍摄\n\n## 一条具体选题"),
     )
-    render_judgment = Mock(return_value="# 孵化判断\n\n已形成项目级判断")
-    monkeypatch.setattr(content_intelligence_tool_module, "_render_incubation_judgment", render_judgment)
+    render_judgment = Mock(return_value="# 账号孵化判断\n\n已形成项目级判断")
+    monkeypatch.setattr(content_intelligence_tool_module, "render_account_strategy", render_judgment)
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -283,11 +289,11 @@ async def test_selected_project_prepares_incubation_judgment_before_delivery(
         }
     )
 
-    assert order == ["prepare", "deliver", "persist"]
+    assert order == ["load_current", "research", "deliver", "persist"]
     assert delivery.await_args.kwargs["incubation_judgment"] is judgment
     assert persistence.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
     assert persistence.await_args.kwargs["include_production_plan"] is False
-    assert "# 孵化判断" in result.update["messages"][0].content
+    assert "# 账号孵化判断" in result.update["messages"][0].content
     assert "# 本条表现形式" in result.update["messages"][0].content
     assert "_answer_appendix" not in result.update["messages"][0].additional_kwargs["incubation_persistence"]
     render_judgment.assert_called_once_with(judgment)
@@ -315,8 +321,8 @@ async def test_shootable_topic_goal_never_silently_downgrades_to_a_map_when_rese
         "synthesize_shooting_delivery",
         delivery,
     )
-    positioning = Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅")
-    monkeypatch.setattr(content_intelligence_tool_module, "_render_positioning_basis", positioning, raising=False)
+    opportunities = Mock(return_value="# 候选内容机会地图\n\n**地图从哪里展开：** 火锅")
+    monkeypatch.setattr(content_intelligence_tool_module, "_render_content_opportunity_map", opportunities)
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -333,10 +339,10 @@ async def test_shootable_topic_goal_never_silently_downgrades_to_a_map_when_rese
     assert isinstance(result, Command)
     content = result.update["messages"][0].content
     assert content.startswith("# 本轮选题结果")
-    assert "定位完成但未形成可拍选题" in content
-    assert "# 账号内容定位" in content
+    assert "候选内容地图已形成，但没有形成可拍选题" in content
+    assert "# 候选内容机会地图" in content
     delivery.assert_not_awaited()
-    positioning.assert_called_once_with(bundle)
+    opportunities.assert_called_once_with(bundle)
 
 
 @pytest.mark.asyncio
@@ -356,9 +362,8 @@ async def test_shootable_topic_goal_reports_when_topic_evidence_adapter_cannot_s
     monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
     monkeypatch.setattr(
         content_intelligence_tool_module,
-        "_render_positioning_basis",
-        Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅"),
-        raising=False,
+        "_render_content_opportunity_map",
+        Mock(return_value="# 候选内容机会地图\n\n**地图从哪里展开：** 火锅"),
     )
 
     result = await explore_content_world_tool.ainvoke(
@@ -374,7 +379,7 @@ async def test_shootable_topic_goal_reports_when_topic_evidence_adapter_cannot_s
         }
     )
 
-    assert "定位完成但未形成可拍选题" in result.update["messages"][0].content
+    assert "候选内容地图已形成，但没有形成可拍选题" in result.update["messages"][0].content
     research.assert_not_awaited()
 
 
@@ -400,9 +405,8 @@ async def test_shootable_topic_goal_reports_when_research_returns_no_topic_brief
     monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
     monkeypatch.setattr(
         content_intelligence_tool_module,
-        "_render_positioning_basis",
-        Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅"),
-        raising=False,
+        "_render_content_opportunity_map",
+        Mock(return_value="# 候选内容机会地图\n\n**地图从哪里展开：** 火锅"),
     )
 
     result = await explore_content_world_tool.ainvoke(
@@ -418,7 +422,7 @@ async def test_shootable_topic_goal_reports_when_research_returns_no_topic_brief
         }
     )
 
-    assert "定位完成但未形成可拍选题" in result.update["messages"][0].content
+    assert "候选内容地图已形成，但没有形成可拍选题" in result.update["messages"][0].content
     delivery.assert_not_awaited()
 
 
@@ -443,9 +447,8 @@ async def test_shootable_topic_goal_reports_when_message_plan_or_base_draft_fail
     )
     monkeypatch.setattr(
         content_intelligence_tool_module,
-        "_render_positioning_basis",
-        Mock(return_value="# 账号内容定位\n\n**长期讲什么：** 火锅"),
-        raising=False,
+        "_render_content_opportunity_map",
+        Mock(return_value="# 候选内容机会地图\n\n**地图从哪里展开：** 火锅"),
     )
 
     result = await explore_content_world_tool.ainvoke(
@@ -461,7 +464,7 @@ async def test_shootable_topic_goal_reports_when_message_plan_or_base_draft_fail
         }
     )
 
-    assert "定位完成但未形成可拍选题" in result.update["messages"][0].content
+    assert "候选内容地图已形成，但没有形成可拍选题" in result.update["messages"][0].content
 
 
 @pytest.mark.asyncio
@@ -485,7 +488,7 @@ async def test_topic_seed_reaches_research_only_as_a_verbatim_user_request_span(
     monkeypatch.setattr(
         content_intelligence_tool_module,
         "render_shooting_delivery",
-        Mock(return_value="# 账号内容定位\n\n普通人观察\n\n# 今日建议拍摄\n\n## 为什么这部影片能火？"),
+        Mock(return_value="# 内容机会依据\n\n普通人观察\n\n# 今日建议拍摄\n\n## 为什么这部影片能火？"),
     )
 
     await explore_content_world_tool.ainvoke(
@@ -534,7 +537,7 @@ async def test_topic_seed_outside_user_request_is_rejected_before_analysis(
     research.assert_not_awaited()
 
 
-def test_tool_layer_renders_positioning_as_basis_and_prioritizes_the_shootable_topic() -> None:
+def test_tool_layer_renders_candidate_map_as_basis_and_prioritizes_the_shootable_topic() -> None:
     world = SimpleNamespace(
         content_root="火锅",
         audience_territory=SimpleNamespace(text="围绕火锅形成的饮食与社交世界"),
@@ -550,14 +553,14 @@ def test_tool_layer_renders_positioning_as_basis_and_prioritizes_the_shootable_t
         drift_boundaries=("不能脱离火锅只讲泛餐饮",),
     )
 
-    positioning = content_intelligence_tool_module._render_positioning_basis(SimpleNamespace(content_world=world))
+    positioning = content_intelligence_tool_module._render_content_opportunity_map(SimpleNamespace(content_world=world))
     prioritized = content_intelligence_tool_module._prioritize_shooting_delivery(positioning + "\n\n# 今日建议拍摄\n\n## 外国人到底吃不吃火锅？")
 
-    assert "**长期讲什么：** 火锅" in positioning
+    assert "**地图从哪里展开：** 火锅" in positioning
     assert "外国人怎么吃火锅" in positioning
     assert prioritized.startswith("# 今日建议拍摄")
-    assert "# 长期定位依据" in prioritized
-    assert prioritized.index("# 今日建议拍摄") < prioritized.index("# 长期定位依据")
+    assert "# 内容机会依据" in prioritized
+    assert prioritized.index("# 今日建议拍摄") < prioritized.index("# 内容机会依据")
 
 
 def test_incubation_renderer_keeps_position_audience_persona_form_and_monetization_separate() -> None:
@@ -604,9 +607,10 @@ def test_incubation_renderer_keeps_position_audience_persona_form_and_monetizati
         alternatives=("也可先从不出镜图文开始",),
     )
 
-    rendered = content_intelligence_tool_module._render_incubation_judgment(judgment)
+    rendered = content_intelligence_tool_module.render_account_strategy(judgment)
 
-    assert rendered.startswith("# 孵化判断")
+    assert rendered.startswith("# 账号孵化判断")
+    assert "**定位版本：** v1" in rendered
     for heading in (
         "## 定位",
         "## 受众假设",
@@ -963,94 +967,13 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
         "user_request",
     }
     goal_schema = schema["$defs"]["ContentWorldAnswerGoal"]
-    assert goal_schema["enum"] == ["long_term_positioning", "one_shootable_topic"]
+    assert goal_schema["enum"] == ["content_opportunities", "one_shootable_topic"]
     assert schema["properties"]["answer_goal"]["default"] == "one_shootable_topic"
 
 
-@pytest.mark.asyncio
-async def test_incubation_preparation_persists_brief_world_and_judgment_in_order(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    from datetime import UTC, datetime
-
-    from deerflow.incubation import ArtifactEnvelope, IncubationBrief, IncubationJudgment, ProjectRef
-
-    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
-    now = datetime(2026, 8, 18, 1, 0, tzinfo=UTC)
-
-    def artifact(artifact_type: str, payload: dict[str, object]) -> ArtifactEnvelope:
-        return ArtifactEnvelope.seal(
-            project=project,
-            artifact_type=artifact_type,
-            version=1,
-            payload=payload,
-            created_at=now,
-            source_thread_id="thread-1",
-            source_run_id="run-1",
-        )
-
-    reading = artifact("content_reading", {"record": "bounded"})
-    world_artifact = artifact(
-        "content_world",
-        {
-            "content_map_version_id": "map-1",
-            "content_root": "礼与人与人相处",
-        },
-    )
-    brief = artifact(
-        "incubation_brief",
-        IncubationBrief(subject_expression="我是做黄金礼品的，我要怎么起号？").model_dump(mode="json"),
-    )
-    judgment = artifact(
-        "incubation_judgment",
-        IncubationJudgment(content_map_version_id="map-1").model_dump(mode="json"),
-    )
-    repository = SimpleNamespace(
-        get_project=AsyncMock(return_value=object()),
-        put_artifact=AsyncMock(side_effect=lambda item: item),
-        list_artifacts=AsyncMock(return_value=[reading, world_artifact, brief]),
-    )
-    monkeypatch.setattr(content_intelligence_tool_module, "_get_incubation_repository", Mock(return_value=repository))
-    monkeypatch.setattr(
-        content_intelligence_tool_module,
-        "seal_content_run_artifacts",
-        Mock(return_value=SimpleNamespace(storage_order=lambda: (reading, world_artifact))),
-    )
-    build_brief = Mock(return_value=brief)
-    monkeypatch.setattr(content_intelligence_tool_module, "build_minimal_incubation_brief", build_brief)
-    generate_judgment = AsyncMock(return_value=judgment)
-    monkeypatch.setattr(content_intelligence_tool_module, "generate_incubation_judgment", generate_judgment)
-
-    prepared = await content_intelligence_tool_module._prepare_incubation_judgment(
-        bundle=SimpleNamespace(
-            content_world=SimpleNamespace(
-                content_root="礼与人与人相处",
-                source_object="黄金礼品",
-            )
-        ),
-        user_request="我是做黄金礼品的，我要怎么起号？",
-        model=object(),
-        runtime=_tool_runtime(
-            "content-world-call-prepare",
-            context={"incubation_project_id": "golden-gift"},
-        ),
-        topic_evidence_snapshots=(),
-    )
-
-    assert prepared is not None
-    assert prepared.judgment_artifact is judgment
-    assert prepared.judgment.content_map_version_id == "map-1"
-    assert [call.args[0].artifact_type for call in repository.put_artifact.await_args_list] == [
-        "content_reading",
-        "content_world",
-        "incubation_brief",
-        "incubation_judgment",
-    ]
-    assert build_brief.call_args.kwargs["source_object"] == "黄金礼品"
-    assert generate_judgment.await_args.kwargs["brief_artifact"] is brief
-    assert generate_judgment.await_args.kwargs["content_world_artifact"] is world_artifact
-    assert generate_judgment.await_args.kwargs["benchmark_evidence_artifacts"] == ()
-    assert generate_judgment.await_args.kwargs["audience_evidence_artifacts"] == ()
+def test_content_tool_does_not_expose_account_positioning_generation_helpers() -> None:
+    assert not hasattr(content_intelligence_tool_module, "_prepare_incubation_judgment")
+    assert not hasattr(content_intelligence_tool_module, "generate_incubation_judgment")
 
 
 @pytest.mark.asyncio
@@ -1099,7 +1022,7 @@ async def test_content_run_persistence_uses_only_the_runtime_bound_project(
         )
         for artifact_type in (
             "content_reading",
-            "content_world",
+            "content_map_candidate",
             "topic_brief",
             "message_plan",
             "draft_version",
@@ -1176,7 +1099,7 @@ async def test_content_run_persistence_stores_used_topic_evidence_before_the_rea
         )
         for artifact_type in (
             "content_reading",
-            "content_world",
+            "content_map_candidate",
             "topic_brief",
             "message_plan",
             "draft_version",
@@ -1220,7 +1143,7 @@ async def test_content_run_persistence_stores_used_topic_evidence_before_the_rea
     assert [item["artifact_type"] for item in receipt["artifacts"]] == [
         "evidence_snapshot",
         "content_reading",
-        "content_world",
+        "content_map_candidate",
         "topic_brief",
         "message_plan",
         "draft_version",
@@ -1239,7 +1162,7 @@ async def test_persistence_continues_through_production_plan_only_when_explicitl
         )
         for artifact_type in (
             "content_reading",
-            "content_world",
+            "content_map_candidate",
             "topic_brief",
             "message_plan",
             "draft_version",
@@ -1346,7 +1269,7 @@ async def test_persistence_can_stop_after_adapted_draft_without_starting_product
         )
         for artifact_type in (
             "content_reading",
-            "content_world",
+            "content_map_candidate",
             "topic_brief",
             "message_plan",
             "draft_version",
@@ -1518,6 +1441,7 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "<content_intelligence>" in SYSTEM_PROMPT_TEMPLATE
     assert "analyze_content_intelligence" in SYSTEM_PROMPT_TEMPLATE
     assert "explore_content_world" in SYSTEM_PROMPT_TEMPLATE
+    assert "develop_account_strategy" in SYSTEM_PROMPT_TEMPLATE
     assert "optional" in SYSTEM_PROMPT_TEMPLATE.lower()
 
     content_section = SYSTEM_PROMPT_TEMPLATE.split("<content_intelligence>", 1)[1].split("</content_intelligence>", 1)[0]
@@ -1528,23 +1452,23 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "3 candidates" not in content_section
     normalized_section = " ".join(content_section.split())
     assert "Use `analyze_content_intelligence` for business semantics only" in normalized_section
-    assert "answer_goal=`long_term_positioning`" in normalized_section
+    assert "answer_goal=`content_opportunities`" in normalized_section
     assert "answer_goal=`one_shootable_topic`" in normalized_section
-    assert "only when the user explicitly asks just for positioning" in normalized_section
-    assert 'A normal account-starting request such as "how should I start this account?"' in normalized_section
-    assert "defaults to answer_goal=`one_shootable_topic`" in normalized_section
+    assert "sole owner of positioning, audience, persona, account-level presentation, and monetization hypotheses" in normalized_section
+    assert "Use `develop_account_strategy` for account-starting or positioning requests" in normalized_section
+    assert "A candidate content map is input evidence, not an adopted account position" in normalized_section
+    assert "never creates or revises account strategy" in normalized_section
+    assert "BenchmarkSnapshot" in normalized_section
+    assert "cannot decide positioning" in normalized_section
     assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section
     assert "topic_seed" in normalized_section
     assert "contiguous verbatim span of the current user request" in normalized_section
-    assert "what the account should talk about before how to operate it" in normalized_section
     assert "posting cadence" in normalized_section
-    assert "provisional rooted map is already a useful answer" in normalized_section
-    assert "do not call `ask_clarification` in that turn" in normalized_section
     assert "`content_entry` only explains the semantic route" in normalized_section
-    assert "The durable `content_root` and audience territory define the account-level map" in normalized_section
+    assert "`content_root` is only the root of that candidate map" in normalized_section
+    assert "long_term_positioning" not in normalized_section
+    assert "audience territory define the account-level map" not in normalized_section
     assert "content root is the entry into the map" not in normalized_section
-    assert "Treat the rooted content map as complete for the current question" in normalized_section
-    assert "do not extend it into an unrequested downstream operating plan" in normalized_section
     assert "do not add an arbitrary number of posts, days, or branches" in normalized_section
     assert "do not pair it with `web_search`" in normalized_section
     assert "internal post-map research" in normalized_section

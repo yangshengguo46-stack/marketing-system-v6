@@ -187,7 +187,7 @@ def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
     ordered = sealed.storage_order()
     assert [artifact.artifact_type for artifact in ordered] == [
         "content_reading",
-        "content_world",
+        "content_map_candidate",
         "topic_brief",
         "message_plan",
         "draft_version",
@@ -349,7 +349,7 @@ def test_content_run_selects_only_topic_snapshots_used_by_the_final_reading() ->
     assert snapshots == (selected,)
 
 
-def test_content_run_without_a_topic_still_seals_the_reading_and_durable_map() -> None:
+def test_content_run_without_a_topic_still_seals_the_reading_and_candidate_map() -> None:
     bundle, _delivery = _content_run()
     map_only = bundle.model_copy(update={"topic_brief": None})
 
@@ -364,7 +364,7 @@ def test_content_run_without_a_topic_still_seals_the_reading_and_durable_map() -
 
     assert [artifact.artifact_type for artifact in sealed.storage_order()] == [
         "content_reading",
-        "content_world",
+        "content_map_candidate",
     ]
     assert sealed.topic_brief is None
     assert sealed.message_plan is None

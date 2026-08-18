@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import Field, field_validator, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from deerflow.content_intelligence.contracts import (
     BasisRef,
@@ -275,7 +275,13 @@ class ContentRootCandidateSetDraft(ContractModel):
 
 class ContentRootDecisionDraft(ContractModel):
     selected_candidate_index: int
-    audience_territory_candidate_index: int | None = None
+    map_root_candidate_index: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "map_root_candidate_index",
+            "audience_territory_candidate_index",
+        ),
+    )
     root_rationale: NonEmptyStr
     unknowns: tuple[NonEmptyStr, ...] = ()
 
@@ -284,7 +290,13 @@ class ContentRootSelectionDraft(ContractModel):
     source_object: NonEmptyStr
     candidates: tuple[RootCandidateDraft, ...]
     selected_candidate_index: int
-    audience_territory_candidate_index: int | None = None
+    map_root_candidate_index: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "map_root_candidate_index",
+            "audience_territory_candidate_index",
+        ),
+    )
     root_rationale: NonEmptyStr
     unknowns: tuple[NonEmptyStr, ...] = ()
 
@@ -294,12 +306,12 @@ class ContentRootSelectionDraft(ContractModel):
             raise ValueError("selected_candidate_index must identify an explicit candidate")
         if self.candidates[self.selected_candidate_index].scope_role != "root_candidate":
             raise ValueError("example branch cannot be selected as the content root")
-        territory_index = self.audience_territory_candidate_index
-        if territory_index is not None:
-            if not 0 <= territory_index < len(self.candidates):
-                raise ValueError("audience_territory_candidate_index must identify an explicit candidate")
-            if self.candidates[territory_index].scope_role != "root_candidate":
-                raise ValueError("example branch cannot be selected as the audience territory")
+        map_root_index = self.map_root_candidate_index
+        if map_root_index is not None:
+            if not 0 <= map_root_index < len(self.candidates):
+                raise ValueError("map_root_candidate_index must identify an explicit candidate")
+            if self.candidates[map_root_index].scope_role != "root_candidate":
+                raise ValueError("example branch cannot be selected as the candidate map root")
         return self
 
     @property
@@ -307,19 +319,15 @@ class ContentRootSelectionDraft(ContractModel):
         return self.candidates[self.selected_candidate_index].label
 
     @property
-    def account_content_world(self) -> str:
-        index = self.audience_territory_candidate_index
+    def map_root(self) -> str:
+        index = self.map_root_candidate_index
         if index is None:
             index = self.selected_candidate_index
         return self.candidates[index].label
 
     @property
     def primary_content_center(self) -> str:
-        return self.content_entry
-
-    @property
-    def audience_territory(self) -> str:
-        return self.account_content_world
+        return self.map_root
 
 
 class FrozenContentMapDraft(ContractModel):
@@ -334,8 +342,7 @@ class FrozenContentMapDraft(ContractModel):
 class FocusedContentWorldDraft(ContractModel):
     source_object: NonEmptyStr
     content_entry: NonEmptyStr
-    audience_territory: NonEmptyStr
-    primary_content_center: NonEmptyStr
+    map_root: NonEmptyStr
     root_rationale: NonEmptyStr
     editorial_promise: NonEmptyStr
     recurring_lens: NonEmptyStr
@@ -462,13 +469,14 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 
 - selected_candidate_index 只选择语义进入点，只能指向 scope_role=root_candidate；它回答商业表达从哪个具体对象、行动、意义核或关系进入更大的内容世界，不等于账号最终只讲这个入口。
 - example_branch 无论多具体、多热闹、搜索资料多丰富，都不能成为进入点。
-- audience_territory_candidate_index 选择账号长期占领的内容世界，也只能指向 scope_role=root_candidate；它回答内容地图最终围绕什么人、事、活动、关系或共同经验展开。
-- 两个索引承担不同职责：进入点负责解释“怎么走过去”，长期领地负责限定“最终长期讲什么”。不能因为进入点更靠近商品，就把已经成立的长期世界收缩成该入口的一种用途、场景或仪式。
+- map_root_candidate_index 只选择本次候选内容地图的展开根，也只能指向 scope_role=root_candidate；它回答这张候选地图围绕什么人、事、活动、关系或共同经验展开。
+- 两个索引承担不同职责：进入点负责解释“怎么走过去”，地图根负责限定“这张候选地图从哪里展开”。不能因为进入点更靠近商品，就把已经成立的较大世界收缩成该入口的一种用途、场景或仪式。
+- 候选内容地图不是账号定位，也不决定受众、人设、表现形式或变现；账号孵化层可以采用、缩窄、组合或拒绝它。
 - 只能在输入索引中选择，不能把较窄对象与较宽关系世界拼成折中混合根。
 - relation_to_business 是上游已经形成并经审查的语义连续路径，不是候选宣传语。与原表达的语义相关性已由上游解决；当前不得重新判定“能不能从商品走到这里”。
 - social_or_cultural_world 候选已通过独立语义路径审查；你不得再次裁决这条连续性是否成立。距离商品较远不等于内容漂移，也不得以“离商品较远”为由推翻它。
 - 你仍可比较内容容量、具体性与长期编辑价值，并在该候选只是空泛口号、缺少可反复研究的人事时选择其他候选。
-- audience_territory_candidate_index 应指向账号当前最值得长期占领的最大有效内容世界：它必须具体，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级；候选与原表达的连接已经不是本节点的裁决对象。
+- map_root_candidate_index 应指向本次最值得展开的最大有效内容世界：它必须具体，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级；候选与原表达的连接已经不是本节点的裁决对象。
 - 内容根选择不是品类定义测验。完整商品或服务没有先验优先权；对象能够脱离某个场景独立存在，不足以否决与原表达直接相连、解释力更强的人类活动或关系世界。
 - 完整商业实体不自动等于最好的内容根。持续发生的人类活动、社交或情绪功能及关系世界已由上游分开绑定，必须与对象候选平等比较。
 - 候选来源不是胜负规则，但必须辨清层级：served_object 是中间实现物所服务的完整对象；subject_activity 是围绕主词发生的动作；subject_function_or_use 是主词承担的功能或结果。
@@ -487,7 +495,7 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 - 用观众可直接理解的对象、活动或关系判断，不要用抽象的‘XX文化’代替已经识别出的具体活动与关系。
 - 若一个候选只取多个平行场景中的一个，或擅自增加用户未给出的地域、人生阶段、人群、用途等范围限制，它应当是 example_branch，不能压过覆盖这些场景的共同世界。
 - 对象型候选可以胜出，但只能因为它本身比竞争活动或关系世界拥有更大、更具体且不失真的长期内容容量，不能仅凭“它是完整对象”获胜。
-- 若 social_or_cultural_world 已通过独立审查，它就是长期领地的权威候选；selected_candidate_index 仍可选择一个更具体的语义进入点，但不得用该入口覆盖长期领地。
+- 若 social_or_cultural_world 已通过独立审查，它只是一个有效候选，不自动覆盖 map_root_candidate_index；selected_candidate_index 仍可选择一个更具体的语义进入点。
 - 商业特异性不必重复在内容根中。本任务只比较候选，不把下游运营约束带入判断。
 - 候选生成者写的优势、风险、案例分支和上游详细语义已被隔离；下游成交便利性不是内容根的优先条件。
 - 只输出索引、判断理由和未知项；不得创造新标签，不输出地图、选题、平台、表现形式、销售、实验或数量。
@@ -497,11 +505,13 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 
 
 FROZEN_CONTENT_MAP_SYSTEM_PROMPT = """<content_intelligence_method>
-你是独立的账号内容地图子智能体。输入只包含已冻结的内容根和输出结构。你的产物是前期账号级长期编辑定位，不是一次性的选题单。将该根视为本任务的完整主题边界，只围绕它展开长期内容地图，不得重新选根。
+你是独立的候选内容机会地图子智能体。输入只包含已冻结的地图根和输出结构。你的产物是一张供账号孵化层选择的候选内容机会地图，不是账号定位，也不是一次性的选题单。将该根视为本任务的完整主题边界，只围绕它展开内容机会，不得重新选根。
+
+- 这张地图不决定受众、人设、表现形式或变现，也不因生成完成就自动成为账号采用的长期方向。
 
 - editorial_promise 回答观众长期关注后会反复获得什么理解或价值。它必须由内容根支持，不能写成涨粉、获客、成交或空泛品牌口号。
 - recurring_lens 回答这个账号会怎样持续观察和解释具体的人、地方、时间、事件与变化。它是稳定的编辑视角，不是口播、微短剧、图文等表现形式，也不是某一条内容的开头或故事结构。
-- drift_boundaries 只记录会破坏账号连续性的边界。热点可以在后续成为地图分支上的新证据或具体事件，但热点本身不能改写内容根、长期承诺或稳定观察方法；仅仅热门而没有可解释路径的事件应留在地图外。
+- drift_boundaries 只记录会破坏这张候选地图语义连续性的边界。热点可以在后续成为地图分支上的新证据或具体事件，但热点本身不能改写地图根、编辑承诺或稳定观察方法；仅仅热门而没有可解释路径的事件应留在地图外。
 - 将冻结根当作面向参与者的内容主题，而不是一个等待经营的生意。活动型内容根应优先展开参与者的动作、技能、感受、关系、成果、失败、历史与文化，不得把活动改写成组织者的运营流程。
 - 定价、获客、会员、排班、供应链、合规或交付管理不属于普通内容地图；只有冻结根本身明确指向经营、管理或行业运营时，相关方向才可进入。
 - 扫描真正适用的扩展方向：向下的种类与子世界、时间与历史变化、地域与环境、人物及其行为、可核验事件、文化与生活习惯、跨群体比较、跨领域作品与公共对象。轴只是召回线索，不构成配额。
@@ -521,13 +531,13 @@ FROZEN_CONTENT_MAP_SYSTEM_PROMPT = """<content_intelligence_method>
 
 
 CONTENT_WORLD_NARRATION_SYSTEM_PROMPT = """<content_intelligence_method>
-你是账号内容地图总编子智能体，只把冻结内容根、长期编辑定位和纯内容地图收敛成一份人类可读的账号内容判断。上游商业表达与语义跃迁已完成且被刻意隔离，不要猜测或补回。
+你是候选内容机会地图总编，只把冻结地图根和纯内容地图收敛成一份人类可读的内容机会判断。上游商业表达与语义跃迁已完成且被刻意隔离，不要猜测或补回。
 
 - 第一行必须严格写为 `# {content_root}`，并在全文保持这个冻结根的原文与边界。
-- 先说明账号长期承诺给观众什么，再说明它会用什么稳定观察方法进入具体的人、地方、时间、事件与变化；不要把观察方法写成口播、短剧、图文等表现形式。
+- 先说明这张候选地图可以持续给观众什么，再说明它会用什么稳定观察方法进入具体的人、地方、时间、事件与变化；不要把观察方法写成口播、短剧、图文等表现形式。
 - 只从输入中已列出的 map_dimensions 选择值得讲的部分，把其整理成有判断的小节，不要显示 dimension_index。
 - 按研究与选题领地组织地图中的方向。
-- 内容地图是账号定位，不是每日选题清单。热点只能在以后沿既有地图路径进入，不能改写定位。
+- 内容地图是账号孵化的候选输入，不是账号定位，也不是每日选题清单。热点只能在以后沿既有地图路径进入，不能改写地图根。
 - 不要贬低或删除语义阅读中同时成立的人类活动、社交功能和情绪功能；它们应在内容判断中保留各自位置，而不是被设备、流程或经营知识覆盖。
 - 不要把关系差异升级为戏剧阻碍或对抗结构；地图表达实际的人、事与关系，故事组织留给证据之后的选题总编。
 - 输入中的地图方向不是外部事实证据；不要自行增加或断言具体命名人物、事件、作品、日期、数据和历史细节。已经取证的具体选题会由确定性证据区另行追加。
@@ -596,7 +606,6 @@ async def synthesize_content_world_narration(
 
     payload = {
         "content_root": world.content_root,
-        "audience_territory": world.audience_territory.text if world.audience_territory else None,
         "editorial_promise": world.editorial_promise,
         "recurring_lens": world.recurring_lens,
         "drift_boundaries": world.drift_boundaries,
@@ -864,11 +873,7 @@ async def _analyze_focused_content_world(
         include_raw=True,
         container_fields={"unknowns"},
     )
-    root = _resolve_root_selection(
-        candidate_set,
-        decision,
-        reviewed_audience_territory=shared_world.world_label,
-    )
+    root = _resolve_root_selection(candidate_set, decision)
     map_messages = (
         SystemMessage(content=FROZEN_CONTENT_MAP_SYSTEM_PROMPT),
         HumanMessage(content=_render_frozen_map_input(root)),
@@ -884,8 +889,7 @@ async def _analyze_focused_content_world(
     world = FocusedContentWorldDraft(
         source_object=root.source_object,
         content_entry=root.content_entry,
-        audience_territory=root.account_content_world,
-        primary_content_center=root.account_content_world,
+        map_root=root.map_root,
         root_rationale=root.root_rationale,
         editorial_promise=content_map.editorial_promise,
         recurring_lens=content_map.recurring_lens,
@@ -1586,41 +1590,30 @@ def _build_root_candidate_set(
 def _resolve_root_selection(
     candidate_set: ContentRootCandidateSetDraft,
     decision: ContentRootDecisionDraft,
-    *,
-    reviewed_audience_territory: str | None = None,
 ) -> ContentRootSelectionDraft:
     eligible_indices = tuple(index for index, candidate in enumerate(candidate_set.candidates) if candidate.scope_role == "root_candidate")
     if not 0 <= decision.selected_candidate_index < len(eligible_indices):
         raise ValueError("selected_candidate_index must identify an explicit root candidate")
     selected_candidate_index = eligible_indices[decision.selected_candidate_index]
 
-    audience_territory_candidate_index = None
-    if reviewed_audience_territory is not None:
-        reviewed_territory_indices = tuple(index for index, candidate in enumerate(candidate_set.candidates) if candidate.scope_role == "root_candidate" and candidate.label == reviewed_audience_territory)
-        if len(reviewed_territory_indices) != 1:
-            raise ValueError("reviewed audience territory must identify exactly one explicit root candidate")
-        audience_territory_candidate_index = reviewed_territory_indices[0]
+    map_root_candidate_index = selected_candidate_index
+    if decision.map_root_candidate_index is not None:
+        if not 0 <= decision.map_root_candidate_index < len(eligible_indices):
+            raise ValueError("map_root_candidate_index must identify an explicit root candidate")
+        map_root_candidate_index = eligible_indices[decision.map_root_candidate_index]
 
-    if audience_territory_candidate_index is None and decision.audience_territory_candidate_index is not None:
-        if not 0 <= decision.audience_territory_candidate_index < len(eligible_indices):
-            raise ValueError("audience_territory_candidate_index must identify an explicit root candidate")
-        audience_territory_candidate_index = eligible_indices[decision.audience_territory_candidate_index]
-
-    if audience_territory_candidate_index is None:
-        audience_territory_candidate_index = selected_candidate_index
-
-    if audience_territory_candidate_index == selected_candidate_index:
+    if map_root_candidate_index == selected_candidate_index:
         root_rationale = decision.root_rationale
     else:
         entry = candidate_set.candidates[selected_candidate_index].label
-        territory = candidate_set.candidates[audience_territory_candidate_index].label
-        root_rationale = f"{entry} 是语义进入点；经独立路径审查的 {territory} 是账号长期内容世界与地图边界。"
+        map_root = candidate_set.candidates[map_root_candidate_index].label
+        root_rationale = f"{entry} 是语义进入点；{map_root} 是本次候选内容地图的展开根。"
 
     return ContentRootSelectionDraft(
         source_object=candidate_set.source_object,
         candidates=candidate_set.candidates,
         selected_candidate_index=selected_candidate_index,
-        audience_territory_candidate_index=audience_territory_candidate_index,
+        map_root_candidate_index=map_root_candidate_index,
         root_rationale=root_rationale,
         unknowns=tuple(dict.fromkeys((*candidate_set.unknowns, *decision.unknowns))),
     )
@@ -1630,7 +1623,7 @@ def _render_frozen_map_input(
     root: ContentRootSelectionDraft,
 ) -> str:
     payload = {
-        "primary_content_center": root.account_content_world,
+        "primary_content_center": root.map_root,
     }
     return "--- BEGIN FROZEN CONTENT MAP INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN CONTENT MAP INPUT ---"
 
@@ -1741,10 +1734,9 @@ def _bind_focused_content_world(
     recurring_world_refs = tuple(add_interpretation(f"recurring-world-{index}", f"跨具体场景反复发生的人类世界：{value}") for index, value in enumerate(recurring_world_values, start=1))
     frame_refs = tuple(add_interpretation(f"frame-{index}", f"可能参与的社会文化框架：{value}") for index, value in enumerate(semantic.social_or_cultural_frames, start=1))
     action_refs = tuple(add_interpretation(f"seller-action-{index}", f"卖方动作：{value}") for index, value in enumerate(semantic.seller_actions, start=1))
-    audience_territory_ref = add_interpretation("audience-territory", f"观众内容领地：{world.audience_territory}")
     content_root_ref = add_interpretation(
         "content-root",
-        f"当前内容中心：{world.primary_content_center}。{world.root_rationale}",
+        f"候选地图根：{world.map_root}。{world.root_rationale}",
     )
     candidate_refs = tuple(
         add_interpretation(
@@ -1832,13 +1824,13 @@ def _bind_focused_content_world(
     dimensions = tuple(
         ContentDimension(
             name=direction.dimension,
-            rationale=f"围绕 {world.primary_content_center} 的实际研究方向。",
+            rationale=f"围绕 {world.map_root} 的实际研究方向。",
             paths=tuple(
                 ContentPath(
                     path_id=f"path-direction-{dimension_index}-{path_index}",
                     steps=(
                         ContentPathStep(
-                            from_label=world.primary_content_center,
+                            from_label=world.map_root,
                             relation="可展开为",
                             to_label=actual_direction,
                             basis_refs=(content_root_ref,),
@@ -1857,8 +1849,8 @@ def _bind_focused_content_world(
         record_id=record_id,
         source_object=world.source_object,
         content_entry=world.content_entry,
-        audience_territory=GroundedStatement(text=world.audience_territory, basis_refs=(audience_territory_ref,)),
-        content_root=world.primary_content_center,
+        audience_territory=None,
+        content_root=world.map_root,
         root_rationale=world.root_rationale,
         editorial_promise=world.editorial_promise,
         recurring_lens=world.recurring_lens,

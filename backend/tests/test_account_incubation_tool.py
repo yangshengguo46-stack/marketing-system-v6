@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+import importlib
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
+
+import pytest
+from langchain.tools import ToolRuntime
+from langchain_core.messages import ToolMessage
+from langgraph.types import Command
+
+from deerflow.tools.builtins.account_incubation_tool import develop_account_strategy_tool
+from deerflow.tools.tools import BUILTIN_TOOLS
+
+tool_module = importlib.import_module("deerflow.tools.builtins.account_incubation_tool")
+
+
+def _runtime(*, project_id: str | None) -> ToolRuntime:
+    context = {
+        "thread_id": "thread-1",
+        "run_id": "run-1",
+        "user_id": "user-1",
+    }
+    if project_id is not None:
+        context["incubation_project_id"] = project_id
+    return ToolRuntime(
+        state={},
+        context=context,
+        config={"configurable": {"thread_id": "thread-1"}},
+        stream_writer=lambda _: None,
+        tools=[],
+        tool_call_id="account-strategy-call",
+        store=None,
+    )
+
+
+def test_account_strategy_tool_is_a_separate_lead_capability() -> None:
+    assert develop_account_strategy_tool in BUILTIN_TOOLS
+    assert develop_account_strategy_tool.name == "develop_account_strategy"
+    assert develop_account_strategy_tool.return_direct is True
+    schema = develop_account_strategy_tool.tool_call_schema.model_json_schema()
+    assert set(schema["properties"]) == {"user_request"}
+
+
+@pytest.mark.asyncio
+async def test_account_strategy_tool_requires_a_selected_project_before_model_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    create_model = Mock()
+    monkeypatch.setattr(tool_module, "create_content_intelligence_model", create_model)
+
+    result = await develop_account_strategy_tool.ainvoke(
+        {
+            "name": "develop_account_strategy",
+            "args": {
+                "user_request": "我是做黄金礼品的，我要怎么起号？",
+                "runtime": _runtime(project_id=None),
+            },
+            "id": "account-strategy-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert isinstance(result, Command)
+    message = result.update["messages"][0]
+    assert isinstance(message, ToolMessage)
+    assert "先创建或选择一个项目" in message.content
+    create_model.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_account_strategy_tool_routes_candidate_map_and_project_evidence_to_strategy_service(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    bundle = object()
+    judgment = object()
+    artifact = SimpleNamespace(
+        artifact_type="incubation_judgment",
+        artifact_id="artifact-strategy-1",
+        content_sha256="a" * 64,
+    )
+    prepared = SimpleNamespace(
+        judgment=judgment,
+        judgment_artifact=artifact,
+        reused=False,
+    )
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(tool_module, "create_content_intelligence_model", Mock(return_value=object()))
+    monkeypatch.setattr(tool_module, "create_lexical_evidence_provider", Mock(return_value=None))
+    analysis = AsyncMock(return_value=bundle)
+    monkeypatch.setattr(tool_module, "analyze_content_intelligence", analysis)
+    prepare = AsyncMock(return_value=prepared)
+    monkeypatch.setattr(tool_module, "prepare_account_strategy", prepare)
+    monkeypatch.setattr(tool_module, "render_account_strategy", Mock(return_value="# 账号孵化判断\n\n**定位版本：** v1"))
+
+    result = await develop_account_strategy_tool.ainvoke(
+        {
+            "name": "develop_account_strategy",
+            "args": {
+                "user_request": "我是做黄金礼品的，我要怎么起号？",
+                "runtime": _runtime(project_id="golden-gift"),
+            },
+            "id": "account-strategy-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert analysis.await_args.args[0].focus == "content_world"
+    assert prepare.await_args.kwargs["bundle"] is bundle
+    assert prepare.await_args.kwargs["verbatim_user_request"] == "我是做黄金礼品的，我要怎么起号？"
+    message = result.update["messages"][0]
+    assert message.content.startswith("# 账号孵化判断")
+    assert message.additional_kwargs["incubation_persistence"]["artifact_id"] == "artifact-strategy-1"

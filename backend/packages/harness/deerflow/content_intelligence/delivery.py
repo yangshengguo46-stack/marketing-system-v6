@@ -154,7 +154,7 @@ def _bind_message_plan_draft(
 
 
 SHOOTING_DELIVERY_SYSTEM_PROMPT = """<content_intelligence_delivery>
-你是 TopicBrief 之后的内容交付编辑。语义理解和账号内容地图已经完成；地图给出长期讲什么和稳定怎么看，TopicBrief 才是今天从地图中选出的具体一题。
+你是 TopicBrief 之后的内容交付编辑。语义理解和候选内容地图已经完成；地图给出可研究的内容机会，TopicBrief 才是今天从地图中选出的具体一题。若输入含当前账号孵化判断，它才负责长期定位、受众与人设。
 
 - 不得重新选择内容根、更换 TopicBrief 的具体问题，也不得把地图重新扩写成百科全书。
 - 讲述方案必须兑现账号长期承诺并服从稳定观察方法，但不得把这两句话生硬复述进正文。当前热点只能增加这条内容的当日入口，不能让成稿脱离地图路径。
@@ -416,16 +416,16 @@ def render_shooting_delivery(
         raise ValueError("shooting delivery record does not match the content bundle")
 
     lines = [
-        "# 账号内容定位",
+        "# 内容机会依据",
         "",
-        f"**长期讲什么：** {world.content_root}",
+        f"**本题来自哪张地图：** {world.content_root}",
     ]
     if world.editorial_promise is not None:
         lines.extend(("", f"**关注理由：** {world.editorial_promise}"))
     if world.recurring_lens is not None:
         lines.extend(("", f"**稳定观察方法：** {world.recurring_lens}"))
     if world.dimensions:
-        lines.extend(("", "## 长期内容疆域", ""))
+        lines.extend(("", "## 候选内容方向", ""))
         lines.extend(f"- **{dimension.name}：** {dimension.rationale}" for dimension in world.dimensions)
     lines.extend(
         (

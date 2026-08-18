@@ -315,7 +315,8 @@ def test_message_plan_contract_requires_a_telling_treatment_but_not_forced_time(
 
 
 def test_delivery_prompt_separates_internal_exploration_from_the_shootable_answer() -> None:
-    assert "语义理解和账号内容地图已经完成" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "语义理解和候选内容地图已经完成" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "它才负责长期定位、受众与人设" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "谁在什么情境下遇到了什么具体事情" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "不得冒充医生、律师、历史学者" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "不设固定段数" in SHOOTING_DELIVERY_SYSTEM_PROMPT
@@ -333,7 +334,7 @@ def test_delivery_prompt_separates_internal_exploration_from_the_shootable_answe
     assert "白酒" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
 
 
-def test_rendered_delivery_shows_account_positioning_before_one_daily_topic() -> None:
+def test_rendered_delivery_shows_content_opportunity_before_one_daily_topic() -> None:
     bundle = _evidence_bound_bundle()
     draft = MessagePlanDraft.model_validate(_message_plan_payload())
     delivery = draft.bind(
@@ -343,8 +344,8 @@ def test_rendered_delivery_shows_account_positioning_before_one_daily_topic() ->
 
     rendered = render_shooting_delivery(bundle, delivery)
 
-    assert rendered.startswith("# 账号内容定位")
-    assert "**长期讲什么：** 饮酒与人际礼俗" in rendered
+    assert rendered.startswith("# 内容机会依据")
+    assert "**本题来自哪张地图：** 饮酒与人际礼俗" in rendered
     assert "**关注理由：** 持续借具体酒桌理解地方礼俗与人际表达，而不是只介绍酒。" in rendered
     assert "**稳定观察方法：** 从一个具体人物、场合或行为进入，解释酒桌上的关系如何被表达。" in rendered
     assert "# 今日建议拍摄" in rendered
@@ -363,6 +364,7 @@ def test_rendered_delivery_shows_account_positioning_before_one_daily_topic() ->
     assert "饮酒与人际礼俗" in rendered
     assert "A public record about regional drinking customs" in rendered
     assert "# 饮酒与人际礼俗" not in rendered
+    assert "# 账号内容定位" not in rendered
 
 
 def test_same_topic_with_a_different_telling_treatment_gets_a_distinct_plan_id() -> None:

@@ -33,7 +33,7 @@ def _world(
     )
 
 
-def test_content_world_artifact_tracks_only_the_durable_editorial_map() -> None:
+def test_content_world_seals_as_a_candidate_map_not_account_positioning() -> None:
     project = ProjectRef(owner_user_id="user-1", project_id="project-1")
     first = seal_content_world_version(
         project=project,
@@ -51,11 +51,17 @@ def test_content_world_artifact_tracks_only_the_durable_editorial_map() -> None:
     )
 
     assert first.artifact_id == later_research.artifact_id
+    assert first.artifact_type == "content_map_candidate"
+    assert first.account is None
     assert first.payload == later_research.payload
     assert "record_id" not in first.payload
     assert "named_candidates" not in first.payload
     assert "source_object" not in first.payload
     assert "content_entry" not in first.payload
+    assert "positioning" not in first.payload
+    assert "persona" not in first.payload
+    assert "presentation" not in first.payload
+    assert "monetization" not in first.payload
 
 
 def test_content_world_artifact_changes_when_the_frozen_map_changes() -> None:

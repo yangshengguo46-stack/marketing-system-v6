@@ -156,59 +156,36 @@ from deerflow.config import get_app_config
 
 ### V6 Content Incubation Core
 
-`content_intelligence/` owns the optional chain `ComprehensionRecord -> ContentWorldView ->
-TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`. ADR-020 retired
-A58's concurrent-reader gates after a live root regression. Keep the current dependency-ordered
-semantic chain; typed intermediate labels are inspectable evidence, never deterministic candidate
-gates. A venue/object/consumption/social scene remains one map path when the object also expands
+`content_intelligence/` owns `ComprehensionRecord -> ContentWorldView -> TopicBrief ->
+MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`. `ContentWorldView` is a
+content-addressed candidate opportunity map, not adopted account positioning. Keep ADR-020's
+dependency-ordered semantic chain: intermediate labels are inspectable evidence, never hard gates.
+One venue, purchase, consumption, or social scene stays a map branch when the object also expands
 into people, history, events, regions, or works outside that scene.
 
-`ContentWorldView` is a content-addressed account map. Every topic binds its frozen version;
-trends, sales, formats, and screenwriting cannot rewrite it. `explore_content_world` receives the
-verbatim request and returns one hidden direct-response `ToolMessage`. Shootable topics bind an
-exact map path and evidence receipt. Search starts only after root freeze; generic search is
-`topic_evidence`, never competitor evidence. Unsupported routes or weak sources must remain
-limitations instead of becoming facts.
+Root selection explicitly chooses `content_entry` and `map_root`; reviewed shared worlds are normal
+candidates and cannot override that choice in code. The map sees only `map_root`. Every topic binds
+the exact candidate-map version and evidence receipt. Generic search is `topic_evidence`, never
+competitor evidence. Weak evidence remains a limitation. `explore_content_world` may return content
+opportunities or one shootable topic, but cannot decide account positioning, audience, persona,
+account presentation, or monetization.
 
-Root selection has two explicit roles. `content_entry` is the per-reading semantic entry from the
-commercial expression; `content_root` is the durable account content world. An independently
-reviewed shared world owns the latter even when the root judge chooses a narrower entry. The map
-model sees only `content_root`; `content_entry` is stored in the reading artifact but excluded from
-the durable content-world artifact, map-version hash, topic-path start, and narration input.
-Shared-world synthesis sees an independent meaning component and its semantic family without that
-component's use inside the original compound. The separate path reviewer receives the compound
-relation afterward to verify that the wider world still explains the user's expression in both
-directions. Do not collapse these inputs: doing so re-anchors the account world to a nearby product
-use before semantic expansion begins.
+`deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
+`develop_account_strategy` alone creates those long-lived judgments from a candidate map, Brief,
+and formal evidence. Identical parents reuse a version; changed inputs create a linked successor
+with a revision reason. Topic delivery may read only the latest exact-map strategy and cannot write
+one. `MessagePlan` and `BaseDraft` stay format-neutral and cannot invent facts, materials, sales,
+experiments, quantities, or publishing decisions.
 
-`MessagePlan` and `BaseDraft` are format-neutral. They cannot invent context, materials, sales
-bridges, experiments, quantities, or publishing decisions. One bounded fact repair may only delete
-or generalize new proper names, numbers, explicit names, and unsupported absolutes; a remaining
-violation rejects delivery. This is not a complete fact checker.
+Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
+formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post
+coverage, remains read-only, and cannot write strategy. Credentials, raw pages, local paths, and
+temporary URLs never enter projections or business artifacts. Production, MediaKit, approvals,
+publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/` and
+ADR-018 through ADR-021 for full contracts and status.
 
-`deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, content-addressed,
-parent-checked truth. Thread state and Memory receive projections only. Brief, judgment, audience,
-benchmark, format, and adaptation artifacts must preserve type, role, owner, project, parent, hash,
-and source boundaries. Account presentation is not a per-topic format. `FormatDecision` may remain
-provisional; every `AdaptedDraft` unit retains a BaseDraft anchor. The server-only
-`content_include_production_plan` flag defaults false. Production, user materials, MediaKit, and
-publishing are separate downstream capabilities and cannot erase an accepted topic or draft.
-
-Douyin topic search and competitor discovery use distinct evidence roles. Author-label search
-results remain candidates until stable identity and author-consistent multi-post coverage exist;
-`BenchmarkSnapshot` caps observations at 24 and never claims audience, causality, or transferability.
-Credentials, cookies, raw pages, local paths, and temporary URLs never enter model projections or
-business artifacts. Cognitive workers cannot write approvals, publications, metrics, or adopted
-learning rules. Full contracts, current status, and rejected experiments live in
-`../docs/content-intelligence-v6/`, especially `ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`, and
-ADR-018 through ADR-020.
-
-A77 treats fixed Agent context as an explicit performance budget. This distribution enables
-deferred Skill discovery and Tool Search, and `tool_search.defer_tools` may defer named generic
-local schemas while the content-intelligence entry tools remain eager. The always-on Lead prompt
-has a UTF-8 byte regression budget; detailed tool and Skill instructions belong behind progressive
-discovery. Keep fixed entry overhead distinct from the multiple real model calls performed by a
-full incubation run.
+Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
+belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
 ## Development Workflow
 

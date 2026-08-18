@@ -59,7 +59,7 @@ def _brief_artifact(*, project: ProjectRef = PROJECT) -> ArtifactEnvelope:
 def _content_world_artifact(*, project: ProjectRef = PROJECT) -> ArtifactEnvelope:
     return ArtifactEnvelope.seal(
         project=project,
-        artifact_type="content_world",
+        artifact_type="content_map_candidate",
         version=1,
         payload={
             "content_map_version_id": "map-gift-relations-v1",

@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Any
@@ -18,7 +16,6 @@ from langgraph.types import Command
 from pydantic import BaseModel, Field, ValidationError
 
 from deerflow.community.url_safety import validate_public_http_url
-from deerflow.config.runtime_paths import runtime_home
 from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceBundle,
@@ -31,28 +28,44 @@ from deerflow.content_intelligence import (
     render_shooting_delivery,
     synthesize_shooting_delivery,
 )
-from deerflow.content_intelligence.analyzer import _invoke_structured
-from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
 from deerflow.incubation import (
     AdaptedDraft,
     ArtifactEnvelope,
     EvidenceSnapshot,
     FormatDecision,
-    IncubationJudgment,
     ProductionPlan,
     ProjectRef,
-    build_minimal_incubation_brief,
     generate_adapted_draft,
     generate_format_decision,
-    generate_incubation_judgment,
     generate_production_plan,
     seal_content_run_artifacts,
     seal_evidence_snapshot,
-    select_project_judgment_evidence,
+    select_current_account_strategy,
     select_used_topic_evidence_snapshots,
 )
-from deerflow.models import create_chat_model
+from deerflow.incubation.account_strategy_presentation import render_account_strategy
 from deerflow.tools.builtins.douyin_topic_evidence import DouyinMcpTopicEvidenceSearch
+from deerflow.tools.builtins.incubation_tool_support import (
+    artifact_receipt as _artifact_receipt,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
+    create_content_intelligence_model as _create_content_intelligence_model,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
+    create_lexical_evidence_provider as _create_lexical_evidence_provider,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
+    get_incubation_repository as _get_incubation_repository,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
+    runtime_context_bool as _runtime_context_bool,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
+    runtime_context_text as _runtime_context_text,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
+    structured_model_runner as _structured_model_runner,
+)
 from deerflow.tools.types import Runtime
 from deerflow.utils.readability import ReadabilityExtractor
 
@@ -64,19 +77,13 @@ _DIRECT_FETCH_USER_AGENT = "Mozilla/5.0 (compatible; DeerFlowContentResearch/1.0
 _direct_readability_extractor = ReadabilityExtractor()
 
 
-@dataclass(frozen=True, slots=True)
-class _PreparedIncubationContext:
-    judgment: IncubationJudgment
-    judgment_artifact: ArtifactEnvelope
-
-
 class ToolAnalysisFocus(StrEnum):
     BUSINESS_SEMANTICS = "business_semantics"
     TOPIC_BRIEF = "topic_brief"
 
 
 class ContentWorldAnswerGoal(StrEnum):
-    LONG_TERM_POSITIONING = "long_term_positioning"
+    CONTENT_OPPORTUNITIES = "content_opportunities"
     ONE_SHOOTABLE_TOPIC = "one_shootable_topic"
 
 
@@ -91,199 +98,6 @@ class _ContentIntelligenceToolInput(BaseModel):
         default_factory=list,
         description="Optional source excerpts already obtained from the user or evidence tools. Do not pass unsupported model claims as source material.",
     )
-
-
-def _create_content_intelligence_model(config: RunnableConfig):
-    from deerflow.config.app_config import get_app_config
-
-    app_config = get_app_config()
-    runtime_options: dict[str, Any] = {}
-    for section_name in ("configurable", "context"):
-        section = (config or {}).get(section_name) or {}
-        if isinstance(section, dict):
-            runtime_options.update(section)
-
-    model_name = runtime_options.get("model_name")
-    if model_name is None or app_config.get_model_config(model_name) is None:
-        model_name = app_config.models[0].name if app_config.models else None
-    if model_name is None:
-        raise ValueError("No chat models are configured for content intelligence analysis.")
-    return create_chat_model(
-        name=model_name,
-        # The parent Lead may use provider thinking, but these bounded workers
-        # expose their reasoning through typed intermediate records. Some
-        # providers also reject structured tool choice while thinking is on.
-        thinking_enabled=False,
-        app_config=app_config,
-        attach_tracing=False,
-    )
-
-
-def _create_lexical_evidence_provider() -> CedictLexicalEvidenceProvider | None:
-    configured_path = os.getenv("CONTENT_INTELLIGENCE_CEDICT_INDEX", "").strip()
-    index_path = configured_path or str(runtime_home() / "lexicons" / "cc-cedict.sqlite3")
-    if not configured_path and not os.path.isfile(index_path):
-        return None
-    try:
-        return CedictLexicalEvidenceProvider(index_path)
-    except (OSError, ValueError, KeyError) as exc:
-        logger.warning(
-            "Configured lexical evidence index was unavailable; preserving the model-only path: %s",
-            type(exc).__name__,
-        )
-        return None
-
-
-def _get_incubation_repository():
-    from deerflow.persistence.engine import get_session_factory
-    from deerflow.persistence.incubation_ledger import IncubationLedgerRepository
-
-    session_factory = get_session_factory()
-    if session_factory is None:
-        return None
-    return IncubationLedgerRepository(session_factory)
-
-
-def _runtime_context_text(runtime: Runtime, name: str) -> str | None:
-    context = runtime.context or {}
-    if not isinstance(context, dict):
-        return None
-    value = context.get(name)
-    if not isinstance(value, str) or not value.strip():
-        return None
-    return value.strip()
-
-
-def _runtime_context_bool(runtime: Runtime, name: str, *, default: bool) -> bool:
-    context = runtime.context or {}
-    if not isinstance(context, dict):
-        return default
-    value = context.get(name)
-    return value if isinstance(value, bool) else default
-
-
-def _artifact_receipt(artifact: ArtifactEnvelope) -> dict[str, str]:
-    return {
-        "artifact_type": artifact.artifact_type,
-        "artifact_id": artifact.artifact_id,
-        "content_sha256": artifact.content_sha256,
-    }
-
-
-def _structured_model_runner(model: Any, config: RunnableConfig):
-    async def invoke(schema, messages):
-        try:
-            return await _invoke_structured(
-                model,
-                schema,
-                tuple(messages),
-                runnable_config=config,
-                include_raw=True,
-                container_fields=set(getattr(schema, "model_fields", {})),
-            )
-        except ValueError as exc:
-            raise ValueError("structured model output could not be parsed") from exc
-
-    return invoke
-
-
-async def _prepare_incubation_judgment(
-    *,
-    bundle: ContentIntelligenceBundle,
-    user_request: str,
-    model: Any,
-    runtime: Runtime,
-    topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
-) -> _PreparedIncubationContext | None:
-    """Persist exact prerequisites, then generate one bounded project judgment."""
-
-    project_id = _runtime_context_text(runtime, "incubation_project_id")
-    if project_id is None:
-        return None
-    owner_user_id = _runtime_context_text(runtime, "user_id")
-    thread_id = _runtime_context_text(runtime, "thread_id")
-    run_id = _runtime_context_text(runtime, "run_id")
-    if owner_user_id is None or thread_id is None or run_id is None:
-        return None
-
-    try:
-        project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
-        repository = _get_incubation_repository()
-        if repository is None or await repository.get_project(project) is None:
-            return None
-
-        selected_snapshots = select_used_topic_evidence_snapshots(
-            bundle,
-            topic_evidence_snapshots,
-        )
-        evidence_artifacts: dict[str, ArtifactEnvelope] = {}
-        for snapshot in selected_snapshots:
-            artifact = seal_evidence_snapshot(
-                project=project,
-                snapshot=snapshot,
-                source_thread_id=thread_id,
-                source_run_id=run_id,
-            )
-            evidence_artifacts[artifact.artifact_id] = artifact
-        evidence_parents = []
-        for artifact_id in sorted(evidence_artifacts):
-            stored = await repository.put_artifact(evidence_artifacts[artifact_id])
-            evidence_parents.append(stored.to_parent_ref())
-
-        created_at = datetime.now(UTC)
-        prerequisites = seal_content_run_artifacts(
-            project=project,
-            bundle=bundle,
-            delivery=None,
-            created_at=created_at,
-            source_thread_id=thread_id,
-            source_run_id=run_id,
-            reading_parents=tuple(evidence_parents),
-        )
-        stored_prerequisites: dict[str, ArtifactEnvelope] = {}
-        for artifact in prerequisites.storage_order():
-            stored = await repository.put_artifact(artifact)
-            stored_prerequisites[stored.artifact_type] = stored
-
-        content_world_artifact = stored_prerequisites["content_world"]
-        world = bundle.content_world
-        assert world is not None and world.content_root is not None
-        brief_artifact = build_minimal_incubation_brief(
-            project=project,
-            verbatim_user_request=user_request,
-            source_object=world.source_object,
-            created_at=created_at,
-            source_thread_id=thread_id,
-            source_run_id=run_id,
-        )
-        brief_artifact = await repository.put_artifact(brief_artifact)
-
-        project_evidence = select_project_judgment_evidence(
-            project=project,
-            artifacts=await repository.list_artifacts(project),
-        )
-        judgment_artifact = await generate_incubation_judgment(
-            project=project,
-            brief_artifact=brief_artifact,
-            content_world_artifact=content_world_artifact,
-            structured_model=_structured_model_runner(model, runtime.config),
-            benchmark_evidence_artifacts=project_evidence.benchmark_evidence_artifacts,
-            audience_evidence_artifacts=project_evidence.audience_evidence_artifacts,
-            created_at=created_at,
-            source_thread_id=thread_id,
-            source_run_id=run_id,
-        )
-        judgment_artifact = await repository.put_artifact(judgment_artifact)
-        return _PreparedIncubationContext(
-            judgment=IncubationJudgment.model_validate(judgment_artifact.payload),
-            judgment_artifact=judgment_artifact,
-        )
-    except Exception as exc:
-        logger.warning(
-            "Incubation judgment preparation was unavailable: %s",
-            type(exc).__name__,
-        )
-        return None
 
 
 async def _persist_content_run(
@@ -441,6 +255,34 @@ async def _persist_content_run(
         return failure
 
 
+async def _load_current_account_strategy(
+    *,
+    bundle: ContentIntelligenceBundle,
+    runtime: Runtime,
+):
+    project_id = _runtime_context_text(runtime, "incubation_project_id")
+    owner_user_id = _runtime_context_text(runtime, "user_id")
+    if project_id is None or owner_user_id is None:
+        return None
+    world = getattr(bundle, "content_world", None)
+    if world is None or world.content_root is None:
+        return None
+    repository = _get_incubation_repository()
+    if repository is None:
+        return None
+    project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    if await repository.get_project(project) is None:
+        return None
+    artifacts = await repository.list_artifacts(
+        project,
+        artifact_type="incubation_judgment",
+    )
+    return select_current_account_strategy(
+        artifacts,
+        content_map_version_id=world.content_map_version_id(),
+    )
+
+
 async def _analyze_content_intelligence(
     user_request: str,
     subject_expression: str,
@@ -484,18 +326,18 @@ async def explore_content_world_tool(
     answer_goal: ContentWorldAnswerGoal = ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC,
     topic_seed: str | None = None,
 ) -> Command:
-    """Build a rooted account position or one evidence-bound shootable topic.
+    """Build a candidate content-opportunity map or one evidence-bound shootable topic.
 
-    Both goals freeze business semantics, one content root, and its content map.
-    Long-term positioning stops there. A shootable-topic goal continues through
+    Both goals freeze business semantics, one map root, and its candidate map.
+    Content opportunities stop there. A shootable-topic goal continues through
     research, TopicBrief, MessagePlan, and BaseDraft. With a selected project it
     may also persist a per-topic FormatDecision, AdaptedDraft, and ProductionPlan.
     It still stops before MediaKit execution, platform, cadence, sales,
     experiments, or questionnaires.
 
     Args:
-        user_request: The current account-positioning or concrete-topic request, copied without adding requirements.
-        answer_goal: Whether to return long-term positioning or one concrete shootable topic.
+        user_request: The current content-opportunity or concrete-topic request, copied without adding requirements.
+        answer_goal: Whether to return candidate content opportunities or one concrete shootable topic.
         topic_seed: Optional hotspot, person, work, event, or question copied as one contiguous verbatim span from user_request.
     """
     try:
@@ -524,7 +366,7 @@ async def explore_content_world_tool(
             runnable_config=config,
             lexical_evidence_provider=lexical_evidence_provider,
         )
-        if answer_goal == ContentWorldAnswerGoal.LONG_TERM_POSITIONING:
+        if answer_goal == ContentWorldAnswerGoal.CONTENT_OPPORTUNITIES:
             persistence = await _persist_content_run(
                 bundle=bundle,
                 delivery=None,
@@ -532,11 +374,15 @@ async def explore_content_world_tool(
                 topic_evidence_snapshots=(),
             )
             return _terminal_content_world_command(
-                _render_positioning_basis(bundle),
+                _render_content_opportunity_map(bundle),
                 tool_call_id=tool_call_id,
                 persistence=persistence,
             )
 
+        current_strategy = await _load_current_account_strategy(
+            bundle=bundle,
+            runtime=runtime,
+        )
         douyin_topic_search: DouyinMcpTopicEvidenceSearch | None = None
         try:
             douyin_topic_search = DouyinMcpTopicEvidenceSearch(runtime)
@@ -590,26 +436,19 @@ async def explore_content_world_tool(
                 persistence=persistence,
             )
 
-        prepared_incubation = await _prepare_incubation_judgment(
-            bundle=bundle,
-            user_request=user_request,
-            model=model,
-            runtime=runtime,
-            topic_evidence_snapshots=topic_evidence_snapshots,
-        )
         try:
             shooting_delivery = await synthesize_shooting_delivery(
                 bundle,
                 user_request=user_request,
                 model=model,
                 runnable_config=config,
-                incubation_judgment=(prepared_incubation.judgment if prepared_incubation is not None else None),
+                incubation_judgment=(current_strategy.judgment if current_strategy is not None else None),
             )
             if shooting_delivery is None:
                 raise ValueError("shootable-topic delivery returned no MessagePlan or BaseDraft")
             rendered_delivery = _prioritize_shooting_delivery(render_shooting_delivery(bundle, shooting_delivery))
-            if prepared_incubation is not None:
-                rendered_delivery += "\n\n" + _render_incubation_judgment(prepared_incubation.judgment)
+            if current_strategy is not None:
+                rendered_delivery += "\n\n" + render_account_strategy(current_strategy.judgment)
         except Exception as exc:
             logger.warning(
                 "Evidence topic delivery was unavailable; no shootable topic was formed: %s",
@@ -621,7 +460,7 @@ async def explore_content_world_tool(
             delivery=shooting_delivery,
             runtime=runtime,
             topic_evidence_snapshots=topic_evidence_snapshots,
-            incubation_judgment_artifact=(prepared_incubation.judgment_artifact if prepared_incubation is not None and shooting_delivery is not None else None),
+            incubation_judgment_artifact=(current_strategy.judgment_artifact if current_strategy is not None and shooting_delivery is not None else None),
             model=model,
             include_production_plan=_runtime_context_bool(
                 runtime,
@@ -662,20 +501,18 @@ def _validate_topic_seed(user_request: str, topic_seed: str | None) -> str | Non
     return topic_seed
 
 
-def _render_positioning_basis(bundle: ContentIntelligenceBundle) -> str:
+def _render_content_opportunity_map(bundle: ContentIntelligenceBundle) -> str:
     world = bundle.content_world
     if world is None or world.content_root is None:
-        raise ValueError("positioning basis requires a frozen content root")
+        raise ValueError("content opportunity rendering requires a frozen map root")
 
     lines = [
-        "# 账号内容定位",
+        "# 候选内容机会地图",
         "",
-        f"**长期讲什么：** {world.content_root}",
+        f"**地图从哪里展开：** {world.content_root}",
     ]
-    if world.audience_territory is not None:
-        lines.extend(("", f"**可以占领的内容世界：** {world.audience_territory.text}"))
     if world.editorial_promise is not None:
-        lines.extend(("", f"**长期承诺：** {world.editorial_promise}"))
+        lines.extend(("", f"**可能持续提供的价值：** {world.editorial_promise}"))
     if world.recurring_lens is not None:
         lines.extend(("", f"**稳定观察方法：** {world.recurring_lens}"))
     if world.dimensions:
@@ -685,125 +522,8 @@ def _render_positioning_basis(bundle: ContentIntelligenceBundle) -> str:
             suffix = f" 可展开：{'；'.join(directions)}" if directions else ""
             lines.append(f"- **{dimension.name}：** {dimension.rationale}{suffix}")
     if world.drift_boundaries:
-        lines.extend(("", "## 不跑偏边界", ""))
+        lines.extend(("", "## 地图边界", ""))
         lines.extend(f"- {boundary}" for boundary in world.drift_boundaries)
-    return "\n".join(lines).strip()
-
-
-def _render_incubation_judgment(judgment: IncubationJudgment) -> str:
-    confidence_labels = {"low": "低", "medium": "中", "high": "高"}
-    lines = ["# 孵化判断"]
-
-    if judgment.positioning is not None:
-        item = judgment.positioning
-        lines.extend(
-            (
-                "",
-                "## 定位",
-                "",
-                f"**账号定位：** {item.decision}",
-                "",
-                f"**给观众的长期承诺：** {item.audience_promise}",
-                "",
-                f"**判断理由：** {item.rationale}",
-                "",
-                f"**置信度：** {confidence_labels[item.confidence]}",
-            )
-        )
-        if item.boundaries:
-            lines.extend(("", "**边界：** " + "；".join(item.boundaries)))
-        if item.unknowns:
-            lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
-
-    if judgment.audience is not None:
-        item = judgment.audience
-        lines.extend(
-            (
-                "",
-                "## 受众假设",
-                "",
-                f"**可能是谁：** {item.people}",
-                "",
-                f"**持续关心什么：** {item.recurring_interest}",
-                "",
-                f"**为什么回来：** {item.why_return}",
-                "",
-                f"**判断理由：** {item.rationale}",
-                "",
-                f"**置信度：** {confidence_labels[item.confidence]}",
-            )
-        )
-        if item.unknowns:
-            lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
-
-    if judgment.persona is not None:
-        item = judgment.persona
-        lines.extend(
-            (
-                "",
-                "## 人设",
-                "",
-                f"**账号角色：** {item.account_role}",
-                "",
-                f"**判断理由：** {item.rationale}",
-                "",
-                f"**置信度：** {confidence_labels[item.confidence]}",
-            )
-        )
-        if item.trust_basis:
-            lines.extend(("", "**可信依据：** " + "；".join(item.trust_basis)))
-        if item.boundaries:
-            lines.extend(("", "**不能冒充：** " + "；".join(item.boundaries)))
-        if item.unknowns:
-            lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
-
-    if judgment.presentation is not None:
-        item = judgment.presentation
-        lines.extend(
-            (
-                "",
-                "## 账号级表现方向",
-                "",
-                "**主要方向：** " + "；".join(item.primary_forms),
-                "",
-                f"**判断理由：** {item.rationale}",
-                "",
-                f"**置信度：** {confidence_labels[item.confidence]}",
-            )
-        )
-        if item.supporting_forms:
-            lines.extend(("", "**辅助方向：** " + "；".join(item.supporting_forms)))
-        if item.constraints:
-            lines.extend(("", "**约束：** " + "；".join(item.constraints)))
-        if item.unknowns:
-            lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
-
-    if judgment.monetization:
-        lines.extend(("", "## 变现假设"))
-        for index, item in enumerate(judgment.monetization, start=1):
-            lines.extend(
-                (
-                    "",
-                    f"**路径 {index}：** {item.path}",
-                    "",
-                    f"**需要先建立的信任：** {item.trust_required}",
-                    "",
-                    f"**判断理由：** {item.rationale}",
-                    "",
-                    f"**置信度：** {confidence_labels[item.confidence]}",
-                )
-            )
-            if item.preconditions:
-                lines.extend(("", "**成立前提：** " + "；".join(item.preconditions)))
-            if item.unknowns:
-                lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
-
-    if judgment.unknowns or judgment.alternatives:
-        lines.extend(("", "## 未知与备选"))
-        if judgment.unknowns:
-            lines.extend(("", "**尚未确认：** " + "；".join(judgment.unknowns)))
-        if judgment.alternatives:
-            lines.extend(("", "**备选路线：** " + "；".join(judgment.alternatives)))
     return "\n".join(lines).strip()
 
 
@@ -915,7 +635,7 @@ def _render_production_plan_artifact(artifact: ArtifactEnvelope) -> str:
 
 
 def _render_shootable_topic_failure(bundle: ContentIntelligenceBundle) -> str:
-    return "# 本轮选题结果\n\n**定位完成但未形成可拍选题。** 研究、证据阅读或内容交付没有形成完整合同，因此本轮不会把长期方向冒充成具体选题。\n\n" + _render_positioning_basis(bundle)
+    return "# 本轮选题结果\n\n**候选内容地图已形成，但没有形成可拍选题。** 研究、证据阅读或内容交付没有形成完整合同，因此本轮不会把地图方向冒充成具体选题。\n\n" + _render_content_opportunity_map(bundle)
 
 
 def _prioritize_shooting_delivery(rendered: str) -> str:
@@ -926,14 +646,14 @@ def _prioritize_shooting_delivery(rendered: str) -> str:
     if topic_heading not in content:
         raise ValueError("shooting delivery did not contain the concrete-topic heading")
 
-    positioning, topic = content.split(topic_heading, 1)
-    positioning_lines = positioning.strip().splitlines()
-    if positioning_lines and positioning_lines[0].strip() == "# 账号内容定位":
-        positioning_lines = positioning_lines[1:]
-    positioning_basis = "\n".join(positioning_lines).strip()
+    opportunity_map, topic = content.split(topic_heading, 1)
+    opportunity_lines = opportunity_map.strip().splitlines()
+    if opportunity_lines and opportunity_lines[0].strip() == "# 内容机会依据":
+        opportunity_lines = opportunity_lines[1:]
+    opportunity_basis = "\n".join(opportunity_lines).strip()
     prioritized = topic_heading + topic.rstrip()
-    if positioning_basis:
-        prioritized += "\n\n# 长期定位依据\n\n" + positioning_basis
+    if opportunity_basis:
+        prioritized += "\n\n# 内容机会依据\n\n" + opportunity_basis
     return prioritized
 
 

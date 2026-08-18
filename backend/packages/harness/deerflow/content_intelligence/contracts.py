@@ -341,6 +341,8 @@ class ContentRootCandidate(ContractModel):
 
 
 class ContentWorldView(ContractModel):
+    """An immutable candidate content-opportunity map, not adopted positioning."""
+
     record_id: NonEmptyStr
     source_object: NonEmptyStr | None = None
     content_entry: NonEmptyStr | None = None
@@ -356,13 +358,12 @@ class ContentWorldView(ContractModel):
     unknown_refs: tuple[NonEmptyStr, ...] = ()
 
     def content_map_version_id(self) -> str:
-        """Identify the durable editorial map, excluding mutable research results."""
+        """Identify the candidate map, excluding mutable research results."""
 
         if self.content_root is None:
             raise ValueError("content map version requires a frozen content root")
         payload = {
             "content_root": self.content_root,
-            "audience_territory": self.audience_territory.text if self.audience_territory else None,
             "editorial_promise": self.editorial_promise,
             "recurring_lens": self.recurring_lens,
             "drift_boundaries": self.drift_boundaries,

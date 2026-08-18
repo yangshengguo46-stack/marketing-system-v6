@@ -115,6 +115,9 @@ class MonetizationHypothesis(JudgmentBasis):
 class IncubationJudgment(IncubationContract):
     """A versionable proposal. Missing facets remain unknown rather than gates."""
 
+    revision_number: int = Field(default=1, ge=1)
+    supersedes_judgment_artifact_id: NonEmptyStr | None = None
+    revision_reason: NonEmptyStr | None = Field(default=None, max_length=3000)
     content_map_version_id: NonEmptyStr = Field(max_length=80)
     positioning: PositioningDecision | None = None
     audience: AudienceHypothesis | None = None
@@ -123,6 +126,16 @@ class IncubationJudgment(IncubationContract):
     monetization: tuple[MonetizationHypothesis, ...] = ()
     unknowns: tuple[NonEmptyStr, ...] = ()
     alternatives: tuple[NonEmptyStr, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_revision_lineage(self) -> IncubationJudgment:
+        if self.revision_number == 1:
+            if self.supersedes_judgment_artifact_id is not None:
+                raise ValueError("first judgment revision cannot supersede a previous judgment")
+            return self
+        if self.supersedes_judgment_artifact_id is None or self.revision_reason is None:
+            raise ValueError("a revised judgment requires a previous judgment and revision reason")
+        return self
 
     def basis_artifact_ids(self) -> frozenset[str]:
         facets: list[JudgmentBasis] = []
@@ -187,7 +200,9 @@ def seal_incubation_judgment(
     source_run_id: str,
     account: PlatformAccountRef | None = None,
     evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
+    previous_judgment_artifact: ArtifactEnvelope | None = None,
 ) -> ArtifactEnvelope:
+    judgment = IncubationJudgment.model_validate(judgment.model_dump(mode="json"))
     _require_project(
         brief_artifact,
         project=project,
@@ -196,20 +211,40 @@ def seal_incubation_judgment(
     _require_project(
         content_world_artifact,
         project=project,
-        artifact_type="content_world",
+        artifact_type="content_map_candidate",
     )
     for artifact in evidence_artifacts:
         if artifact.project != project:
             raise ValueError("evidence parent project must match judgment project")
 
+    if judgment.revision_number == 1:
+        if previous_judgment_artifact is not None:
+            raise ValueError("first judgment revision cannot bind a previous judgment")
+    else:
+        if previous_judgment_artifact is None:
+            raise ValueError("revised judgment requires its previous judgment parent")
+        _require_project(
+            previous_judgment_artifact,
+            project=project,
+            artifact_type="incubation_judgment",
+        )
+        if previous_judgment_artifact.account != account:
+            raise ValueError("previous judgment account must match revised judgment account")
+        if judgment.supersedes_judgment_artifact_id != previous_judgment_artifact.artifact_id:
+            raise ValueError("previous judgment id must match supersedes_judgment_artifact_id")
+        previous_judgment = IncubationJudgment.model_validate(previous_judgment_artifact.payload)
+        if judgment.revision_number != previous_judgment.revision_number + 1:
+            raise ValueError("judgment revision number must immediately follow the previous judgment")
+
     world_version = content_world_artifact.payload.get("content_map_version_id")
     if world_version != judgment.content_map_version_id:
-        raise ValueError("incubation judgment content map version must match its frozen world")
+        raise ValueError("incubation judgment content map version must match its candidate map")
 
     parent_artifacts = (
         brief_artifact,
         content_world_artifact,
         *evidence_artifacts,
+        *((previous_judgment_artifact,) if previous_judgment_artifact is not None else ()),
     )
     parent_ids = {artifact.artifact_id for artifact in parent_artifacts}
     if not judgment.basis_artifact_ids().issubset(parent_ids):
@@ -218,7 +253,7 @@ def seal_incubation_judgment(
     return ArtifactEnvelope.seal(
         project=project,
         artifact_type="incubation_judgment",
-        version=1,
+        version=judgment.revision_number,
         payload=judgment.model_dump(mode="json"),
         account=account,
         parents=tuple(artifact.to_parent_ref() for artifact in parent_artifacts),
