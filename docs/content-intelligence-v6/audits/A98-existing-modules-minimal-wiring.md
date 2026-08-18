@@ -92,8 +92,10 @@ sources:
 
 ### 2. MechanismUseRecord
 
-金枪大叔、薛辉和文案三把刀的方法卡不需要各自成为 Agent。Lead 在内容根和具体选题已经明确后，按需读取
-一至数张相关卡，并保存一条采用记录：
+金枪大叔、薛辉、亲爱的安先生和文案三把刀的方法卡不需要各自成为 Agent。亲爱的安先生目前不是独立
+Skill 目录，而是 `distill-screen-methods` 中已经蒸馏的方法组，负责概念构建、并置/演绎/转换、时间语法、
+观众参与和把“网感”还原为具体的人。Lead 在内容根和具体选题已经明确后，按需读取一至数张相关卡，并
+保存一条采用记录：
 
 ```text
 method_id + version
@@ -169,7 +171,7 @@ IncubationJudgment version
 ## 最小实施顺序
 
 1. 测试先行实现 `AccountPatternEvidence`，把第五版仓颉式五层语义薄迁入现有项目证据，不迁整套 E15。
-2. 测试先行实现 `MechanismUseRecord`，再把三位创作者图谱拆成小方法卡并延迟加载。
+2. 测试先行实现 `MechanismUseRecord`，再把四位创作者图谱拆成小方法卡并延迟加载。
 3. 实现 `RootFeedbackRecord` 的追加保存和最小用户选择入口，先跑无需发布的学习闭环。
 4. 使用抖音真实回执与 MediaKit 视频样本验收账号证据桥。
 5. 发布线恢复后再实现 `LearningClaim`；HLLM 在真实行为和群体聚合通过后插入同一证据入口。

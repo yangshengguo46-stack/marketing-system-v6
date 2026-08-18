@@ -1984,9 +1984,9 @@ A96 据此把下一步从“再次自动改提示词”改为自举数据闭环�
 
 2026-08-19 复核第五版 E15、第四版仓颉适配 Skill、个人 IP 创作者方法图谱，以及第六版抖音
 OpenAPI/MCP、MediaKit 和 HLLM 的真实状态。它们可以组成自进化系统，但不能作为多个拥有决策权的
-Skill 同时常驻 Lead：抖音与 MediaKit 是观察层，仓颉式适配是证据编译层，金枪大叔、薛辉小清新和
-文案三把刀是提出可测试创意机制的方法卡，HLLM 只在真实逐受众行为和多 actor 聚合验收后提供推断证据，
-Lead 仍是唯一营销判断者。
+Skill 同时常驻 Lead：抖音与 MediaKit 是观察层，仓颉式适配是证据编译层，金枪大叔、薛辉小清新、
+亲爱的安先生和文案三把刀是提出可测试创意机制的方法卡，HLLM 只在真实逐受众行为和多 actor 聚合验收
+后提供推断证据，Lead 仍是唯一营销判断者。
 
 自进化被限定为追加式、可复核和可回滚的数据闭环：`RootFeedbackRecord / AccountEvidencePack ->
 MechanismHypothesis -> PreflightPrediction -> PublicationReceipt / MetricSnapshot -> Retrospective /
@@ -2003,8 +2003,8 @@ MediaKit 广义感知与 HLLM 真实推理仍有未验收断点。详见
 本条表现形式和适配稿。
 
 最小缺口被压缩为三个薄连接件：`AccountPatternEvidence` 将抖音账号作品、MediaKit 时序观察与仓颉式
-五层分析接入现有证据中心；`MechanismUseRecord` 保存本轮按需采用的金枪大叔、薛辉或文案三把刀方法
-及其可观察预测；反馈入口分别保存用户纠错 `RootFeedbackRecord` 和后续真实运营
+五层分析接入现有证据中心；`MechanismUseRecord` 保存本轮按需采用的金枪大叔、薛辉、亲爱的安先生或
+文案三把刀方法及其可观察预测；反馈入口分别保存用户纠错 `RootFeedbackRecord` 和后续真实运营
 `LearningClaim`。MediaKit 仅在有视频时启动，HLLM 仅在有合格逐受众行为和真实推理回执时启动，缺少
 对标或平台账号均不阻断初步孵化。当前只完成接线审计，运行时未修改。详见
 `audits/A98-existing-modules-minimal-wiring.md`。
