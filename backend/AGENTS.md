@@ -200,12 +200,12 @@ ADR-018 through ADR-022 for full contracts and status.
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
-A84 content-root, A86 lexical, A88 compact lexical, and A90 split-attention recall are rejected,
-consumed experiments. Never rerun, tune, stack, import, or register them. A90 reached only 5/12 split
-contracts versus 8/12 single; manual semantic recall fell to 3/16 versus 9/16 while tokens rose 1.71x.
-Its workers collapsed roots into map nodes and added unsupported facts. Do not add dictionaries,
-Douyin, maps, positioning, or more agents to A90. Dictionaries remain optional lookup evidence. A new
-successor needs new cases and a thinner same-level candidate contract with code-derived path endpoints.
+A84/A86/A88/A90 are rejected, consumed experiments; never rerun, tune, stack, import, or register them.
+A90 split recall fell to 3/16 versus 9/16 single, collapsed roots into map nodes, and added unsupported
+facts. A92 is a preregistered, isolated successor on new cases: one reader, zero-to-five final-root-
+eligible candidates, no paths, facts, maps, ranks, or selection. Until its unique run and ADR, do not
+register it or add dictionaries, Douyin, positioning, or more agents. Dictionaries remain optional
+lookup evidence only.
 
 ## Development Workflow
 

@@ -1,0 +1,144 @@
+{
+  "dataset_id": "thin-single-agent-content-root-held-out-v1",
+  "status": "frozen_before_implementation_and_live_run",
+  "annotation_status": "preregistered_analyst_provisional",
+  "cases": [
+    {
+      "case_id": "baby-food-maker",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖婴儿辅食机的",
+      "commercial_object": "婴儿辅食机",
+      "required_concept_groups": [
+        ["婴幼儿辅食与喂养", "婴儿辅食", "辅食喂养", "婴幼儿喂养"]
+      ],
+      "forbidden_label_fragments": ["辅食机销售", "小家电经营"],
+      "review_rationale": "机器服务的是婴幼儿辅食与喂养实践，候选不能停在小家电经营。"
+    },
+    {
+      "case_id": "business-suit-tailoring",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做商务西装定制的",
+      "commercial_object": "商务西装定制",
+      "required_concept_groups": [
+        ["商务着装", "商务穿搭", "职业着装", "职场着装"],
+        ["职场形象", "职业形象", "商务形象"]
+      ],
+      "forbidden_label_fragments": ["西装定制获客", "面料供应链"],
+      "review_rationale": "候选应覆盖商务着装及其服务的职场形象，而不是定制门店经营。"
+    },
+    {
+      "case_id": "senior-hearing-aid",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖老年助听器的",
+      "commercial_object": "老年助听器",
+      "required_concept_groups": [
+        ["听力健康", "老年听力健康", "听觉健康"],
+        ["老年沟通", "老年人沟通", "老年社交沟通", "家庭沟通"]
+      ],
+      "forbidden_label_fragments": ["助听器销售", "医疗器械经营"],
+      "review_rationale": "助听器同时连接听力健康和老人重新参与沟通的生活世界。"
+    },
+    {
+      "case_id": "home-organizer",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做家庭收纳师的",
+      "commercial_object": "家庭收纳师服务",
+      "required_concept_groups": [
+        ["居家整理", "家庭整理", "家庭收纳", "家居收纳"]
+      ],
+      "forbidden_label_fragments": ["收纳师获客", "家政经营"],
+      "review_rationale": "职业服务的完整活动世界是家庭空间中的整理与收纳。"
+    },
+    {
+      "case_id": "rv-rental",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做房车租赁的",
+      "commercial_object": "房车租赁",
+      "required_concept_groups": [
+        ["房车旅行", "房车旅居", "房车生活"],
+        ["自驾旅行", "自驾游", "公路旅行"]
+      ],
+      "forbidden_label_fragments": ["车辆租赁经营", "租车获客"],
+      "review_rationale": "租赁是手段，候选应覆盖房车旅居和更广的自驾旅行世界。"
+    },
+    {
+      "case_id": "wedding-host",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做婚礼主持的",
+      "commercial_object": "婚礼主持",
+      "required_concept_groups": [
+        ["婚礼仪式", "婚礼", "婚礼礼仪"]
+      ],
+      "forbidden_label_fragments": ["主持人获客", "婚庆公司经营"],
+      "review_rationale": "主持工作嵌入婚礼仪式，具体某场婚礼只能是后续地图节点。"
+    },
+    {
+      "case_id": "piano-coaching",
+      "cohort": "world_transfer",
+      "subject_expression": "我是做钢琴陪练的",
+      "commercial_object": "钢琴陪练",
+      "required_concept_groups": [
+        ["钢琴学习", "钢琴教育", "钢琴练习"]
+      ],
+      "forbidden_label_fragments": ["陪练招生", "琴行经营"],
+      "review_rationale": "陪练服务的是长期钢琴学习，而不是一次练琴或招生流程。"
+    },
+    {
+      "case_id": "pour-over-coffee-tools",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖手冲咖啡器具的",
+      "commercial_object": "手冲咖啡器具",
+      "required_concept_groups": [
+        ["手冲咖啡", "手冲"],
+        ["咖啡", "咖啡文化", "咖啡世界"]
+      ],
+      "forbidden_label_fragments": ["咖啡器具销售", "器具测评带货"],
+      "review_rationale": "器具连接手冲实践和更大的咖啡世界，两个概念必须由不同候选承担。"
+    },
+    {
+      "case_id": "children-balance-bike",
+      "cohort": "world_transfer",
+      "subject_expression": "我是卖儿童平衡车的",
+      "commercial_object": "儿童平衡车",
+      "required_concept_groups": [
+        ["儿童骑行", "幼儿骑行", "儿童运动"]
+      ],
+      "forbidden_label_fragments": ["童车销售", "母婴店经营"],
+      "review_rationale": "平衡车是儿童参与骑行与运动的工具，不是童车销售内容。"
+    },
+    {
+      "case_id": "buddha-jumps-over-wall-guard",
+      "cohort": "lexicalized_guard",
+      "subject_expression": "我是卖佛跳墙预制菜的",
+      "commercial_object": "佛跳墙预制菜",
+      "required_concept_groups": [
+        ["佛跳墙", "闽菜", "福建菜"]
+      ],
+      "forbidden_label_fragments": ["佛教", "寺庙", "僧侣", "宗教"],
+      "review_rationale": "佛跳墙是词汇化菜名，不能从字面跳到宗教世界。"
+    },
+    {
+      "case_id": "beggars-chicken-guard",
+      "cohort": "lexicalized_guard",
+      "subject_expression": "我是卖叫花鸡半成品的",
+      "commercial_object": "叫花鸡半成品",
+      "required_concept_groups": [
+        ["叫花鸡", "常熟菜", "江南菜", "苏菜"]
+      ],
+      "forbidden_label_fragments": ["乞丐", "流浪者", "讨饭", "贫困人群"],
+      "review_rationale": "叫花鸡是菜名，不能按叫花子的字面义扩张。"
+    },
+    {
+      "case_id": "fish-fragrant-pork-guard",
+      "cohort": "lexicalized_guard",
+      "subject_expression": "我是卖鱼香肉丝调料包的",
+      "commercial_object": "鱼香肉丝调料包",
+      "required_concept_groups": [
+        ["鱼香肉丝", "川菜", "鱼香味型"]
+      ],
+      "forbidden_label_fragments": ["鱼类", "海鲜", "养鱼", "捕鱼"],
+      "review_rationale": "鱼香是川菜味型，不能因字面上的鱼进入水产世界。"
+    }
+  ]
+}
+
