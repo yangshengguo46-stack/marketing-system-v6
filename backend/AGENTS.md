@@ -206,11 +206,10 @@ rerun, tune, or stack it; its four cases are consumed development data. Semantic
 inspectable candidate hints, never labels or gates. Successors need new cases and must separate recall
 from frozen-graph selection.
 
-`experiments/lexical_candidate_lab` is the A86 recall-only successor. It compares dictionary-only,
-one-call model, and model-plus-bounded-CC-CEDICT arms on ten hidden-label cases without ranking or
-selecting a root. Evaluator labels never enter model messages. Run it once only after a preregistered
-commit; then consume its cases. Never import or register it in production; even a pass permits only a
-new offline candidate-supplement experiment.
+`experiments/lexical_candidate_lab` is rejected A86 evidence. Dictionary substrings recalled 7/7 but
+split `马桶`; model source self-report broke 3 contracts, and real relation payloads exceeded the input
+budget in 8 cases. Its ten cases are consumed: never rerun, tune, import, or register it. A successor
+needs new cases, compact exact-sense evidence, deterministic provenance, and preflighted byte budgets.
 
 ## Development Workflow
 

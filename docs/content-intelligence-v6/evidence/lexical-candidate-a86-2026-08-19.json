@@ -1,0 +1,1992 @@
+{
+  "arms": {
+    "dictionary_only": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "ski-clothes",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "滑雪",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "ski-clothes",
+          "duration_seconds": 0.004,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "滑雪服",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "滑雪",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "滑雪"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "滑",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "滑"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "雪",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "雪"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "服",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "服"
+                ]
+              }
+            ],
+            "commercial_object": "滑雪服",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "d781221b39b9a8a90bd0238599fba9be0e5da2e46c687a9d0e1665e618bd3014",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖滑雪服的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "surfboard",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "冲浪",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "surfboard",
+          "duration_seconds": 0.003,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "冲浪板",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "冲浪",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "冲浪"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "冲",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "冲"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "浪",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "浪"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "板",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "板"
+                ]
+              }
+            ],
+            "commercial_object": "冲浪板",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "93837da2323c47a7bb42c4ecc1abeaea6fca1040ff73eb8cac7fe57cbe537c68",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做冲浪板的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "guzheng-strings",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "古筝",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "guzheng-strings",
+          "duration_seconds": 0.005,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "古筝琴弦",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "古筝",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "古筝"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "琴弦",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "琴弦"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "古",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "古"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "筝",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "筝"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "琴",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "琴"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "弦",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "弦"
+                ]
+              }
+            ],
+            "commercial_object": "古筝琴弦",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "447aa5ba7c4325d8d43f3ada3fcf547d872ada202ccea5f348e145f73d97c5ce",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖古筝琴弦的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "calligraphy-ink",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "书法",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "calligraphy-ink",
+          "duration_seconds": 0.007,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "书法墨汁",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "书法",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "书法"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "墨汁",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "墨汁"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "书",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "书"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "法",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "法"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "墨",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "墨"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "汁",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "汁"
+                ]
+              }
+            ],
+            "commercial_object": "书法墨汁",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "4fadbe945587f01b14f39e2160d8d2bb714f2690fb687d7e41ae7fb798bed5c7",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做书法墨汁的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "go-board",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "围棋",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "go-board",
+          "duration_seconds": 0.004,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "围棋棋盘",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "围棋",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "围棋"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "棋盘",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "棋盘"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "围",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "围"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "棋",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "棋"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "盘",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "盘"
+                ]
+              }
+            ],
+            "commercial_object": "围棋棋盘",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "05ec5e38f503f31985fcefbea96de4268b8333c103f259b47079a5b27af80465",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖围棋棋盘的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "photography-fill-light",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "摄影",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "photography-fill-light",
+          "duration_seconds": 0.013,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "摄影补光灯",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "补光灯",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "补光灯"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "摄影",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "摄影"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "摄",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "摄"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "影",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "影"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "补",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "补"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "光",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "光"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "灯",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "灯"
+                ]
+              }
+            ],
+            "commercial_object": "摄影补光灯",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "4dcca518c2739d3285c56a56fe5aaa86789798433c14d84620c18118eab935fc",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做摄影补光灯的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "camping-canopy",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "露营",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "camping-canopy",
+          "duration_seconds": 0.006,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "露营天幕",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "露营",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "露营"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "露",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "露"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "营",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "营"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "天",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "天"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "幕",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "幕"
+                ]
+              }
+            ],
+            "commercial_object": "露营天幕",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "6cd28f88b87e3e9eaf741676cd51d7c086e08cf6a829d3e743e2a44e3648d4d9",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖露营天幕的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "chocolate-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "巧克力",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "chocolate-loanword-guard",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "巧克力",
+                "relation_from_object": null,
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "巧克力",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "78c7ab3acf9b912ed99ef26a4c2c18db953a4cec4be4f9a68ce4295dceee452f",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做巧克力的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "sofa-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "沙发",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "sofa-loanword-guard",
+          "duration_seconds": 0.0,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "沙发",
+                "relation_from_object": null,
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "沙发",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "90a66d1df2b3df8dc02641f52eacdf6d8b50d6ca18eb22f29f542a3331ea3373",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做沙发的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "toilet-lexicalized-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": true,
+            "matched_accepted_alias": "马桶",
+            "matched_forbidden_labels": [
+              "马",
+              "桶"
+            ]
+          },
+          "case_id": "toilet-lexicalized-guard",
+          "duration_seconds": 0.001,
+          "model_calls": 0,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "马桶",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "马",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "马"
+                ]
+              },
+              {
+                "basis": "lexical_evidence",
+                "candidate_kind": "lexical_component_candidate",
+                "label": "桶",
+                "relation_from_object": "CC-CEDICT 收录为商业对象中的严格真子串",
+                "support_terms": [
+                  "桶"
+                ]
+              }
+            ],
+            "commercial_object": "马桶",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "0cbc91acdd3b8b832792057158e9929cc0724571910fee2d85d870c10ed32673",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做马桶的",
+            "unknowns": [
+              "词典裸候选未判断子串义项是否在整词中保持，也没有选择内容根。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "duration_seconds": 0.043,
+      "model_calls": 0,
+      "status": "completed",
+      "summary": {
+        "case_count": 10,
+        "contract_success": 10,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 1,
+        "transparent_candidate_recall": 7,
+        "transparent_case_count": 7
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    "model_only": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "ski-clothes",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "ski-clothes",
+          "duration_seconds": 13.427,
+          "error": "lexical evidence cannot be cited when the arm has no evidence",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 732,
+            "output_tokens": 472,
+            "total_tokens": 1204
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "surfboard",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "冲浪",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "surfboard",
+          "duration_seconds": 12.26,
+          "input_bytes": 161,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "product",
+                "label": "冲浪板",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "冲浪",
+                "relation_from_object": "冲浪板是冲浪运动的核心装备，使用者因冲浪板而进入冲浪活动世界",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "lifestyle",
+                "label": "冲浪文化",
+                "relation_from_object": "冲浪板是冲浪文化的物质载体，围绕冲浪板衍生出海滩生活方式、音乐、时尚等文化圈层",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity_domain",
+                "label": "板类运动",
+                "relation_from_object": "冲浪板属于板类运动器材，与滑板、滑雪板、桨板等共享板类运动的设计理念与用户群体",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "scene",
+                "label": "海洋与海滩生活",
+                "relation_from_object": "冲浪板的使用场景天然绑定海洋与海滩环境，延伸至海滨旅行、海岸生活方式",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "craft",
+                "label": "手工制板工艺",
+                "relation_from_object": "冲浪板的制作涉及泡沫芯、树脂、玻璃纤维等手工成型工艺，制板师是一个独立的手工艺世界",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "knowledge_domain",
+                "label": "板型设计与水动力学",
+                "relation_from_object": "冲浪板的性能取决于板型设计、鳍片配置、 rocker 曲线等水动力学参数，构成一个技术知识体系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "travel",
+                "label": "冲浪旅行与目的地",
+                "relation_from_object": "冲浪板使用者追随浪况前往全球各冲浪点，形成冲浪旅行与目的地探索的内容世界",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "冲浪板",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做冲浪板的",
+            "unknowns": [
+              "冲浪板品牌生态与具体市场格局未确认",
+              "冲浪板细分品类（如长板、短板、鱼板、桨板等）的完整谱系未展开",
+              "冲浪板维修与翻新作为独立内容世界的深度未确认"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 733,
+            "output_tokens": 560,
+            "total_tokens": 1293
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "guzheng-strings",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "古筝",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "guzheng-strings",
+          "duration_seconds": 11.586,
+          "input_bytes": 167,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "古筝琴弦",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "whole_instrument",
+                "label": "古筝",
+                "relation_from_object": "琴弦是古筝的组成部件，古筝是琴弦所属的完整乐器",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "musical_activity",
+                "label": "古筝弹奏",
+                "relation_from_object": "琴弦是古筝弹奏时直接振动发声的部件，弹奏是琴弦发挥功能的完整活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "maintenance_activity",
+                "label": "古筝调音",
+                "relation_from_object": "琴弦是调音操作的核心对象，调音是围绕琴弦张力的完整维护活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "maintenance_activity",
+                "label": "古筝换弦",
+                "relation_from_object": "换弦是琴弦作为耗材的直接消费场景，是围绕琴弦更换的完整活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "consumer_topic",
+                "label": "古筝选购与保养",
+                "relation_from_object": "琴弦品质是选购和保养古筝时的关键考量因素，琴弦连接到完整的乐器消费决策世界",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "instrument_category",
+                "label": "中国民族乐器弦类",
+                "relation_from_object": "古筝琴弦属于中国民族乐器弦类的一个实例，可延伸到古琴、琵琶、二胡等同类弦乐器的弦",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "cultural_content",
+                "label": "古筝音乐与曲目",
+                "relation_from_object": "琴弦振动产生的声音是古筝音乐的物质基础，连接到古筝曲目、流派与演奏文化",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "古筝琴弦",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖古筝琴弦的",
+            "unknowns": [
+              "古筝琴弦的材质细分（如尼龙钢丝弦、纯钢丝弦、丝弦）是否各自构成独立内容世界，需进一步确认",
+              "是否存在以古筝琴弦本身为核心的专业社群或内容生态，而非依附于古筝整体"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 736,
+            "output_tokens": 558,
+            "total_tokens": 1294
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "calligraphy-ink",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "calligraphy-ink",
+          "duration_seconds": 9.568,
+          "error": "lexical evidence cannot be cited when the arm has no evidence",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 734,
+            "output_tokens": 449,
+            "total_tokens": 1183
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "go-board",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "围棋",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "go-board",
+          "duration_seconds": 12.118,
+          "input_bytes": 167,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "围棋棋盘",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity_game",
+                "label": "围棋",
+                "relation_from_object": "棋盘是围棋活动的核心器具，围棋是棋盘所服务的完整博弈活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "object_class",
+                "label": "棋盘",
+                "relation_from_object": "棋盘是围棋棋盘的上位概念，泛指各类棋类对弈用的盘面器具",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity_culture",
+                "label": "棋",
+                "relation_from_object": "棋是围棋所属的更广泛棋类文化活动的统称",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "craft_activity",
+                "label": "木工手作",
+                "relation_from_object": "围棋棋盘多为木制品，其制作过程涉及木工技艺与手作文化",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "lifestyle_scene",
+                "label": "茶室空间",
+                "relation_from_object": "围棋棋盘常陈设于茶室、书房等东方生活美学空间，是空间美学的一部分",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "hobby_collection",
+                "label": "棋具收藏",
+                "relation_from_object": "围棋棋盘作为器具可被收藏，与棋子、棋罐等共同构成棋具收藏领域",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "education_activity",
+                "label": "围棋教学",
+                "relation_from_object": "围棋棋盘是围棋教学与启蒙活动中不可或缺的教具",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "围棋棋盘",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是卖围棋棋盘的",
+            "unknowns": [
+              "围棋棋盘的具体材质（榧木、新榧、竹、塑料等）是否构成独立内容世界，取决于产品线定位，此处未拆分",
+              "棋盘规格（标准19路、13路、9路等）是否构成独立内容世界，取决于目标用户群体"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 734,
+            "output_tokens": 522,
+            "total_tokens": 1256
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "photography-fill-light",
+            "cohort": "transparent",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "摄影",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "photography-fill-light",
+          "duration_seconds": 9.576,
+          "input_bytes": 173,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "product",
+                "label": "摄影补光灯",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "摄影",
+                "relation_from_object": "补光灯所服务的核心活动场景",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "technique",
+                "label": "补光",
+                "relation_from_object": "补光灯实现的核心功能与用光技法",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "人像摄影",
+                "relation_from_object": "补光灯最典型应用题材之一",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "短视频拍摄",
+                "relation_from_object": "补光灯的高频使用场景",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "直播",
+                "relation_from_object": "补光灯的常见使用场景",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "technique",
+                "label": "布光",
+                "relation_from_object": "补光灯参与的整体灯光布置方法",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "place",
+                "label": "影棚",
+                "relation_from_object": "补光灯使用的典型空间环境",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "摄影补光灯",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做摄影补光灯的",
+            "unknowns": [
+              "无法确认具体产品形态（环形灯/平板灯/棒灯等），可能影响细分内容世界",
+              "无法确认目标用户是专业摄影师还是大众创作者，内容方向可能不同"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 734,
+            "output_tokens": 410,
+            "total_tokens": 1144
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "camping-canopy",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "camping-canopy",
+          "duration_seconds": 14.037,
+          "error": "lexical evidence cannot be cited when the arm has no evidence",
+          "error_type": "ValueError",
+          "model_calls": 1,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 734,
+            "output_tokens": 530,
+            "total_tokens": 1264
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "chocolate-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "巧克力",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "chocolate-loanword-guard",
+          "duration_seconds": 8.948,
+          "input_bytes": 161,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "巧克力",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "raw_material",
+                "label": "可可豆",
+                "relation_from_object": "巧克力的核心原料",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "可可种植",
+                "relation_from_object": "巧克力原料的农业源头环节",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "activity",
+                "label": "巧克力制作工艺",
+                "relation_from_object": "从可可豆到成品巧克力的加工过程",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "product_category",
+                "label": "手工巧克力",
+                "relation_from_object": "巧克力的手工制作细分品类",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "domain",
+                "label": "甜品",
+                "relation_from_object": "巧克力所属的更广泛食品类别",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "use_scenario",
+                "label": "情人节礼物",
+                "relation_from_object": "巧克力作为礼物的典型消费场景",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "ingredient",
+                "label": "可可",
+                "relation_from_object": "巧克力中决定风味的核心成分",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "巧克力",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做巧克力的",
+            "unknowns": [
+              "输入未附带 lexical_evidence 字段，无法基于词形证据拆解候选",
+              "巧克力是否为音译借词（chocolate）存在争议，若为借词则不宜机械拆解为'巧'+'克'+'力'"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 731,
+            "output_tokens": 422,
+            "total_tokens": 1153
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "sofa-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "沙发",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "sofa-loanword-guard",
+          "duration_seconds": 12.365,
+          "input_bytes": 155,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "沙发",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "客厅",
+                "relation_from_object": "沙发是客厅的核心家具，沙发所在的空间即为客厅",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家居搭配",
+                "relation_from_object": "沙发需要与茶几、电视柜、地毯、窗帘等软装搭配使用",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "坐姿与人体工学",
+                "relation_from_object": "沙发的核心功能是支撑坐姿与躺姿，直接关联人体工学与舒适度",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "面料与材质",
+                "relation_from_object": "沙发表层材料（真皮、布艺、科技布等）是沙发选购的核心维度",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "小户型空间利用",
+                "relation_from_object": "沙发尺寸与户型大小直接相关，小户型沙发选择是高频内容场景",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家居生活方式",
+                "relation_from_object": "沙发承载居家休闲、待客、观影等生活场景，是生活方式的载体",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家具制造工艺",
+                "relation_from_object": "做沙发涉及木框架、海绵填充、缝制包覆等制造工艺环节",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "沙发",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做沙发的",
+            "unknowns": [
+              "沙发是否有特定品牌联名或设计师系列等商业合作背景",
+              "做沙发的主体是工厂、手工作坊还是品牌方，具体经营模式未知"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 730,
+            "output_tokens": 481,
+            "total_tokens": 1211
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "toilet-lexicalized-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "马桶",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "toilet-lexicalized-guard",
+          "duration_seconds": 14.517,
+          "input_bytes": 155,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "马桶",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "卫生间",
+                "relation_from_object": "马桶是卫生间中的核心洁具，二者为整体空间与核心构件的关系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "卫浴",
+                "relation_from_object": "马桶属于卫浴品类，二者为品类与子类的关系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "厕所",
+                "relation_from_object": "马桶是厕所中的核心设施，二者为场所与核心设施的关系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "管道疏通",
+                "relation_from_object": "马桶堵塞后常需管道疏通，二者为使用场景与后续维护服务的关系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "水垢清洁",
+                "relation_from_object": "马桶日常清洁的核心痛点之一是水垢去除，二者为对象与典型维护场景的关系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "装修",
+                "relation_from_object": "马桶是装修采购清单中的标准项，二者为采购对象与整体装修活动的关系",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "智能家居",
+                "relation_from_object": "智能马桶是智能家居的重要单品，二者为智能单品与智能生态的关系",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "马桶",
+            "lexical_evidence_source": null,
+            "lexical_evidence_used": false,
+            "lexical_payload_sha256": null,
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做马桶的",
+            "unknowns": [
+              "输入未提供 lexical_evidence 字段，无法判断是否存在可拆解的复合词成分或借词线索",
+              "无法确认商业对象具体指传统陶瓷马桶还是智能马桶，二者内容世界差异较大"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 730,
+            "output_tokens": 477,
+            "total_tokens": 1207
+          }
+        }
+      ],
+      "duration_seconds": 118.402,
+      "model_calls": 10,
+      "status": "completed",
+      "summary": {
+        "case_count": 10,
+        "contract_success": 7,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 0,
+        "transparent_candidate_recall": 4,
+        "transparent_case_count": 7
+      },
+      "usage": {
+        "input_tokens": 7328,
+        "output_tokens": 4881,
+        "total_tokens": 12209
+      }
+    },
+    "model_with_cedict": {
+      "cases": [
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "ski-clothes",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "ski-clothes",
+          "duration_seconds": 0.005,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "surfboard",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "surfboard",
+          "duration_seconds": 0.004,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "guzheng-strings",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "guzheng-strings",
+          "duration_seconds": 0.005,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "calligraphy-ink",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "calligraphy-ink",
+          "duration_seconds": 0.007,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "go-board",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "go-board",
+          "duration_seconds": 0.004,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "photography-fill-light",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "photography-fill-light",
+          "duration_seconds": 0.015,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "camping-canopy",
+            "cohort": "transparent",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "camping-canopy",
+          "duration_seconds": 0.007,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "chocolate-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "巧克力",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "chocolate-loanword-guard",
+          "duration_seconds": 13.907,
+          "input_bytes": 1211,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object_self",
+                "label": "巧克力",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "raw_material",
+                "label": "可可豆",
+                "relation_from_object": "巧克力的核心原料",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "agricultural_activity",
+                "label": "可可种植",
+                "relation_from_object": "巧克力原料的种植环节",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "craft_process",
+                "label": "巧克力制作工艺",
+                "relation_from_object": "从可可豆到成品巧克力的加工过程",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "product_category",
+                "label": "手工巧克力",
+                "relation_from_object": "巧克力按制作方式的细分品类",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "consumer_activity",
+                "label": "巧克力品鉴",
+                "relation_from_object": "围绕巧克力成品的品尝与评价活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "geographic_context",
+                "label": "可可产地",
+                "relation_from_object": "巧克力原料的主要地理来源区域",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "culinary_domain",
+                "label": "甜点与烘焙",
+                "relation_from_object": "巧克力作为食材所关联的更广泛烹饪领域",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "巧克力",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "78c7ab3acf9b912ed99ef26a4c2c18db953a4cec4be4f9a68ce4295dceee452f",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做巧克力的",
+            "unknowns": [
+              "lexical_evidence 标注巧克力为 loanword_or_transliteration，整词为音译借词，无可靠构词成分可拆分，故不拆解子串候选。",
+              "输入未提供具体经营形态（工厂、工作室、品牌等），无法确定更细粒度的商业语境。"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1047,
+            "output_tokens": 451,
+            "total_tokens": 1498
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": true,
+            "case_id": "sofa-loanword-guard",
+            "cohort": "guard",
+            "contract_success": true,
+            "forbidden_hit": false,
+            "matched_accepted_alias": "沙发",
+            "matched_forbidden_labels": []
+          },
+          "case_id": "sofa-loanword-guard",
+          "duration_seconds": 13.973,
+          "input_bytes": 1249,
+          "model_calls": 1,
+          "record": {
+            "candidates": [
+              {
+                "basis": "literal_expression",
+                "candidate_kind": "commercial_object",
+                "label": "沙发",
+                "relation_from_object": null,
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "客厅布置与软装搭配",
+                "relation_from_object": "沙发是客厅软装的核心家具，围绕它展开空间规划、色彩搭配与风格营造",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家具制造工艺与生产流程",
+                "relation_from_object": "沙发作为家具产品，其木工框架、海绵填充、面料裁剪与缝制构成完整生产活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家具材料与面料选择",
+                "relation_from_object": "沙发的品质直接取决于木材、海绵、弹簧、皮革或布艺等材料的选用",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家居空间设计与室内装修",
+                "relation_from_object": "沙发是室内空间设计的重要元素，与整体装修风格、动线规划密切相关",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家具选购指南与避坑攻略",
+                "relation_from_object": "消费者选购沙发时关注尺寸、材质、舒适度、价格等，形成完整的消费决策内容",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "家具行业与工厂经营",
+                "relation_from_object": "做沙发意味着经营家具工厂或作坊，涉及供应链、成本控制、渠道销售等经营活动",
+                "support_terms": []
+              },
+              {
+                "basis": "commonsense_hypothesis",
+                "candidate_kind": "content_world",
+                "label": "论坛抢沙发文化",
+                "relation_from_object": "沙发在网络语境中指论坛帖子的首条回复，形成独立的网络文化现象",
+                "support_terms": []
+              }
+            ],
+            "commercial_object": "沙发",
+            "lexical_evidence_source": {
+              "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+              "license": "CC BY-SA 4.0",
+              "name": "CC-CEDICT",
+              "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+              "version": "1.0+2026-08-15T06:33:03Z"
+            },
+            "lexical_evidence_used": true,
+            "lexical_payload_sha256": "90a66d1df2b3df8dc02641f52eacdf6d8b50d6ca18eb22f29f542a3331ea3373",
+            "schema_version": "lexical-candidate-recall-v1",
+            "selected_candidate_id": null,
+            "subject_expression": "我是做沙发的",
+            "unknowns": [
+              "lexical_evidence 标注沙发为 loanword_or_transliteration，整词为音译借词，无法从字形拆出独立成分，故不拆词",
+              "subject_expression「我是做沙发的」暗示主体是沙发制造者/经营者，但具体经营模式（工厂/作坊/品牌/电商）未知",
+              "沙发具体品类（如功能沙发、布艺沙发、真皮沙发、定制沙发等）未在输入中指定"
+            ]
+          },
+          "status": "succeeded",
+          "usage": {
+            "input_tokens": 1062,
+            "output_tokens": 579,
+            "total_tokens": 1641
+          }
+        },
+        {
+          "automatic_score": {
+            "candidate_recall": false,
+            "case_id": "toilet-lexicalized-guard",
+            "cohort": "guard",
+            "contract_success": false,
+            "forbidden_hit": false,
+            "matched_accepted_alias": null,
+            "matched_forbidden_labels": []
+          },
+          "case_id": "toilet-lexicalized-guard",
+          "duration_seconds": 0.001,
+          "error": "bounded lexical candidate input exceeded its byte budget",
+          "error_type": "ValueError",
+          "model_calls": 0,
+          "status": "failed",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0
+          }
+        }
+      ],
+      "duration_seconds": 27.928,
+      "model_calls": 2,
+      "status": "completed",
+      "summary": {
+        "case_count": 10,
+        "contract_success": 2,
+        "guard_case_count": 3,
+        "guard_forbidden_hit": 0,
+        "transparent_candidate_recall": 0,
+        "transparent_case_count": 7
+      },
+      "usage": {
+        "input_tokens": 2109,
+        "output_tokens": 1030,
+        "total_tokens": 3139
+      }
+    }
+  },
+  "completed_at": "2026-08-18T18:04:42.749186+00:00",
+  "dataset_id": "lexical-candidate-held-out-v1",
+  "dataset_status": "frozen_before_live_run",
+  "experiment_id": "A86-lexical-candidate-recall-v1",
+  "git_commit": "8f32e848fcdeb915c50cdc11dbaa4672d2ba7274",
+  "lexical_source": {
+    "content_sha256": "ac0696d1fc870770b7368f6088c6d08fed1e443a7526e08dc31426e6e7d594bb",
+    "license": "CC BY-SA 4.0",
+    "name": "CC-CEDICT",
+    "source_uri": "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+    "version": "1.0+2026-08-15T06:33:03Z"
+  },
+  "manual_review_status": "pending",
+  "model_name": "glm-5-2-260617",
+  "network_evidence_enabled": false,
+  "promotion_status": "offline_only",
+  "schema_version": "lexical-candidate-lab-receipt-v1",
+  "started_at": "2026-08-18T18:02:14.213906+00:00",
+  "temperature": 0,
+  "thinking_enabled": false
+}
