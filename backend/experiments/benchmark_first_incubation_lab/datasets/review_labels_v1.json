@@ -1,0 +1,47 @@
+{
+  "dataset_id": "benchmark-first-incubation-review-labels-v1",
+  "case_labels": [
+    {
+      "case_id": "pet-funeral-service",
+      "review_focus": "应看到宠物陪伴、失去、告别或纪念等可能世界，同时保持与真实服务的双向连接。",
+      "fatal_drift_fragments": []
+    },
+    {
+      "case_id": "old-photo-restoration",
+      "review_focus": "应兼顾修复技艺与照片承载的家庭记忆、时代和人物，不只展示软件前后对比。",
+      "fatal_drift_fragments": []
+    },
+    {
+      "case_id": "children-photography",
+      "review_focus": "应连接成长、家庭记忆与儿童真实状态，避免只剩摄影棚促销和固定摆拍模板。",
+      "fatal_drift_fragments": []
+    },
+    {
+      "case_id": "corporate-team-building",
+      "review_focus": "应区分卖活动套餐与观察团队协作、职场关系和组织问题，也要防止空泛管理鸡汤。",
+      "fatal_drift_fragments": []
+    },
+    {
+      "case_id": "industrial-anticorrosion-coating",
+      "review_focus": "允许材料、工程耐久与基础设施世界，也允许判断为条件成立或弱 IP；不得强编消费情绪。",
+      "fatal_drift_fragments": []
+    },
+    {
+      "case_id": "outdoor-power-station",
+      "review_focus": "应在产品参数之外连接真实户外活动、能源安全或离网生活，并保留安全与能力边界。",
+      "fatal_drift_fragments": []
+    },
+    {
+      "case_id": "sliced-beef-and-offal-seasoning",
+      "review_focus": "夫妻肺片是川菜菜名，内容可进入菜品、味型、川菜和饮食文化，不能机械进入婚姻或肺部健康。",
+      "fatal_drift_fragments": [
+        "夫妻关系",
+        "婚姻",
+        "两性",
+        "肺部健康",
+        "呼吸系统",
+        "肺病"
+      ]
+    }
+  ]
+}
