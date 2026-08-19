@@ -88,6 +88,7 @@ from deerflow.incubation.format_runtime import (
     generate_format_decision,
 )
 from deerflow.incubation.judgment import (
+    AccountBusinessIntent,
     AccountPresentationPlan,
     AccountRouteOption,
     AccountStrategyStatus,
@@ -232,6 +233,7 @@ __all__ = [
     "ApprovalGrantRejectedError",
     "ApprovalKind",
     "AssemblyStep",
+    "AccountBusinessIntent",
     "AccountPresentationPlan",
     "AccountRouteOption",
     "AccountRouteOptionDraft",

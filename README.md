@@ -813,6 +813,12 @@ but recommendation remains `proposed`; it is not user consent. Only
 `confirm_account_strategy`, called after the user chooses an offered option, creates a
 `confirmed` successor and projects that exact route into positioning, audience, persona,
 account-level presentation, and monetization. The user may choose a non-recommended route.
+A route also carries a separate business-intent facet: the user's role in the declared business,
+the outcome the account should produce after reach, the people whose behavior should change,
+their need, the desired next action, and the stated market scope. This is distinct from the
+content audience and from presentation form. Routes cannot be repackaged as format choices alone,
+and monetization cannot invent a course, SaaS, consulting offer, or other undeclared business.
+Legacy judgments may omit this facet; every newly generated proposal must provide it.
 A `BenchmarkSnapshot` is read-only observation, never positioning authority, and missing
 formal benchmark evidence lowers confidence rather than blocking a cold start. The topic path
 may read a confirmed strategy only when it binds the exact candidate-map version, and it never

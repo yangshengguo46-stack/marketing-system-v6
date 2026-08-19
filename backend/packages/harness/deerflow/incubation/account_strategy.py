@@ -134,6 +134,7 @@ async def confirm_account_strategy(
             "decision_status": "confirmed",
             "selected_option_id": selected.option_id,
             "positioning": selected.positioning,
+            "business_intent": selected.business_intent,
             "audience": selected.audience,
             "persona": selected.persona,
             "presentation": selected.presentation,

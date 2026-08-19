@@ -1,0 +1,89 @@
+{
+  "audit_id": "A111",
+  "date": "2026-08-20",
+  "status": "reviewed_with_live_e2e_and_residuals",
+  "case": "tiktok_live_guild_mena_cca_account_start",
+  "input": "我是做TikTok直播公会的，主要地区为MENA和CCA，我该怎么起号？",
+  "official_context": {
+    "creator_network_role_sources": [
+      "https://live-backstage.tiktok.com/?enterFrom=agency_official&lang=it-IT",
+      "https://newsroom.tiktok.com/tiktok-live-stpr?lang=ja-JP"
+    ],
+    "cca_source": "https://newsroom.tiktok.com/tiktok-live-fest-2025-celebrates-the-power-of-community-and-authenticity-sg?lang=en-SG",
+    "runtime_country_list_verified": false
+  },
+  "baseline": {
+    "thread_id": "69325468-e7f3-4ad6-9254-9bd33ab0fdc9",
+    "run_id": "98b81ee3-fd54-4c9a-bc07-6fb9841ac503",
+    "model_calls": 7,
+    "total_tokens": 26118,
+    "result": "format_routes_and_business_goal_miss"
+  },
+  "runs": [
+    {
+      "thread_id": "194a9de0-4353-4169-923f-357f48c93a7d",
+      "run_id": "d6a03300-d55d-4d79-a007-fae76cfd1825",
+      "model_calls": 4,
+      "input_tokens": 12715,
+      "output_tokens": 2142,
+      "total_tokens": 14857,
+      "semantic_reading": {
+        "source_object": "TikTok直播公会",
+        "offering_role": "operating_container",
+        "served_objects": [
+          "主播"
+        ],
+        "served_activities": [
+          "直播",
+          "主播招募与管理",
+          "直播运营"
+        ],
+        "region_modifiers_preserved": [
+          "MENA",
+          "CCA"
+        ]
+      },
+      "result": "upstream_contract_failure_after_provider_xml_repair_markup"
+    },
+    {
+      "thread_id": "3b554fc2-91d6-4148-9c7a-97eff9833044",
+      "run_id": "a1f9bd62-41c2-420d-b963-47085d9ec61e",
+      "model": "glm-5-2-260617",
+      "model_calls": 8,
+      "input_tokens": 20388,
+      "output_tokens": 11686,
+      "total_tokens": 32074,
+      "subagent_tokens": 0,
+      "result": "pass_with_residual_resource_claims_and_upstream_cost"
+    }
+  ],
+  "acceptance": {
+    "business_role_understood": true,
+    "account_objective_understood": true,
+    "business_target_separated_from_content_audience": true,
+    "target_need_present": true,
+    "desired_action_present": true,
+    "market_scope_affects_strategy": true,
+    "routes_not_format_only": true,
+    "monetization_anchored_to_declared_business": true,
+    "resource_fact_boundary_passed": false,
+    "content_root_precision": "partial",
+    "cost_boundary_passed": false
+  },
+  "provider_compatibility": {
+    "accepted_shape": "one exact-schema function_calls XML wrapper",
+    "bounded": true,
+    "pydantic_validation_retained": true,
+    "multiple_or_wrong_named_calls_rejected": true
+  },
+  "verification": {
+    "focused_tests_passed": 376,
+    "focused_test_warnings": 1,
+    "backend_non_live_passed": 12257,
+    "backend_non_live_skipped": 76,
+    "backend_non_live_warnings": 17,
+    "backend_non_live_elapsed_seconds": 510.73,
+    "agent_guidance_errors": 0,
+    "agent_guidance_warnings": 0
+  }
+}

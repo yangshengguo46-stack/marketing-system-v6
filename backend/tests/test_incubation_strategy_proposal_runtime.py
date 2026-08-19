@@ -5,8 +5,10 @@ from datetime import UTC, datetime
 import pytest
 
 from deerflow.incubation import ArtifactEnvelope, ProjectRef
-from deerflow.incubation.judgment import IncubationBrief, seal_incubation_brief
+from deerflow.incubation.judgment import BriefFact, IncubationBrief, seal_incubation_brief
 from deerflow.incubation.judgment_runtime import (
+    INCUBATION_JUDGMENT_SYSTEM_PROMPT,
+    AccountRouteOptionDraft,
     AccountStrategyProposalDraft,
     IncubationJudgmentModelError,
     generate_incubation_judgment,
@@ -16,11 +18,35 @@ NOW = datetime(2026, 8, 18, 11, 0, tzinfo=UTC)
 PROJECT = ProjectRef(owner_user_id="user-1", project_id="project-1")
 
 
+def test_account_route_contract_separates_business_intent_from_content_audience_and_format() -> None:
+    required_business_fields = {
+        "business_role",
+        "account_objective",
+        "target_people",
+        "target_need",
+        "desired_action",
+        "market_scope",
+    }
+
+    assert required_business_fields.issubset(AccountRouteOptionDraft.model_fields)
+    assert "曝光只是中间手段" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "内容受众不一定等于业务要影响的人" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "不能只在表现形式上不同" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "不得凭空新增课程、SaaS、咨询、付费社群" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+
+
 def _brief() -> ArtifactEnvelope:
     return seal_incubation_brief(
         project=PROJECT,
         brief=IncubationBrief(
             subject_expression="我是做宠物殡葬的，我要怎么起号？",
+            business_facts=(
+                BriefFact(
+                    statement="宠物殡葬",
+                    provenance="user_stated",
+                    source_quote="宠物殡葬",
+                ),
+            ),
             unknowns=("用户是否愿意出镜仍未知。",),
         ),
         created_at=NOW,
@@ -53,6 +79,12 @@ def _route(option_id: str, name: str, form: str, *, basis_ids: tuple[str, ...]) 
         "name": name,
         "content_subject": f"{name}中的陪伴、告别与纪念",
         "business_connection": "用户的宠物殡葬从业经历提供观察位置，服务只在需要时承接。",
+        "business_role": "为宠物主人提供告别与纪念服务的从业者",
+        "account_objective": f"通过{name}建立理解告别者处境的信任，并让有需要的人愿意进一步咨询",
+        "target_people": "正在面对宠物离世、需要告别支持的宠物主人",
+        "target_need": "被理解，并找到尊重情感且可信的告别方案",
+        "desired_action": "在需要告别帮助时主动咨询用户现有的宠物殡葬服务",
+        "market_scope": "用户未说明服务地区，首版保留为未知",
         "long_term_promise": "每次讲清一次具体告别里的陪伴与选择。",
         "audience_people": "正在养宠、经历失去或关心动物陪伴的人",
         "recurring_interest": "如何理解陪伴、告别和纪念",
@@ -68,6 +100,32 @@ def _route(option_id: str, name: str, form: str, *, basis_ids: tuple[str, ...]) 
         "resource_requirements": [f"持续生产{form}需要的素材"],
         "tradeoffs": [f"{form}的制作成本待确认"],
     }
+
+
+def test_account_routes_cannot_be_repackaged_as_format_choices() -> None:
+    basis_ids = ("brief-1", "map-1")
+    first = _route("route_a", "真人纪录", "真人纪录叙事", basis_ids=basis_ids)
+    second = _route("route_b", "无人素材", "无人素材旁白", basis_ids=basis_ids)
+    for field in (
+        "content_subject",
+        "business_role",
+        "account_objective",
+        "target_people",
+        "target_need",
+        "desired_action",
+        "market_scope",
+    ):
+        second[field] = first[field]
+
+    with pytest.raises(ValueError, match="cannot differ only by presentation form"):
+        AccountStrategyProposalDraft.model_validate(
+            {
+                "content_map_version_id": "map-companion-v1",
+                "route_options": [first, second],
+                "recommended_option_id": "route_a",
+                "unknowns": [],
+            }
+        )
 
 
 @pytest.mark.asyncio
@@ -104,8 +162,10 @@ async def test_runtime_uses_a_flat_proposal_draft_and_code_owns_confirmation_sta
     assert sealed.payload["selected_option_id"] is None
     assert sealed.payload["recommended_option_id"] == "route_a"
     assert sealed.payload["positioning"]["decision"] == "真人纪录中的陪伴、告别与纪念"
+    assert sealed.payload["business_intent"]["target_people"].startswith("正在面对宠物离世")
     assert sealed.payload["route_options"][0]["business_connection"].startswith("用户的宠物殡葬从业经历")
     assert sealed.payload["presentation"]["primary_forms"] == ["真人纪录叙事"]
+    assert sealed.payload["persona"]["trust_basis"] == []
     assert len(sealed.payload["route_options"]) == 2
 
 

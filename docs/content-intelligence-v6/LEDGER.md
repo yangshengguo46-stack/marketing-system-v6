@@ -2,13 +2,13 @@
 
 ## 当前状态
 
-- 台账日期：2026-08-19
+- 台账日期：2026-08-20
 - 第五版冻结提交：`3ee135f7`
 - 第五版归档分支：`codex/archive-v5-final`
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A108 layered experience memory reviewed; first append-only root feedback contract implemented`
+- 当前结论状态：`A111 account business intent live-E2E reviewed with residual resource and cost failures`
 
 ## A01 第五版与第六版边界
 
@@ -2172,3 +2172,23 @@ topic_brief -> message_plan -> draft_version`，随后返回一个紧凑的“�
 `audits/A110-delivery-stop-boundary-and-context-cost.md` 与
 `evidence/a110-delivery-stop-and-live-e2e-2026-08-20.json`。聚焦跨模块回归 `248 passed`；最终后端非 live
 全量回归 `12252 passed, 76 skipped, 17 warnings in 445.89s`，Agent 指导文件预算零警告。
+
+## A111 账号业务意图与 TikTok LIVE 公会真实端到端
+
+账号策略此前把“更多曝光”当作默认目标，又容易把同一定位分别包装成口播、无人素材和 AI 情景剧。本轮
+测试先行新增独立 `AccountBusinessIntent`，让每条新路线同时回答业务角色、账号业务任务、需要影响的人、
+对方需求、希望促成的行为和市场范围。业务对象与内容受众分别展示；路线若只有表现形式不同则拒绝；
+用户只声明业务身份时，不再自动把经验和素材写入人设 `trust_basis`。旧台账中的该切面保持可空，新提案
+必须填写，确认路线会把它一并封存。
+
+TikTok LIVE 公会 MENA/CCA 真实端到端先暴露了 GLM 把结构化修复写成 XML 工具调用的问题。兼容层现在
+只接受一个、工具名与目标 Schema 完全一致、参数不重复且总字节有上限的 `<function_calls>`，之后仍走
+Pydantic 校验。修复后运行使用 8 次调用、32,074 Token，已经把公会识别为招募和运营直播创作者的组织，
+把潜在主播、主播选择公会时的需求、主动咨询或入会动作及 MENA/CCA 区域差异写入路线；三条候选分别
+围绕行业机制、公会经营透明度和跨区域比较，不再只是三种拍法。
+
+本轮只能记为带残留通过：自由叙述仍把公会身份推断成“一手经验、实际案例和天然跨区域视角”，上游
+“艺人经纪与组织管理”内容根偏宽且再次使用“博弈”，成本也未通过。详见
+`audits/A111-account-business-intent-and-live-guild-e2e.md` 与
+`evidence/a111-account-business-intent-live-e2e-2026-08-20.json`。聚焦回归 `376 passed`；最终后端非 live
+全量回归 `12257 passed, 76 skipped, 17 warnings in 510.73s`，Agent 指导文件预算零警告。

@@ -107,6 +107,22 @@ class AccountPresentationPlan(JudgmentBasis):
     constraints: tuple[NonEmptyStr, ...] = ()
 
 
+class AccountBusinessIntent(JudgmentBasis):
+    """The business outcome an account route is meant to produce.
+
+    This stays separate from the content audience and presentation form: reach
+    is an intermediate signal, while this facet names whose behavior should
+    change and why.
+    """
+
+    business_role: NonEmptyStr = Field(max_length=2000)
+    account_objective: NonEmptyStr = Field(max_length=2000)
+    target_people: NonEmptyStr = Field(max_length=2000)
+    target_need: NonEmptyStr = Field(max_length=2000)
+    desired_action: NonEmptyStr = Field(max_length=2000)
+    market_scope: NonEmptyStr = Field(max_length=2000)
+
+
 class MonetizationHypothesis(JudgmentBasis):
     path: NonEmptyStr = Field(max_length=3000)
     trust_required: NonEmptyStr = Field(max_length=2000)
@@ -119,6 +135,7 @@ class AccountRouteOption(IncubationContract):
     option_id: NonEmptyStr = Field(max_length=80, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     name: NonEmptyStr = Field(max_length=200)
     positioning: PositioningDecision
+    business_intent: AccountBusinessIntent | None = None
     audience: AudienceHypothesis
     persona: PersonaDecision
     presentation: AccountPresentationPlan
@@ -131,6 +148,7 @@ class AccountRouteOption(IncubationContract):
     def basis_artifact_ids(self) -> frozenset[str]:
         facets: tuple[JudgmentBasis, ...] = (
             self.positioning,
+            *((self.business_intent,) if self.business_intent is not None else ()),
             self.audience,
             self.persona,
             self.presentation,
@@ -151,6 +169,7 @@ class IncubationJudgment(IncubationContract):
     recommended_option_id: NonEmptyStr | None = Field(default=None, max_length=80)
     selected_option_id: NonEmptyStr | None = Field(default=None, max_length=80)
     positioning: PositioningDecision | None = None
+    business_intent: AccountBusinessIntent | None = None
     audience: AudienceHypothesis | None = None
     persona: PersonaDecision | None = None
     presentation: AccountPresentationPlan | None = None
@@ -194,6 +213,7 @@ class IncubationJudgment(IncubationContract):
         facets: list[JudgmentBasis] = []
         for facet in (
             self.positioning,
+            self.business_intent,
             self.audience,
             self.persona,
             self.presentation,
@@ -319,6 +339,7 @@ def seal_incubation_judgment(
 
 
 __all__ = [
+    "AccountBusinessIntent",
     "AccountPresentationPlan",
     "AccountRouteOption",
     "AccountStrategyStatus",

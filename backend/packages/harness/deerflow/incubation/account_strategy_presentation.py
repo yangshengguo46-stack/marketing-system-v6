@@ -24,8 +24,30 @@ def _render_route_proposal(judgment: IncubationJudgment) -> str:
                 f"**给观众的长期承诺：** {route.positioning.audience_promise}",
                 "",
                 f"**与业务如何连接：** {route.business_connection}",
+            )
+        )
+        if route.business_intent is not None:
+            intent = route.business_intent
+            lines.extend(
+                (
+                    "",
+                    f"**业务角色：** {intent.business_role}",
+                    "",
+                    f"**账号要完成的业务任务：** {intent.account_objective}",
+                    "",
+                    f"**需要影响的人：** {intent.target_people}",
+                    "",
+                    f"**对方的需求：** {intent.target_need}",
+                    "",
+                    f"**希望促成的行为：** {intent.desired_action}",
+                    "",
+                    f"**目标市场：** {intent.market_scope}",
+                )
+            )
+        lines.extend(
+            (
                 "",
-                f"**受众假设：** {route.audience.people}",
+                f"**内容受众假设：** {route.audience.people}",
                 "",
                 f"**账号人设：** {route.persona.account_role}",
                 "",
@@ -52,6 +74,7 @@ def _render_route_proposal(judgment: IncubationJudgment) -> str:
             dict.fromkeys(
                 (
                     *route.positioning.unknowns,
+                    *((route.business_intent.unknowns) if route.business_intent is not None else ()),
                     *route.audience.unknowns,
                     *route.persona.unknowns,
                     *route.presentation.unknowns,
@@ -105,6 +128,33 @@ def render_account_strategy(judgment: IncubationJudgment) -> str:
         )
         if item.boundaries:
             lines.extend(("", "**边界：** " + "；".join(item.boundaries)))
+        if item.unknowns:
+            lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
+
+    if judgment.business_intent is not None:
+        item = judgment.business_intent
+        lines.extend(
+            (
+                "",
+                "## 账号的业务任务",
+                "",
+                f"**业务角色：** {item.business_role}",
+                "",
+                f"**账号要完成什么：** {item.account_objective}",
+                "",
+                f"**需要影响谁：** {item.target_people}",
+                "",
+                f"**对方需要什么：** {item.target_need}",
+                "",
+                f"**希望促成什么行为：** {item.desired_action}",
+                "",
+                f"**目标市场：** {item.market_scope}",
+                "",
+                f"**判断理由：** {item.rationale}",
+                "",
+                f"**置信度：** {confidence_labels[item.confidence]}",
+            )
+        )
         if item.unknowns:
             lines.extend(("", "**仍未知：** " + "；".join(item.unknowns)))
 

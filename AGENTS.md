@@ -183,10 +183,11 @@ These apply repo-wide; module guides own the module-specific detail.
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
 - **V6 content core** — ADR-020 owns semantic order; candidate maps are not account strategy.
-  Only user confirmation adopts a proposed route. Topic continuation rehydrates its exact source map.
-  Research budgets are ceilings and provider wrappers normalize only the exact target type. Normal
-  delivery stops at `BaseDraft`; later stages are explicit. Project subject is the only account-position
-  fact; resources or experience need artifact evidence. Competitor evidence is read-only.
+  Routes keep role, outcome, target/need/action/market, content audience, and
+  presentation distinct; reach is intermediate and format-only variants are invalid. Only user
+  confirmation adopts a route. Topic continuation rehydrates its source map. Research caps are ceilings;
+  wrappers accept only the target type. Normal delivery stops at `BaseDraft`; later stages are explicit.
+  Project subject proves no resources or experience. Competitor evidence is read-only.
   See `docs/content-intelligence-v6/` and `backend/AGENTS.md`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

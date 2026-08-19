@@ -13,6 +13,7 @@ from deerflow.incubation.account_strategy import (
 from deerflow.incubation.account_strategy_presentation import render_account_strategy
 from deerflow.incubation.brief_runtime import build_minimal_incubation_brief
 from deerflow.incubation.judgment import (
+    AccountBusinessIntent,
     AccountPresentationPlan,
     AccountRouteOption,
     AudienceHypothesis,
@@ -82,6 +83,19 @@ def _presentation(form: str, *, basis_ids: tuple[str, ...]) -> AccountPresentati
     )
 
 
+def _business_intent(label: str, *, basis_ids: tuple[str, ...]) -> AccountBusinessIntent:
+    return AccountBusinessIntent(
+        business_role="提供黄金礼品解决方案的从业者",
+        account_objective=f"通过{label}建立懂送礼与人情分寸的信任，并承接真实礼品需求",
+        target_people="正在为具体关系和场合选择礼物的人",
+        target_need="判断送什么、怎么送才合适且不失分寸",
+        desired_action="在出现礼品需求时主动咨询用户已有的黄金礼品业务",
+        market_scope="用户未说明经营地区，首版保留为未知",
+        rationale="业务任务与用户已声明的礼品业务直接相连。",
+        basis_artifact_ids=basis_ids,
+    )
+
+
 def _monetization(label: str, *, basis_ids: tuple[str, ...]) -> tuple[MonetizationHypothesis, ...]:
     return (
         MonetizationHypothesis(
@@ -104,6 +118,7 @@ def _route(
         option_id=option_id,
         name=label,
         positioning=_positioning(label, basis_ids=basis_ids),
+        business_intent=_business_intent(label, basis_ids=basis_ids),
         audience=_audience(label, basis_ids=basis_ids),
         persona=_persona(label, basis_ids=basis_ids),
         presentation=_presentation(form, basis_ids=basis_ids),
@@ -216,6 +231,9 @@ def test_account_strategy_proposal_renders_each_route_and_waits_for_the_user() -
     assert "**主要表现形式：** 真人出镜口述" in rendered
     assert "**主要表现形式：** AI情景剧" in rendered
     assert "**与业务如何连接：** 用户的礼品从业位置提供观察角度" in rendered
+    assert "**账号要完成的业务任务：** 通过真人故事建立懂送礼与人情分寸的信任" in rendered
+    assert "**需要影响的人：** 正在为具体关系和场合选择礼物的人" in rendered
+    assert "**内容受众假设：** 愿意看真人故事的人" in rendered
     assert "推荐只是建议，在你确认之前不会进入下一步" in rendered
 
 
@@ -237,6 +255,8 @@ async def test_user_can_confirm_a_non_recommended_route_without_a_platform_accou
     assert confirmed.judgment.selected_option_id == "route_b"
     assert confirmed.judgment.recommended_option_id == "route_a"
     assert confirmed.judgment.positioning.decision == "AI情景叙事账号"
+    assert confirmed.judgment.business_intent is not None
+    assert confirmed.judgment.business_intent.account_objective.startswith("通过AI情景叙事")
     assert confirmed.judgment.presentation.primary_forms == ("AI情景剧",)
     assert confirmed.judgment_artifact.account is None
     assert confirmed.judgment_artifact.version == 2

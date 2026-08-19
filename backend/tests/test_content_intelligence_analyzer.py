@@ -277,6 +277,61 @@ def test_structured_parser_rejects_multiple_tool_calls_instead_of_silently_using
         )
 
 
+def test_structured_parser_recovers_one_exact_schema_xml_function_call() -> None:
+    content = """<function_calls>
+<invoke name="SemanticFamilyExpansionDraft">
+<parameter name="components">[{"term":"会","component_of":"公会","role":"cultural_institution","relation_to_subject":"组织核心"}]</parameter>
+<parameter name="branches">[{"component":"会","expression":"会友","semantic_domain":"成员关系","continuity":"组织成员关系"}]</parameter>
+<parameter name="limitations">["仅为语义候选"]</parameter>
+</invoke>
+</function_calls>"""
+
+    parsed = _parse_structured_result(
+        {
+            "raw": AIMessage(content=content),
+            "parsed": None,
+            "parsing_error": ValueError("provider returned XML tool markup as message content"),
+        },
+        SemanticFamilyExpansionDraft,
+        container_fields={"components", "branches", "limitations"},
+    )
+
+    assert parsed.components[0].term == "会"
+    assert parsed.branches[0].expression == "会友"
+    assert parsed.limitations == ("仅为语义候选",)
+
+
+@pytest.mark.parametrize(
+    "content",
+    (
+        """<function_calls>
+<invoke name="WrongDraft">
+<parameter name="payload">{"components":[],"branches":[],"limitations":[]}</parameter>
+</invoke>
+</function_calls>""",
+        """<function_calls>
+<invoke name="SemanticFamilyExpansionDraft">
+<parameter name="payload">{"components":[],"branches":[],"limitations":[]}</parameter>
+</invoke>
+<invoke name="SemanticFamilyExpansionDraft">
+<parameter name="payload">{"components":[],"branches":[],"limitations":[]}</parameter>
+</invoke>
+</function_calls>""",
+    ),
+)
+def test_structured_parser_does_not_scan_json_after_rejecting_xml_tool_markup(content: str) -> None:
+    with pytest.raises(ValueError, match="invalid XML tool markup"):
+        _parse_structured_result(
+            {
+                "raw": AIMessage(content=content),
+                "parsed": None,
+                "parsing_error": ValueError("provider returned invalid XML tool markup"),
+            },
+            SemanticFamilyExpansionDraft,
+            container_fields={"components", "branches", "limitations"},
+        )
+
+
 @pytest.mark.asyncio
 async def test_structured_repair_receives_malformed_tool_arguments_as_bounded_data() -> None:
     model = UnescapedQuoteRepairFakeModel({FrozenContentMapDraft: _frozen_map_payload()})

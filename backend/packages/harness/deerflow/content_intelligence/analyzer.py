@@ -4,6 +4,7 @@ import ast
 import hashlib
 import json
 import logging
+import xml.etree.ElementTree as ET
 from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any, Literal
@@ -1016,7 +1017,7 @@ def _parse_structured_result(
     if payload is not None:
         return schema.model_validate(_decode_container_fields(payload, container_fields=container_fields))
 
-    payload = _extract_raw_message_content(raw_message)
+    payload = _extract_raw_message_content(raw_message, expected_tool_name=schema.__name__)
     if payload is not None:
         return schema.model_validate(_decode_container_fields(payload, container_fields=container_fields))
 
@@ -1071,10 +1072,14 @@ def _extract_raw_tool_arguments(raw_message: Any) -> dict[str, Any] | None:
     return None
 
 
-def _extract_raw_message_content(raw_message: Any) -> dict[str, Any] | None:
+def _extract_raw_message_content(
+    raw_message: Any,
+    *,
+    expected_tool_name: str,
+) -> dict[str, Any] | None:
     content = getattr(raw_message, "content", None)
     if isinstance(content, str):
-        return _extract_json_object_from_text(content)
+        return _extract_structured_message_text(content, expected_tool_name=expected_tool_name)
     if not isinstance(content, list):
         return None
 
@@ -1084,7 +1089,51 @@ def _extract_raw_message_content(raw_message: Any) -> dict[str, Any] | None:
             text_parts.append(block)
         elif isinstance(block, Mapping) and isinstance(block.get("text"), str):
             text_parts.append(block["text"])
-    return _extract_json_object_from_text("\n".join(text_parts))
+    joined = "\n".join(text_parts)
+    return _extract_structured_message_text(joined, expected_tool_name=expected_tool_name)
+
+
+def _extract_structured_message_text(
+    value: str,
+    *,
+    expected_tool_name: str,
+) -> dict[str, Any] | None:
+    if value.lstrip().startswith("<function_calls>"):
+        return _extract_xml_function_call(value, expected_tool_name=expected_tool_name)
+    return _extract_json_object_from_text(value)
+
+
+def _extract_xml_function_call(
+    value: str,
+    *,
+    expected_tool_name: str,
+) -> dict[str, Any] | None:
+    """Recover one provider-emitted XML tool call before scanning embedded JSON."""
+
+    stripped = value.strip()
+    if not stripped.startswith("<function_calls>") or len(stripped.encode("utf-8")) > _STRUCTURED_REPAIR_MAX_BYTES:
+        return None
+    try:
+        root = ET.fromstring(stripped)
+    except ET.ParseError:
+        return None
+    if root.tag != "function_calls":
+        return None
+    invokes = list(root)
+    if len(invokes) != 1 or invokes[0].tag != "invoke" or invokes[0].attrib.get("name") != expected_tool_name:
+        return None
+
+    payload: dict[str, Any] = {}
+    for parameter in list(invokes[0]):
+        name = parameter.attrib.get("name")
+        if parameter.tag != "parameter" or not name or name in payload:
+            return None
+        raw_value = "".join(parameter.itertext()).strip()
+        try:
+            payload[name] = json.loads(raw_value)
+        except json.JSONDecodeError:
+            payload[name] = raw_value
+    return payload
 
 
 def _extract_malformed_tool_arguments(raw_message: Any) -> str | None:

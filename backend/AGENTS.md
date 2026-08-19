@@ -177,10 +177,11 @@ these invariants out of the provider-facing parser.
 `deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
 `RootFeedbackRecord` is append-only, exact-map-bound episodic evidence. Do not inject, retrieve, or promote it
 as a rule before the held-out approval in ADR-031; preserve alternatives, no-strong-root, conditions, and lineage.
-`develop_account_strategy` alone creates those long-lived judgments from a candidate map, Brief,
-and formal evidence. Its model-facing contract is a flat 2-5 route proposal: each route combines
-content subject, business connection, audience, persona, presentation, monetization, resources,
-and tradeoffs. It may recommend one but cannot confirm it. When no explicit project is selected, a
+`develop_account_strategy` alone creates those judgments from a candidate map, Brief,
+and evidence. Routes separate subject, role, outcome, target/need/action/market, audience, persona,
+form, monetization, and resources. Target is not audience; form is not strategy.
+No format-only variants or invented offers.
+It may recommend but cannot confirm. When no explicit project is selected, a
 trusted owner/thread lazily receives a deterministic internal project on the first strategy request;
 later runs rehydrate it from the ledger. An explicitly selected stale project still fails closed.
 Only `confirm_account_strategy` adopts a route; topic delivery cannot create or revise one. A new
