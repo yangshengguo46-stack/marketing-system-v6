@@ -888,6 +888,29 @@ or search receipts. Without a selected incubation project, the result remains us
 read-only evidence. With a server-injected project ID, ownership is verified before the
 platform call and the full snapshot is attributed to the current thread and run. A ledger
 write failure is reported separately without discarding the already collected evidence.
+When the official candidate route explicitly reports that the application's search Scope
+is unavailable, this high-level tool can use a local visible, authenticated Playwright
+session as a read-only fallback. The browser must reach the real search page and parse a
+whitelisted `general/search` JSON response before the run can succeed; suggestions, hot
+lists, page navigation, DOM, HTML, and screenshots do not count as evidence. A selected
+candidate can then be collected with `collect_douyin_benchmark_account`, which retains
+only stable-author posts and produces a formal bounded `BenchmarkSnapshot`.
+
+Install the optional local browser runtime and point DeerFlow at an ignored Playwright
+storage-state file created through a visible manual Douyin login:
+
+```bash
+cd backend
+uv sync --extra browser
+uv run playwright install chromium
+export DOUYIN_BROWSER_STORAGE_STATE_PATH=/absolute/local/path/douyin-storage-state.json
+export DOUYIN_BROWSER_HEADLESS=0
+```
+
+The state file remains local. Cookie values, browser storage, local paths, raw responses,
+and temporary media URLs are never returned to the Lead, frontend, ledger, or logs. The
+fallback does not bypass login challenges or access controls, and official OpenAPI/MCP
+remains the preferred route after provider approval.
 The Gateway now exposes owner-scoped incubation project APIs and a dedicated thread binding
 endpoint. Run requests cannot inject or replace `incubation_project_id`; `start_run`
 rehydrates only the stored, owner-validated binding into runtime context. The product-facing
@@ -970,8 +993,10 @@ It binds one stable external account identity to at most 24 author-qualified pos
 actual coverage and exclusions explicit, seals the result as project-scoped
 `benchmark_evidence`, and gives the Lead only a fixed-byte projection. This snapshot is
 not an audience profile, positioning verdict, virality explanation, or reusable success
-formula. The contract is implemented; production Douyin account-link collection remains
-pending separate connector and live-account acceptance.
+formula. The authenticated-browser connector has passed one live Douyin account slice for
+candidate search and direct account collection. This is connector acceptance for continued
+use, not a claim that every account or page revision is supported; official account-link
+collection and broader live-account regression coverage remain pending.
 
 The content-world contract contains no product anchor or commercial return path. It
 does not choose presentation format, platform, sales, experiments, or publishing.

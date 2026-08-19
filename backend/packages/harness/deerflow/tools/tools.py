@@ -11,6 +11,7 @@ from deerflow.tools.builtins import (
     confirm_account_strategy_tool,
     content_intelligence_tool,
     develop_account_strategy_tool,
+    douyin_benchmark_account_tool,
     douyin_benchmark_candidate_tool,
     explore_content_world_tool,
     list_uploaded_files,
@@ -31,6 +32,7 @@ BUILTIN_TOOLS = [
     content_intelligence_tool,
     develop_account_strategy_tool,
     explore_content_world_tool,
+    douyin_benchmark_account_tool,
     douyin_benchmark_candidate_tool,
     review_skill_package,
 ]

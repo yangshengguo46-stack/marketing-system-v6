@@ -7,6 +7,13 @@ Request trace correlation is controlled by `logging.enhance.enabled` at **both**
 
 The same ContextVar value is injected into enhanced log records as `trace_id` and into Langfuse metadata as `deerflow_trace_id`.
 
+### Douyin Benchmark Browser Fallback
+
+The local browser fallback is official-first and response-driven. Candidate search needs a real
+result URL plus parsed whitelisted responses; direct-account snapshots need one stable author.
+Credentials and raw pages stay local, while login, captcha, restrictions, or drift fail closed.
+A106 and ADR-030 own the detailed boundary and live acceptance.
+
 `logging` is registered as a **restart-required** field
 (`STARTUP_ONLY_FIELDS["logging"]`): `configure_logging()` installs the trace-context
 filter and enhanced formatter on root handlers only during app.py lifespan startup,
