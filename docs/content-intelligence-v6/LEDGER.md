@@ -2111,3 +2111,15 @@ Catalog，真正实现的 Child 只有视频搜索和图文/经验搜索。真�
 
 收尾验收：后端全量套件 `12218 passed, 76 skipped`，零失败；Agent 规范软上限检查也已恢复为
 零警告。
+
+## A107 字节 Web Search 视频能力真实审计
+
+2026-08-19 将用户提供的独立豆包搜索凭证写入根目录 Git 忽略的 `.env`，使用现有
+`deerflow.community.byted_search` 适配器完成四次真实只读探测。基础 `web` 搜索鉴权成功；三组视频
+意图查询可以召回普通网页和少量爱奇艺/Bilibili 视频页面，但均没有抖音作品直链，响应也没有
+`VideoResults`。显式 `SearchType=video` 被供应商以 `10402 invalid search type` 拒绝。
+
+因此这把 Key 已证明可用于内容研究的普通 `topic_evidence`，但不能替代抖音 OpenAPI 或登录态结构化账号
+采集。联网问答 Agent Pro 的抖音视频卡片属于带 Bot 与独立视频权限的另一产品合同。详见
+`audits/A107-byted-web-search-video-capability.md` 与
+`evidence/byted-web-search-video-a107-2026-08-19.md`。
