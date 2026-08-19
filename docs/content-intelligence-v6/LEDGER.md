@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A111 account business intent live-E2E reviewed with residual resource and cost failures`
+- 当前结论状态：`A112 TikTok LIVE guild clean rerun passed business intent but failed whole-entity semantics, fact boundaries, and cost`
 
 ## A01 第五版与第六版边界
 
@@ -2192,3 +2192,18 @@ Pydantic 校验。修复后运行使用 8 次调用、32,074 Token，已经把�
 `audits/A111-account-business-intent-and-live-guild-e2e.md` 与
 `evidence/a111-account-business-intent-live-e2e-2026-08-20.json`。聚焦回归 `376 passed`；最终后端非 live
 全量回归 `12257 passed, 76 skipped, 17 warnings in 510.73s`，Agent 指导文件预算零警告。
+
+## A112 TikTok LIVE 公会干净线程重跑
+
+2026-08-20 使用与 A111 相同输入，在全新线程、关闭记忆和子智能体的条件下再次运行完整 Lead 链。
+本轮 7 次模型调用、25,006 Token，相比 A111 减少 1 次调用和 7,068 Token（约 22.0%），但 206 秒耗时与
+总成本仍未通过。完整对象、业务角色和目标对象识别正确，内容根从“艺人经纪与组织管理”改进为“主播”；
+两条路线分别围绕主播个体处境与地区行业信息展开，不再只是更换表现形式，潜在主播、对方需求、咨询或
+入驻动作和 MENA/CCA 范围均进入路线。
+
+中间语义层仍把完整行业词“公会”拆成单字“会”并标记为 `cultural_institution`，触发了一整轮没有赢得
+根裁决的语义家族推演。全程未调用搜索、抖音 MCP 或正式对标证据，却输出地区平台规则、收入与监管判断，
+并继续把“大量真实主播、一手素材、培训和收益分成”写成用户已有事实。结论因此固定为：内部深链不可
+删除，但必须保留完整商业实体、并行引入外部事实证据，并禁止下游从业务身份反推用户资源。详见
+`audits/A112-tiktok-live-guild-clean-rerun.md` 与
+`evidence/a112-tiktok-live-guild-clean-rerun-2026-08-20.json`。本轮没有修改运行代码或继续调提示词。

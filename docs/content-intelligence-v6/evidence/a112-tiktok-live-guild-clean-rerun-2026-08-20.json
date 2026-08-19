@@ -1,0 +1,92 @@
+{
+  "audit_id": "A112",
+  "date": "2026-08-20",
+  "status": "live_e2e_pass_with_semantic_and_fact_boundary_failures",
+  "case": "tiktok_live_guild_mena_cca_clean_rerun",
+  "input": "我是做TikTok直播公会的，主要地区为MENA和CCA，我该怎么起号？",
+  "runtime": {
+    "thread_id": "622ee99c-0737-417e-a3a8-6a9af25b2867",
+    "run_id": "ddbe10c4-6eda-4c59-bdf1-38916441ff93",
+    "model": "glm-5-2-260617",
+    "thinking_enabled": true,
+    "subagent_enabled": false,
+    "memory_enabled": false,
+    "status": "success",
+    "model_calls": 7,
+    "input_tokens": 17050,
+    "output_tokens": 7956,
+    "total_tokens": 25006,
+    "cache_read_tokens": 8487,
+    "subagent_tokens": 0,
+    "started_at": "2026-08-19T21:04:03.087675Z",
+    "completed_at": "2026-08-19T21:07:28.896219Z"
+  },
+  "lineage": {
+    "content_reading_artifact_id": "artifact_9a8c0bf2e73731165c7d696dbda04dff4983e02caf63fdc69ea125882270a462",
+    "content_map_artifact_id": "artifact_ce398a0eae4b7a7ed89a2096d95953977508e771b0ce042c6298666bafb09bcb",
+    "incubation_brief_artifact_id": "artifact_a564fca9c7f8ee95113b86f827ba9bd07aa3b7b8b968066f751c1d72b19ad5d4",
+    "incubation_judgment_artifact_id": "artifact_561082cd3300a2aa8d49eced9936f4d40bbba85222bc92f7f6e658a6eecbc9f6"
+  },
+  "observed_path": {
+    "lead_domain_action": "develop_account_strategy",
+    "source_object": "TikTok直播公会",
+    "lexical_head": "公会",
+    "offering_role": "operating_container",
+    "served_object": "主播",
+    "incorrect_meaning_component": "会",
+    "incorrect_meaning_component_type": "cultural_institution",
+    "selected_content_root": "主播",
+    "route_names": [
+      "主播田野观察者——以公会视角记录主播真实处境",
+      "主播行业信使——以信息差服务连接潜在主播与行业认知"
+    ],
+    "external_search_used": false,
+    "benchmark_evidence_used": false,
+    "source_kinds": [
+      "user_statement"
+    ]
+  },
+  "business_intent_projection": {
+    "business_role": "TikTok直播公会经营者",
+    "target_people": "MENA和CCA地区正在做或考虑做TikTok直播的潜在主播",
+    "target_need": "理解收入、平台规则、公会作用和合作条件",
+    "desired_action": "主动咨询入驻公会或合作",
+    "market_scope_preserved": [
+      "MENA",
+      "CCA"
+    ],
+    "content_audience_separated_from_business_target": true
+  },
+  "unsupported_runtime_claims": [
+    "用户日常接触大量真实主播",
+    "用户拥有可持续使用的一手主播素材",
+    "用户负责培训主播并参与主播直播收益分成",
+    "用户拥有地区平台规则、收入结构和行业动态的信息获取优势"
+  ],
+  "comparison_to_a111": {
+    "previous_thread_id": "3b554fc2-91d6-4148-9c7a-97eff9833044",
+    "previous_run_id": "a1f9bd62-41c2-420d-b963-47085d9ec61e",
+    "previous_model_calls": 8,
+    "current_model_calls": 7,
+    "previous_total_tokens": 32074,
+    "current_total_tokens": 25006,
+    "token_reduction": 7068,
+    "token_reduction_percent": 22.0,
+    "previous_content_root": "艺人经纪与组织管理",
+    "current_content_root": "主播"
+  },
+  "acceptance": {
+    "business_entity_understood": true,
+    "business_target_understood": true,
+    "target_need_present": true,
+    "desired_action_present": true,
+    "market_scope_affects_routes": true,
+    "content_audience_separated_from_business_target": true,
+    "route_difference_exceeds_format": true,
+    "content_root_improved": true,
+    "whole_compound_semantics_preserved": false,
+    "external_fact_boundary_passed": false,
+    "user_resource_boundary_passed": false,
+    "cost_boundary_passed": false
+  }
+}
