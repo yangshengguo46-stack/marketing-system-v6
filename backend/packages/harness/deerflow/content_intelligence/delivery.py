@@ -6,7 +6,7 @@ import re
 from typing import Annotated, Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from deerflow.content_intelligence.analyzer import _invoke_structured
 from deerflow.content_intelligence.contracts import (
@@ -22,6 +22,12 @@ MessageBeats = Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
 _LATIN_NAMED_TOKEN_RE = re.compile(r"(?<![A-Za-zÀ-ÖØ-öø-ÿ0-9])(?:[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]{2,}|[A-Z]{2,})(?![A-Za-zÀ-ÖØ-öø-ÿ0-9])")
 _NUMBER_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9])\d+(?:[.,]\d+)*(?![A-Za-z0-9])")
 _INTRODUCED_NAME_RE = re.compile(r"(?:名叫|名为|叫作|叫做)\s*[‘’“”\"']?([\u4e00-\u9fff·]{2,10}|[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,4})")
+_CYRILLIC_TOKEN_RE = re.compile(r"[\u0400-\u04ff]{2,}")
+_UNSUPPORTED_USER_EXPERIENCE_RE = re.compile(
+    r"(?:我|我们)(?:亲自|曾经|经常|实际|长期)?(?:见过|遇到过|接触过|经手过|卖过|做过|服务过)"
+    r"|(?:我|我们)(?:的)?(?:客户|门店|店里|工厂|诊所|团队|库存|案例|素材)"
+    r"|[\u4e00-\u9fff]{0,16}(?:待|干|做)久了你就(?:会)?(?:知道|明白|发现)"
+)
 _ABSOLUTE_CLAIM_MARKERS = (
     "全球最贵",
     "价格的最顶端",
@@ -52,6 +58,13 @@ class MessagePlanDraft(ContractModel):
     closing: NonEmptyStr
     limitations: tuple[NonEmptyStr, ...] = ()
     unknowns: tuple[NonEmptyStr, ...] = ()
+
+    @field_validator("context", mode="before")
+    @classmethod
+    def normalize_explicit_json_null_literal(cls, value: object) -> object:
+        if isinstance(value, str) and value.strip() == "null":
+            return None
+        return value
 
     def bind(
         self,
@@ -135,7 +148,8 @@ def _bind_message_plan_draft(
     message_plan = MessagePlan(
         message_plan_id=message_plan_id,
         record_id=bundle.record.record_id,
-        **draft.model_dump(exclude={"limitations", "unknowns"}),
+        **draft.model_dump(exclude={"account_position", "limitations", "unknowns"}),
+        account_position=account_position_basis,
         account_position_basis=account_position_basis,
         evidence_refs=topic.evidence_refs,
         limitations=tuple(dict.fromkeys((*topic.limitations, *draft.limitations))),
@@ -176,8 +190,11 @@ SHOOTING_DELIVERY_SYSTEM_PROMPT = """<content_intelligence_delivery>
 - topic_title 和 opening 可以有吸引力，但标题包装不能替代切入点、视角、证据推进和最终兑现。不得用“震惊、惊呆、不看后悔”等空壳词冒充内容强度。
 - 来源名称本身不是内容。除非来源身份就是事件的一部分或某个断言必须就地归因，否则让证据约束事实并保留在参考资料中，不要把正文写成资料汇报。
 - opening、message_beats 和 closing 共同构成表现形式之前的基础文案。都要写成可直接连起来表达的句子，不要写成“讲背景”、“分析原因”一类操作标签。不设固定段数、时长、镜头数、信息点数或发布配额。
+- 基础文案只推进一条连贯的论证主线。证据用于支持这条主线，不要为了显得完整而穷尽所有资料、旁支和可能解释。
 - opening、message_beats 和 closing 只能改写输入的具体问题、中心判断、作用机制、反面边界和已读观察。输入没有的人名、角色名称、仪式步骤、历史原因、数字或因果不得由常识补入；需要时写入 unknowns。
 - 基础文案先把话说清，不预设用户必须口播、演短剧、出镜或拥有某种素材。
+- 业务身份不等于拥有拍摄素材、客户案例、店内空间、库存或可出镜人员。项目主体原话只能证明用户做什么；资源未被用户或正式证据明示时，不得把它写成已有条件。
+- “我是做什么的”只提供观察立场，不得改写成用户做久了、见过、经手过、拥有客户案例或掌握鉴定能力等经验事实。
 - 对医疗、法律、金融、健康或其他高风险事实，只能沿已给证据表达；证据不足时保留为问题或未知，不得写成确定建议。
 - 不补造数据、历史细节、具体人名、用户经历、拍摄素材或经营结果。未请求时不加销售话术、商业回桥、发布节奏或投流方案。
 - 不得因为用户从事商业经营，就把 closing 写成购买、成交、市场、客户或“消费者为什么买单”。立场负责观察，收束只回到这条内容的判断。
@@ -252,7 +269,10 @@ async def synthesize_shooting_delivery(
         )
         if remaining_details:
             raise DeliveryFactBoundaryError("delivery still contains unsupported factual specifics after one bounded repair: " + ", ".join(remaining_details))
-    return draft.bind(bundle=bundle, account_position_basis=user_request)
+    return draft.bind(
+        bundle=bundle,
+        account_position_basis=bundle.record.subject_expression,
+    )
 
 
 def _unsupported_delivery_details(
@@ -286,6 +306,16 @@ def _unsupported_delivery_details(
         if marker in draft_text and marker not in fact_ledger:
             unsupported.append(marker)
 
+    for match in _CYRILLIC_TOKEN_RE.finditer(draft_text):
+        token = match.group(0)
+        if token not in fact_ledger:
+            unsupported.append(token)
+
+    for match in _UNSUPPORTED_USER_EXPERIENCE_RE.finditer(draft_text):
+        claim = match.group(0)
+        if claim not in fact_ledger:
+            unsupported.append(claim)
+
     return tuple(dict.fromkeys(unsupported))
 
 
@@ -301,6 +331,7 @@ def _delivery_fact_ledger(
     return json.dumps(
         {
             "user_request": user_request,
+            "project_subject_statement": bundle.record.subject_expression,
             "topic_brief": topic.model_dump(mode="json"),
             "evidence_observations": observations,
         },
@@ -353,6 +384,7 @@ def _render_delivery_input(
 
     payload = {
         "用户原话": user_request,
+        "项目主体原话": bundle.record.subject_expression,
         "已冻结内容根": world.content_root,
         "账号长期承诺": world.editorial_promise,
         "持续观察方法": world.recurring_lens,
@@ -397,9 +429,7 @@ def _delivery_judgment_projection(
         "定位": (judgment.positioning.model_dump(mode="json") if judgment.positioning is not None else None),
         "受众假设": (judgment.audience.model_dump(mode="json") if judgment.audience is not None else None),
         "人设判断": (judgment.persona.model_dump(mode="json") if judgment.persona is not None else None),
-        "账号级表达方向": (judgment.presentation.model_dump(mode="json") if judgment.presentation is not None else None),
         "未知": judgment.unknowns,
-        "备选": judgment.alternatives,
     }
 
 
@@ -415,24 +445,23 @@ def render_shooting_delivery(
     if plan.record_id != bundle.record.record_id:
         raise ValueError("shooting delivery record does not match the content bundle")
 
+    route = " → ".join(
+        dict.fromkeys(
+            (
+                world.content_root,
+                *(label for step in topic.path.steps for label in (step.from_label, step.to_label)),
+            )
+        )
+    )
     lines = [
-        "# 内容机会依据",
+        "# 今日建议拍摄",
         "",
-        f"**本题来自哪张地图：** {world.content_root}",
+        f"## {plan.topic_title}",
+        "",
+        f"**内容路线：** {route}",
     ]
-    if world.editorial_promise is not None:
-        lines.extend(("", f"**关注理由：** {world.editorial_promise}"))
-    if world.recurring_lens is not None:
-        lines.extend(("", f"**稳定观察方法：** {world.recurring_lens}"))
-    if world.dimensions:
-        lines.extend(("", "## 候选内容方向", ""))
-        lines.extend(f"- **{dimension.name}：** {dimension.rationale}" for dimension in world.dimensions)
     lines.extend(
         (
-            "",
-            "# 今日建议拍摄",
-            "",
-            f"## {plan.topic_title}",
             "",
             f"**谁：** {plan.focal_subject}",
         )
@@ -444,59 +473,30 @@ def render_shooting_delivery(
             "",
             f"**发生什么：** {plan.concrete_event_or_question}",
             "",
-            f"**你的立场：** {plan.account_position}",
+            f"**你的立场：** {plan.account_position_basis}",
             "",
             f"**核心观点：** {plan.point_of_view}",
             "",
-            f"**从哪里讲起：** {plan.entry_point}",
-            "",
-            f"**讲述视角：** {plan.telling_lens}",
-            "",
-            f"**观众一路想知道：** {plan.audience_question}",
-            "",
-            f"**信息怎么揭开：** {plan.information_order}",
-            "",
-            f"**最后得到什么：** {plan.payoff}",
-            "",
-            "## 内容推进",
-            "",
-            f"**开头：** {plan.opening}",
-            "",
+            f"**切入点：** {plan.entry_point}",
         )
     )
-    lines.extend(f"{index}. {beat}" for index, beat in enumerate(plan.message_beats, start=1))
     lines.extend(
         (
-            "",
-            f"**收束：** {plan.closing}",
             "",
             "## 基础文案",
             "",
             delivery.base_draft.text,
-            "",
-            "## 内容路径",
-            "",
-            " → ".join(
-                dict.fromkeys(
-                    (
-                        world.content_root,
-                        *(label for step in topic.path.steps for label in (step.from_label, step.to_label)),
-                    )
-                )
-            ),
         )
     )
 
     boundary_items = tuple(dict.fromkeys((*plan.limitations, *plan.research_needed)))
     if boundary_items:
-        lines.extend(("", "## 证据边界", ""))
-        lines.extend(f"- {item}" for item in boundary_items)
+        lines.extend(("", f"**证据状态：** {len(boundary_items)} 项待补证边界；未核实内容未写成事实。"))
 
     unknowns_by_id = {item.unknown_id: item.question for item in bundle.record.unknowns}
     unknown_items = tuple(unknowns_by_id[ref] for ref in plan.unknown_refs if ref in unknowns_by_id)
     if unknown_items:
-        lines.extend(("", "## 待确认", ""))
-        lines.extend(f"- {item}" for item in unknown_items)
+        lines.extend(("", f"**待确认：** {len(unknown_items)} 项未知；未确认内容未写成事实。"))
 
     citations = _topic_citations(bundle)
     if citations:

@@ -852,15 +852,16 @@ Code joins the reviewed opening, message beats, and closing into a `BaseDraft` w
 second free-form rewrite. Before it is sealed, one bounded repair may only delete or
 generalize high-signal names, numbers, or absolute claims that are absent from the fact
 ledger; a remaining violation rejects delivery. A shootable run leads with one map-bound
-"shoot today" example and labels the map only as its content-opportunity basis; the
-map prose is a fail-open response when no topic exists or delivery validation fails.
-For a selected project, the completed BaseDraft now enters a separate per-topic
-`FormatDecision` and `AdaptedDraft`. The decision may remain provisional when owned
-resources are unknown; the adaptation must preserve verbatim anchors from the BaseDraft,
-and narrative staging is available only when a narrative form is actually selected.
-The run may stop there. `ProductionPlan`, user-material work, MediaKit, and publishing are
-separate downstream capabilities, disabled by default, and are not required for incubation
-or expression acceptance.
+"shoot today" example, one rooted route, and one BaseDraft; full candidate maps, account
+strategy, repeated beats, and production advice remain in their artifacts rather than the
+chat projection. The exact project subject statement is the account-position basis. It does
+not prove owned material, customer cases, facilities, experience, or personnel. Detailed
+limitations stay in the ledger while chat shows compact counts and citations. The map prose
+is a fail-open response when no topic exists or delivery validation fails.
+Normal topic delivery stops after `draft_version`. `FormatDecision`, `AdaptedDraft`, and
+`ProductionPlan` run only when the user explicitly requests presentation, adaptation, or
+production. Every claimed resource match needs a user-material artifact parent; unknown
+resources remain unknown. MediaKit and publishing are separate downstream capabilities.
 The completed prose is delivered through the native return-direct exit
 and promoted once after the agent loop has stopped, so the generic Lead cannot rewrite
 it back into a product catalogue.

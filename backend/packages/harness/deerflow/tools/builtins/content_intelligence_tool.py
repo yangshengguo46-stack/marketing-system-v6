@@ -47,7 +47,8 @@ from deerflow.incubation import (
     select_current_account_strategy,
     select_used_topic_evidence_snapshots,
 )
-from deerflow.incubation.account_strategy_presentation import render_account_strategy
+from deerflow.incubation.account_strategy_presentation import render_account_strategy as render_account_strategy
+from deerflow.incubation.judgment import IncubationJudgment
 from deerflow.tools.builtins.douyin_topic_evidence import DouyinMcpTopicEvidenceSearch
 from deerflow.tools.builtins.incubation_tool_support import (
     artifact_receipt as _artifact_receipt,
@@ -112,6 +113,7 @@ async def _persist_content_run(
     topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
     model: Any | None = None,
+    include_presentation_adaptation: bool = False,
     include_production_plan: bool = False,
 ) -> dict[str, Any]:
     project_id = _runtime_context_text(runtime, "incubation_project_id")
@@ -185,7 +187,7 @@ async def _persist_content_run(
                 }
             )
         answer_sections: list[str] = []
-        if delivery is not None and model is not None:
+        if delivery is not None and model is not None and (include_presentation_adaptation or include_production_plan):
             try:
                 resource_artifacts = await repository.list_artifacts(
                     project,
@@ -556,7 +558,7 @@ async def explore_content_world_tool(
                 raise ValueError("shootable-topic delivery returned no MessagePlan or BaseDraft")
             rendered_delivery = _prioritize_shooting_delivery(render_shooting_delivery(bundle, shooting_delivery))
             if current_strategy is not None:
-                rendered_delivery += "\n\n" + render_account_strategy(current_strategy.judgment)
+                rendered_delivery += "\n\n" + _render_confirmed_route_reference(current_strategy.judgment)
         except Exception as exc:
             logger.warning(
                 "Evidence topic delivery was unavailable; no shootable topic was formed: %s",
@@ -570,6 +572,11 @@ async def explore_content_world_tool(
             topic_evidence_snapshots=topic_evidence_snapshots,
             incubation_judgment_artifact=(current_strategy.judgment_artifact if current_strategy is not None and shooting_delivery is not None else None),
             model=model,
+            include_presentation_adaptation=_runtime_context_bool(
+                runtime,
+                "content_include_presentation_adaptation",
+                default=False,
+            ),
             include_production_plan=_runtime_context_bool(
                 runtime,
                 "content_include_production_plan",
@@ -781,6 +788,20 @@ def _render_production_plan_artifact(artifact: ArtifactEnvelope) -> str:
 
 def _render_shootable_topic_failure(bundle: ContentIntelligenceBundle) -> str:
     return "# 本轮选题结果\n\n**候选内容地图已形成，但没有形成可拍选题。** 研究、证据阅读或内容交付没有形成完整合同，因此本轮不会把地图方向冒充成具体选题。\n\n" + _render_content_opportunity_map(bundle)
+
+
+def _render_confirmed_route_reference(judgment: IncubationJudgment) -> str:
+    selected = next(
+        (option for option in judgment.route_options if option.option_id == judgment.selected_option_id),
+        None,
+    )
+    if selected is None:
+        if judgment.positioning is None:
+            raise ValueError("confirmed account strategy has no selected route or positioning")
+        label = judgment.positioning.decision
+    else:
+        label = f"{selected.name}（{selected.option_id}）"
+    return f"## 已确认路线\n\n**沿用：** {label}"
 
 
 def _prioritize_shooting_delivery(rendered: str) -> str:

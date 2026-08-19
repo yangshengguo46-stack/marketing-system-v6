@@ -156,25 +156,23 @@ from deerflow.config import get_app_config
 
 ### V6 Content Incubation Core
 
-`content_intelligence/` owns `ComprehensionRecord -> ContentWorldView -> TopicBrief ->
-MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`. `ContentWorldView` is a
+`content_intelligence/` owns the normal chain `ComprehensionRecord -> ContentWorldView ->
+TopicBrief -> MessagePlan -> BaseDraft`. Explicit downstream requests may continue through
+`FormatDecision -> AdaptedDraft -> ProductionPlan`. `ContentWorldView` is a
 content-addressed candidate opportunity map, not adopted account positioning. Keep ADR-020's
 dependency-ordered semantic chain: intermediate labels are inspectable evidence, never hard gates.
 One venue, purchase, consumption, or social scene stays a map branch when the object also expands
 into people, history, events, regions, or works outside that scene.
 
-Root selection explicitly chooses `content_entry` and `map_root`; reviewed shared worlds are normal
-candidates and cannot override that choice in code. The map sees only `map_root`. Every topic binds
-the exact candidate-map version and evidence receipt. Generic search is `topic_evidence`, never
-competitor evidence. Weak evidence remains a limitation. `explore_content_world` may return content
-opportunities or one shootable topic, but cannot decide account positioning, audience, persona,
-account presentation, or monetization.
+Root selection chooses `content_entry` and `map_root`; reviewed shared worlds remain candidates and
+cannot override it. The map sees only `map_root`; every topic binds its exact map version and evidence
+receipt. Generic search is `topic_evidence`, never competitor evidence. `explore_content_world` may
+return opportunities or one shootable topic, but cannot decide account strategy.
 
-Shared-world provider payloads are parsed before semantic reconciliation. Normalize explicit null
-collections and discard misplaced non-constitutive modifier terms without dropping an otherwise valid
-world. Deterministic reconciliation must still withdraw a world with no semantic path, a missing required
-constitutive context, or a context erased from its label; do not move those semantic invariants back into
-the provider-facing Pydantic parser.
+Parse shared-world provider payloads before reconciliation. Normalize explicit null collections and
+discard misplaced non-constitutive modifiers only when the world remains valid. Deterministically
+withdraw worlds with no semantic path, missing constitutive context, or labels that erase it; keep
+these invariants out of the provider-facing parser.
 
 `deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
 `RootFeedbackRecord` is append-only, exact-map-bound episodic evidence. Do not inject, retrieve, or promote it
@@ -190,8 +188,11 @@ account-starting request is not continuation merely because a confirmed route ex
 topic continuation reconstructs the exact source record and map hash; delivery words never become
 the root. A new subject must be contiguous current-user text. Drop an invalid optional topic seed.
 Research caps are ceilings, not quotas. Decode provider JSON wrappers only to the exact target type;
-otherwise fail. `MessagePlan` and `BaseDraft` cannot invent facts, materials, sales, quantities, or
-publishing decisions.
+otherwise fail. Normal topic delivery stops after `BaseDraft` and returns one compact topic;
+format, adaptation, and production are never an automatic tail. The project subject statement is
+the only account-position fact. `MessagePlan` and `BaseDraft` cannot invent experience, facts,
+materials, sales, quantities, or publishing decisions. Every `ResourceMatch` needs at least one
+user-material artifact parent; unknown resources remain unknown.
 
 Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
 formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post

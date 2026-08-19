@@ -262,7 +262,6 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
             "status": "stored",
             "project_id": "project-1",
             "artifacts": [],
-            "_answer_appendix": "# 本条表现形式\n\n图文",
         }
 
     monkeypatch.setattr(content_intelligence_tool_module, "_load_current_account_strategy", load_current)
@@ -276,8 +275,12 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
         "render_shooting_delivery",
         Mock(return_value="# 今日建议拍摄\n\n## 一条具体选题"),
     )
-    render_judgment = Mock(return_value="# 已确认的账号路线\n\n已形成项目级判断")
-    monkeypatch.setattr(content_intelligence_tool_module, "render_account_strategy", render_judgment)
+    render_route_reference = Mock(return_value="## 已确认路线\n\n**沿用：** 酒桌人情")
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_confirmed_route_reference",
+        render_route_reference,
+    )
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -297,11 +300,12 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
     assert order == ["load_current", "research", "deliver", "persist"]
     assert delivery.await_args.kwargs["incubation_judgment"] is judgment
     assert persistence.await_args.kwargs["incubation_judgment_artifact"] is judgment_artifact
+    assert persistence.await_args.kwargs["include_presentation_adaptation"] is False
     assert persistence.await_args.kwargs["include_production_plan"] is False
-    assert "# 已确认的账号路线" in result.update["messages"][0].content
-    assert "# 本条表现形式" in result.update["messages"][0].content
+    assert "## 已确认路线" in result.update["messages"][0].content
+    assert "# 本条表现形式" not in result.update["messages"][0].content
     assert "_answer_appendix" not in result.update["messages"][0].additional_kwargs["incubation_persistence"]
-    render_judgment.assert_called_once_with(judgment)
+    render_route_reference.assert_called_once_with(judgment)
 
 
 @pytest.mark.asyncio
@@ -346,8 +350,8 @@ async def test_confirmed_route_topic_continuation_reuses_its_frozen_map_before_s
     )
     monkeypatch.setattr(
         content_intelligence_tool_module,
-        "render_account_strategy",
-        Mock(return_value="# 已确认的账号路线\n\n旧书的履历表"),
+        "_render_confirmed_route_reference",
+        Mock(return_value="## 已确认路线\n\n**沿用：** 旧书的履历表"),
     )
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -1325,6 +1329,65 @@ async def test_content_run_persistence_stores_used_topic_evidence_before_the_rea
 
 
 @pytest.mark.asyncio
+async def test_persistence_stops_at_base_draft_without_explicit_presentation_adaptation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    content_artifacts = tuple(
+        SimpleNamespace(
+            artifact_type=artifact_type,
+            artifact_id=f"artifact-{artifact_type}",
+            content_sha256=f"sha-{artifact_type}",
+        )
+        for artifact_type in (
+            "content_reading",
+            "content_map_candidate",
+            "topic_brief",
+            "message_plan",
+            "draft_version",
+        )
+    )
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(side_effect=lambda artifact: artifact),
+        list_artifacts=AsyncMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_get_incubation_repository",
+        Mock(return_value=repository),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "seal_content_run_artifacts",
+        Mock(return_value=SimpleNamespace(storage_order=lambda: content_artifacts)),
+    )
+    generate_format = AsyncMock()
+    generate_adapted = AsyncMock()
+    generate_production = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_format_decision", generate_format)
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_adapted_draft", generate_adapted)
+    monkeypatch.setattr(content_intelligence_tool_module, "generate_production_plan", generate_production)
+
+    receipt = await content_intelligence_tool_module._persist_content_run(
+        bundle=object(),
+        delivery=object(),
+        runtime=_tool_runtime(
+            "content-world-call-base-draft-only",
+            context={"incubation_project_id": "old-books"},
+        ),
+        topic_evidence_snapshots=(),
+        model=object(),
+    )
+
+    assert [call.args[0] for call in repository.put_artifact.await_args_list] == list(content_artifacts)
+    repository.list_artifacts.assert_not_awaited()
+    generate_format.assert_not_awaited()
+    generate_adapted.assert_not_awaited()
+    generate_production.assert_not_awaited()
+    assert "_answer_appendix" not in receipt
+
+
+@pytest.mark.asyncio
 async def test_persistence_continues_through_production_plan_only_when_explicitly_enabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1500,6 +1563,7 @@ async def test_persistence_can_stop_after_adapted_draft_without_starting_product
         ),
         topic_evidence_snapshots=(),
         model=object(),
+        include_presentation_adaptation=True,
     )
 
     assert [call.args[0] for call in repository.put_artifact.await_args_list] == [
@@ -1660,6 +1724,24 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
         "bridge path",
     ):
         assert attention_leak not in content_section.lower()
+
+
+def test_confirmed_route_reference_keeps_only_the_selected_name_and_id() -> None:
+    judgment = SimpleNamespace(
+        selected_option_id="route-old-book-history",
+        route_options=(
+            SimpleNamespace(
+                option_id="route-old-book-history",
+                name="旧书的履历表",
+                positioning=SimpleNamespace(decision="以逐页翻阅和实物鉴定为基础，追踪每一本旧书跨越时代的完整流转史。"),
+            ),
+        ),
+    )
+
+    rendered = content_intelligence_tool_module._render_confirmed_route_reference(judgment)
+
+    assert rendered == "## 已确认路线\n\n**沿用：** 旧书的履历表（route-old-book-history）"
+    assert "逐页翻阅" not in rendered
 
 
 def test_clarification_is_not_a_mandatory_business_workflow_gate() -> None:

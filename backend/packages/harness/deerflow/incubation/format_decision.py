@@ -4,9 +4,9 @@ import hashlib
 import json
 import re
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
@@ -91,7 +91,7 @@ class FormatChoice(IncubationContract):
 class ResourceMatch(IncubationContract):
     resource: NonEmptyStr
     fit: NonEmptyStr
-    basis_artifact_ids: tuple[NonEmptyStr, ...] = ()
+    basis_artifact_ids: Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
 
     @field_validator("basis_artifact_ids")
     @classmethod

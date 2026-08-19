@@ -16,6 +16,7 @@ from deerflow.content_intelligence import (
     Observation,
     SourceItem,
     TopicBrief,
+    Unknown,
     render_shooting_delivery,
     synthesize_shooting_delivery,
 )
@@ -216,6 +217,7 @@ async def test_topic_brief_becomes_a_concrete_shooting_delivery_from_the_users_p
 
     prompt_input = model.message_batches[0][1].content
     assert '"用户原话": "我是卖白酒的，该怎么起号？"' in prompt_input
+    assert '"项目主体原话": "我是卖白酒的，该怎么起号？"' in prompt_input
     assert '"具体问题"' in prompt_input
     assert '"中心判断"' in prompt_input
     assert '"账号长期承诺"' in prompt_input
@@ -223,6 +225,23 @@ async def test_topic_brief_becomes_a_concrete_shooting_delivery_from_the_users_p
     assert "business_semantics" not in prompt_input
     assert "map_dimensions" not in prompt_input
     assert "A bounded public record" not in prompt_input
+
+
+@pytest.mark.asyncio
+async def test_confirmed_route_continuation_keeps_the_project_subject_as_its_position_basis() -> None:
+    bundle = _evidence_bound_bundle()
+    model = StructuredDeliveryFakeModel(_message_plan_payload())
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="按照已确认路线，再给我一个今天能拍的选题和基础稿。",
+        model=model,
+    )
+
+    assert delivery is not None
+    assert delivery.message_plan.account_position_basis == bundle.record.subject_expression
+    assert delivery.message_plan.account_position == bundle.record.subject_expression
+    assert "按照已确认路线" not in delivery.message_plan.account_position_basis
 
 
 @pytest.mark.asyncio
@@ -243,6 +262,8 @@ async def test_incubation_judgment_guides_position_and_audience_without_leaking_
     assert "对地方生活、人际往来和酒桌现象好奇的观众" in prompt_input
     assert "观察日常酒桌与地方人情的经营者" in prompt_input
     assert "尚未确认用户是否愿意出镜" in prompt_input
+    assert "账号级表达方向" not in prompt_input
+    assert '"备选"' not in prompt_input
     assert "通过长期信任承接白酒购买需求" not in prompt_input
     assert "monetization" not in prompt_input.casefold()
 
@@ -275,6 +296,32 @@ async def test_delivery_repairs_named_numeric_and_absolute_claims_absent_from_ev
     assert "1977" in repair_message
     assert "全球最贵" in repair_message
     assert "do not replace it with another name" in repair_message
+
+
+@pytest.mark.asyncio
+async def test_delivery_repairs_unsupported_user_experience_and_foreign_text() -> None:
+    bundle = _evidence_bound_bundle()
+    unsupported = _message_plan_payload()
+    unsupported["message_beats"] = [
+        "旧书店里待久了你就会知道，我们的客户 заранее 都会先看这枚印。",
+    ]
+    model = SequencedStructuredDeliveryFakeModel([unsupported, _message_plan_payload()])
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="我是卖白酒的，该怎么起号？",
+        model=model,
+    )
+
+    assert delivery is not None
+    assert "待久了你就会知道" not in delivery.base_draft.text
+    assert "我们的客户" not in delivery.base_draft.text
+    assert "заранее" not in delivery.base_draft.text
+    assert len(model.message_batches) == 2
+    repair_message = model.message_batches[1][-1].content
+    assert "待久了你就会知道" in repair_message
+    assert "我们的客户" in repair_message
+    assert "заранее" in repair_message
 
 
 @pytest.mark.asyncio
@@ -313,6 +360,10 @@ def test_message_plan_contract_requires_a_telling_treatment_but_not_forced_time(
     validated = MessagePlanDraft.model_validate(payload)
     assert validated.context is None
 
+    payload["context"] = "null"
+    normalized = MessagePlanDraft.model_validate(payload)
+    assert normalized.context is None
+
 
 def test_delivery_prompt_separates_internal_exploration_from_the_shootable_answer() -> None:
     assert "语义理解和候选内容地图已经完成" in SHOOTING_DELIVERY_SYSTEM_PROMPT
@@ -329,13 +380,32 @@ def test_delivery_prompt_separates_internal_exploration_from_the_shootable_answe
     assert "context 描述内容世界里的时间、地点、场合或处境" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "选择一个主入口" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "不要求把用户的店铺、职业或商品写进正文" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "业务身份不等于拥有拍摄素材" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "不得改写成用户做久了、见过、经手过" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "只推进一条连贯的论证主线" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "来源名称本身不是内容" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "红薯" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "白酒" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
 
 
-def test_rendered_delivery_shows_content_opportunity_before_one_daily_topic() -> None:
+def test_rendered_delivery_is_a_compact_daily_topic_and_base_draft() -> None:
     bundle = _evidence_bound_bundle()
+    assert bundle.topic_brief is not None
+    bundle = bundle.model_copy(
+        update={
+            "record": bundle.record.model_copy(
+                update={
+                    "unknowns": (
+                        Unknown(
+                            unknown_id="unknown-regional-scope",
+                            question="这份资料能否代表两地全部宴席？",
+                        ),
+                    )
+                }
+            ),
+            "topic_brief": bundle.topic_brief.model_copy(update={"unknown_refs": ("unknown-regional-scope",)}),
+        }
+    )
     draft = MessagePlanDraft.model_validate(_message_plan_payload())
     delivery = draft.bind(
         bundle=bundle,
@@ -344,27 +414,31 @@ def test_rendered_delivery_shows_content_opportunity_before_one_daily_topic() ->
 
     rendered = render_shooting_delivery(bundle, delivery)
 
-    assert rendered.startswith("# 内容机会依据")
-    assert "**本题来自哪张地图：** 饮酒与人际礼俗" in rendered
-    assert "**关注理由：** 持续借具体酒桌理解地方礼俗与人际表达，而不是只介绍酒。" in rendered
-    assert "**稳定观察方法：** 从一个具体人物、场合或行为进入，解释酒桌上的关系如何被表达。" in rendered
-    assert "# 今日建议拍摄" in rendered
+    assert rendered.startswith("# 今日建议拍摄")
+    assert "**内容路线：** 饮酒与人际礼俗 → 山东、河南宴席上的饮酒习俗" in rendered
+    assert "**账号方向：**" not in rendered
     assert "**谁：** 参加当地宴席的饮酒者与主家" in rendered
     assert "**时间 / 场景：** 宴请、节庆和人情往来的饭桌上" in rendered
     assert "**发生什么：**" in rendered
-    assert "**你的立场：**" in rendered
+    assert "**你的立场：** 我是卖白酒的，该怎么起号？" in rendered
+    assert "从一名白酒经营者日常观察饮酒场景的立场出发" not in rendered
     assert "**核心观点：**" in rendered
-    assert "**从哪里讲起：**" in rendered
-    assert "**讲述视角：**" in rendered
-    assert "**观众一路想知道：**" in rendered
-    assert "**信息怎么揭开：**" in rendered
-    assert "**最后得到什么：**" in rendered
+    assert "**切入点：**" in rendered
     assert "## 基础文案" in rendered
-    assert "## 内容路径" in rendered
     assert "饮酒与人际礼俗" in rendered
     assert "A public record about regional drinking customs" in rendered
-    assert "# 饮酒与人际礼俗" not in rendered
-    assert "# 账号内容定位" not in rendered
+    assert "**证据状态：** 3 项待补证边界；未核实内容未写成事实。" in rendered
+    assert "**待确认：** 1 项未知；未确认内容未写成事实。" in rendered
+    assert "当前只有一份有界证据回执。" not in rendered
+    assert "成稿前补充两地的礼俗及历史来源。" not in rendered
+    assert "这份资料能否代表两地全部宴席？" not in rendered
+    assert "## 证据边界" not in rendered
+    assert "## 待确认" not in rendered
+    assert "# 内容机会依据" not in rendered
+    assert "## 候选内容方向" not in rendered
+    assert "**讲述视角：**" not in rendered
+    assert "**信息怎么揭开：**" not in rendered
+    assert rendered.count(delivery.base_draft.text) == 1
 
 
 def test_same_topic_with_a_different_telling_treatment_gets_a_distinct_plan_id() -> None:

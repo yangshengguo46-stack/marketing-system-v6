@@ -1,0 +1,77 @@
+{
+  "audit_id": "A110",
+  "date": "2026-08-20",
+  "status": "reviewed_with_live_e2e",
+  "baseline": {
+    "audit": "A109",
+    "case": "used_book_confirmed_route_topic",
+    "run_id": "54227c13-5e3d-4107-8816-efb50d9cc448",
+    "model_calls": 8,
+    "total_tokens": 66295
+  },
+  "runs": [
+    {
+      "case": "old_thread_default_stop",
+      "thread_id": "aef4c464-ce38-4d3a-9336-ac13834acd56",
+      "run_id": "5431309e-0f11-4bfb-ab7c-71179bc99b58",
+      "model_calls": 5,
+      "input_tokens": 53303,
+      "output_tokens": 7650,
+      "total_tokens": 60953,
+      "first_lead_prompt_tokens": 29620,
+      "result": "stop_boundary_pass_context_cost_fail"
+    },
+    {
+      "case": "fresh_thread_bound_project",
+      "thread_id": "1f638434-1c8f-466b-a46f-2f33e0aabe74",
+      "run_id": "97a0a40b-3e7e-478f-9f40-0305ce3fddac",
+      "model_calls": 5,
+      "input_tokens": 34450,
+      "output_tokens": 8165,
+      "total_tokens": 42615,
+      "first_lead_total_tokens": 4798,
+      "persisted_artifact_types": [
+        "content_reading",
+        "content_map_candidate",
+        "topic_brief",
+        "message_plan",
+        "draft_version"
+      ],
+      "result": "pass_with_remaining_evidence_cost"
+    }
+  ],
+  "interrupted_non_acceptance": {
+    "thread_id": "b4f64acf-1842-46c5-a009-cf44c1430a78",
+    "run_id": "842ec2c0-f363-4920-8e7a-4f9cce615326",
+    "reason": "reserved project metadata was correctly stripped; run cancelled before acceptance",
+    "model_calls": 4,
+    "total_tokens": 12267
+  },
+  "model_only_delivery_verification": {
+    "source_run_id": "97a0a40b-3e7e-478f-9f40-0305ce3fddac",
+    "account_position": "我是开旧书店的，该怎么起号？",
+    "base_draft_characters": 1216,
+    "rendered_characters": 2228,
+    "unsupported_experience_claim": false,
+    "cyrillic_token": false,
+    "literal_null_context": false,
+    "account_direction_paragraph": false,
+    "evidence_boundary_count": 12,
+    "unknown_count": 4,
+    "citation_count": 3,
+    "scope": "targeted delivery verification, not a second full end-to-end run"
+  },
+  "reductions": {
+    "model_calls_vs_a109_percent": 37.5,
+    "fresh_thread_tokens_vs_old_thread_default_stop_percent": 30.1
+  },
+  "verification": {
+    "focused_cross_module_tests_passed": 248,
+    "agent_guidance_errors": 0,
+    "agent_guidance_warnings": 0,
+    "backend_non_live_passed": 12252,
+    "backend_non_live_skipped": 76,
+    "backend_non_live_warnings": 17,
+    "backend_non_live_elapsed_seconds": 445.89
+  }
+}

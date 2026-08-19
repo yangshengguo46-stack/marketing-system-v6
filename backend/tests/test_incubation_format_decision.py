@@ -408,6 +408,15 @@ def test_provisional_decision_allows_missing_resource_information() -> None:
     assert sealed.payload["unknowns"] == ["尚未了解用户的出镜意愿、素材和协作资源。"]
 
 
+def test_a_claimed_resource_match_requires_at_least_one_evidence_artifact() -> None:
+    with pytest.raises(ValidationError):
+        ResourceMatch(
+            resource="店内可直接拍摄的旧书",
+            fit="可以作为本条内容的实物依据。",
+            basis_artifact_ids=(),
+        )
+
+
 def test_resource_basis_must_be_bound_as_a_parent() -> None:
     draft = _draft(
         resource_matches=(

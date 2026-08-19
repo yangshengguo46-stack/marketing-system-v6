@@ -2156,3 +2156,19 @@ Skill/856 个案例证明“一项 Skill 只做一件事、按需加载、自带
 `audits/A109-community-skills-agents-finetunes-and-live-e2e.md` 与
 `evidence/a109-community-and-live-e2e-2026-08-20.json`。聚焦回归 `167 passed`，最终后端非 live
 全量回归 `12247 passed, 76 skipped, 17 warnings in 517.62s`。
+
+## A110 默认交付停止边界与上下文成本
+
+2026-08-20 将普通具体选题交付改为默认只封存 `content_reading -> content_map_candidate ->
+topic_brief -> message_plan -> draft_version`，随后返回一个紧凑的“今日建议拍摄”和基础稿。
+`FormatDecision`、`AdaptedDraft`、`ProductionPlan` 只在用户明确请求相应下游能力时继续；制作请求可以
+显式包含前置适配，但不能改变基础稿。形式决策中的 `ResourceMatch` 必须至少绑定一个正式用户素材父工件。
+
+真实旧书确认路线从 A109 的 8 次调用降为 5 次，下降 `37.5%`。同一停止边界下，全新且通过正式 API
+绑定项目的线程为 42,615 Token，相比旧历史线程的 60,953 Token 下降约 `30.1%`；这证明自动下游调用与
+历史会话上下文是两类独立成本。最新定向交付验证已消除把当前续写请求当主体、字面量 `null`、虚构经营
+经验、西里尔词和账号方向长段落。详细事实仍保存在台账，聊天只投影边界数量和引用。剩余主要成本在证据
+召回/阅读和会话压缩，后续必须单独优化，不能恢复自动生产尾链。详见
+`audits/A110-delivery-stop-boundary-and-context-cost.md` 与
+`evidence/a110-delivery-stop-and-live-e2e-2026-08-20.json`。聚焦跨模块回归 `248 passed`；最终后端非 live
+全量回归 `12252 passed, 76 skipped, 17 warnings in 445.89s`，Agent 指导文件预算零警告。
