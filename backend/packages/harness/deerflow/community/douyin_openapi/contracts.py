@@ -42,6 +42,7 @@ class CapabilityEntry:
     child_name: str | None = None
     handler_key: str | None = None
     required_scopes: tuple[str, ...] = ()
+    required_scope_any_of: tuple[str, ...] = ()
     auth_mode: str | None = None
     risk_level: RiskLevel = "unknown"
     input_schema: dict[str, Any] | None = None

@@ -857,7 +857,8 @@ is not reused. Generic search receipts are topic evidence only. A video or accou
 returned by search is never treated as competitor-account analysis without a separate
 identity-bound, multi-post collection receipt.
 
-Official Douyin video search uses the current v2 contract. The same bounded adapter can
+Official Douyin video search selects the current v1 contract or the retained v2 contract
+from the application's exact approved Scope. The same bounded adapter can
 return `topic_evidence` for subject research or `benchmark_account_candidate` for account
 discovery. The purpose flag is local and is never forwarded to Douyin. A candidate author
 label can now be matched across bounded search pages, deduplicated by public video ID, and
@@ -876,7 +877,9 @@ write failure is reported separately without discarding the already collected ev
 The Gateway now exposes owner-scoped incubation project APIs and a dedicated thread binding
 endpoint. Run requests cannot inject or replace `incubation_project_id`; `start_run`
 rehydrates only the stored, owner-validated binding into runtime context. The product-facing
-frontend selector and local live Douyin credential acceptance are still pending.
+frontend selector and OAuth account authorization are still pending. Run `make doctor`
+before claiming live Douyin access: MCP domain discovery can succeed while the Client Key
+and Client Secret are absent.
 
 When a thread has a selected project, a successful content-world run now seals the exact
 `content_reading + content_map_candidate -> topic_brief -> message_plan -> draft_version -> format_decision -> adapted_draft`

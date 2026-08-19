@@ -45,7 +45,8 @@ flowchart LR
 两者都内容寻址且只向 Lead 给出有界投影，但证据角色不能互换。对标快照只是观察；定位、受众、
 获客期/当前迁移和不可复制条件属于独立 `IncubationJudgment` 的判断，不属于快照或内容地图。
 
-抖音读取采用官方优先路由。`search.video_search` 当前使用官方 v2 合同：选题检索生成
+抖音读取采用官方优先路由。`search.video_search` 按应用精确获批的 Scope 选择当前 v1 合同或
+保留的 v2 兼容合同：选题检索生成
 `topic_evidence`，对标发现生成 `benchmark_account_candidate`。搜索回执中的作者显示名没有稳定
 账号身份。现有聚合层可在同一 Manifest 下跨页搜索，按归一后的显示名筛选、去重，
 并将最多 24 条公开作品封存为项目级候选证据；它仍不能直接升级为

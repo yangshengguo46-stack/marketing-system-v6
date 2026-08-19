@@ -2057,3 +2057,18 @@ A/B/C 公共路线 -> 盲审 -> 密封标签检查”，代码、提示、Schema
 `audits/A101-real-account-benchmark-only-smoke-result.md`、
 `decisions/ADR-028-retain-semantic-world-and-use-benchmarks-as-evidence.md` 与
 `evidence/real-account-benchmark-smoke-a101-2026-08-19.json`。
+
+## A102 抖音 OpenAPI 真实接入断点
+
+2026-08-19 重新核对 Gateway 日志、第六版本地配置和抖音官方当前文档。MCP 子进程确实能
+列出 16 个领域，但根 `.env` 与当前 Gateway 进程均没有 `DOUYIN_CLIENT_KEY` 和
+`DOUYIN_CLIENT_SECRET`；之前所谓“已接通”只是 MCP 协议与 Catalog 路由通过，没有真实平台请求。
+
+官方视频搜索文档又从 A41 审计时的 v2/`aweme.dy.video_search_v2` 显示为当前
+v1/`aweme.dy.video_search`。运行时现按应用精确获批 Scope 选择当前 v1 或保留的 v2 合同，
+Manifest 接受两个别名中的真实获批项。`make doctor` 已增加抖音专项，会分别检查 MCP 可执行文件、
+应用凭据和搜索合同，不再将工具列表成功当成 API 成功。官方公开搜索使用应用级 `client_token`；
+自有/客户账号、粉丝、发布等另需 OAuth `access_token + open_id` 及独立令牌仓。当前 119 条仍是
+Catalog，真正实现的 Child 只有视频搜索和图文/经验搜索。真实凭据进入本地未跟踪配置并产生一次
+官方回执前，状态保持 `not live verified`。详见 `audits/A102-douyin-openapi-real-connection-audit.md` 与
+`evidence/douyin-openapi-preflight-a102-2026-08-19.md`。

@@ -26,7 +26,8 @@ from .contracts import CapabilityContext
 from .evidence import build_video_search_evidence_snapshot
 from .router import DomainRouter
 
-_VIDEO_SEARCH_SCOPE = "aweme.dy.video_search_v2"
+_VIDEO_SEARCH_SCOPE = "aweme.dy.video_search"
+_VIDEO_SEARCH_V2_SCOPE = "aweme.dy.video_search_v2"
 _MAX_PAGE_SIZE = 20
 
 
@@ -69,6 +70,14 @@ def _is_error_receipt(value: object) -> bool:
         return True
     data = value.get("data")
     return isinstance(data, dict) and "error" in data
+
+
+def _video_search_scope(context: CapabilityContext) -> str:
+    if _VIDEO_SEARCH_SCOPE in context.granted_scopes:
+        return _VIDEO_SEARCH_SCOPE
+    if _VIDEO_SEARCH_V2_SCOPE in context.granted_scopes:
+        return _VIDEO_SEARCH_V2_SCOPE
+    return _VIDEO_SEARCH_SCOPE
 
 
 async def collect_benchmark_account_candidate(
@@ -215,7 +224,7 @@ async def collect_benchmark_account_candidate(
 
     route_receipt = {
         "adapter": "douyin_openapi.search.video_search",
-        "capability_version": _VIDEO_SEARCH_SCOPE,
+        "capability_version": _video_search_scope(context),
         "manifest_version": manifest_version,
         "catalog_version": manifest.get("metadata", {}).get("catalog_version"),
         "pages_requested": pages_requested,

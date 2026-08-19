@@ -57,6 +57,8 @@ class DomainRouter:
         for entry in domain_entries:
             if not entry.is_child_contract:
                 continue
+            if entry.required_scope_any_of and not set(entry.required_scope_any_of).intersection(context.granted_scopes):
+                continue
             if not set(entry.required_scopes).issubset(context.granted_scopes):
                 continue
             callable_now, reason = self._availability(entry, context)

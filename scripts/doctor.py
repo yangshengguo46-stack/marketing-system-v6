@@ -11,6 +11,7 @@ Exit codes:
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -702,6 +703,87 @@ def check_env_file(project_root: Path) -> CheckResult:
     )
 
 
+def _resolved_mcp_env_value(raw_value: object) -> str:
+    if not isinstance(raw_value, str):
+        return ""
+    value = raw_value.strip()
+    if value.startswith("$"):
+        return os.environ.get(value[1:], "").strip()
+    return value
+
+
+def check_douyin_openapi(project_root: Path) -> list[CheckResult]:
+    """Check the real Douyin gateway prerequisites without printing secrets."""
+
+    config_path = project_root / "extensions_config.json"
+    if not config_path.exists():
+        return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
+    try:
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+        servers = payload.get("mcpServers")
+        server = servers.get("douyin_openapi") if isinstance(servers, dict) else None
+        if not isinstance(server, dict):
+            return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
+        if not server.get("enabled", True):
+            return [CheckResult("Douyin OpenAPI gateway", "skip", "disabled")]
+
+        results: list[CheckResult] = []
+        command = server.get("command")
+        command_name = command.strip() if isinstance(command, str) else ""
+        local_command = project_root / "backend" / ".venv" / "bin" / command_name
+        if command_name and (shutil.which(command_name) or local_command.is_file()):
+            results.append(CheckResult("Douyin MCP executable", "ok", command_name))
+        else:
+            results.append(
+                CheckResult(
+                    "Douyin MCP executable",
+                    "fail",
+                    command_name or "missing command",
+                    fix="Run `make install` so backend/.venv/bin/douyin-openapi-mcp exists",
+                )
+            )
+
+        raw_env = server.get("env")
+        env = raw_env if isinstance(raw_env, dict) else {}
+        has_key = bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_KEY")))
+        has_secret = bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_SECRET")))
+        if has_key and has_secret:
+            results.append(CheckResult("Douyin application credentials", "ok", "configured locally"))
+        else:
+            results.append(
+                CheckResult(
+                    "Douyin application credentials",
+                    "fail",
+                    "missing Client Key or Client Secret",
+                    fix="Add DOUYIN_CLIENT_KEY and DOUYIN_CLIENT_SECRET to the root .env file",
+                )
+            )
+
+        scopes = {
+            part.strip()
+            for part in _resolved_mcp_env_value(env.get("DOUYIN_APPROVED_SCOPES")).split(",")
+            if part.strip()
+        }
+        v1_scope = "aweme.dy.video_search"
+        v2_scope = "aweme.dy.video_search_v2"
+        if v1_scope in scopes:
+            results.append(CheckResult("Douyin video-search contract", "ok", f"v1 ({v1_scope})"))
+        elif v2_scope in scopes:
+            results.append(CheckResult("Douyin video-search contract", "ok", f"v2 compatibility ({v2_scope})"))
+        else:
+            results.append(
+                CheckResult(
+                    "Douyin video-search contract",
+                    "fail",
+                    "no approved video-search Scope declared",
+                    fix=f"Set DOUYIN_APPROVED_SCOPES to the exact approved Scope, normally {v1_scope}",
+                )
+            )
+        return results
+    except Exception as exc:
+        return [CheckResult("Douyin OpenAPI gateway", "fail", str(exc))]
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -764,6 +846,9 @@ def main() -> int:
         check_image_search(config_path),
     ]
     sections.append(("Web Capabilities", search_checks))
+
+    # ── Douyin OpenAPI ─────────────────────────────────────────────────
+    sections.append(("Douyin OpenAPI", check_douyin_openapi(project_root)))
 
     # ── Sandbox ──────────────────────────────────────────────────────────────
     sandbox_checks = check_sandbox(config_path)

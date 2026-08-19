@@ -17,8 +17,40 @@ def _clear_token_cache() -> None:
     tools._reset_token_cache_for_tests()
 
 
-def test_douyin_video_search_uses_the_current_official_v2_endpoint() -> None:
-    assert tools._VIDEO_SEARCH_URL == "https://open.douyin.com/dy_open_api/v2/search/video/"
+def test_douyin_video_search_defaults_to_the_current_official_v1_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("DOUYIN_APPROVED_SCOPES", raising=False)
+
+    contract = tools.resolve_video_search_contract({})
+
+    assert contract.url == "https://open.douyin.com/dy_open_api/v1/search/video/"
+    assert contract.scope == "aweme.dy.video_search"
+
+
+def test_douyin_video_search_keeps_v2_for_an_app_that_was_approved_for_v2(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("DOUYIN_APPROVED_SCOPES", "aweme.dy.video_search_v2")
+
+    contract = tools.resolve_video_search_contract({})
+
+    assert contract.url == "https://open.douyin.com/dy_open_api/v2/search/video/"
+    assert contract.scope == "aweme.dy.video_search_v2"
+
+
+def test_douyin_video_search_prefers_current_v1_when_both_scope_aliases_exist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        "DOUYIN_APPROVED_SCOPES",
+        "aweme.dy.video_search_v2,aweme.dy.video_search",
+    )
+
+    contract = tools.resolve_video_search_contract({})
+
+    assert contract.url == "https://open.douyin.com/dy_open_api/v1/search/video/"
+    assert contract.scope == "aweme.dy.video_search"
 
 
 @pytest.mark.asyncio

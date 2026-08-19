@@ -209,6 +209,11 @@ Lead 投影；抖音 `search.video_search` 的 DomainRouter 回执经白名单�
 `audits/A41-douyin-official-first-evidence-routing.md` 与
 `evidence/douyin-video-search-v2-a41-2026-08-16.md`。
 
+2026-08-19 A102 更正：官方当前文档又显示 v1/`aweme.dy.video_search`，而部分先前获批应用
+仍使用 v2/`aweme.dy.video_search_v2`。运行时现按应用精确声明的获批 Scope 选择两个合同，
+不再把文档漂移写成单一硬编码版本。`make doctor` 另行检查 MCP 进程、应用凭据和搜索 Scope。
+当前真实 Client Key/Secret 仍未进入 Gateway，因此状态仍为 `not live verified`。
+
 2026-08-17 第四切片回执：现有 DomainRouter 之上新增薄的对标候选聚合层。它使用
 同一 Manifest 跨页调用官方视频搜索，按 Unicode 归一后的作者显示名精确筛选、作品 ID
 去重，并记录排除、重复、跨页和停止回执。最多 24 条的完整候选快照可幂等封存到
@@ -557,7 +562,8 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-ledger-a38-2026-08-16.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-下一验收断点仍是 W02 的官方 v2 真实回执，需要本地绑定三项抖音应用凭据；W04 的持久提交意图与
+下一验收断点仍是 W02 的官方视频搜索真实回执，需要本地绑定 Client Key、Client Secret 和精确
+获批 Scope；W04 的持久提交意图与
 隔离云驱动、精确批准账本、受信来源与幂等物化已通过无费用验收。下一切片先对照实时能力 Schema、
 输出类型和计费证据，只为一个明确 MediaKit 云能力登记策略；取得用户对精确费用上限的新批准后才能做真实
 回执验收。不得用网页视觉采集伪装 W02 已通过，也不得在 Agent 循环内

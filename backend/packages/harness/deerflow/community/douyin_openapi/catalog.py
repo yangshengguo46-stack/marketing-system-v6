@@ -17,7 +17,8 @@ _MAX_DOMAIN_CHILDREN = 32
 _MAX_TOOL_LIST_BYTES = 24 * 1024
 _MAX_CHILD_DESCRIPTION_BYTES = 800
 _MAX_SCHEMA_BYTES = 4 * 1024
-_VIDEO_SEARCH_V2_URL = "https://open.douyin.com/dy_open_api/v2/search/video/"
+_VIDEO_SEARCH_URL = "https://open.douyin.com/dy_open_api/v1/search/video/"
+_VIDEO_SEARCH_SCOPE = "aweme.dy.video_search"
 _VIDEO_SEARCH_V2_SCOPE = "aweme.dy.video_search_v2"
 
 _VIDEO_SEARCH_INPUT_SCHEMA: dict[str, Any] = {
@@ -177,9 +178,9 @@ def _contract_overrides(entry: CapabilityEntry) -> CapabilityEntry:
             entry,
             child_name="video_search",
             handler_key="search.video_search",
-            http_url=_VIDEO_SEARCH_V2_URL,
-            scope=_VIDEO_SEARCH_V2_SCOPE,
-            required_scopes=(_VIDEO_SEARCH_V2_SCOPE,),
+            http_url=_VIDEO_SEARCH_URL,
+            scope=_VIDEO_SEARCH_SCOPE,
+            required_scope_any_of=(_VIDEO_SEARCH_SCOPE, _VIDEO_SEARCH_V2_SCOPE),
             auth_mode="client_token",
             risk_level="read",
             input_schema=_VIDEO_SEARCH_INPUT_SCHEMA,

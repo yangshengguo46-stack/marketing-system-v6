@@ -7,6 +7,7 @@ Run from repo root:
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -236,6 +237,85 @@ class TestCheckLLMAuth:
         monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "token")
         results = doctor.check_llm_auth(cfg)
         assert any(result.status == "ok" and "Claude auth available" in result.label for result in results)
+
+
+# ---------------------------------------------------------------------------
+# check_douyin_openapi
+# ---------------------------------------------------------------------------
+
+
+class TestCheckDouyinOpenAPI:
+    @staticmethod
+    def _write_extensions_config(tmp_path: Path, *, enabled: bool = True, scope: str = "aweme.dy.video_search") -> None:
+        (tmp_path / "extensions_config.json").write_text(
+            json.dumps(
+                {
+                    "mcpServers": {
+                        "douyin_openapi": {
+                            "enabled": enabled,
+                            "type": "stdio",
+                            "command": "douyin-openapi-mcp",
+                            "env": {
+                                "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
+                                "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
+                                "DOUYIN_APPROVED_SCOPES": scope,
+                            },
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    def test_enabled_gateway_reports_missing_real_credentials_without_values(self, tmp_path, monkeypatch):
+        self._write_extensions_config(tmp_path)
+        monkeypatch.delenv("DOUYIN_CLIENT_KEY", raising=False)
+        monkeypatch.delenv("DOUYIN_CLIENT_SECRET", raising=False)
+
+        results = doctor.check_douyin_openapi(tmp_path)
+
+        credential = next(result for result in results if result.label == "Douyin application credentials")
+        assert credential.status == "fail"
+        assert "DOUYIN_CLIENT_KEY" in (credential.fix or "")
+        rendered = "\n".join(f"{result.label} {result.detail} {result.fix}" for result in results)
+        assert "client-secret-value" not in rendered
+
+    def test_current_v1_scope_and_credentials_are_ready(self, tmp_path, monkeypatch):
+        self._write_extensions_config(tmp_path)
+        monkeypatch.setenv("DOUYIN_CLIENT_KEY", "client-key-value")
+        monkeypatch.setenv("DOUYIN_CLIENT_SECRET", "client-secret-value")
+        monkeypatch.setattr(doctor.shutil, "which", lambda command: f"/usr/local/bin/{command}")
+
+        results = doctor.check_douyin_openapi(tmp_path)
+
+        assert all(result.status == "ok" for result in results)
+        scope = next(result for result in results if result.label == "Douyin video-search contract")
+        assert "v1" in scope.detail
+        rendered = "\n".join(f"{result.label} {result.detail} {result.fix}" for result in results)
+        assert "client-key-value" not in rendered
+        assert "client-secret-value" not in rendered
+
+    def test_previously_approved_v2_scope_remains_supported(self, tmp_path, monkeypatch):
+        self._write_extensions_config(tmp_path, scope="aweme.dy.video_search_v2")
+        monkeypatch.setenv("DOUYIN_CLIENT_KEY", "client-key-value")
+        monkeypatch.setenv("DOUYIN_CLIENT_SECRET", "client-secret-value")
+        monkeypatch.setattr(doctor.shutil, "which", lambda command: f"/usr/local/bin/{command}")
+
+        results = doctor.check_douyin_openapi(tmp_path)
+
+        scope = next(result for result in results if result.label == "Douyin video-search contract")
+        assert scope.status == "ok"
+        assert "v2" in scope.detail
+
+    def test_disabled_gateway_is_skipped(self, tmp_path):
+        self._write_extensions_config(tmp_path, enabled=False)
+
+        results = doctor.check_douyin_openapi(tmp_path)
+
+        assert len(results) == 1
+        assert results[0].label == "Douyin OpenAPI gateway"
+        assert results[0].status == "skip"
+        assert results[0].detail == "disabled"
 
 
 # ---------------------------------------------------------------------------

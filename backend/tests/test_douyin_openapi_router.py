@@ -73,9 +73,12 @@ def test_official_catalog_snapshot_covers_every_directory_row_once() -> None:
         "汽水音乐": 2,
     }
     video_search = next(entry for entry in catalog.entries if entry.name_zh == "抖音视频搜索")
-    assert video_search.http_url == "https://open.douyin.com/dy_open_api/v2/search/video/"
-    assert video_search.scope == "aweme.dy.video_search_v2"
-    assert video_search.required_scopes == ("aweme.dy.video_search_v2",)
+    assert video_search.http_url == "https://open.douyin.com/dy_open_api/v1/search/video/"
+    assert video_search.scope == "aweme.dy.video_search"
+    assert video_search.required_scope_any_of == (
+        "aweme.dy.video_search",
+        "aweme.dy.video_search_v2",
+    )
 
 
 def test_catalog_loader_rejects_snapshot_content_hash_drift(
@@ -126,6 +129,16 @@ def test_discovery_keeps_authorized_but_unavailable_child_with_reason() -> None:
     assert [child["name"] for child in manifest["children"]] == ["video_search"]
     assert manifest["children"][0]["callable"] is False
     assert manifest["children"][0]["unavailable_reason"] == "adapter_not_registered"
+
+
+def test_discovery_accepts_the_current_v1_video_search_scope() -> None:
+    manifest = _router().discover(
+        "search",
+        _context(scopes={"aweme.dy.video_search"}, auth_modes={"client_token"}),
+    )
+
+    assert [child["name"] for child in manifest["children"]] == ["video_search"]
+    assert manifest["children"][0]["callable"] is True
 
 
 def test_search_domain_can_disclose_both_reviewed_search_children() -> None:

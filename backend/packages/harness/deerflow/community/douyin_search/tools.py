@@ -18,7 +18,10 @@ from deerflow.config import get_app_config
 logger = logging.getLogger(__name__)
 
 _STABLE_TOKEN_URL = "https://open.douyin.com/oauth/stable_client_token/"
-_VIDEO_SEARCH_URL = "https://open.douyin.com/dy_open_api/v2/search/video/"
+_VIDEO_SEARCH_URL = "https://open.douyin.com/dy_open_api/v1/search/video/"
+_VIDEO_SEARCH_SCOPE = "aweme.dy.video_search"
+_VIDEO_SEARCH_V2_URL = "https://open.douyin.com/dy_open_api/v2/search/video/"
+_VIDEO_SEARCH_V2_SCOPE = "aweme.dy.video_search_v2"
 _MAX_RESULTS = 20
 _TOKEN_REFRESH_SKEW_SECONDS = 60
 _TOKEN_RETRY_ERROR_CODES = {28001003, 28001008}
@@ -31,6 +34,12 @@ class _TokenEntry:
     expires_at: float
 
 
+@dataclass(frozen=True)
+class VideoSearchContract:
+    url: str
+    scope: str
+
+
 _token_cache: dict[str, _TokenEntry] = {}
 _token_lock = asyncio.Lock()
 
@@ -40,6 +49,29 @@ def _tool_extras() -> dict[str, Any]:
     if config is None:
         return {}
     return config.model_extra or {}
+
+
+def _configured_scopes(extras: dict[str, Any]) -> frozenset[str]:
+    raw = extras.get("approved_scopes") or os.getenv("DOUYIN_APPROVED_SCOPES", "")
+    if isinstance(raw, str):
+        return frozenset(part.strip() for part in raw.split(",") if part.strip())
+    if isinstance(raw, (list, tuple, set, frozenset)):
+        return frozenset(str(part).strip() for part in raw if str(part).strip())
+    return frozenset()
+
+
+def resolve_video_search_contract(extras: dict[str, Any] | None = None) -> VideoSearchContract:
+    """Select the provider contract from the app's actually approved Scope.
+
+    The official documentation moved from v1 to v2 and back to v1 while some
+    applications retained the previously approved v2 Scope. Prefer the current
+    v1 contract, but keep v2 for an app that declares only the v2 Scope.
+    """
+
+    scopes = _configured_scopes(extras or {})
+    if _VIDEO_SEARCH_V2_SCOPE in scopes and _VIDEO_SEARCH_SCOPE not in scopes:
+        return VideoSearchContract(url=_VIDEO_SEARCH_V2_URL, scope=_VIDEO_SEARCH_V2_SCOPE)
+    return VideoSearchContract(url=_VIDEO_SEARCH_URL, scope=_VIDEO_SEARCH_SCOPE)
 
 
 def _configured_text(extras: dict[str, Any], name: str, env_name: str) -> str | None:
@@ -122,7 +154,11 @@ async def _request_video_search(access_token: str, params: dict[str, object]) ->
         "content-type": "application/json",
     }
     async with httpx.AsyncClient(timeout=httpx.Timeout(30.0), trust_env=True) as client:
-        response = await client.get(_VIDEO_SEARCH_URL, headers=headers, params=params)
+        response = await client.get(
+            resolve_video_search_contract(_tool_extras()).url,
+            headers=headers,
+            params=params,
+        )
         response.raise_for_status()
         payload = response.json()
     return payload if isinstance(payload, dict) else {}

@@ -91,8 +91,10 @@ current app's declared Scope become callable Children.
 
 1. Set `DOUYIN_CLIENT_KEY` and `DOUYIN_CLIENT_SECRET` in local environment
    configuration. Never put literal values in the checked-in JSON or YAML.
-2. Set `DOUYIN_APPROVED_SCOPES` to the exact comma-separated Scopes approved for
-   this app. The initial adapters use `aweme.dy.video_search_v2` and
+2. Set `DOUYIN_APPROVED_SCOPES` to the exact comma-separated Scopes shown as
+   approved for this app. Current video-search documentation uses
+   `aweme.dy.video_search`; applications previously approved for
+   `aweme.dy.video_search_v2` remain supported. Image-text search uses
    `aweme.experience.search`.
 3. Add `douyin-openapi-mcp` to
    `DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST`; it is a first-party installed console
@@ -100,6 +102,17 @@ current app's declared Scope become callable Children.
 4. Copy the disabled `douyin_openapi` example from
    `extensions_config.example.json`, enable it, and restart or reset the MCP
    cache.
+5. Run `make doctor`. Seeing 16 MCP domain tools only proves that the local MCP
+   protocol loaded. `Douyin application credentials` and the exact search
+   contract must also pass before making a live provider request.
+
+Public search uses a two-hour application `client_token`, obtained from the
+Client Key and Client Secret without user login. Own-account, customer-account,
+publishing, fan, and other user-authorized APIs use a separate OAuth
+`access_token + open_id`: the user first authorizes the exact Scope, the callback
+code is exchanged server-side, and refresh tokens must be stored outside model
+context. The current gateway implements the public video and image-text search
+adapters only; the 119-row catalog is not 119 connected adapters.
 
 The server exposes 16 mutually exclusive top-level domains rather than one tool
 per catalog row. Call one best-matching domain with no arguments, then call one

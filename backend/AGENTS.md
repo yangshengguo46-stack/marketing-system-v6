@@ -193,9 +193,10 @@ materials, sales, experiments, quantities, or publishing decisions.
 Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
 formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post
 coverage, remains read-only, and cannot write strategy. Credentials, raw pages, local paths, and
-temporary URLs never enter projections or business artifacts. Production, MediaKit, approvals,
-publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/` and
-ADR-018 through ADR-022 for full contracts and status.
+temporary URLs never enter artifacts. Loaded MCP domains do not prove live access. Public video search
+selects v1 or retained v2 from declared Scope; credentials must resolve in Gateway and live acceptance
+still needs a provider receipt. Production, MediaKit,
+publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/`.
 
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
@@ -206,12 +207,11 @@ hearing-aid hidden labels were narrow or incomplete. Future labels require user-
 contracts must allow no strong root or a conditional IP. Keep dictionaries optional and do not add
 Douyin, maps, positioning, or agents to root recall.
 
-A99 and A101 are consumed offline benchmark-first experiments; never tune, rerun, import, or register
-them. A99's public-web evidence failed relevance. A101's accepted real Douyin pack improved mechanism,
-audience-response, and non-copy analysis, but its routes invented user facts and the model judge missed
-them. ADR-028 therefore keeps account evidence read-only after user facts and a candidate content world:
-it may challenge a conditional route, but cannot select a root, create capabilities, or treat a mature
-account as a cold-start template. Details remain in A99-A101 and ADR-028.
+A99/A101 are consumed offline experiments; never tune, rerun, import, or register them. A99's public-web
+evidence failed relevance. A101's real Douyin pack improved mechanism and audience-response analysis,
+but routes invented user facts and its judge missed them. ADR-028 keeps account evidence read-only after
+user facts and a candidate world: it may challenge a route, never select a root, create capabilities,
+or treat a mature account as a cold-start template.
 
 ## Development Workflow
 
