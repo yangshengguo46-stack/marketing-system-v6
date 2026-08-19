@@ -180,6 +180,29 @@ class SemanticReadingDraft(ContractModel):
     seller_actions: tuple[NonEmptyStr, ...] = ()
     uncertainties: tuple[NonEmptyStr, ...] = ()
 
+    @field_validator(
+        "modifiers",
+        "served_objects",
+        "served_activities",
+        "defining_functions_or_uses",
+        "social_or_cultural_frames",
+        "unmodified_subject_activities",
+        "unmodified_subject_functions_or_uses",
+        "unmodified_subject_frames",
+        "seller_actions",
+        "uncertainties",
+        mode="before",
+    )
+    @classmethod
+    def decode_provider_json_array_strings(cls, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            return value
+        return decoded if isinstance(decoded, list) else value
+
 
 class SharedWorldSynthesisDraft(ContractModel):
     common_action_or_relation: NonEmptyStr | None = None

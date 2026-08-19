@@ -931,6 +931,37 @@ async def test_analyzer_decodes_provider_stringified_projection_objects_without_
     assert bundle.topic_brief is not None
 
 
+def test_semantic_reading_decodes_explicit_provider_json_array_strings() -> None:
+    draft = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "儿童安全座椅",
+            "lexical_head": "座椅",
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "表达一个完整商品对象。",
+            "unmodified_subject_activities": '["乘坐"]',
+            "unmodified_subject_functions_or_uses": '["提供坐具支撑功能"]',
+            "unmodified_subject_frames": '["日常坐具使用"]',
+        }
+    )
+
+    assert draft.unmodified_subject_activities == ("乘坐",)
+    assert draft.unmodified_subject_functions_or_uses == ("提供坐具支撑功能",)
+    assert draft.unmodified_subject_frames == ("日常坐具使用",)
+
+
+def test_semantic_reading_rejects_free_text_disguised_as_a_collection() -> None:
+    with pytest.raises(ValidationError, match="unmodified_subject_activities"):
+        SemanticReadingDraft.model_validate(
+            {
+                "source_object": "儿童安全座椅",
+                "lexical_head": "座椅",
+                "offering_role": "complete_object_or_service",
+                "role_rationale": "表达一个完整商品对象。",
+                "unmodified_subject_activities": "乘坐",
+            }
+        )
+
+
 @pytest.mark.asyncio
 async def test_content_world_focus_uses_semantic_attention_before_map_expansion() -> None:
     model = _focused_model()

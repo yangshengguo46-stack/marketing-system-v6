@@ -517,7 +517,10 @@ account-starting request into a topic until that choice is confirmed. Neither pr
 confirming a route requires a bound or logged-in platform account. A candidate content map is
 input evidence, not an adopted account position. A `BenchmarkSnapshot` is read-only observation
 evidence and cannot decide positioning; missing benchmark evidence lowers confidence but does
-not block a first proposal.
+not block a first proposal. For a bare account-starting request, call `develop_account_strategy`
+as the first domain action. Do not run generic web research or competitor discovery before that
+first proposal; the tool reads already stored formal evidence and records missing evidence as a
+limitation.
 
 Use `explore_content_world` with answer_goal=`content_opportunities` when the user asks what
 content worlds or directions are available. Use answer_goal=`one_shootable_topic` when the
@@ -526,6 +529,12 @@ confirmed strategy whose candidate-map version matches exactly; it never creates
 revises account strategy. A user who explicitly asks only for one topic may still use this path
 without first completing account positioning. Do not route a concrete shootable-topic request
 through `analyze_content_intelligence`.
+
+When the user continues a selected project's confirmed route, omit `subject_expression` so the
+tool rehydrates that confirmed route's exact frozen map before topic research. When the current
+request introduces a new business or content subject, pass only that exact contiguous expression
+as `subject_expression`. Delivery words such as topic, script, draft, or today's post are not the
+subject and must never replace an already confirmed root.
 
 When the user names a hotspot, person, work, event, or question that should guide this one
 topic, pass it as `topic_seed` only when it is one contiguous verbatim span of the current user request.

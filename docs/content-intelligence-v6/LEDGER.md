@@ -2138,3 +2138,21 @@ Dynamic Cheatsheet、ACE、Agent Workflow Memory 和 Voyager。共同可用方�
 前端、检索或提示优化，当前回答行为不变。详见
 `audits/A108-agent-community-memory-and-evaluation-methods.md` 与
 `decisions/ADR-031-layered-experience-memory-before-optimization.md`。
+
+## A109 Skills、改造型 Agent、微调模型与真实端到端
+
+2026-08-20 继续审计两个营销 Skill 仓库、两个社交媒体 Agent 实现和公开微调模型。
+`marketingskills` 的 47 份评测 Skill/305 个案例与 `social-media-skills` 的 106 份评测
+Skill/856 个案例证明“一项 Skill 只做一件事、按需加载、自带评测”值得采用；
+`marketing-os-starter` 的关键词路由和自动营销链则重现第四版硬流程风险。公开营销微调
+模型主要提升文案和风格，不具备内容根、路线选择和反例标签，因此暂不替换 GLM 或微调核心模型。
+
+真实端到端先后跑了旧书店、工业阀门、儿童安全座椅与旧书确认路线续写。儿童安全座椅修复后从
+12 次调用/53,291 Token/4 次结构错误降为 7 次调用/21,773 Token/零结构错误。旧书续写暴露
+聊天交付词被重新识别为内容根，现改为从确认策略的精确父工件、哈希和原始阅读记录重建候选地图。
+修复后产出“书页上的印迹：藏书印如何让一部古书记住每一任主人”，用户复核确认选题与根路径通过；
+66,295 Token、交付过长和资源边界仍不通过。同时收紧首次起号路由、研究召回成本上限和供应商 JSON
+包装兼容；兼容层只接受精确容器类型，普通文本仍会失败。详见
+`audits/A109-community-skills-agents-finetunes-and-live-e2e.md` 与
+`evidence/a109-community-and-live-e2e-2026-08-20.json`。聚焦回归 `167 passed`，最终后端非 live
+全量回归 `12247 passed, 76 skipped, 17 warnings in 517.62s`。

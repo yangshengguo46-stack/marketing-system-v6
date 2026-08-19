@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Any
 
 import pytest
@@ -305,6 +306,8 @@ async def test_map_direction_search_runs_in_parallel_with_latent_recall_and_can_
     assert both_lanes_started.is_set()
     assert "unsupported recalled anecdote shared meal" in started_queries
     assert any("how the shared meal carries emotion and group belonging" in query for query in started_queries)
+    discovery_input = research_model.message_batches[0][1].content
+    assert '"max_candidate_recall": 2' in discovery_input
     reading_input = research_model.message_batches[1][1].content
     assert '"discovery_mode": "map_direction_search"' in reading_input
     assert '"discovery_mode": "latent_recall"' in reading_input
@@ -1385,6 +1388,24 @@ def test_topic_editor_keeps_story_structure_optional_but_complete_when_used() ->
         TopicEditorialDecisionDraft.model_validate(incomplete_story)
 
 
+def test_topic_editor_decodes_an_explicit_json_object_wrapper_from_the_provider() -> None:
+    payload = _editorial_payload()
+    payload["topic_brief"] = json.dumps(payload["topic_brief"], ensure_ascii=False)
+
+    decision = TopicEditorialDecisionDraft.model_validate(payload)
+
+    assert decision.topic_brief is not None
+    assert decision.topic_brief.question.startswith("How did one public event")
+
+
+def test_topic_editor_rejects_free_text_instead_of_treating_it_as_an_object() -> None:
+    payload = _editorial_payload()
+    payload["topic_brief"] = "a fluent answer that is not a JSON object"
+
+    with pytest.raises(ValidationError):
+        TopicEditorialDecisionDraft.model_validate(payload)
+
+
 def test_topic_editor_requires_an_explicit_abstention_instead_of_an_empty_answer() -> None:
     with pytest.raises(ValidationError, match="topic or an abstention"):
         TopicEditorialDecisionDraft.model_validate(
@@ -1405,6 +1426,7 @@ def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> Non
         budget.max_results_per_query,
         budget.max_evidence_items,
     ) == (6, 3, 3, 8)
+    assert "max_candidate_recall 是本轮技术预算上限，不是交付配额" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "人的行为、关系、情绪、选择、变化或共同记忆" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "冲突" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "博弈" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT

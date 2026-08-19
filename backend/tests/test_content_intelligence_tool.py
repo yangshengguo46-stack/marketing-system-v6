@@ -216,7 +216,7 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
 ) -> None:
     bundle = object()
     enriched_bundle = SimpleNamespace(topic_brief=object())
-    judgment = object()
+    judgment = SimpleNamespace(route_options=(), selected_option_id=None)
     judgment_artifact = object()
     prepared = SimpleNamespace(
         judgment=judgment,
@@ -227,6 +227,11 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
 
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
     monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_load_confirmed_topic_context",
+        AsyncMock(return_value=None),
+    )
     monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -297,6 +302,160 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
     assert "# 本条表现形式" in result.update["messages"][0].content
     assert "_answer_appendix" not in result.update["messages"][0].additional_kwargs["incubation_persistence"]
     render_judgment.assert_called_once_with(judgment)
+
+
+@pytest.mark.asyncio
+async def test_confirmed_route_topic_continuation_reuses_its_frozen_map_before_semantic_analysis(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frozen_bundle = SimpleNamespace(
+        record=SimpleNamespace(subject_expression="我是开旧书店的"),
+        content_world=SimpleNamespace(
+            source_object="旧书店",
+            content_entry="旧书",
+            content_root="旧书",
+        ),
+    )
+    enriched_bundle = SimpleNamespace(topic_brief=object())
+    judgment = SimpleNamespace(route_options=(), selected_option_id=None)
+    judgment_artifact = object()
+    prepared = SimpleNamespace(
+        judgment=judgment,
+        judgment_artifact=judgment_artifact,
+    )
+    shooting_delivery = object()
+    load_context = AsyncMock(return_value=(frozen_bundle, prepared))
+    semantic_analysis = AsyncMock()
+
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_load_confirmed_topic_context", load_context)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", semantic_analysis)
+    research = AsyncMock(return_value=enriched_bundle)
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "DouyinMcpTopicEvidenceSearch",
+        Mock(return_value=SimpleNamespace(snapshots=())),
+    )
+    delivery = AsyncMock(return_value=shooting_delivery)
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 今日建议拍摄\n\n## 一本旧书如何换过三个主人？"),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_account_strategy",
+        Mock(return_value="# 已确认的账号路线\n\n旧书的履历表"),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_persist_content_run",
+        AsyncMock(return_value={"status": "stored", "project_id": "project-1", "artifacts": []}),
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "按照这条路线，给我一个今天能直接拍的具体选题和基础稿。",
+                "subject_expression": "旧书店",
+                "topic_seed": "一本旧书的版本信息、扉页题字、藏书印、批注、修补痕迹和流通线索",
+                "runtime": _tool_runtime(
+                    "content-world-call-confirmed-continuation",
+                    context={"incubation_project_id": "project-1"},
+                ),
+            },
+            "id": "content-world-call-confirmed-continuation",
+            "type": "tool_call",
+        }
+    )
+
+    load_context.assert_awaited_once()
+    semantic_analysis.assert_not_awaited()
+    assert research.await_args.args[0] is frozen_bundle
+    assert research.await_args.kwargs["topic_seed"] is None
+    assert delivery.await_args.kwargs["incubation_judgment"] is judgment
+    assert "一本旧书如何换过三个主人" in result.update["messages"][0].content
+
+
+@pytest.mark.asyncio
+async def test_confirmed_topic_context_rehydrates_the_exact_map_bound_to_the_judgment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime
+
+    from deerflow.content_intelligence import ComprehensionRecord, ContentIntelligenceBundle, ContentWorldView, SourceItem
+    from deerflow.incubation import ArtifactEnvelope, ProjectRef, seal_content_run_artifacts
+
+    now = datetime(2026, 8, 20, 8, 0, tzinfo=UTC)
+    project = ProjectRef(owner_user_id="user-1", project_id="old-books")
+    record = ComprehensionRecord(
+        record_id="record-old-books",
+        subject_expression="我是开旧书店的",
+        sources=(
+            SourceItem(
+                source_id="source-user",
+                kind="user_statement",
+                content="我是开旧书店的",
+            ),
+        ),
+    )
+    world = ContentWorldView(
+        record_id=record.record_id,
+        source_object="旧书店",
+        content_entry="旧书",
+        content_root="旧书",
+        root_rationale="店是经营容器，旧书才是可持续追踪履历的内容主体。",
+        editorial_promise="从书的版本、旧主人与流转经历理解一本书的生命。",
+        recurring_lens="追踪一本书在不同时间、地方和人手中的变化。",
+    )
+    bundle = ContentIntelligenceBundle(record=record, content_world=world)
+    artifacts = seal_content_run_artifacts(
+        project=project,
+        bundle=bundle,
+        delivery=None,
+        created_at=now,
+        source_thread_id="thread-original",
+        source_run_id="run-original",
+    )
+    judgment = ArtifactEnvelope.seal(
+        project=project,
+        artifact_type="incubation_judgment",
+        version=1,
+        payload={
+            "content_map_version_id": world.content_map_version_id(),
+            "monetization": [],
+            "unknowns": [],
+            "alternatives": [],
+        },
+        parents=(artifacts.content_world.to_parent_ref(),),
+        created_at=now,
+        source_thread_id="thread-confirmation",
+        source_run_id="run-confirmation",
+    )
+    stored = [artifacts.content_reading, artifacts.content_world, judgment]
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        list_artifacts=AsyncMock(return_value=stored),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "_get_incubation_repository", lambda: repository)
+
+    result = await content_intelligence_tool_module._load_confirmed_topic_context(
+        runtime=_tool_runtime(
+            "load-confirmed-topic-context",
+            context={"incubation_project_id": project.project_id},
+        )
+    )
+
+    assert result is not None
+    restored_bundle, restored_strategy = result
+    assert restored_bundle.record.subject_expression == "我是开旧书店的"
+    assert restored_bundle.content_world is not None
+    assert restored_bundle.content_world.content_root == "旧书"
+    assert restored_bundle.content_world.content_map_version_id() == world.content_map_version_id()
+    assert restored_strategy.judgment_artifact == judgment
 
 
 @pytest.mark.asyncio
@@ -509,14 +668,28 @@ async def test_topic_seed_reaches_research_only_as_a_verbatim_user_request_span(
 
 
 @pytest.mark.asyncio
-async def test_topic_seed_outside_user_request_is_rejected_before_analysis(
+async def test_topic_seed_outside_user_request_is_dropped_without_blocking_the_valid_request(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    analysis = AsyncMock()
-    research = AsyncMock()
+    bundle = object()
+    enriched_bundle = SimpleNamespace(topic_brief=object())
+    shooting_delivery = object()
+    analysis = AsyncMock(return_value=bundle)
+    research = AsyncMock(return_value=enriched_bundle)
     monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
     monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", analysis)
     monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_shooting_delivery",
+        AsyncMock(return_value=shooting_delivery),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 今日建议拍摄\n\n## 一条不依赖伪线索的选题"),
+    )
 
     result = await explore_content_world_tool.ainvoke(
         {
@@ -532,9 +705,9 @@ async def test_topic_seed_outside_user_request_is_rejected_before_analysis(
         }
     )
 
-    assert "选题线索必须直接来自你的原话" in result.update["messages"][0].content
-    analysis.assert_not_awaited()
-    research.assert_not_awaited()
+    assert "一条不依赖伪线索的选题" in result.update["messages"][0].content
+    analysis.assert_awaited_once()
+    assert research.await_args.kwargs["topic_seed"] is None
 
 
 def test_tool_layer_renders_candidate_map_as_basis_and_prioritizes_the_shootable_topic() -> None:
@@ -963,6 +1136,7 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
 
     assert set(schema["properties"]) == {
         "answer_goal",
+        "subject_expression",
         "topic_seed",
         "user_request",
     }
@@ -1456,6 +1630,8 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "answer_goal=`one_shootable_topic`" in normalized_section
     assert "sole owner of positioning, audience, persona, account-level presentation, and monetization hypotheses" in normalized_section
     assert "Use `develop_account_strategy` for account-starting or positioning requests" in normalized_section
+    assert "call `develop_account_strategy` as the first domain action" in normalized_section
+    assert "Do not run generic web research or competitor discovery before that first proposal" in normalized_section
     assert "A candidate content map is input evidence, not an adopted account position" in normalized_section
     assert "never creates, confirms, or revises account strategy" in normalized_section
     assert "call `confirm_account_strategy` with that exact option id" in normalized_section
@@ -1463,6 +1639,8 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "BenchmarkSnapshot" in normalized_section
     assert "cannot decide positioning" in normalized_section
     assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section
+    assert "omit `subject_expression` so the tool rehydrates that confirmed route's exact frozen map" in normalized_section
+    assert "Delivery words such as topic, script, draft, or today's post are not the subject" in normalized_section
     assert "topic_seed" in normalized_section
     assert "contiguous verbatim span of the current user request" in normalized_section
     assert "posting cadence" in normalized_section

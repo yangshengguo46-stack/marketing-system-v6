@@ -185,12 +185,13 @@ content subject, business connection, audience, persona, presentation, monetizat
 and tradeoffs. It may recommend one but cannot confirm it. When no explicit project is selected, a
 trusted owner/thread lazily receives a deterministic internal project on the first strategy request;
 later runs rehydrate it from the ledger. An explicitly selected stale project still fails closed.
-`confirm_account_strategy` is the only writer for the user's exact route choice and creates the
-linked `confirmed` successor; neither operation requires a platform account. Topic delivery may read
-only the latest confirmed exact-map strategy and cannot create, confirm, or revise one. A current
-account-starting request must not be silently reinterpreted as topic continuation merely because a
-confirmed strategy exists. `MessagePlan` and `BaseDraft` stay format-neutral and cannot invent facts,
-materials, sales, experiments, quantities, or publishing decisions.
+Only `confirm_account_strategy` adopts a route; topic delivery cannot create or revise one. A new
+account-starting request is not continuation merely because a confirmed route exists. Confirmed
+topic continuation reconstructs the exact source record and map hash; delivery words never become
+the root. A new subject must be contiguous current-user text. Drop an invalid optional topic seed.
+Research caps are ceilings, not quotas. Decode provider JSON wrappers only to the exact target type;
+otherwise fail. `MessagePlan` and `BaseDraft` cannot invent facts, materials, sales, quantities, or
+publishing decisions.
 
 Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
 formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post

@@ -1,0 +1,98 @@
+{
+  "audit_id": "A109",
+  "date": "2026-08-20",
+  "status": "reviewed_and_live_e2e_repaired",
+  "community_snapshots": [
+    {
+      "repository": "coreyhaines31/marketingskills",
+      "commit": "7868cb9251fad80a73d26e488a5ad5f6c4a9f335",
+      "license": "MIT",
+      "eval_files": 47,
+      "eval_cases": 305
+    },
+    {
+      "repository": "social-media-skills/skills",
+      "commit": "6e30eeb2f6736bda8683b6bbaa674af3641d7945",
+      "license": "MIT",
+      "eval_files": 106,
+      "eval_cases": 856
+    },
+    {
+      "repository": "ericosiu/marketing-os-starter",
+      "commit": "798fed627b481af44531b6563004d44f6a0c612d",
+      "license": "MIT",
+      "agent_count": 4,
+      "skill_count": 5
+    },
+    {
+      "repository": "langchain-ai/social-media-agent",
+      "commit": "8c416f75a2af3ec5bb3599b956360bb9874b1eaf",
+      "license": "MIT"
+    }
+  ],
+  "live_runs": [
+    {
+      "case": "used_book_shop_initial_strategy",
+      "thread_id": "aef4c464-ce38-4d3a-9336-ac13834acd56",
+      "run_id": "26b1e18b-c398-49ca-9952-5bc994fa4340",
+      "model_calls": 10,
+      "tokens": 27242,
+      "result": "partial_pass"
+    },
+    {
+      "case": "industrial_valves_initial_strategy",
+      "thread_id": "fdd1d262-5f08-4ddc-9d0d-661431bfd321",
+      "run_id": "b9b8e830-da65-4f14-997f-cfdfc885565f",
+      "model_calls": 8,
+      "tokens": 23798,
+      "result": "partial_pass"
+    },
+    {
+      "case": "child_safety_seat_before_routing_fix",
+      "thread_id": "488fb7eb-7fd4-4974-b716-755918f0e9cf",
+      "run_id": "7d6246ce-50e8-4cf6-8eed-1c2d03c04db4",
+      "model_calls": 12,
+      "tokens": 53291,
+      "structured_errors": 4,
+      "result": "failed"
+    },
+    {
+      "case": "child_safety_seat_after_routing_fix",
+      "thread_id": "c6817155-c829-4b7b-82f1-243196013212",
+      "run_id": "28ae2108-6b7f-40fa-a8fb-ebef917f9d64",
+      "model_calls": 7,
+      "tokens": 21773,
+      "structured_errors": 0,
+      "result": "partial_pass"
+    },
+    {
+      "case": "used_book_confirmed_route_topic",
+      "thread_id": "aef4c464-ce38-4d3a-9336-ac13834acd56",
+      "run_id": "54227c13-5e3d-4107-8816-efb50d9cc448",
+      "model_calls": 8,
+      "tokens": 66295,
+      "topic": "书页上的印迹：藏书印如何让一部古书记住每一任主人",
+      "rooted_path": [
+        "旧书",
+        "扉页题字/藏书印等如何揭示前藏主",
+        "藏书印"
+      ],
+      "user_topic_review": "pass",
+      "delivery_review": "needs_cost_length_and_resource_boundary_work"
+    }
+  ],
+  "runtime_decision": {
+    "lead_runtime": "keep_single_deerflow_lead",
+    "skills": "adopt_bounded_job_specific_patterns_only",
+    "second_agent_runtime": "reject",
+    "core_model_swap": "defer",
+    "core_finetune": "defer_until_reviewed_cross_industry_labels"
+  },
+  "verification": {
+    "focused_tests_passed": 167,
+    "backend_non_live_passed": 12247,
+    "backend_non_live_skipped": 76,
+    "backend_non_live_warnings": 17,
+    "backend_non_live_elapsed_seconds": 517.62
+  }
+}

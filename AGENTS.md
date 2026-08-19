@@ -182,11 +182,10 @@ These apply repo-wide; module guides own the module-specific detail.
 - **Test-driven development** — features and bug fixes ship with tests. Backend tests live
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
-- **V6 content core** — ADR-020 owns semantic order. Candidate maps are not account strategy.
-  `develop_account_strategy` proposes 2-5 routes; only `confirm_account_strategy` records the
-  user's choice. A trusted thread may lazily create its internal project on the first strategy
-  request; no project UI or platform login is required. A generic container transaction restored
-  with its served category stays a map branch. Topics read confirmed exact-map strategy, and
-  competitor evidence stays read-only. See `docs/content-intelligence-v6/` and `backend/AGENTS.md`.
+- **V6 content core** — ADR-020 owns semantic order; candidate maps are not account strategy.
+  Strategy proposes 2-5 routes and only user confirmation adopts one. Confirmed topic continuation
+  rehydrates the exact source map instead of reinterpreting delivery words. Research budgets are
+  ceilings; provider wrappers normalize only the exact target type. Competitor evidence is read-only.
+  See `docs/content-intelligence-v6/` and `backend/AGENTS.md`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

@@ -170,6 +170,19 @@ class TopicEditorialDecisionDraft(ContractModel):
     topic_brief: EvidenceTopicDraft | None = None
     abstention_reason: NonEmptyStr | None = None
 
+    @field_validator("topic_brief", mode="before")
+    @classmethod
+    def decode_explicit_json_object_wrapper(cls, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            return value
+        if decoded is None or isinstance(decoded, dict):
+            return decoded
+        return value
+
     @model_validator(mode="after")
     def require_topic_or_explicit_abstention(self) -> TopicEditorialDecisionDraft:
         if (self.topic_brief is None) == (self.abstention_reason is None):
@@ -216,6 +229,7 @@ RESEARCH_DISCOVERY_SYSTEM_PROMPT = """<content_intelligence_research>
 - 优先寻找能显化人的行为、关系、情绪、选择、变化或共同记忆的候选，让具体对象帮助观众理解内容根。除非冻结地图明确以行业经营为主题，不要让卖方经营案例、企业扩张或设备方案压过人的世界。
 - 候选只是检索入口，不是事实。为每个候选说明它与内容根的关系，并给出可以在公开资料中核验的搜索词。
 - candidate.entity 必须是可核验的专名对象或明确记录，不得把地图里的泛化教程词、普通技法类别或宽泛需求换个说法当成命名候选。搜索词应优先指向原始作品、当事人记录、公共机构或可靠报道。
+- max_candidate_recall 是本轮技术预算上限，不是交付配额。只保留最值得查证的少量候选，可以少于上限或为空，不得超出。
 - 地图没有自然落点时可以返回空列表，不要为了凑齐数量制造候选或查询。
 - 不输出平台、表现形式、运营步骤、销售、实验或发布计划。
 
@@ -426,10 +440,12 @@ def _render_discovery_input(
     bundle: ContentIntelligenceBundle,
     *,
     topic_seed: str | None = None,
+    max_candidate_recall: int = 6,
 ) -> str:
     world = bundle.content_world
     assert world is not None and world.content_root is not None
     payload = {
+        "max_candidate_recall": max_candidate_recall,
         "content_root": world.content_root,
         "content_map_version_id": world.content_map_version_id(),
         "editorial_promise": world.editorial_promise,
@@ -524,7 +540,13 @@ async def _discover_and_collect_search_evidence(
             ResearchDiscoveryDraft,
             (
                 SystemMessage(content=_render_discovery_system_prompt(topic_seed)),
-                HumanMessage(content=_render_discovery_input(bundle, topic_seed=topic_seed)),
+                HumanMessage(
+                    content=_render_discovery_input(
+                        bundle,
+                        topic_seed=topic_seed,
+                        max_candidate_recall=budget.max_queries,
+                    )
+                ),
             ),
             runnable_config=runnable_config,
             include_raw=True,

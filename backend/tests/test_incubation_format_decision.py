@@ -369,6 +369,21 @@ def test_narrative_method_is_an_optional_hint_only_for_narrative_forms() -> None
         )
 
 
+def test_format_decision_normalizes_only_the_explicit_json_null_literal() -> None:
+    decision = _draft(
+        selected_format=FormatChoice(kind="spoken_delivery"),
+        narrative_method_hint="null",
+    )
+
+    assert decision.narrative_method_hint is None
+
+    with pytest.raises(ValidationError, match="narrative method hint"):
+        _draft(
+            selected_format=FormatChoice(kind="spoken_delivery"),
+            narrative_method_hint="none",
+        )
+
+
 def test_provisional_decision_allows_missing_resource_information() -> None:
     message_plan = _message_plan()
     sealed = seal_format_decision(

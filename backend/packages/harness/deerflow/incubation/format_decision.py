@@ -154,6 +154,13 @@ class FormatDecisionDraft(IncubationContract):
     unknowns: tuple[NonEmptyStr, ...] = ()
     narrative_method_hint: NonEmptyStr | None = None
 
+    @field_validator("narrative_method_hint", mode="before")
+    @classmethod
+    def normalize_explicit_json_null_literal(cls, value: object) -> object:
+        if isinstance(value, str) and value.strip() == "null":
+            return None
+        return value
+
     @model_validator(mode="after")
     def keep_narrative_method_optional_and_downstream(self) -> FormatDecisionDraft:
         if self.narrative_method_hint is not None and self.selected_format.kind not in _NARRATIVE_FORMATS:

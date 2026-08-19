@@ -925,6 +925,12 @@ injected through `ToolRuntime` and stay out of the model-facing tool schema. The
 candidate map excludes run-specific named candidates, so later research does not silently
 rewrite an adopted account strategy. Running without a selected project remains valid, and a
 redacted ledger or post-draft adaptation failure does not discard the generated answer.
+When a user asks for a concrete topic after confirming an account route, the tool reconstructs
+that route's exact source reading and content-addressed candidate map from the ledger. It does not
+run semantic analysis again on delivery words such as "draft" or "today's topic". A truly new
+subject must still appear verbatim in the current request. Research recall limits are cost ceilings,
+not output quotas, and narrow provider normalization accepts only explicit JSON wrappers of the
+expected container type; free text remains a contract error.
 Project history UI, visual route-selection cards, version switching, and production fact
 review remain later V6 work. Chat-based exact-route confirmation is implemented.
 

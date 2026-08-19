@@ -402,3 +402,6 @@ async def test_monetization_stays_in_judgment_and_cannot_rewrite_content_map() -
     assert "不要求固定模板" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "不要求数字配额" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "不要求实验" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "业务身份不等于资源所有权" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "已知资源" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "resource_requirements" in INCUBATION_JUDGMENT_SYSTEM_PROMPT

@@ -18,8 +18,11 @@ from pydantic import BaseModel, Field, ValidationError
 from deerflow.community.url_safety import validate_public_http_url
 from deerflow.content_intelligence import (
     AnalysisFocus,
+    BusinessSemanticView,
+    ComprehensionRecord,
     ContentIntelligenceBundle,
     ContentIntelligenceRequest,
+    ContentWorldView,
     ResearchSearchResult,
     ShootingDelivery,
     SourceMaterial,
@@ -33,6 +36,7 @@ from deerflow.incubation import (
     ArtifactEnvelope,
     EvidenceSnapshot,
     FormatDecision,
+    PreparedAccountStrategy,
     ProductionPlan,
     ProjectRef,
     generate_adapted_draft,
@@ -284,6 +288,86 @@ async def _load_current_account_strategy(
     )
 
 
+async def _load_confirmed_topic_context(
+    *,
+    runtime: Runtime,
+) -> tuple[ContentIntelligenceBundle, PreparedAccountStrategy] | None:
+    """Rehydrate the exact frozen map selected by the confirmed account route."""
+
+    project_id = _runtime_context_text(runtime, "incubation_project_id")
+    owner_user_id = _runtime_context_text(runtime, "user_id")
+    if project_id is None or owner_user_id is None:
+        return None
+    repository = _get_incubation_repository()
+    if repository is None:
+        return None
+    project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    if await repository.get_project(project) is None:
+        return None
+
+    artifacts = await repository.list_artifacts(project)
+    strategy = select_current_account_strategy(
+        artifacts,
+        require_confirmed=True,
+    )
+    if strategy is None:
+        return None
+
+    by_id = {artifact.artifact_id: artifact for artifact in artifacts}
+    map_parents = tuple(parent for parent in strategy.judgment_artifact.parents if parent.artifact_type == "content_map_candidate")
+    if len(map_parents) != 1:
+        raise ValueError("confirmed account strategy requires exactly one candidate-map parent")
+    map_parent = map_parents[0]
+    map_artifact = by_id.get(map_parent.artifact_id)
+    if map_artifact is None or map_artifact.artifact_type != map_parent.artifact_type or map_artifact.content_sha256 != map_parent.content_sha256:
+        raise ValueError("confirmed account strategy candidate-map receipt does not match storage")
+    if map_artifact.payload.get("content_map_version_id") != strategy.judgment.content_map_version_id:
+        raise ValueError("confirmed account strategy does not match its candidate-map version")
+
+    reading_candidates = tuple(
+        artifact
+        for artifact in artifacts
+        if artifact.artifact_type == "content_reading"
+        and artifact.source_thread_id == map_artifact.source_thread_id
+        and artifact.source_run_id == map_artifact.source_run_id
+        and isinstance(artifact.payload.get("root_selection"), dict)
+        and artifact.payload["root_selection"].get("content_map_version_id") == strategy.judgment.content_map_version_id
+    )
+    if len(reading_candidates) != 1:
+        raise ValueError("confirmed candidate map requires one exact source reading")
+    reading_artifact = reading_candidates[0]
+    root_selection = reading_artifact.payload["root_selection"]
+    record = ComprehensionRecord.model_validate(reading_artifact.payload.get("record"))
+    business_payload = reading_artifact.payload.get("business_semantics")
+    business_semantics = BusinessSemanticView.model_validate(business_payload) if business_payload is not None else None
+    content_world = ContentWorldView.model_validate(
+        {
+            "record_id": record.record_id,
+            "source_object": root_selection.get("source_object"),
+            "content_entry": root_selection.get("content_entry"),
+            "content_root": map_artifact.payload.get("content_root"),
+            "root_rationale": root_selection.get("root_rationale"),
+            "editorial_promise": map_artifact.payload.get("editorial_promise"),
+            "recurring_lens": map_artifact.payload.get("recurring_lens"),
+            "drift_boundaries": map_artifact.payload.get("drift_boundaries", []),
+            "root_candidates": root_selection.get("root_candidates", []),
+            "dimensions": map_artifact.payload.get("dimensions", []),
+            "named_candidates": root_selection.get("named_candidates", []),
+            "unknown_refs": root_selection.get("unknown_refs", []),
+        }
+    )
+    if content_world.content_map_version_id() != strategy.judgment.content_map_version_id:
+        raise ValueError("rehydrated candidate map does not match the confirmed account strategy")
+    return (
+        ContentIntelligenceBundle(
+            record=record,
+            business_semantics=business_semantics,
+            content_world=content_world,
+        ),
+        strategy,
+    )
+
+
 async def _analyze_content_intelligence(
     user_request: str,
     subject_expression: str,
@@ -325,6 +409,7 @@ async def explore_content_world_tool(
     runtime: Runtime,
     user_request: str,
     answer_goal: ContentWorldAnswerGoal = ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC,
+    subject_expression: str | None = None,
     topic_seed: str | None = None,
 ) -> Command:
     """Build a candidate content-opportunity map or one evidence-bound shootable topic.
@@ -339,34 +424,55 @@ async def explore_content_world_tool(
     Args:
         user_request: The current content-opportunity or concrete-topic request, copied without adding requirements.
         answer_goal: Whether to return candidate content opportunities or one concrete shootable topic.
+        subject_expression: Optional exact business or content subject copied as one contiguous span from user_request. Omit it when continuing a selected project's confirmed route so the tool reuses that route's frozen map.
         topic_seed: Optional hotspot, person, work, event, or question copied as one contiguous verbatim span from user_request.
     """
     try:
         validated_topic_seed = _validate_topic_seed(user_request, topic_seed)
     except ValueError:
-        return _terminal_content_world_command(
-            "选题线索必须直接来自你的原话，因此这次没有让该线索进入研究。",
-            tool_call_id=runtime.tool_call_id,
-        )
+        validated_topic_seed = None
 
     config = runtime.config
     tool_call_id = runtime.tool_call_id
     model = _create_content_intelligence_model(config)
     lexical_evidence_provider = _create_lexical_evidence_provider()
-    request = ContentIntelligenceRequest(
-        user_request=user_request,
-        subject_expression=user_request,
-        focus=AnalysisFocus.CONTENT_WORLD,
-        source_materials=(),
-    )
 
     try:
-        bundle = await analyze_content_intelligence(
-            request,
-            model=model,
-            runnable_config=config,
-            lexical_evidence_provider=lexical_evidence_provider,
+        confirmed_context = None
+        if answer_goal == ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC:
+            confirmed_context = await _load_confirmed_topic_context(runtime=runtime)
+        reuse_confirmed_context = confirmed_context is not None and (
+            subject_expression is None
+            or _subject_expression_matches_confirmed_context(
+                subject_expression,
+                bundle=confirmed_context[0],
+                strategy=confirmed_context[1],
+            )
         )
+        if not reuse_confirmed_context:
+            try:
+                validated_subject_expression = _validate_subject_expression(user_request, subject_expression)
+            except ValueError:
+                return _terminal_content_world_command(
+                    "内容主体必须来自当前原话或已确认项目，因此这次没有用一个陌生主体覆盖现有路线。",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            request = ContentIntelligenceRequest(
+                user_request=user_request,
+                subject_expression=validated_subject_expression or user_request,
+                focus=AnalysisFocus.CONTENT_WORLD,
+                source_materials=(),
+            )
+            bundle = await analyze_content_intelligence(
+                request,
+                model=model,
+                runnable_config=config,
+                lexical_evidence_provider=lexical_evidence_provider,
+            )
+            current_strategy = None
+        else:
+            assert confirmed_context is not None
+            bundle, current_strategy = confirmed_context
         if answer_goal == ContentWorldAnswerGoal.CONTENT_OPPORTUNITIES:
             persistence = await _persist_content_run(
                 bundle=bundle,
@@ -380,10 +486,11 @@ async def explore_content_world_tool(
                 persistence=persistence,
             )
 
-        current_strategy = await _load_current_account_strategy(
-            bundle=bundle,
-            runtime=runtime,
-        )
+        if current_strategy is None:
+            current_strategy = await _load_current_account_strategy(
+                bundle=bundle,
+                runtime=runtime,
+            )
         douyin_topic_search: DouyinMcpTopicEvidenceSearch | None = None
         try:
             douyin_topic_search = DouyinMcpTopicEvidenceSearch(runtime)
@@ -500,6 +607,43 @@ def _validate_topic_seed(user_request: str, topic_seed: str | None) -> str | Non
     if not topic_seed.strip() or topic_seed not in user_request:
         raise ValueError("topic_seed must be a non-empty contiguous verbatim span of user_request")
     return topic_seed
+
+
+def _validate_subject_expression(user_request: str, subject_expression: str | None) -> str | None:
+    if subject_expression is None:
+        return None
+    if not subject_expression.strip() or subject_expression not in user_request:
+        raise ValueError("subject_expression must be a non-empty contiguous verbatim span of user_request")
+    return subject_expression
+
+
+def _subject_expression_matches_confirmed_context(
+    subject_expression: str,
+    *,
+    bundle: ContentIntelligenceBundle,
+    strategy: PreparedAccountStrategy,
+) -> bool:
+    candidate = "".join(subject_expression.split())
+    if not candidate:
+        return False
+    world = bundle.content_world
+    aliases = {
+        bundle.record.subject_expression,
+        *((world.source_object, world.content_entry, world.content_root) if world is not None else ()),
+    }
+    selected_option = next(
+        (option for option in strategy.judgment.route_options if option.option_id == strategy.judgment.selected_option_id),
+        None,
+    )
+    if selected_option is not None:
+        aliases.update((selected_option.name, selected_option.positioning.decision))
+    for alias in aliases:
+        if alias is None:
+            continue
+        normalized_alias = "".join(alias.split())
+        if candidate in normalized_alias or normalized_alias in candidate:
+            return True
+    return False
 
 
 def _render_content_opportunity_map(bundle: ContentIntelligenceBundle) -> str:
