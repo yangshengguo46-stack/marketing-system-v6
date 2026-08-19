@@ -246,24 +246,37 @@ class TestCheckLLMAuth:
 
 class TestCheckDouyinOpenAPI:
     @staticmethod
-    def _write_extensions_config(tmp_path: Path, *, enabled: bool = True, scope: str = "aweme.dy.video_search") -> None:
+    def _write_extensions_config(
+        tmp_path: Path,
+        *,
+        enabled: bool = True,
+        scope: str = "aweme.dy.video_search",
+        official_enabled: bool = False,
+    ) -> None:
+        servers = {
+            "douyin_openapi": {
+                "enabled": enabled,
+                "type": "stdio",
+                "command": "douyin-openapi-mcp",
+                "env": {
+                    "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
+                    "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
+                    "DOUYIN_APPROVED_SCOPES": scope,
+                },
+            }
+        }
+        if official_enabled:
+            servers["douyin_official_mcp"] = {
+                "enabled": True,
+                "type": "stdio",
+                "command": "douyin-official-mcp",
+                "env": {
+                    "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
+                    "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
+                },
+            }
         (tmp_path / "extensions_config.json").write_text(
-            json.dumps(
-                {
-                    "mcpServers": {
-                        "douyin_openapi": {
-                            "enabled": enabled,
-                            "type": "stdio",
-                            "command": "douyin-openapi-mcp",
-                            "env": {
-                                "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
-                                "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
-                                "DOUYIN_APPROVED_SCOPES": scope,
-                            },
-                        }
-                    }
-                }
-            ),
+            json.dumps({"mcpServers": servers}),
             encoding="utf-8",
         )
 
@@ -306,6 +319,20 @@ class TestCheckDouyinOpenAPI:
         scope = next(result for result in results if result.label == "Douyin video-search contract")
         assert scope.status == "ok"
         assert "v2" in scope.detail
+
+    def test_official_mcp_bridge_is_reported_separately_from_live_tools(self, tmp_path, monkeypatch):
+        self._write_extensions_config(tmp_path, official_enabled=True)
+        monkeypatch.setenv("DOUYIN_CLIENT_KEY", "client-key-value")
+        monkeypatch.setenv("DOUYIN_CLIENT_SECRET", "client-secret-value")
+        monkeypatch.setattr(doctor.shutil, "which", lambda command: f"/usr/local/bin/{command}")
+
+        results = doctor.check_douyin_openapi(tmp_path)
+
+        bridge = next(result for result in results if result.label == "Douyin official MCP bridge")
+        assert bridge.status == "warn"
+        assert "tools/list" in bridge.detail
+        executables = [result.detail for result in results if result.label == "Douyin MCP executable"]
+        assert executables == ["douyin-openapi-mcp", "douyin-official-mcp"]
 
     def test_disabled_gateway_is_skipped(self, tmp_path):
         self._write_extensions_config(tmp_path, enabled=False)

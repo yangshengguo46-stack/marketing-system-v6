@@ -721,32 +721,38 @@ def check_douyin_openapi(project_root: Path) -> list[CheckResult]:
     try:
         payload = json.loads(config_path.read_text(encoding="utf-8"))
         servers = payload.get("mcpServers")
-        server = servers.get("douyin_openapi") if isinstance(servers, dict) else None
-        if not isinstance(server, dict):
+        if not isinstance(servers, dict):
             return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
-        if not server.get("enabled", True):
+
+        direct_server = servers.get("douyin_openapi")
+        official_server = servers.get("douyin_official_mcp")
+        enabled_servers = [server for server in (direct_server, official_server) if isinstance(server, dict) and server.get("enabled", True)]
+        configured_servers = [server for server in (direct_server, official_server) if isinstance(server, dict)]
+        if not configured_servers:
+            return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
+        if not enabled_servers:
             return [CheckResult("Douyin OpenAPI gateway", "skip", "disabled")]
 
         results: list[CheckResult] = []
-        command = server.get("command")
-        command_name = command.strip() if isinstance(command, str) else ""
-        local_command = project_root / "backend" / ".venv" / "bin" / command_name
-        if command_name and (shutil.which(command_name) or local_command.is_file()):
-            results.append(CheckResult("Douyin MCP executable", "ok", command_name))
-        else:
-            results.append(
-                CheckResult(
-                    "Douyin MCP executable",
-                    "fail",
-                    command_name or "missing command",
-                    fix="Run `make install` so backend/.venv/bin/douyin-openapi-mcp exists",
+        for server in enabled_servers:
+            command = server.get("command")
+            command_name = command.strip() if isinstance(command, str) else ""
+            local_command = project_root / "backend" / ".venv" / "bin" / command_name
+            if command_name and (shutil.which(command_name) or local_command.is_file()):
+                results.append(CheckResult("Douyin MCP executable", "ok", command_name))
+            else:
+                results.append(
+                    CheckResult(
+                        "Douyin MCP executable",
+                        "fail",
+                        command_name or "missing command",
+                        fix=f"Run `make install` so backend/.venv/bin/{command_name or 'the MCP command'} exists",
+                    )
                 )
-            )
 
-        raw_env = server.get("env")
-        env = raw_env if isinstance(raw_env, dict) else {}
-        has_key = bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_KEY")))
-        has_secret = bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_SECRET")))
+        server_envs = [server.get("env") if isinstance(server.get("env"), dict) else {} for server in enabled_servers]
+        has_key = all(bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_KEY"))) for env in server_envs)
+        has_secret = all(bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_SECRET"))) for env in server_envs)
         if has_key and has_secret:
             results.append(CheckResult("Douyin application credentials", "ok", "configured locally"))
         else:
@@ -759,24 +765,33 @@ def check_douyin_openapi(project_root: Path) -> list[CheckResult]:
                 )
             )
 
-        scopes = {
-            part.strip()
-            for part in _resolved_mcp_env_value(env.get("DOUYIN_APPROVED_SCOPES")).split(",")
-            if part.strip()
-        }
-        v1_scope = "aweme.dy.video_search"
-        v2_scope = "aweme.dy.video_search_v2"
-        if v1_scope in scopes:
-            results.append(CheckResult("Douyin video-search contract", "ok", f"v1 ({v1_scope})"))
-        elif v2_scope in scopes:
-            results.append(CheckResult("Douyin video-search contract", "ok", f"v2 compatibility ({v2_scope})"))
-        else:
+        if isinstance(direct_server, dict) and direct_server.get("enabled", True):
+            raw_env = direct_server.get("env")
+            env = raw_env if isinstance(raw_env, dict) else {}
+            scopes = {part.strip() for part in _resolved_mcp_env_value(env.get("DOUYIN_APPROVED_SCOPES")).split(",") if part.strip()}
+            v1_scope = "aweme.dy.video_search"
+            v2_scope = "aweme.dy.video_search_v2"
+            if v1_scope in scopes:
+                results.append(CheckResult("Douyin video-search contract", "ok", f"v1 ({v1_scope})"))
+            elif v2_scope in scopes:
+                results.append(CheckResult("Douyin video-search contract", "ok", f"v2 compatibility ({v2_scope})"))
+            else:
+                results.append(
+                    CheckResult(
+                        "Douyin video-search contract",
+                        "fail",
+                        "no approved video-search Scope declared",
+                        fix=f"Set DOUYIN_APPROVED_SCOPES to the exact approved Scope, normally {v1_scope}",
+                    )
+                )
+
+        if isinstance(official_server, dict) and official_server.get("enabled", True):
             results.append(
                 CheckResult(
-                    "Douyin video-search contract",
-                    "fail",
-                    "no approved video-search Scope declared",
-                    fix=f"Set DOUYIN_APPROVED_SCOPES to the exact approved Scope, normally {v1_scope}",
+                    "Douyin official MCP bridge",
+                    "warn",
+                    "configured; live tools/list acceptance is still required",
+                    fix="Verify that the requested service is approved in Douyin MCP Service Marketplace",
                 )
             )
         return results

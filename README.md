@@ -449,6 +449,20 @@ runtime availability. The initial adopted Children are official public video
 search and image-text/experience search. See the
 [Douyin gateway setup](backend/docs/MCP_SERVER.md#douyin-openapi-gateway).
 
+For capabilities published through Douyin's official MCP service marketplace,
+the optional `douyin-official-mcp` bridge connects to the official SSE endpoint
+with an automatically refreshed application token. Its tool list comes from the
+application's live approvals rather than the 119-row documentation snapshot. A
+successful MCP handshake with zero tools therefore remains unavailable, not
+production-ready; generic bridge calls are limited to tools the provider marks
+read-only. See the
+[official service-market bridge](backend/docs/MCP_SERVER.md#official-douyin-mcp-service-marketplace).
+The generated [capability readiness matrix](docs/content-intelligence-v6/evidence/douyin-openapi-readiness-2026-08-19.md)
+keeps catalog presence, local adapters, declared Scope, provider approval, and
+real receipts separate. It also separates mobile/website-app capabilities from
+mini-app, local-life, service-market, clone-skill, and music product lines, so a
+large documentation catalog cannot be mistaken for one application's live toolset.
+
 The Gateway also includes a disabled-by-default, protocol-neutral foundation for durable long-running MCP tasks. It stores remote task handles outside model context, polls them under cross-worker leases, rejects results returned after their lease expires, schedules the next attempt from the time a remote status call finishes, isolates unexpected failures between claimed tasks, cancels in-flight polling during Gateway shutdown, and makes expired claims recoverable after restart. If remote submission succeeds but the handle cannot be persisted, the runtime makes a best-effort cancellation so an untracked task is not silently left running. The exact scoped duplicate-handle conflict is surfaced without cancellation because an existing durable row already owns that remote task. Durable recovery requires a SQL database backend (`sqlite` or `postgres`); the in-memory backend does not initialize this task repository. This foundation does not make existing MCP tools asynchronous by itself: `mcp_tasks.enabled` should remain `false` until a compatible task driver is configured. Ordinary `submit/status/cancel` tools and the future MCP Tasks extension can share the same runtime without making the model remember remote task IDs.
 See the [MCP Server Guide](backend/docs/MCP_SERVER.md) for detailed instructions.
 

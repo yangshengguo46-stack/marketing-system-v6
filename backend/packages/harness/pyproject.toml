@@ -58,6 +58,7 @@ dependencies = [
 [project.scripts]
 deerflow = "deerflow.tui.cli:main"
 douyin-openapi-mcp = "deerflow.community.douyin_openapi.server:main"
+douyin-official-mcp = "deerflow.community.douyin_openapi.official_mcp:main"
 
 [project.optional-dependencies]
 # Terminal workbench (TUI). Kept optional so the core harness install stays lean;

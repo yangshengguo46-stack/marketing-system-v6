@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-19T08:50:03+08:00",
+  "application_type": "mobile_or_web",
+  "configured_auth_modes": [
+    "client_token"
+  ],
+  "declared_scopes": [
+    "aweme.dy.video_search_v2"
+  ],
+  "official_mcp": {
+    "initialized": true,
+    "tested_tool_group_aids": [
+      null,
+      "28"
+    ],
+    "tool_names": []
+  },
+  "direct_receipts": [
+    {
+      "capability_id": "account.permission.client.token",
+      "state": "live_verified",
+      "provider_code": 0,
+      "message": "client_token 获取成功，有效期 7200 秒"
+    },
+    {
+      "capability_id": "douyin.search.capability.aweme.dy.video.search",
+      "state": "provider_denied",
+      "provider_code": 28001018,
+      "message": "应用未获得该能力"
+    }
+  ]
+}

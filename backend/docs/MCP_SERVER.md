@@ -127,6 +127,40 @@ Those rows remain in the evidence snapshot so their history is not lost, but
 they are not promoted to callable tools until the active contract is traced and
 reviewed. The generated matrix is at
 `docs/content-intelligence-v6/evidence/douyin-openapi-catalog-2026-08-16.md`.
+That inventory is paired with the generated live-readiness matrix at
+`docs/content-intelligence-v6/evidence/douyin-openapi-readiness-2026-08-19.md`.
+The latter keeps documentation, local adapter, declared Scope, provider approval,
+and exact live receipt as separate states. Regenerate it with
+`backend/.venv/bin/python scripts/render_douyin_openapi_readiness.py`; its
+credential-free observation input is committed beside the report.
+
+### Official Douyin MCP service marketplace
+
+Douyin also operates a remote MCP SSE endpoint at
+`https://open.douyin.com/sse`. The first-party `douyin-official-mcp` stdio
+bridge obtains and caches the documented two-hour application `client_token`,
+adds it to the remote connection only in memory, and forwards live
+`tools/list` and exact read-only tool calls. It exists because a token embedded
+directly in `extensions_config.json` would both leak a credential and expire.
+
+Enable the disabled `douyin_official_mcp` example only after configuring the
+same local Client Key and Client Secret. Leave `DOUYIN_MCP_TOOL_GROUP_AIDS`
+empty to request every MCP tool currently approved for the application, or set
+the exact comma-separated tool-group IDs shown by the service marketplace.
+The bridge never logs the tokenized URL. Tools explicitly marked mutating, or
+without an explicit provider read-only annotation, are discoverable but cannot
+be called through this generic bridge; they require a reviewed domain adapter
+with the normal business approval boundary.
+
+An initialized connection with an empty `tools/list` is not a successful
+capability acceptance. It means the application currently has no effective MCP
+service tools for that token. Official MCP services must be applied for in the
+MCP service marketplace, and the platform documents an approval window of up
+to five business days. App-level `client_token` covers only app-level tools;
+user-authorized MCP tools still require the user's OAuth `access_token`.
+The current application has also been tested with the console-path candidate
+tool group `28`; it still returns zero tools. This rules out a missing group
+filter but does not replace service approval.
 
 ## Routing Hints
 

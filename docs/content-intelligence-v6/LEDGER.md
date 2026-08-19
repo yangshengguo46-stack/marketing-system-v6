@@ -2072,3 +2072,24 @@ Manifest 接受两个别名中的真实获批项。`make doctor` 已增加抖音
 Catalog，真正实现的 Child 只有视频搜索和图文/经验搜索。真实凭据进入本地未跟踪配置并产生一次
 官方回执前，状态保持 `not live verified`。详见 `audits/A102-douyin-openapi-real-connection-audit.md` 与
 `evidence/douyin-openapi-preflight-a102-2026-08-19.md`。
+
+## A103-A104 抖音官方 MCP 与全能力就绪矩阵
+
+2026-08-19 使用本地未跟踪应用凭据完成官方真实验收：普通 `client_token` 获取成功，有效期 `7200`
+秒；官方 SSE 能完成 MCP 初始化，但省略工具组、使用 stable token、以及显式传入控制台路径候选工具组
+`28` 时，`tools/list` 都返回 `0`。同一应用的直接 v1/v2 视频搜索均返回
+`28001018 应用未获得该能力`。因此病根在平台能力审批，不在网页登录 Cookie、MCP 协议、令牌刷新或
+搜索请求代码。
+
+新增 `douyin-official-mcp` 本地桥自动换取和缓存应用 token，动态发现官方工具，通用路径只允许官方
+明确标记只读的调用。随后将 119 项目录、当前合同、本地适配器、鉴权面和真实回执生成全量就绪矩阵。
+矩阵显示：75 项属于小程序、生活服务、推广计划、服务市场、分身技能或汽水音乐等独立产品线；当前
+移动/网站应用候选面中，12 项需重查合同、29 项尚无适配器、图文搜索未声明获批、视频搜索被平台拒绝。
+唯一真实成功项是 `client_token` 鉴权基础设施，真实业务能力仍为 `0`。
+
+后续不再逐接口猜测：应用级只读能力等待 Scope/MCP 审批后复测；自有或客户账号能力统一建设 OAuth、
+回调和令牌保险库；Webhook 走验签与幂等接收器；独立产品线分别申请。只有精确调用与第一方回执成功才
+标记 `live_verified`。详见 `audits/A103-douyin-official-mcp-sse-live-audit.md`、
+`audits/A104-douyin-open-platform-capability-readiness.md`、
+`decisions/ADR-029-use-official-douyin-mcp-as-live-capability-source.md` 与
+`evidence/douyin-openapi-readiness-2026-08-19.md`。
