@@ -161,6 +161,16 @@ from deerflow.incubation.project_evidence import (
     ProjectEvidenceSelection,
     select_project_judgment_evidence,
 )
+from deerflow.incubation.root_feedback import (
+    RootCandidateDecision,
+    RootCandidateFeedback,
+    RootCandidateOrigin,
+    RootFeasibility,
+    RootFeedbackErrorKind,
+    RootFeedbackRecord,
+    RootFeedbackStatus,
+    seal_root_feedback_record,
+)
 
 _PERSISTENCE_EXPORTS = frozenset(
     {
@@ -324,6 +334,13 @@ __all__ = [
     "PRODUCTION_PLAN_SYSTEM_PROMPT",
     "ProjectEvidenceSelection",
     "ResourceMatch",
+    "RootCandidateDecision",
+    "RootCandidateFeedback",
+    "RootCandidateOrigin",
+    "RootFeasibility",
+    "RootFeedbackErrorKind",
+    "RootFeedbackRecord",
+    "RootFeedbackStatus",
     "StructuredJudgmentModel",
     "StructuredAdaptedDraftModel",
     "StructuredFormatModel",
@@ -347,6 +364,7 @@ __all__ = [
     "seal_media_artifact",
     "seal_media_source_receipt",
     "seal_production_plan",
+    "seal_root_feedback_record",
     "seal_incubation_brief",
     "seal_incubation_judgment",
     "seal_observed_audience_behavior_evidence",

@@ -177,6 +177,8 @@ constitutive context, or a context erased from its label; do not move those sema
 the provider-facing Pydantic parser.
 
 `deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
+`RootFeedbackRecord` is append-only, exact-map-bound episodic evidence. Do not inject, retrieve, or promote it
+as a rule before the held-out approval in ADR-031; preserve alternatives, no-strong-root, conditions, and lineage.
 `develop_account_strategy` alone creates those long-lived judgments from a candidate map, Brief,
 and formal evidence. Its model-facing contract is a flat 2-5 route proposal: each route combines
 content subject, business connection, audience, persona, presentation, monetization, resources,
@@ -201,17 +203,11 @@ publishing, metrics, and learning stay downstream. See `../docs/content-intellig
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
 belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
 
-A84/A86/A88/A90/A92 are consumed offline experiments; never rerun, tune, stack, import, or register
-them. A92 improved contracts and cost but failed production gates, and A94-A95 show that its RV and
-hearing-aid hidden labels were narrow or incomplete. Future labels require user-reviewed alternatives;
-contracts must allow no strong root or a conditional IP. Keep dictionaries optional and do not add
-Douyin, maps, positioning, or agents to root recall.
-
-A99/A101 are consumed offline experiments; never tune, rerun, import, or register them. A99's public-web
-evidence failed relevance. A101's real Douyin pack improved mechanism and audience-response analysis,
-but routes invented user facts and its judge missed them. ADR-028 keeps account evidence read-only after
-user facts and a candidate world: it may challenge a route, never select a root, create capabilities,
-or treat a mature account as a cold-start template.
+A84/A86/A88/A90/A92 and A99/A101 are consumed; never rerun, tune, stack, import, or register them.
+Future labels require reviewed alternatives and may be conditional or have no strong root. Dictionaries stay
+optional; root recall does not gain Douyin, maps, positioning, or agents. Under ADR-028, account evidence comes
+after user facts and a candidate world: it may challenge a route but cannot select roots, invent capabilities,
+or turn a mature account into a cold-start template.
 
 ## Development Workflow
 

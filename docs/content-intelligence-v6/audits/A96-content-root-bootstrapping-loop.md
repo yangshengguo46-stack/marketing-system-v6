@@ -3,7 +3,7 @@
 ## 状态
 
 - 本地日期：2026-08-19
-- 状态：`reviewed -> research design proposed; runtime unchanged`
+- 状态：`reviewed -> first append-only feedback contract implemented; capture and retrieval pending`
 - 问题：如何让内容根能力从少量用户纠错中持续进步，而不是逐行业手工标注或继续修改核心提示词
 - 前置证据：A83-A95
 - 非范围：现役 Lead 接入、自动改提示词、在线训练、小模型微调和发布结果奖励
@@ -176,3 +176,9 @@ A94-A95 这样主动解释时，系统再保存更高价值的条件化纠错。
 
 因此，第六版最应该先建设的不是新知识库或新提示，而是**可积累的纠错数据合同、主动复核队列和离线晋级
 机制**。这三者才是内容根真正开始自举的起点。
+
+## 2026-08-19 实施更新
+
+A108 已实现第一项：`RootFeedbackRecord` 作为 `content_root_feedback` 追加式工件，绑定精确的
+`content_map_candidate` 父版本，并支持候选判断、无强根、条件 IP、四类错误和争议/替代/退休谱系。
+当前仍未接入 Lead、前端确认、检索或自动优化，因此不会改变现役回答。

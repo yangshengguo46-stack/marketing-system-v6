@@ -928,6 +928,14 @@ redacted ledger or post-draft adaptation failure does not discard the generated 
 Project history UI, visual route-selection cards, version switching, and production fact
 review remain later V6 work. Chat-based exact-route confirmation is implemented.
 
+The ledger also defines a typed, append-only `content_root_feedback` artifact. It binds one
+user-reviewable correction to the exact candidate map being evaluated and preserves model
+candidates, user-added alternatives, acceptance or rejection, no-strong-root judgments,
+conditions, unknowns, IP feasibility, and error class. Revisions create lineage instead of
+overwriting history. This is currently a domain and persistence contract only: feedback is not
+automatically retrieved into Lead, converted into a prompt rule, shared across users, or used
+to train a model before a separate held-out evaluation approves that behavior.
+
 Audience intelligence now has a formal observation boundary. Authorized official
 demographic, interest, activity, or commerce slices retain their exact population scope
 and may enter incubation judgment as observed evidence. Pseudonymous interaction histories

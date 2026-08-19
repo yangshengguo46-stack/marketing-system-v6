@@ -2,13 +2,13 @@
 
 ## 当前状态
 
-- 台账日期：2026-08-18
+- 台账日期：2026-08-19
 - 第五版冻结提交：`3ee135f7`
 - 第五版归档分支：`codex/archive-v5-final`
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A98 existing modules minimally rewired on paper; runtime unchanged`
+- 当前结论状态：`A108 layered experience memory reviewed; first append-only root feedback contract implemented`
 
 ## A01 第五版与第六版边界
 
@@ -2123,3 +2123,18 @@ Catalog，真正实现的 Child 只有视频搜索和图文/经验搜索。真�
 采集。联网问答 Agent Pro 的抖音视频卡片属于带 Bot 与独立视频权限的另一产品合同。详见
 `audits/A107-byted-web-search-video-capability.md` 与
 `evidence/byted-web-search-video-a107-2026-08-19.md`。
+
+## A108 Agent 社区方法与分层经验记忆
+
+2026-08-19 对照 OpenAI、Anthropic、LangGraph/LangMem、AutoGen、DSPy、Agent Lightning、ExpeL、
+Dynamic Cheatsheet、ACE、Agent Workflow Memory 和 Voyager。共同可用方法不是再安装一个 Agent 框架，
+而是把事实证据、确认案例和程序式方法分层保存，在后台形成经验，在线只注入有界正例、反例与条件，并由
+冻结留出评测控制版本晋级。
+
+本地 A96 原本只有自举设计，没有可运行的反馈记录。本轮测试先行新增 `RootFeedbackRecord` 与
+`seal_root_feedback_record`，将模型候选、用户新增候选、最佳/可接受/拒绝/无强根、IP 可行性、四类错误和
+修订状态保存为 `content_root_feedback` 追加式工件，并精确绑定被评价的 `content_map_candidate`。8 个
+聚焦测试通过；最终后端非 live 全量回归为 `12240 passed, 76 skipped, 17 warnings`。它尚未接入 Lead、
+前端、检索或提示优化，当前回答行为不变。详见
+`audits/A108-agent-community-memory-and-evaluation-methods.md` 与
+`decisions/ADR-031-layered-experience-memory-before-optimization.md`。
