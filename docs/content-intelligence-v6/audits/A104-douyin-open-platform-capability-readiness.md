@@ -7,6 +7,8 @@ sources:
   - https://developer.open-douyin.com/docs/resource/zh-CN/dop/ability/mcp-service/mcp-service-desc
   - https://developer.open-douyin.com/docs/resource/zh-CN/dop/ability/opensdk/user-authorization/solution
   - https://developer.open-douyin.com/docs/resource/zh-CN/dop/develop/openapi/common-params
+  - https://developer.open-douyin.com/docs/resource/zh-CN/dop/develop/openapi/account-permission/generate-stable-client-token
+  - https://developer.open-douyin.com/docs/resource/zh-CN/dop/ability/search-management/item-search
   - backend/packages/harness/deerflow/community/douyin_openapi/catalog_snapshot.json
   - backend/packages/harness/deerflow/community/douyin_openapi/readiness.py
   - docs/content-intelligence-v6/evidence/douyin-openapi-live-observation-2026-08-19.json
@@ -39,12 +41,16 @@ sources:
   当前真实业务能力通过数仍为 `0`。
 - 官方 MCP 普通发现、stable token 发现和显式工具组 `28` 发现均为 `0` 个工具。协议初始化成功不等于
   服务已获批。
+- A105 复测确认应用仍为测试应用，稳定应用 Token 与 SSE 鉴权均正常；官方现行搜索能力文档把该能力
+  标为“实验能力，现不对外开放”，产品页入口仍是内测申请。当前 `28001018` 是平台准入状态，不是本地
+  Token 实现错误。
 
 ## 正确接入方式
 
 ### 应用级只读能力
 
-搜索等能力使用 `client_token`。先在控制台完成对应能力或 MCP 服务审批，再将**实际获批** Scope 写入
+搜索等能力使用应用级 Token。所有本地调用统一经 `stable_client_token` 获取器；各进程本地缓存，跨进程
+重复请求依赖官方幂等语义得到同一 Token。先在控制台完成对应能力或 MCP 服务审批，再将**实际获批** Scope 写入
 本地未跟踪配置，最后用同一只读请求保存第一方回执。代码不能替平台授予权限；本地配置也不能冒充
 控制台审批。
 
@@ -83,6 +89,8 @@ Lead 继续只看 16 个业务领域，不直接接收 119 个静态 Schema。�
 2. 第六版实现账号 OAuth、回调和令牌保险库，这是粉丝、作品、指标与发布真正可用的共同前置。
 3. 官方 MCP `tools/list` 首次非空后，保存工具名、Schema 和安全注解快照，再映射进现有 16 个领域。
 4. 只为业务需要且平台已授权的能力补薄适配器；禁止为了“119 全覆盖”实现不可用或不属于当前产品线的接口。
+
+图三凭证接法、测试应用限制和搜索内测入口的专项审计见 A105。
 
 ## 复现
 

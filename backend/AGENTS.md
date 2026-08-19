@@ -193,9 +193,9 @@ materials, sales, experiments, quantities, or publishing decisions.
 Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
 formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post
 coverage, remains read-only, and cannot write strategy. Credentials, raw pages, local paths, and
-temporary URLs never enter artifacts. Loaded MCP domains do not prove live access. Public video search
-selects v1 or retained v2 from declared Scope; credentials must resolve in Gateway and live acceptance
-still needs a provider receipt. Production, MediaKit,
+temporary URLs never enter artifacts. Loaded MCP domains do not prove live access. Video search
+selects v1 or retained v2 from declared Scope; it needs a provider receipt. App clients use the
+`douyin_openapi.client_token` stable endpoint; stdio caches separately. Production, MediaKit,
 publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/`.
 
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance

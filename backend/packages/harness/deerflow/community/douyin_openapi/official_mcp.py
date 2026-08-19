@@ -3,23 +3,24 @@ from __future__ import annotations
 import asyncio
 import os
 import re
-import time
 from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.parse import urlencode
 
-import httpx
 from mcp import ClientSession
 from mcp.client.sse import sse_client
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import CallToolResult, Tool
 
-_CLIENT_TOKEN_URL = "https://open.douyin.com/oauth/client_token/"
+from deerflow.community.douyin_openapi.client_token import (
+    TokenRequester,
+    get_stable_client_token,
+    request_stable_client_token,
+)
+
 _OFFICIAL_SSE_ENDPOINT = "https://open.douyin.com/sse"
-_TOKEN_REFRESH_SKEW_SECONDS = 60
 _MAX_TOOL_PAGES = 20
 _MAX_TOOLS = 256
 _TOOL_GROUP_AID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
@@ -35,7 +36,6 @@ class _RemoteSession(Protocol):
 
 TokenProvider = Callable[[], Awaitable[str]]
 SessionFactory = Callable[[str], AbstractAsyncContextManager[_RemoteSession]]
-TokenRequester = Callable[[str, str], Awaitable[tuple[str, int]]]
 
 
 class DouyinOfficialMCPError(RuntimeError):
@@ -77,42 +77,11 @@ def build_official_sse_url(
     return f"{_OFFICIAL_SSE_ENDPOINT}?{urlencode(query)}"
 
 
-async def _request_client_token(client_key: str, client_secret: str) -> tuple[str, int]:
-    async with httpx.AsyncClient(timeout=httpx.Timeout(30.0), trust_env=True) as client:
-        response = await client.post(
-            _CLIENT_TOKEN_URL,
-            headers={"content-type": "application/json"},
-            json={
-                "client_key": client_key,
-                "client_secret": client_secret,
-                "grant_type": "client_credential",
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-
-    data = payload.get("data") if isinstance(payload, dict) else None
-    if not isinstance(data, dict):
-        raise DouyinOfficialMCPError("Douyin client token response was invalid")
-    try:
-        error_code = int(data.get("error_code", -1))
-        expires_in = int(data.get("expires_in", 0))
-    except (TypeError, ValueError) as exc:
-        raise DouyinOfficialMCPError("Douyin client token response was invalid") from exc
-    access_token = data.get("access_token")
-    if error_code != 0 or not isinstance(access_token, str) or not access_token.strip() or expires_in <= 0:
-        raise DouyinOfficialMCPError(f"Douyin client token request failed with provider code {error_code}")
-    return access_token.strip(), expires_in
-
-
-@dataclass(frozen=True)
-class _CachedToken:
-    value: str
-    expires_at: float
+_request_client_token = request_stable_client_token
 
 
 class DouyinClientTokenProvider:
-    """Fetch and cache the two-hour application token used by official MCP."""
+    """Read the process-wide stable application token used by official MCP."""
 
     def __init__(
         self,
@@ -126,20 +95,13 @@ class DouyinClientTokenProvider:
         self._client_key = client_key.strip()
         self._client_secret = client_secret.strip()
         self._request_token = request_token
-        self._cached: _CachedToken | None = None
-        self._lock = asyncio.Lock()
 
     async def __call__(self) -> str:
-        now = time.monotonic()
-        if self._cached and self._cached.expires_at - _TOKEN_REFRESH_SKEW_SECONDS > now:
-            return self._cached.value
-        async with self._lock:
-            now = time.monotonic()
-            if self._cached and self._cached.expires_at - _TOKEN_REFRESH_SKEW_SECONDS > now:
-                return self._cached.value
-            token, expires_in = await self._request_token(self._client_key, self._client_secret)
-            self._cached = _CachedToken(value=token, expires_at=now + expires_in)
-            return token
+        return await get_stable_client_token(
+            self._client_key,
+            self._client_secret,
+            request_token=self._request_token,
+        )
 
 
 @asynccontextmanager

@@ -2093,3 +2093,21 @@ Catalog，真正实现的 Child 只有视频搜索和图文/经验搜索。真�
 `audits/A104-douyin-open-platform-capability-readiness.md`、
 `decisions/ADR-029-use-official-douyin-mcp-as-live-capability-source.md` 与
 `evidence/douyin-openapi-readiness-2026-08-19.md`。
+
+## A105 图三稳定 Token 接入与搜索准入结论
+
+2026-08-19 继续核对用户截图中的 `client_token`。普通 Token 两小时有效但重复获取可能使旧 Token 失效；
+官方 `stable_client_token` 在有效期内幂等返回同一枚 Token，才是搜索 MCP 与官方 MCP 多进程并存时防止
+互刷的正确合同。新增共享实现后，直接搜索与官方桥均只走稳定端点：同一进程共享指纹缓存，独立 MCP
+进程依靠官方幂等语义获得同一 Token，失败响应只可精准作废与当前请求相同的 Token。94 项抖音与诊断
+聚焦测试通过，其中新增共享凭证测试 4 项；凭据和 Token 未进入回执。
+
+实时复测中稳定 Token 获取与官方 SSE 初始化成功，但 `tools/list` 仍为 `0`，视频搜索 v1/v2 均返回
+`28001018 应用未获得该能力`。控制台显示当前 IPAgent 仍为测试应用且转正资料未完成；这会限制每日
+额度，但不是 28001018 的直接原因。官方产品页虽写“正式开放”，入口仍为“申请内测”，现行接入文档
+更明确写“实验能力，现不对外开放”。因此本地认证已完成，剩余阻塞是搜索内测与 MCP 服务审批；平台
+通过前不得继续改请求代码、伪造 Scope 或回退网页视觉采集。详见
+`audits/A105-douyin-stable-token-and-search-access.md`。
+
+收尾验收：后端全量套件 `12218 passed, 76 skipped`，零失败；Agent 规范软上限检查也已恢复为
+零警告。

@@ -6,6 +6,7 @@ decision: connect_official_sse_but_do_not_claim_capability_until_tools_exist
 sources:
   - https://developer.open-douyin.com/docs/resource/zh-CN/dop/ability/mcp-service/mcp-service-desc
   - https://developer.open-douyin.com/docs/resource/zh-CN/dop/develop/openapi/account-permission/client-token/
+  - https://developer.open-douyin.com/docs/resource/zh-CN/dop/develop/openapi/account-permission/generate-stable-client-token
   - backend/packages/harness/deerflow/community/douyin_openapi/official_mcp.py
   - extensions_config.json
 ---
@@ -42,8 +43,9 @@ sources:
 
 ## 实现
 
-- 新增 `douyin-official-mcp` 本地 stdio 桥，运行时换取普通 `client_token`，在两小时有效期内缓存并
-  自动刷新。
+- 新增 `douyin-official-mcp` 本地 stdio 桥。A105 后续将其与直接 OpenAPI 搜索统一到
+  `stable_client_token` 实现；各进程在两小时有效期内本地缓存，而官方稳定端点保证跨进程重复获取
+  幂等返回同一 Token，避免普通 Token 互刷。
 - token 只在内存中拼入官方 SSE URL；异常统一脱敏，不打印该 URL。
 - 动态读取全部分页工具；可用 `DOUYIN_MCP_TOOL_GROUP_AIDS` 缩小到控制台给出的精确工具组。
 - 通用桥只执行官方明确标为只读的工具。写工具或缺少安全标注的工具必须另建经过审计的领域适配器，
@@ -57,6 +59,8 @@ sources:
 3. 选择一个只读工具完成真实调用，保存官方回执和错误边界。
 4. 视频搜索只有在返回真实作品结果后，才替换现有失败的直连适配器并进入选题/对标证据链。
 5. 需要账号授权的作品、粉丝、发布和指标能力另走 OAuth，不得拿应用 token 冒充用户授权。
+
+稳定 Token 的最终实现与搜索内测准入断点见 A105。
 
 ## 结论
 

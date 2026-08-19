@@ -106,8 +106,12 @@ current app's declared Scope become callable Children.
    protocol loaded. `Douyin application credentials` and the exact search
    contract must also pass before making a live provider request.
 
-Public search uses a two-hour application `client_token`, obtained from the
-Client Key and Client Secret without user login. Own-account, customer-account,
+Public search uses a two-hour application token, obtained from the Client Key and
+Client Secret without user login. All application-level clients call the official
+`stable_client_token` endpoint through one shared implementation. Same-process
+callers share a fingerprinted in-memory cache; separate stdio MCP processes have
+separate memory, and rely on the provider's within-validity idempotency to receive
+the same token instead of invalidating each other. Own-account, customer-account,
 publishing, fan, and other user-authorized APIs use a separate OAuth
 `access_token + open_id`: the user first authorizes the exact Scope, the callback
 code is exchanged server-side, and refresh tokens must be stored outside model
@@ -138,8 +142,8 @@ credential-free observation input is committed beside the report.
 
 Douyin also operates a remote MCP SSE endpoint at
 `https://open.douyin.com/sse`. The first-party `douyin-official-mcp` stdio
-bridge obtains and caches the documented two-hour application `client_token`,
-adds it to the remote connection only in memory, and forwards live
+bridge obtains and caches the documented two-hour application token through the
+shared stable-token implementation, adds it to the remote connection only in memory, and forwards live
 `tools/list` and exact read-only tool calls. It exists because a token embedded
 directly in `extensions_config.json` would both leak a credential and expire.
 
@@ -161,6 +165,11 @@ user-authorized MCP tools still require the user's OAuth `access_token`.
 The current application has also been tested with the console-path candidate
 tool group `28`; it still returns zero tools. This rules out a missing group
 filter but does not replace service approval.
+
+The current search product page points to a beta application while the active
+search guide calls the capability experimental and not generally open. A valid
+stable token plus `28001018` therefore means provider approval is absent; do not
+change token code, declare the Scope approved, or fall back to browser scraping.
 
 ## Routing Hints
 

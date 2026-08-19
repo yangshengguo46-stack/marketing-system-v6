@@ -928,16 +928,18 @@ bind an exact ready-plan action, assembly step, reviewed user material, dynamic 
 `trim-video` arguments to a resulting `MediaArtifact`. It is a backend execution boundary, not
 yet a user-facing content-tool or Gateway action.
 
-Content-world research now reaches official Douyin video search only through the
-configured `douyin_search` MCP domain. It discovers the current Manifest, calls the exact
-`video_search` child as `topic_research`, and never falls back to the legacy directly
-configured Douyin search provider. Only official snapshots whose public URLs survive the
-final evidence reading are sealed; those `topic_evidence` artifacts become parents of the
-run-specific `content_reading`, while the durable `content_world` identity stays unchanged.
-The route and persistence are offline verified. Live v2 acceptance still requires local
-`DOUYIN_CLIENT_KEY`, `DOUYIN_CLIENT_SECRET`, and `DOUYIN_DEVICE_ID` environment values;
-their references remain in the ignored extensions config and credential values never enter
-Git, logs, artifacts, or model context.
+Content-world research reaches official Douyin video search through the configured
+`douyin_search` MCP domain. It discovers the current Manifest, calls the exact `video_search`
+child as `topic_research`, and seals only official snapshots whose public URLs survive final
+evidence reading. Direct search and the official Douyin MCP bridge now share one stable
+application-token implementation: each process caches locally, while Douyin's idempotent
+`stable_client_token` endpoint prevents separate MCP processes from rotating one another's
+two-hour token. Local credentials remain in ignored configuration and never enter Git, logs,
+artifacts, or model context. Live probes on 2026-08-19 obtained the application token and
+initialized the official SSE, but `tools/list` returned zero and both video-search contracts
+returned `28001018`. The current official search guide still marks access as experimental and
+not generally open, so search remains `not_live_verified` until the application's beta/MCP
+approval produces a real first-party result.
 
 MediaKit local execution now runs through the same V6 provenance boundary. A local video is
 hashed before and after execution, the current CLI output is checked against both its dynamic

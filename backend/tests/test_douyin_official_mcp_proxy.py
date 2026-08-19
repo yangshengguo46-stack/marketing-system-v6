@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool, ToolAnnotations
 
+from deerflow.community.douyin_openapi.client_token import reset_stable_client_token_cache_for_tests
 from deerflow.community.douyin_openapi.official_mcp import (
     DouyinClientTokenProvider,
     DouyinOfficialMCPProxy,
@@ -13,6 +14,11 @@ from deerflow.community.douyin_openapi.official_mcp import (
     build_official_sse_url,
     parse_tool_group_aids,
 )
+
+
+@pytest.fixture(autouse=True)
+def _reset_token_cache() -> None:
+    reset_stable_client_token_cache_for_tests()
 
 
 def _tool(
