@@ -898,7 +898,14 @@ async def _analyze_focused_content_world(
         include_raw=True,
         container_fields={"unknowns"},
     )
-    root = _resolve_root_selection(candidate_set, decision)
+    root = _resolve_root_selection(
+        candidate_set,
+        decision,
+        reviewed_family_map_root=_reviewed_cross_domain_family_map_root(
+            semantic_family,
+            shared_world,
+        ),
+    )
     map_messages = (
         SystemMessage(content=FROZEN_CONTENT_MAP_SYSTEM_PROMPT),
         HumanMessage(content=_render_frozen_map_input(root)),
@@ -1700,9 +1707,32 @@ def _build_root_candidate_set(
     )
 
 
+def _reviewed_cross_domain_family_map_root(
+    semantic_family: SemanticFamilyExpansionDraft,
+    shared_world: SharedWorldSynthesisDraft,
+) -> str | None:
+    """Preserve a reviewed cross-domain family world as the map boundary.
+
+    The root judge still selects the concrete semantic entry. This only stops a
+    later product-capacity comparison from discarding a common world that two
+    independent semantic workers already established across distinct domains.
+    """
+
+    if shared_world.world_label is None or not _human_world_components(semantic_family):
+        return None
+    family_branches = tuple(branch for branch in semantic_family.branches if branch.component.casefold() in {component.term.casefold() for component in _human_world_components(semantic_family)})
+    if len({branch.expression.casefold() for branch in family_branches}) < 2:
+        return None
+    if len({branch.semantic_domain.casefold() for branch in family_branches}) < 2:
+        return None
+    return shared_world.world_label
+
+
 def _resolve_root_selection(
     candidate_set: ContentRootCandidateSetDraft,
     decision: ContentRootDecisionDraft,
+    *,
+    reviewed_family_map_root: str | None = None,
 ) -> ContentRootSelectionDraft:
     eligible_indices = tuple(index for index, candidate in enumerate(candidate_set.candidates) if candidate.scope_role == "root_candidate")
     if not 0 <= decision.selected_candidate_index < len(eligible_indices):
@@ -1714,6 +1744,14 @@ def _resolve_root_selection(
         if not 0 <= decision.map_root_candidate_index < len(eligible_indices):
             raise ValueError("map_root_candidate_index must identify an explicit root candidate")
         map_root_candidate_index = eligible_indices[decision.map_root_candidate_index]
+
+    if reviewed_family_map_root is not None:
+        reviewed_index = next(
+            (index for index in eligible_indices if candidate_set.candidates[index].label == reviewed_family_map_root),
+            None,
+        )
+        if reviewed_index is not None:
+            map_root_candidate_index = reviewed_index
 
     if map_root_candidate_index == selected_candidate_index:
         root_rationale = decision.root_rationale

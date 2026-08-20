@@ -177,7 +177,7 @@ SHOOTING_DELIVERY_SYSTEM_PROMPT = """<content_intelligence_delivery>
 - focal_subject 是这条内容中真正被讲述的人、群体或具体对象；不得用“某些人”、“相关人群”等空话代替。
 - context 描述内容世界里的时间、地点、场合或处境，只在它真正影响这件事时填写；不得填写来源名称、资料年代、检索过程，也不得为了对称强行补齐。
 - concrete_event_or_question 必须是一件可讲清的事、一个可回答的具体问题或一个可观察的行为，不得使用“品类与文化”、“某物的多元价值”一类宽泛方向。
-- account_position 只能由用户原话支持。可以使用从业者、经营者或当事人的观察视角，但不得补造年限、客户案例、业绩、资质或专业能力，不得冒充用户没有声明的身份。
+- account_position 只能由用户原话或已确认账号路线中的人设支持。可以使用从业者、经营者或当事人的观察视角，但不得补造年限、客户案例、业绩、资质或专业能力，不得冒充用户没有声明的身份。
 - 输入若包含孵化判断，可以用其中的定位、受众和人设假设校准观察立场与解释重点；这些仍是假设，不是事实，不得更换选题、补造素材或写入新的事实断言。
 - 账号级表现形式只描述长期可持续的表达方向，不能在这里强迫本条采用口播、短剧、图文或出镜；本层仍输出形式无关的基础文案。
 - 用户身份只决定观察角度，不要求把用户的店铺、职业或商品写进正文；不得冒充医生、律师、历史学者或其他身份。
@@ -269,9 +269,12 @@ async def synthesize_shooting_delivery(
         )
         if remaining_details:
             raise DeliveryFactBoundaryError("delivery still contains unsupported factual specifics after one bounded repair: " + ", ".join(remaining_details))
+    account_position_basis = bundle.record.subject_expression
+    if incubation_judgment is not None and incubation_judgment.decision_status == "confirmed" and incubation_judgment.persona is not None:
+        account_position_basis = incubation_judgment.persona.account_role
     return draft.bind(
         bundle=bundle,
-        account_position_basis=bundle.record.subject_expression,
+        account_position_basis=account_position_basis,
     )
 
 
@@ -473,7 +476,7 @@ def render_shooting_delivery(
             "",
             f"**发生什么：** {plan.concrete_event_or_question}",
             "",
-            f"**你的立场：** {plan.account_position_basis}",
+            f"**账号观察立场：** {plan.account_position_basis}",
             "",
             f"**核心观点：** {plan.point_of_view}",
             "",

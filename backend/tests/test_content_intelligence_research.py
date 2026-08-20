@@ -17,6 +17,7 @@ from deerflow.content_intelligence import (
     EvidenceReadingDraft,
     ResearchBudget,
     ResearchDiscoveryDraft,
+    ResearchEditorialContext,
     ResearchSearchResult,
     SemanticFamilyExpansionDraft,
     SharedWorldReviewDraft,
@@ -1431,6 +1432,8 @@ def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> Non
     assert "冲突" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "博弈" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "卖方经营案例" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "证据质量是准入条件，不是唯一排序目标" in EVIDENCE_READING_SYSTEM_PROMPT
+    assert "政策或制度文本本身" in EVIDENCE_READING_SYSTEM_PROMPT
     assert "可核验的专名对象" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "泛化教程词" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "售卖页、推广页、聚合页、社交收藏页" in EVIDENCE_READING_SYSTEM_PROMPT
@@ -1450,3 +1453,74 @@ def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> Non
     assert "人的关系、选择和变化" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "KTV" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "KTV" not in TOPIC_EDITOR_SYSTEM_PROMPT
+
+
+@pytest.mark.asyncio
+async def test_confirmed_editorial_route_guides_discovery_reading_and_topic_without_business_fields() -> None:
+    bundle = await _content_world_bundle()
+    context = ResearchEditorialContext(
+        route_id="route-a",
+        content_subject="观察具体人际场景里谁在行动、如何选择、关系怎样变化",
+        audience_promise="让观众看懂日常关系中那些没有被说破的规则",
+        audience_people="对人际分寸与真实故事好奇的普通成年人",
+        recurring_interest="每次从一件具体的人和事得到新的关系判断",
+        account_role="人际规则的场景观察者",
+    )
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title="A documented public event",
+                url="https://example.com/public-event",
+                content="A named person made a documented choice that changed a relationship.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        editorial_context=context,
+    )
+
+    assert enriched.topic_brief is not None
+    assert len(research_model.message_batches) == 3
+    for messages in research_model.message_batches:
+        payload = messages[1].content
+        assert "confirmed_editorial_route" in payload
+        assert context.content_subject in payload
+        assert "business_connection" not in payload
+        assert "monetization" not in payload
+
+
+@pytest.mark.asyncio
+async def test_map_direction_search_uses_a_compact_retrieval_phrase_not_the_full_map_prose() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: {"candidates": [], "unknowns": []},
+        }
+    )
+    queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        queries.append(query)
+        return ()
+
+    await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        budget=ResearchBudget(max_queries=1),
+    )
+
+    assert len(queries) == 1
+    assert len(queries[0]) <= 120
+    assert "Use shared meals to understand" not in queries[0]

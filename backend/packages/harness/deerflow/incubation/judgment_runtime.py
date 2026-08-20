@@ -31,40 +31,45 @@ from deerflow.incubation.judgment import (
 )
 
 
+class AccountBusinessIntentDraft(IncubationContract):
+    """Business reading shared by every route in one proposal."""
+
+    business_role: NonEmptyStr = Field(max_length=500)
+    account_objective: NonEmptyStr = Field(max_length=1000)
+    target_people: NonEmptyStr = Field(max_length=800)
+    target_need: NonEmptyStr = Field(max_length=800)
+    desired_action: NonEmptyStr = Field(max_length=800)
+    market_scope: NonEmptyStr = Field(max_length=800)
+    rationale: NonEmptyStr = Field(max_length=1000)
+    confidence: Literal["low", "medium", "high"] = "low"
+    unknowns: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
+
+
 class AccountRouteOptionDraft(IncubationContract):
-    """Flat model-facing route proposal compiled into ledger contracts by code."""
+    """One compact model-facing route compiled into ledger contracts by code."""
 
     option_id: NonEmptyStr = Field(max_length=80, pattern=r"^[a-z0-9][a-z0-9_-]*$")
-    name: NonEmptyStr = Field(max_length=200)
-    content_subject: NonEmptyStr = Field(max_length=2000)
-    business_connection: NonEmptyStr = Field(max_length=3000)
-    business_role: NonEmptyStr = Field(max_length=2000)
-    account_objective: NonEmptyStr = Field(max_length=2000)
-    target_people: NonEmptyStr = Field(max_length=2000)
-    target_need: NonEmptyStr = Field(max_length=2000)
-    desired_action: NonEmptyStr = Field(max_length=2000)
-    market_scope: NonEmptyStr = Field(max_length=2000)
-    long_term_promise: NonEmptyStr = Field(max_length=2000)
-    audience_people: NonEmptyStr = Field(max_length=2000)
-    recurring_interest: NonEmptyStr = Field(max_length=2000)
-    account_role: NonEmptyStr = Field(max_length=2000)
-    primary_forms: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=4)
-    supporting_forms: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
-    monetization_path: NonEmptyStr | None = Field(default=None, max_length=3000)
-    monetization_trust_required: NonEmptyStr | None = Field(default=None, max_length=2000)
-    rationale: NonEmptyStr = Field(max_length=3000)
-    basis_artifact_ids: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=6)
+    name: NonEmptyStr = Field(max_length=120)
+    content_subject: NonEmptyStr = Field(max_length=600)
+    business_connection: NonEmptyStr = Field(max_length=800)
+    long_term_promise: NonEmptyStr = Field(max_length=600)
+    audience_people: NonEmptyStr = Field(max_length=600)
+    recurring_interest: NonEmptyStr = Field(max_length=600)
+    account_role: NonEmptyStr = Field(max_length=600)
+    primary_forms: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=2)
+    supporting_forms: tuple[NonEmptyStr, ...] = Field(default=(), max_length=2)
+    monetization_path: NonEmptyStr | None = Field(default=None, max_length=800)
+    monetization_trust_required: NonEmptyStr | None = Field(default=None, max_length=600)
+    rationale: NonEmptyStr = Field(max_length=1000)
     confidence: Literal["low", "medium", "high"] = "low"
-    unknowns: tuple[NonEmptyStr, ...] = ()
-    resource_requirements: tuple[NonEmptyStr, ...] = ()
-    tradeoffs: tuple[NonEmptyStr, ...] = ()
+    unknowns: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
+    resource_requirements: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
+    tradeoffs: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
 
     @model_validator(mode="after")
     def validate_monetization_pair(self) -> AccountRouteOptionDraft:
         if (self.monetization_path is None) != (self.monetization_trust_required is None):
             raise ValueError("monetization path and trust requirement must be provided together")
-        if len(set(self.basis_artifact_ids)) != len(self.basis_artifact_ids):
-            raise ValueError("route basis artifact ids must be unique")
         return self
 
 
@@ -72,9 +77,11 @@ class AccountStrategyProposalDraft(IncubationContract):
     """Thin proposal output; confirmation and revision fields are server-owned."""
 
     content_map_version_id: NonEmptyStr = Field(max_length=80)
-    route_options: tuple[AccountRouteOptionDraft, ...] = Field(min_length=2, max_length=5)
+    business_intent: AccountBusinessIntentDraft
+    route_options: tuple[AccountRouteOptionDraft, ...] = Field(min_length=2, max_length=2)
     recommended_option_id: NonEmptyStr = Field(max_length=80)
-    unknowns: tuple[NonEmptyStr, ...] = ()
+    basis_artifact_ids: tuple[NonEmptyStr, ...] = Field(min_length=1, max_length=6)
+    unknowns: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
 
     @model_validator(mode="after")
     def validate_route_ids(self) -> AccountStrategyProposalDraft:
@@ -83,16 +90,18 @@ class AccountStrategyProposalDraft(IncubationContract):
             raise ValueError("route option ids must be unique")
         if self.recommended_option_id not in option_ids:
             raise ValueError("recommended option must identify one proposed route")
+        if len(set(self.basis_artifact_ids)) != len(self.basis_artifact_ids):
+            raise ValueError("proposal basis artifact ids must be unique")
         strategy_signatures = {
             tuple(
                 "".join(value.casefold().split())
                 for value in (
                     option.content_subject,
-                    option.account_objective,
-                    option.target_people,
-                    option.target_need,
-                    option.desired_action,
-                    option.market_scope,
+                    option.business_connection,
+                    option.long_term_promise,
+                    option.audience_people,
+                    option.recurring_interest,
+                    option.account_role,
                 )
             )
             for option in self.route_options
@@ -118,7 +127,7 @@ _AUDIENCE_EVIDENCE_ROLES = frozenset(
 )
 
 INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
-你只负责根据已封存的项目事实、候选内容机会地图、上一版账号判断和可选证据，生成一份扁平的 AccountStrategyProposalDraft。你是账号定位、受众、人设、账号级表现形式和变现假设的唯一判断层；版本、证据绑定和确认状态由代码负责。
+你只负责根据已封存的项目事实、候选内容机会地图、上一版账号判断和可选证据，生成一份紧凑的 AccountStrategyProposalDraft。你是账号定位、受众、人设、账号级表现形式和变现假设的唯一判断层；版本、证据绑定和确认状态由代码负责。
 
 只判断以下内容：
 - 用户做的是什么业务、在交易或服务关系中扮演什么角色。
@@ -132,7 +141,8 @@ INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
 
 这一步只能提案，不能替用户选择：
 - 不输出版本号、确认状态或已选路线，合同中也没有这些字段。
-- route_options 必须给出 2 至 5 条真正不同、各自闭环的账号路线；每条都要绑定定位、受众、人设、账号级表现形式、变现假设、资源要求和代价。
+- 首轮只输出两条真正不同的账号路线，让用户可以直接比较；不要为了显得完整增加第三条。共同的业务角色、业务任务、目标人群、需求、行动和市场只在 business_intent 写一次，不得在每条路线里重复。
+- route_options 只写两条路线各自不同的定位、内容受众、人设、账号级表现形式、变现假设、资源要求和代价。
 - option_id 使用简短稳定的小写英文标识，例如 route_a、route_b；不得重复。
 - recommended_option_id 可以推荐其中一条，但要说明它如何匹配用户业务、已知资源、内容地图和可选对标证据。缺少对标或资源信息时降低置信度并保留未知，不阻断提案。
 - 表现路线可按实际匹配考虑真人出镜口述、无人素材叙事、数字人、AI 情景剧、AI 微电影、MV 或其他方式；这些不是必填套餐，不适合的不要凑。
@@ -144,7 +154,8 @@ INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
 - content_subject 是账号长期真正讲什么，必须服从 candidate_content_map.content_root、editorial_promise 和 recurring_lens。除非 content_root 本身就是商业对象，否则不得把产品、材质、店铺或服务流程重新升格为内容主体。
 - business_connection 另行说明用户的业务为什么提供观察角度、信任依据或后续承接；不得为了商业连接就把产品塞进每条内容。
 - 候选路线必须在账号业务任务、要影响的人及其需求、期望行动或长期内容位置上有实质区别，不能只在表现形式上不同，不能只把同一个产品中心分别换成口播、素材和 AI 短剧。
-- basis_artifact_ids 只能复制 allowed_basis_artifact_ids 中真正支撑该路线的 ID，不得写来源名或自造 ID。
+- basis_artifact_ids 在提案顶层只写一次，只能复制 allowed_basis_artifact_ids 中真正支撑本提案的 ID，不得写来源名或自造 ID。
+- 所有字段都用能支撑选择的短句；不复述输入，不写长篇报告，不把同一理由换词重复。
 
 边界：
 - content_map_version_id 必须原样使用输入的候选地图版本。
@@ -166,17 +177,53 @@ INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
 class IncubationJudgmentModelError(RuntimeError):
     """The injected structured model did not produce a usable judgment draft."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        stage: Literal["model_call", "model_output", "binding"],
+        diagnostics: tuple[str, ...],
+    ) -> None:
+        super().__init__(message)
+        self.stage = stage
+        self.diagnostics = diagnostics
+
+
+def _safe_contract_diagnostics(error: BaseException) -> tuple[str, ...]:
+    """Return bounded schema locations without values or provider payloads."""
+
+    current: BaseException | None = error
+    visited: set[int] = set()
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
+        if isinstance(current, ValidationError):
+            diagnostics: list[str] = []
+            for item in current.errors(include_url=False, include_context=False, include_input=False)[:8]:
+                location = ".".join(str(part) for part in item.get("loc", ())) or "root"
+                diagnostics.append(f"{item.get('type', 'validation_error')}@{location}")
+            return tuple(diagnostics) or ("ValidationError",)
+        current = current.__cause__ or current.__context__
+    return (type(error).__name__,)
+
 
 def _compile_route_option(
     draft: AccountRouteOptionDraft,
     *,
     brief: IncubationBrief,
+    business_intent: AccountBusinessIntentDraft,
+    basis_artifact_ids: tuple[NonEmptyStr, ...],
 ) -> AccountRouteOption:
     common = {
         "rationale": draft.rationale,
-        "basis_artifact_ids": draft.basis_artifact_ids,
+        "basis_artifact_ids": basis_artifact_ids,
         "confidence": draft.confidence,
         "unknowns": draft.unknowns,
+    }
+    business_common = {
+        "rationale": business_intent.rationale,
+        "basis_artifact_ids": basis_artifact_ids,
+        "confidence": business_intent.confidence,
+        "unknowns": business_intent.unknowns,
     }
     trust_basis = tuple(
         fact.statement
@@ -205,13 +252,13 @@ def _compile_route_option(
             **common,
         ),
         business_intent=AccountBusinessIntent(
-            business_role=draft.business_role,
-            account_objective=draft.account_objective,
-            target_people=draft.target_people,
-            target_need=draft.target_need,
-            desired_action=draft.desired_action,
-            market_scope=draft.market_scope,
-            **common,
+            business_role=business_intent.business_role,
+            account_objective=business_intent.account_objective,
+            target_people=business_intent.target_people,
+            target_need=business_intent.target_need,
+            desired_action=business_intent.desired_action,
+            market_scope=business_intent.market_scope,
+            **business_common,
         ),
         audience=AudienceHypothesis(
             people=draft.audience_people,
@@ -254,12 +301,19 @@ def _compile_proposal(
         *(artifact.artifact_id for artifact in evidence_artifacts),
         *((previous_judgment_artifact.artifact_id,) if previous_judgment_artifact is not None else ()),
     }
-    for route in draft.route_options:
-        if not set(route.basis_artifact_ids).issubset(allowed_basis_ids):
-            raise ValueError("route basis artifact ids must come from allowed proposal inputs")
+    if not set(draft.basis_artifact_ids).issubset(allowed_basis_ids):
+        raise ValueError("proposal basis artifact ids must come from allowed proposal inputs")
 
     brief = IncubationBrief.model_validate(brief_artifact.payload)
-    routes = tuple(_compile_route_option(route, brief=brief) for route in draft.route_options)
+    routes = tuple(
+        _compile_route_option(
+            route,
+            brief=brief,
+            business_intent=draft.business_intent,
+            basis_artifact_ids=draft.basis_artifact_ids,
+        )
+        for route in draft.route_options
+    )
     recommended = next(route for route in routes if route.option_id == draft.recommended_option_id)
     revision_number = 1
     supersedes_id = None
@@ -546,7 +600,24 @@ async def generate_incubation_judgment(
     )
     try:
         model_result = await structured_model(AccountStrategyProposalDraft, messages)
+    except Exception as error:
+        output_error = isinstance(error, (ValidationError, TypeError, ValueError))
+        raise IncubationJudgmentModelError(
+            "structured model failed while generating an incubation judgment",
+            stage="model_output" if output_error else "model_call",
+            diagnostics=_safe_contract_diagnostics(error),
+        ) from error
+
+    try:
         draft = AccountStrategyProposalDraft.model_validate(model_result)
+    except (ValidationError, TypeError, ValueError) as error:
+        raise IncubationJudgmentModelError(
+            "structured model returned an invalid incubation judgment",
+            stage="model_output",
+            diagnostics=_safe_contract_diagnostics(error),
+        ) from error
+
+    try:
         judgment = _compile_proposal(
             draft,
             brief_artifact=brief_artifact,
@@ -558,9 +629,11 @@ async def generate_incubation_judgment(
             previous_judgment_artifact=previous_judgment_artifact,
         )
     except (ValidationError, TypeError, ValueError) as error:
-        raise IncubationJudgmentModelError("structured model returned an invalid incubation judgment") from error
-    except Exception as error:
-        raise IncubationJudgmentModelError("structured model failed while generating an incubation judgment") from error
+        raise IncubationJudgmentModelError(
+            "structured model output could not bind to the selected project evidence",
+            stage="binding",
+            diagnostics=_safe_contract_diagnostics(error),
+        ) from error
 
     return seal_incubation_judgment(
         project=project,
@@ -580,6 +653,7 @@ async def generate_incubation_judgment(
 
 
 __all__ = [
+    "AccountBusinessIntentDraft",
     "AccountRouteOptionDraft",
     "AccountStrategyProposalDraft",
     "INCUBATION_JUDGMENT_SYSTEM_PROMPT",

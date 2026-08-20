@@ -68,20 +68,12 @@ def _route_payload(
     option_id: str,
     name: str,
     form: str,
-    *,
-    basis_ids: tuple[str, ...],
 ) -> dict[str, object]:
     return {
         "option_id": option_id,
         "name": name,
         "content_subject": f"{name}视角下的人情、礼节和关系判断",
         "business_connection": "礼品从业位置提供观察角度，不把产品当成内容主体。",
-        "business_role": "提供黄金礼品解决方案的从业者",
-        "account_objective": f"通过{name}建立懂送礼与人情分寸的信任，并承接真实礼品需求",
-        "target_people": "正在为具体关系和场合选择礼物的人",
-        "target_need": "判断送什么、怎么送才合适且不失分寸",
-        "desired_action": "在出现礼品需求时主动咨询用户已有的黄金礼品业务",
-        "market_scope": "用户未说明经营地区，首版保留为未知",
         "long_term_promise": "用具体人物与事件理解人情与礼。",
         "audience_people": "关心人情与礼节的人",
         "recurring_interest": "人与人如何相处",
@@ -91,7 +83,6 @@ def _route_payload(
         "monetization_path": None,
         "monetization_trust_required": None,
         "rationale": "与已知业务和候选地图相符。",
-        "basis_artifact_ids": list(basis_ids),
         "confidence": "low",
         "unknowns": ["持续产能未确认。"],
         "resource_requirements": [],
@@ -106,11 +97,23 @@ def _proposal_payload(
 ) -> dict[str, object]:
     return {
         "content_map_version_id": map_version,
+        "business_intent": {
+            "business_role": "提供黄金礼品解决方案的从业者",
+            "account_objective": "建立懂送礼与人情分寸的信任，并承接真实礼品需求",
+            "target_people": "正在为具体关系和场合选择礼物的人",
+            "target_need": "判断送什么、怎么送才合适且不失分寸",
+            "desired_action": "在出现礼品需求时主动咨询用户已有的黄金礼品业务",
+            "market_scope": "用户未说明经营地区，首版保留为未知",
+            "rationale": "来自用户业务原话，经营地区仍未知。",
+            "confidence": "low",
+            "unknowns": ["经营地区未知。"],
+        },
         "route_options": [
-            _route_payload("route_a", "真人故事", "真人出镜口述", basis_ids=basis_ids),
-            _route_payload("route_b", "AI情境叙事", "AI情景剧", basis_ids=basis_ids),
+            _route_payload("route_a", "真人故事", "真人出镜口述"),
+            _route_payload("route_b", "AI情境叙事", "AI情景剧"),
         ],
         "recommended_option_id": "route_a",
+        "basis_artifact_ids": list(basis_ids),
         "unknowns": ["尚未取得真实受众反馈。"],
     }
 

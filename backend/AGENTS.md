@@ -190,8 +190,8 @@ topic continuation reconstructs the exact source record and map hash; delivery w
 the root. A new subject must be contiguous current-user text. Drop an invalid optional topic seed.
 Research caps are ceilings, not quotas. Decode provider JSON wrappers only to the exact target type;
 otherwise fail. Normal topic delivery stops after `BaseDraft` and returns one compact topic;
-format, adaptation, and production are never an automatic tail. The project subject statement is
-the only account-position fact. `MessagePlan` and `BaseDraft` cannot invent experience, facts,
+format, adaptation, and production are never an automatic tail. Position uses confirmed
+`persona.account_role`, else project subject. `MessagePlan` and `BaseDraft` cannot invent experience, facts,
 materials, sales, quantities, or publishing decisions. Every `ResourceMatch` needs at least one
 user-material artifact parent; unknown resources remain unknown.
 

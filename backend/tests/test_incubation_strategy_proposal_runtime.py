@@ -8,6 +8,7 @@ from deerflow.incubation import ArtifactEnvelope, ProjectRef
 from deerflow.incubation.judgment import BriefFact, IncubationBrief, seal_incubation_brief
 from deerflow.incubation.judgment_runtime import (
     INCUBATION_JUDGMENT_SYSTEM_PROMPT,
+    AccountBusinessIntentDraft,
     AccountRouteOptionDraft,
     AccountStrategyProposalDraft,
     IncubationJudgmentModelError,
@@ -28,7 +29,10 @@ def test_account_route_contract_separates_business_intent_from_content_audience_
         "market_scope",
     }
 
-    assert required_business_fields.issubset(AccountRouteOptionDraft.model_fields)
+    assert required_business_fields.issubset(AccountBusinessIntentDraft.model_fields)
+    assert required_business_fields.isdisjoint(AccountRouteOptionDraft.model_fields)
+    assert "business_intent" in AccountStrategyProposalDraft.model_fields
+    assert "basis_artifact_ids" in AccountStrategyProposalDraft.model_fields
     assert "曝光只是中间手段" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "内容受众不一定等于业务要影响的人" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "不能只在表现形式上不同" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
@@ -73,18 +77,26 @@ def _world() -> ArtifactEnvelope:
     )
 
 
-def _route(option_id: str, name: str, form: str, *, basis_ids: tuple[str, ...]) -> dict[str, object]:
+def _business_intent() -> dict[str, object]:
+    return {
+        "business_role": "为宠物主人提供告别与纪念服务的从业者",
+        "account_objective": "建立理解告别者处境的信任，并让有需要的人愿意进一步咨询",
+        "target_people": "正在面对宠物离世、需要告别支持的宠物主人",
+        "target_need": "被理解，并找到尊重情感且可信的告别方案",
+        "desired_action": "在需要告别帮助时主动咨询用户现有的宠物殡葬服务",
+        "market_scope": "用户未说明服务地区，首版保留为未知",
+        "rationale": "业务任务来自用户原话，地区仍未知。",
+        "confidence": "low",
+        "unknowns": ["具体服务地区未知。"],
+    }
+
+
+def _route(option_id: str, name: str, form: str) -> dict[str, object]:
     return {
         "option_id": option_id,
         "name": name,
         "content_subject": f"{name}中的陪伴、告别与纪念",
         "business_connection": "用户的宠物殡葬从业经历提供观察位置，服务只在需要时承接。",
-        "business_role": "为宠物主人提供告别与纪念服务的从业者",
-        "account_objective": f"通过{name}建立理解告别者处境的信任，并让有需要的人愿意进一步咨询",
-        "target_people": "正在面对宠物离世、需要告别支持的宠物主人",
-        "target_need": "被理解，并找到尊重情感且可信的告别方案",
-        "desired_action": "在需要告别帮助时主动咨询用户现有的宠物殡葬服务",
-        "market_scope": "用户未说明服务地区，首版保留为未知",
         "long_term_promise": "每次讲清一次具体告别里的陪伴与选择。",
         "audience_people": "正在养宠、经历失去或关心动物陪伴的人",
         "recurring_interest": "如何理解陪伴、告别和纪念",
@@ -94,7 +106,6 @@ def _route(option_id: str, name: str, form: str, *, basis_ids: tuple[str, ...]) 
         "monetization_path": "先建立告别和纪念的信任，再承接用户已有服务。",
         "monetization_trust_required": "观众相信账号能理解失去者的感受且不消费悲伤。",
         "rationale": "路线与业务位置和候选内容地图一致。",
-        "basis_artifact_ids": list(basis_ids),
         "confidence": "low",
         "unknowns": ["真实表现能力和持续产能未确认。"],
         "resource_requirements": [f"持续生产{form}需要的素材"],
@@ -103,17 +114,15 @@ def _route(option_id: str, name: str, form: str, *, basis_ids: tuple[str, ...]) 
 
 
 def test_account_routes_cannot_be_repackaged_as_format_choices() -> None:
-    basis_ids = ("brief-1", "map-1")
-    first = _route("route_a", "真人纪录", "真人纪录叙事", basis_ids=basis_ids)
-    second = _route("route_b", "无人素材", "无人素材旁白", basis_ids=basis_ids)
+    first = _route("route_a", "真人纪录", "真人纪录叙事")
+    second = _route("route_b", "无人素材", "无人素材旁白")
     for field in (
         "content_subject",
-        "business_role",
-        "account_objective",
-        "target_people",
-        "target_need",
-        "desired_action",
-        "market_scope",
+        "business_connection",
+        "long_term_promise",
+        "audience_people",
+        "recurring_interest",
+        "account_role",
     ):
         second[field] = first[field]
 
@@ -121,8 +130,28 @@ def test_account_routes_cannot_be_repackaged_as_format_choices() -> None:
         AccountStrategyProposalDraft.model_validate(
             {
                 "content_map_version_id": "map-companion-v1",
+                "business_intent": _business_intent(),
                 "route_options": [first, second],
                 "recommended_option_id": "route_a",
+                "basis_artifact_ids": ["brief-1", "map-1"],
+                "unknowns": [],
+            }
+        )
+
+
+def test_first_strategy_proposal_is_bounded_to_two_real_choices() -> None:
+    with pytest.raises(ValueError):
+        AccountStrategyProposalDraft.model_validate(
+            {
+                "content_map_version_id": "map-companion-v1",
+                "business_intent": _business_intent(),
+                "route_options": [
+                    _route("route_a", "真人纪录", "真人纪录叙事"),
+                    _route("route_b", "无人素材", "无人素材旁白"),
+                    _route("route_c", "图文档案", "图文叙事"),
+                ],
+                "recommended_option_id": "route_a",
+                "basis_artifact_ids": ["brief-1", "map-1"],
                 "unknowns": [],
             }
         )
@@ -140,11 +169,13 @@ async def test_runtime_uses_a_flat_proposal_draft_and_code_owns_confirmation_sta
         assert "revision_number" not in schema.model_fields
         return {
             "content_map_version_id": "map-companion-v1",
+            "business_intent": _business_intent(),
             "route_options": [
-                _route("route_a", "真人纪录", "真人纪录叙事", basis_ids=basis_ids),
-                _route("route_b", "无人素材", "无人素材旁白", basis_ids=basis_ids),
+                _route("route_a", "真人纪录", "真人纪录叙事"),
+                _route("route_b", "无人素材", "无人素材旁白"),
             ],
             "recommended_option_id": "route_a",
+            "basis_artifact_ids": list(basis_ids),
             "unknowns": ["尚无正式对标和受众证据。"],
         }
 
@@ -177,15 +208,10 @@ async def test_runtime_rejects_a_single_route_instead_of_padding_it() -> None:
     async def structured_model(schema, messages):
         return {
             "content_map_version_id": "map-companion-v1",
-            "route_options": [
-                _route(
-                    "route_a",
-                    "真人纪录",
-                    "真人纪录叙事",
-                    basis_ids=(brief.artifact_id, world.artifact_id),
-                )
-            ],
+            "business_intent": _business_intent(),
+            "route_options": [_route("route_a", "真人纪录", "真人纪录叙事")],
             "recommended_option_id": "route_a",
+            "basis_artifact_ids": [brief.artifact_id, world.artifact_id],
             "unknowns": [],
         }
 

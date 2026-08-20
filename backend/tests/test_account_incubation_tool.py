@@ -8,6 +8,7 @@ import pytest
 from langchain.tools import ToolRuntime
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
+from pydantic import BaseModel, Field, ValidationError
 
 from deerflow.incubation import implicit_thread_project_ref
 from deerflow.tools.builtins.account_incubation_tool import (
@@ -17,6 +18,19 @@ from deerflow.tools.builtins.account_incubation_tool import (
 from deerflow.tools.tools import BUILTIN_TOOLS
 
 tool_module = importlib.import_module("deerflow.tools.builtins.account_incubation_tool")
+
+
+def test_account_strategy_validation_diagnostics_expose_only_schema_locations() -> None:
+    class _Fixture(BaseModel):
+        bounded_text: str = Field(max_length=3)
+
+    with pytest.raises(ValidationError) as captured:
+        _Fixture.model_validate({"bounded_text": "sensitive-model-output"})
+
+    diagnostics = tool_module._safe_validation_diagnostics(captured.value)
+
+    assert diagnostics == ("bounded_text:string_too_long",)
+    assert "sensitive-model-output" not in repr(diagnostics)
 
 
 def _runtime(*, project_id: str | None) -> ToolRuntime:
@@ -179,6 +193,67 @@ async def test_account_strategy_tool_routes_candidate_map_and_project_evidence_t
     message = result.update["messages"][0]
     assert message.content.startswith("# 账号路线候选")
     assert message.additional_kwargs["incubation_persistence"]["artifact_id"] == "artifact-strategy-1"
+
+
+@pytest.mark.asyncio
+async def test_account_strategy_collects_and_stores_public_benchmark_after_root_freezes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stored_evidence = SimpleNamespace(artifact_id="benchmark-evidence-1")
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(return_value=stored_evidence),
+    )
+    bundle = SimpleNamespace(content_world=SimpleNamespace(content_root="人们如何用礼组织人与人的相处"))
+    snapshot = object()
+    sealed = object()
+    artifact = SimpleNamespace(
+        artifact_type="incubation_judgment",
+        artifact_id="artifact-strategy-with-evidence",
+        content_sha256="e" * 64,
+    )
+    prepared = SimpleNamespace(
+        judgment=object(),
+        judgment_artifact=artifact,
+        reused=False,
+    )
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(tool_module, "create_content_intelligence_model", Mock(return_value=object()))
+    monkeypatch.setattr(tool_module, "create_lexical_evidence_provider", Mock(return_value=None))
+    monkeypatch.setattr(tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    collect = AsyncMock(return_value=snapshot)
+    monkeypatch.setattr(tool_module, "collect_public_douyin_benchmark", collect, raising=False)
+    seal = Mock(return_value=sealed)
+    monkeypatch.setattr(tool_module, "seal_benchmark_snapshot", seal, raising=False)
+    prepare = AsyncMock(return_value=prepared)
+    monkeypatch.setattr(tool_module, "prepare_account_strategy", prepare)
+    monkeypatch.setattr(tool_module, "render_account_strategy", Mock(return_value="# 账号路线候选"))
+
+    await develop_account_strategy_tool.ainvoke(
+        {
+            "name": "develop_account_strategy",
+            "args": {
+                "user_request": "我是做黄金礼品的，我要怎么起号？",
+                "runtime": _runtime(project_id="golden-gift"),
+            },
+            "id": "account-strategy-call",
+            "type": "tool_call",
+        }
+    )
+
+    collect.assert_awaited_once()
+    assert collect.await_args.kwargs["query"] == "人们如何用礼组织人与人的相处"
+    seal.assert_called_once_with(
+        project=implicit_thread_project_ref(
+            owner_user_id="user-1",
+            thread_id="thread-1",
+        ).model_copy(update={"project_id": "golden-gift"}),
+        snapshot=snapshot,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+    repository.put_artifact.assert_awaited_once_with(sealed)
+    prepare.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -216,7 +216,20 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
 ) -> None:
     bundle = object()
     enriched_bundle = SimpleNamespace(topic_brief=object())
-    judgment = SimpleNamespace(route_options=(), selected_option_id=None)
+    judgment = SimpleNamespace(
+        decision_status="confirmed",
+        route_options=(),
+        selected_option_id="route_a",
+        positioning=SimpleNamespace(
+            decision="观察具体人际场景里谁在行动、如何选择、关系怎样变化",
+            audience_promise="让观众看懂日常关系中没有说破的规则",
+        ),
+        audience=SimpleNamespace(
+            people="对人际分寸与真实故事好奇的普通成年人",
+            recurring_interest="每次从一件具体的人和事得到新的关系判断",
+        ),
+        persona=SimpleNamespace(account_role="人际规则的场景观察者"),
+    )
     judgment_artifact = object()
     prepared = SimpleNamespace(
         judgment=judgment,
@@ -321,7 +334,20 @@ async def test_confirmed_route_topic_continuation_reuses_its_frozen_map_before_s
         ),
     )
     enriched_bundle = SimpleNamespace(topic_brief=object())
-    judgment = SimpleNamespace(route_options=(), selected_option_id=None)
+    judgment = SimpleNamespace(
+        decision_status="confirmed",
+        route_options=(),
+        selected_option_id="route_a",
+        positioning=SimpleNamespace(
+            decision="追踪一本旧书在不同主人手中的经历",
+            audience_promise="让观众透过一本旧书看见旧主人和时代",
+        ),
+        audience=SimpleNamespace(
+            people="喜欢旧书、人物故事和时代痕迹的人",
+            recurring_interest="每本书都能打开一段具体人物经历",
+        ),
+        persona=SimpleNamespace(account_role="旧书履历的调查者"),
+    )
     judgment_artifact = object()
     prepared = SimpleNamespace(
         judgment=judgment,
@@ -380,6 +406,9 @@ async def test_confirmed_route_topic_continuation_reuses_its_frozen_map_before_s
     semantic_analysis.assert_not_awaited()
     assert research.await_args.args[0] is frozen_bundle
     assert research.await_args.kwargs["topic_seed"] is None
+    editorial_context = research.await_args.kwargs["editorial_context"]
+    assert editorial_context.route_id == "route_a"
+    assert editorial_context.content_subject.startswith("追踪一本旧书")
     assert delivery.await_args.kwargs["incubation_judgment"] is judgment
     assert "一本旧书如何换过三个主人" in result.update["messages"][0].content
 

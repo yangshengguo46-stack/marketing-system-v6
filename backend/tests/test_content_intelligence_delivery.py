@@ -257,6 +257,9 @@ async def test_incubation_judgment_guides_position_and_audience_without_leaking_
     )
 
     assert delivery is not None
+    assert delivery.message_plan.account_position_basis == "观察日常酒桌与地方人情的经营者"
+    assert delivery.message_plan.account_position == "观察日常酒桌与地方人情的经营者"
+    assert "怎么起号" not in delivery.message_plan.account_position_basis
     prompt_input = model.message_batches[0][1].content
     assert "从酒桌中的具体人物和事情理解地方礼俗" in prompt_input
     assert "对地方生活、人际往来和酒桌现象好奇的观众" in prompt_input
@@ -420,7 +423,8 @@ def test_rendered_delivery_is_a_compact_daily_topic_and_base_draft() -> None:
     assert "**谁：** 参加当地宴席的饮酒者与主家" in rendered
     assert "**时间 / 场景：** 宴请、节庆和人情往来的饭桌上" in rendered
     assert "**发生什么：**" in rendered
-    assert "**你的立场：** 我是卖白酒的，该怎么起号？" in rendered
+    assert "**账号观察立场：** 我是卖白酒的，该怎么起号？" in rendered
+    assert "**你的立场：**" not in rendered
     assert "从一名白酒经营者日常观察饮酒场景的立场出发" not in rendered
     assert "**核心观点：**" in rendered
     assert "**切入点：**" in rendered

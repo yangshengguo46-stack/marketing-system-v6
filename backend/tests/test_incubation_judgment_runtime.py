@@ -168,12 +168,6 @@ def _judgment_payload(*, basis_ids: tuple[str, ...]) -> dict[str, Any]:
             "name": name,
             "content_subject": f"{name}视角下的人情、礼节和关系判断",
             "business_connection": "礼品从业位置提供观察角度，不把产品当成内容主体。",
-            "business_role": "提供黄金礼品解决方案的从业者",
-            "account_objective": f"通过{name}建立懂送礼与人情分寸的信任，并承接真实礼品需求",
-            "target_people": "正在为具体关系和场合选择礼物的人",
-            "target_need": "判断送什么、怎么送才合适且不失分寸",
-            "desired_action": "在出现礼品需求时主动咨询用户已有的黄金礼品业务",
-            "market_scope": "用户未说明经营地区，首版保留为未知",
             "long_term_promise": "每次借一件具体人情事件讲清人怎样相处。",
             "audience_people": "关心人情、礼节和关系判断的人",
             "recurring_interest": "具体关系如何被安排",
@@ -183,7 +177,6 @@ def _judgment_payload(*, basis_ids: tuple[str, ...]) -> dict[str, Any]:
             "monetization_path": "先建立长期内容信任，再承接用户已有的礼品服务。",
             "monetization_trust_required": "观众先确认账号懂礼与关系。",
             "rationale": "与已冻结的内容根一致。",
-            "basis_artifact_ids": list(basis_ids),
             "confidence": "low",
             "unknowns": ["仍需真实反馈校正。"],
             "resource_requirements": [f"持续生产{form}所需素材"],
@@ -192,11 +185,23 @@ def _judgment_payload(*, basis_ids: tuple[str, ...]) -> dict[str, Any]:
 
     return {
         "content_map_version_id": "map-gift-relations-v1",
+        "business_intent": {
+            "business_role": "提供黄金礼品解决方案的从业者",
+            "account_objective": "建立懂送礼与人情分寸的信任，并承接真实礼品需求",
+            "target_people": "正在为具体关系和场合选择礼物的人",
+            "target_need": "判断送什么、怎么送才合适且不失分寸",
+            "desired_action": "在出现礼品需求时主动咨询用户已有的黄金礼品业务",
+            "market_scope": "用户未说明经营地区，首版保留为未知",
+            "rationale": "来自用户业务原话，经营地区仍未知。",
+            "confidence": "low",
+            "unknowns": ["经营地区未知。"],
+        },
         "route_options": [
             route("route_a", "真人故事", "真人出镜口述"),
             route("route_b", "无人素材", "无人素材旁白"),
         ],
         "recommended_option_id": "route_a",
+        "basis_artifact_ids": list(basis_ids),
         "unknowns": ["尚无真实受众反馈。"],
     }
 
@@ -359,6 +364,31 @@ async def test_runtime_surfaces_structured_model_failure_without_sealing() -> No
         )
 
     assert exc_info.value.__cause__ is provider_error
+
+
+@pytest.mark.asyncio
+async def test_runtime_exposes_only_safe_contract_locations_for_nested_model_errors() -> None:
+    async def invalid_model(schema, messages):
+        try:
+            schema.model_validate({"private_payload": "must-never-enter-logs"})
+        except Exception as validation_error:
+            raise ValueError("structured model output could not be parsed") from validation_error
+
+    with pytest.raises(IncubationJudgmentModelError) as exc_info:
+        await generate_incubation_judgment(
+            project=PROJECT,
+            brief_artifact=_brief_artifact(),
+            content_world_artifact=_content_world_artifact(),
+            structured_model=invalid_model,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-2",
+        )
+
+    error = exc_info.value
+    assert error.stage == "model_output"
+    assert any("business_intent" in item for item in error.diagnostics)
+    assert "must-never-enter-logs" not in " ".join(error.diagnostics)
 
 
 @pytest.mark.asyncio

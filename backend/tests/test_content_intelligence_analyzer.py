@@ -593,6 +593,92 @@ async def test_optional_shared_world_failure_preserves_other_root_candidates() -
     assert any("共同世界分析暂时不可用" in item.question for item in bundle.record.unknowns)
 
 
+@pytest.mark.asyncio
+async def test_reviewed_cross_domain_semantic_family_cannot_be_lost_when_root_judge_reselects_product() -> None:
+    model = SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: {
+                "source_object": "纸质契约文书",
+                "lexical_head": "契约文书",
+                "modifiers": [
+                    {
+                        "term": "纸质",
+                        "relation": "材质",
+                        "modifies": "契约文书",
+                        "removal_counterfactual": "去掉纸质后仍是契约文书，只改变载体。",
+                        "world_scope_effect": "branch_specificity",
+                    }
+                ],
+                "offering_role": "complete_object_or_service",
+                "role_rationale": "纸质只限定契约文书的载体。",
+            },
+            SemanticFamilyExpansionDraft: {
+                "components": [
+                    {
+                        "term": "契约",
+                        "component_of": "契约文书",
+                        "role": "cultural_institution",
+                        "relation_to_subject": "契约在整词中仍表示人与人共同承认的约定。",
+                    }
+                ],
+                "branches": [
+                    {
+                        "component": "契约",
+                        "expression": "合同",
+                        "semantic_domain": "商业与法律",
+                        "continuity": "都以共同承认的约定约束参与者。",
+                    },
+                    {
+                        "component": "契约",
+                        "expression": "盟约",
+                        "semantic_domain": "政治与群体关系",
+                        "continuity": "都以共同承认的约定建立合作关系。",
+                    },
+                ],
+            },
+            SharedWorldSynthesisDraft: {
+                "common_action_or_relation": "以共同约定建立并维持关系",
+                "participant_relationship": "作出约定并承担后果的人",
+                "world_label": "人们如何用约定建立并维持关系",
+                "semantic_path": [
+                    "契约",
+                    "不同领域中的共同约定",
+                    "人们如何用约定建立并维持关系",
+                ],
+                "covered_frames": ["合同", "盟约"],
+            },
+            SharedWorldReviewDraft: {
+                "reviewed_world_label": "人们如何用约定建立并维持关系",
+                "entry_path_is_explanatory": True,
+                "substitution_counterfactual": "更换文书载体后，共同约定仍然成立。",
+                "rationale": "该世界同时解释商业法律与群体关系中的契约。",
+            },
+            ContentRootDecisionDraft: {
+                "selected_candidate_index": 0,
+                "map_root_candidate_index": 0,
+                "root_rationale": "纸质契约文书拥有材质、工艺和交易历史。",
+            },
+            FrozenContentMapDraft: {
+                "editorial_promise": "持续理解约定如何建立关系并改变参与者的选择。",
+                "recurring_lens": "从具体人物、约定、违约事件和关系变化进入。",
+            },
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做纸质契约文书的，我要怎么起号？",
+            subject_expression="我是做纸质契约文书的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+    )
+
+    assert bundle.content_world.content_entry == "纸质契约文书"
+    assert bundle.content_world.content_root == "人们如何用约定建立并维持关系"
+    assert "人们如何用约定建立并维持关系" in model.message_batches[-1][1].content
+
+
 class StubLexicalEvidenceProvider:
     def __init__(self, evidence: LexicalEvidence | Exception) -> None:
         self.evidence = evidence

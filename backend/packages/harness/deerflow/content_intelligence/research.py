@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import Annotated, Any, Literal
@@ -42,6 +43,17 @@ class ResearchBudget(ContractModel):
     max_concurrent_queries: int = Field(default=3, ge=1, le=6)
     max_results_per_query: int = Field(default=3, ge=1, le=8)
     max_evidence_items: int = Field(default=8, ge=1, le=32)
+
+
+class ResearchEditorialContext(ContractModel):
+    """Content-side projection of a user-confirmed account route."""
+
+    route_id: NonEmptyStr = Field(max_length=80)
+    content_subject: NonEmptyStr = Field(max_length=1000)
+    audience_promise: NonEmptyStr = Field(max_length=1000)
+    audience_people: NonEmptyStr = Field(max_length=1000)
+    recurring_interest: NonEmptyStr = Field(max_length=1000)
+    account_role: NonEmptyStr = Field(max_length=1000)
 
 
 class ResearchSearchResult(ContractModel):
@@ -226,6 +238,7 @@ RESEARCH_DISCOVERY_SYSTEM_PROMPT = """<content_intelligence_research>
 - 保持内容根不变，从地图方向中寻找值得进一步阅读的具体命名人物、事件、作品、制度、习俗、地点或日期。
 - 每个候选必须逐字返回输入中已有的 map_path_id。它表示候选沿哪条冻结路径进入，不得自造路径 ID、跳过中间节点或只绑定一个宽泛维度。
 - 具体候选要同时服从账号的长期承诺与稳定观察方法。实时热点只是可能的证据入口；没有地图路径的热点不得因热度进入账号选题。
+- 输入存在 confirmed_editorial_route 时，它是用户已经选定的内容路线。候选必须同时兑现其中的 content_subject、audience_promise 与 recurring_interest；不得退回未选路线，也不得把业务连接、变现或最容易搜索的窄支线当成内容路线。
 - 优先寻找能显化人的行为、关系、情绪、选择、变化或共同记忆的候选，让具体对象帮助观众理解内容根。除非冻结地图明确以行业经营为主题，不要让卖方经营案例、企业扩张或设备方案压过人的世界。
 - 候选只是检索入口，不是事实。为每个候选说明它与内容根的关系，并给出可以在公开资料中核验的搜索词。
 - candidate.entity 必须是可核验的专名对象或明确记录，不得把地图里的泛化教程词、普通技法类别或宽泛需求换个说法当成命名候选。搜索词应优先指向原始作品、当事人记录、公共机构或可靠报道。
@@ -252,6 +265,8 @@ EVIDENCE_READING_SYSTEM_PROMPT = """<content_intelligence_research>
 - 先记录来源文字直接支持的观察，再显化观察之间的关系、状态变化和带限制的解释。
 - 只能引用输入中存在的 source_id；搜索摘要不能被夸大成全文、原始档案或市场因果。
 - 比较来源质量：优先依赖一手记录、公共机构、原始作品或可靠报道；推广页、聚合页和无出处转述只能作为待核线索，不能独立支撑强结论。
+- 证据质量是准入条件，不是唯一排序目标。多条路线都达到可核验门槛后，优先选择最能兑现 confirmed_editorial_route、最能显化具体人及其行动、选择、关系变化，并能形成一个观众愿意点开的具体问题的对象；不得仅因某份材料最权威、最长或最好抓取就选它。
+- 政策或制度文本本身只有在用户题眼或 confirmed_editorial_route 明确以制度解释为内容主体时，才可成为最终对象。否则它只能给具体人物、事件与关系提供背景，不能压过更符合已确认路线的人与事。
 - 本管道的公开搜索回执只是 topic_evidence。即使来源是某条短视频或账号页，也不得由单条结果推断该账号的定位、内容模式、受众或成绩；对标账号需要独立的账号身份与多作品回执。
 - 如搜索回执只有售卖页、推广页、聚合页、社交收藏页或无出处摘要，要把来源限制明确写入 limitations，不能替它增强可信度。
 - 本步骤只负责阅读与归纳证据，不负责立题或编排故事；不得为了戏剧性补造目标、阻碍、行动、代价或结局。
@@ -297,6 +312,7 @@ async def enrich_content_world_with_research(
     topic_seed: str | None = None,
     fetch: ResearchFetch | None = None,
     budget: ResearchBudget | None = None,
+    editorial_context: ResearchEditorialContext | None = None,
     runnable_config: dict[str, Any] | None = None,
 ) -> ContentIntelligenceBundle:
     """Grow a frozen map into one evidence-bound topic without changing its root."""
@@ -313,6 +329,7 @@ async def enrich_content_world_with_research(
         topic_seed=topic_seed,
         fetch=fetch,
         budget=active_budget,
+        editorial_context=editorial_context,
         runnable_config=runnable_config,
     )
     if _has_topic_seed(topic_seed):
@@ -329,7 +346,15 @@ async def enrich_content_world_with_research(
 
     reading_messages = (
         SystemMessage(content=_render_evidence_reading_system_prompt(topic_seed)),
-        HumanMessage(content=_render_reading_input(bundle, routes, evidence_payload, topic_seed=topic_seed)),
+        HumanMessage(
+            content=_render_reading_input(
+                bundle,
+                routes,
+                evidence_payload,
+                topic_seed=topic_seed,
+                editorial_context=editorial_context,
+            )
+        ),
     )
     reading = await _invoke_structured(
         model,
@@ -410,7 +435,15 @@ async def enrich_content_world_with_research(
         TopicEditorialDecisionDraft,
         (
             SystemMessage(content=TOPIC_EDITOR_SYSTEM_PROMPT),
-            HumanMessage(content=_render_topic_editor_input(bundle, routes, reading, selected_evidence_sources)),
+            HumanMessage(
+                content=_render_topic_editor_input(
+                    bundle,
+                    routes,
+                    reading,
+                    selected_evidence_sources,
+                    editorial_context=editorial_context,
+                )
+            ),
         ),
         runnable_config=runnable_config,
         include_raw=True,
@@ -441,6 +474,7 @@ def _render_discovery_input(
     *,
     topic_seed: str | None = None,
     max_candidate_recall: int = 6,
+    editorial_context: ResearchEditorialContext | None = None,
 ) -> str:
     world = bundle.content_world
     assert world is not None and world.content_root is not None
@@ -487,6 +521,8 @@ def _render_discovery_input(
             "provenance": "user_provided",
             "epistemic_status": "unverified_lead_not_evidence",
         }
+    if editorial_context is not None:
+        payload["confirmed_editorial_route"] = editorial_context.model_dump(mode="json")
     return "--- BEGIN FROZEN MAP RESEARCH INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN MAP RESEARCH INPUT ---"
 
 
@@ -510,6 +546,7 @@ async def _discover_and_collect_search_evidence(
     topic_seed: str | None,
     fetch: ResearchFetch | None,
     budget: ResearchBudget,
+    editorial_context: ResearchEditorialContext | None,
     runnable_config: dict[str, Any] | None,
 ) -> tuple[
     ResearchDiscoveryDraft,
@@ -545,6 +582,7 @@ async def _discover_and_collect_search_evidence(
                         bundle,
                         topic_seed=topic_seed,
                         max_candidate_recall=budget.max_queries,
+                        editorial_context=editorial_context,
                     )
                 ),
             ),
@@ -609,14 +647,7 @@ def _map_direction_routes(bundle: ContentIntelligenceBundle) -> tuple[_ResearchR
     for dimension_index, dimension in enumerate(world.dimensions, start=1):
         for path_index, path in enumerate(dimension.paths, start=1):
             direction = path.steps[-1].to_label
-            query = " ".join(
-                dict.fromkeys(
-                    (
-                        world.content_root,
-                        direction,
-                    )
-                )
-            )
+            query = _compact_retrieval_phrase(world.content_root, direction)
             routes.append(
                 _ResearchRoute(
                     candidate_id=f"map-direction-{dimension_index}-{path_index}",
@@ -629,6 +660,16 @@ def _map_direction_routes(bundle: ContentIntelligenceBundle) -> tuple[_ResearchR
                 )
             )
     return tuple(routes)
+
+
+def _compact_retrieval_phrase(content_root: str, direction: str) -> str:
+    """Turn explanatory map prose into a bounded search phrase."""
+
+    def head(value: str) -> str:
+        return re.split(r"[：:—–]", value, maxsplit=1)[0].strip()
+
+    parts = tuple(dict.fromkeys(part for value in (content_root, direction) if (part := head(value))))
+    return " ".join(parts)[:120].rstrip()
 
 
 def _constrain_discovery_to_frozen_map(
@@ -813,6 +854,7 @@ def _render_reading_input(
     evidence_payload: tuple[dict[str, Any], ...],
     *,
     topic_seed: str | None = None,
+    editorial_context: ResearchEditorialContext | None = None,
 ) -> str:
     world = bundle.content_world
     assert world is not None and world.content_root is not None
@@ -856,6 +898,8 @@ def _render_reading_input(
             }
             for dimension in world.dimensions
         ]
+    if editorial_context is not None:
+        payload["confirmed_editorial_route"] = editorial_context.model_dump(mode="json")
     return "--- BEGIN EVIDENCE READING INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END EVIDENCE READING INPUT ---"
 
 
@@ -935,6 +979,8 @@ def _render_topic_editor_input(
     routes: tuple[_ResearchRoute, ...],
     reading: EvidenceReadingDraft,
     evidence_sources: tuple[SourceItem, ...],
+    *,
+    editorial_context: ResearchEditorialContext | None = None,
 ) -> str:
     world = bundle.content_world
     assert world is not None and world.content_root is not None
@@ -972,6 +1018,8 @@ def _render_topic_editor_input(
             if source.source_id in referenced_source_ids
         ],
     }
+    if editorial_context is not None:
+        payload["confirmed_editorial_route"] = editorial_context.model_dump(mode="json")
     return "--- BEGIN TOPIC EDITOR INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END TOPIC EDITOR INPUT ---"
 
 

@@ -1,0 +1,60 @@
+{
+  "audit": "A115",
+  "date": "2026-08-20",
+  "status": "business_chain_passed_cost_failed",
+  "input": "我是做黄金礼品的，我要怎么起号？",
+  "thread_id": "a8d0b374-4cf2-4ba7-b74f-7e21ba998bca",
+  "project_id": "thread_1182e7caecf16f89d0a1093a23f9deb7",
+  "runs": {
+    "strategy": "d5176f03-0c3e-4d00-90a1-9c7f8d76128d",
+    "confirmation": "2c027b71-cc45-4767-b226-3e7d60b4473f",
+    "topic_and_draft": "77251572-d7b7-4c1b-ace2-66fd9426d96c"
+  },
+  "semantic_result": {
+    "source_expression": "黄金礼品",
+    "lexical_head": "礼品",
+    "material_modifier": "黄金",
+    "content_root": "礼如何规范人们的行为与彼此相待"
+  },
+  "benchmark": {
+    "provider": "pazwusimple-netizen/douyin-mcp",
+    "collection_method": "authenticated_public_search_then_account_posts",
+    "account_label": "断墨的笔",
+    "observed_fans": 1255503,
+    "observed_profile_post_count": 257,
+    "qualified_post_count": 6
+  },
+  "routes": [
+    {
+      "id": "route_a",
+      "label": "礼俗观察者：从行为到选物的自然承接",
+      "recommended": true,
+      "confirmed": true
+    },
+    {
+      "id": "route_b",
+      "label": "礼器解读者：从器物到关系的文化拆解",
+      "recommended": false,
+      "confirmed": false
+    }
+  ],
+  "topic": {
+    "title": "他叫你「兄」，不是跟你称兄道弟——古代书信里一个字的信号陷阱",
+    "named_subjects": ["许广平", "鲁迅", "钱钟书"],
+    "forbidden_product_return": false,
+    "artifact_chain": ["content_reading", "topic_brief", "message_plan", "draft_version"]
+  },
+  "performance": {
+    "tokens": 73500,
+    "elapsed_seconds": 277,
+    "passed": false
+  },
+  "post_run_defect": {
+    "field": "message_plan.account_position_basis",
+    "symptom": "raw project question rendered as the account stance",
+    "fix": "confirmed persona.account_role wins; project subject is fallback only",
+    "focused_regression_passed": true,
+    "live_reverification_pending": true
+  },
+  "secrets_included": false
+}

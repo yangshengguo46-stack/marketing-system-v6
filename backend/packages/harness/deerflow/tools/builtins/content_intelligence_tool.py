@@ -23,6 +23,7 @@ from deerflow.content_intelligence import (
     ContentIntelligenceBundle,
     ContentIntelligenceRequest,
     ContentWorldView,
+    ResearchEditorialContext,
     ResearchSearchResult,
     ShootingDelivery,
     SourceMaterial,
@@ -290,6 +291,23 @@ async def _load_current_account_strategy(
     )
 
 
+def _research_editorial_context(
+    judgment: IncubationJudgment | None,
+) -> ResearchEditorialContext | None:
+    """Project only the confirmed content route into topic research."""
+
+    if judgment is None or judgment.decision_status != "confirmed" or judgment.selected_option_id is None or judgment.positioning is None or judgment.audience is None or judgment.persona is None:
+        return None
+    return ResearchEditorialContext(
+        route_id=judgment.selected_option_id,
+        content_subject=judgment.positioning.decision,
+        audience_promise=judgment.positioning.audience_promise,
+        audience_people=judgment.audience.people,
+        recurring_interest=judgment.audience.recurring_interest,
+        account_role=judgment.persona.account_role,
+    )
+
+
 async def _load_confirmed_topic_context(
     *,
     runtime: Runtime,
@@ -513,6 +531,7 @@ async def explore_content_world_tool(
                 search=search_content_evidence,
                 topic_seed=validated_topic_seed,
                 fetch=_fetch_content_world_evidence,
+                editorial_context=_research_editorial_context(current_strategy.judgment if current_strategy is not None else None),
                 runnable_config=config,
             )
         except Exception as exc:

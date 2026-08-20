@@ -860,8 +860,9 @@ generalize high-signal names, numbers, or absolute claims that are absent from t
 ledger; a remaining violation rejects delivery. A shootable run leads with one map-bound
 "shoot today" example, one rooted route, and one BaseDraft; full candidate maps, account
 strategy, repeated beats, and production advice remain in their artifacts rather than the
-chat projection. The exact project subject statement is the account-position basis. It does
-not prove owned material, customer cases, facilities, experience, or personnel. Detailed
+chat projection. A confirmed route's persona role is the account-observation position; the
+exact project subject statement is only the fallback when no confirmed route is available.
+Neither source proves owned material, customer cases, facilities, experience, or personnel. Detailed
 limitations stay in the ledger while chat shows compact counts and citations. The map prose
 is a fail-open response when no topic exists or delivery validation fails.
 Normal topic delivery stops after `draft_version`. `FormatDecision`, `AdaptedDraft`, and

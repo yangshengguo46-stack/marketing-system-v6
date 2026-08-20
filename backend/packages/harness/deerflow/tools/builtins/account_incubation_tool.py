@@ -15,13 +15,18 @@ from deerflow.content_intelligence import (
     analyze_content_intelligence,
 )
 from deerflow.incubation import (
+    IncubationJudgmentModelError,
     ProjectRef,
     confirm_account_strategy,
     implicit_project_display_name,
     implicit_thread_project_ref,
     prepare_account_strategy,
+    seal_benchmark_snapshot,
 )
 from deerflow.incubation.account_strategy_presentation import render_account_strategy
+from deerflow.tools.builtins.douyin_public_benchmark_evidence import (
+    collect_public_douyin_benchmark,
+)
 from deerflow.tools.builtins.incubation_tool_support import (
     create_content_intelligence_model,
     create_lexical_evidence_provider,
@@ -32,6 +37,16 @@ from deerflow.tools.builtins.incubation_tool_support import (
 from deerflow.tools.types import Runtime
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_validation_diagnostics(error: ValidationError) -> tuple[str, ...]:
+    """Expose bounded schema locations without logging model or user values."""
+
+    diagnostics: list[str] = []
+    for item in error.errors(include_url=False, include_context=False, include_input=False)[:8]:
+        location = ".".join(str(part) for part in item.get("loc", ())) or "root"
+        diagnostics.append(f"{location}:{item.get('type', 'validation_error')}")
+    return tuple(diagnostics) or ("root:validation_error",)
 
 
 def _terminal_account_strategy_command(
@@ -136,6 +151,29 @@ async def develop_account_strategy_tool(
             runnable_config=runtime.config,
             lexical_evidence_provider=create_lexical_evidence_provider(),
         )
+        content_world = getattr(bundle, "content_world", None)
+        content_root = getattr(content_world, "content_root", None)
+        if isinstance(content_root, str) and content_root.strip():
+            try:
+                benchmark = await collect_public_douyin_benchmark(
+                    runtime,
+                    query=content_root.strip(),
+                    max_posts=6,
+                )
+                if benchmark is not None:
+                    await repository.put_artifact(
+                        seal_benchmark_snapshot(
+                            project=project,
+                            snapshot=benchmark,
+                            source_thread_id=thread_id,
+                            source_run_id=run_id,
+                        )
+                    )
+            except Exception as exc:
+                logger.warning(
+                    "Account strategy benchmark evidence was unavailable: %s",
+                    type(exc).__name__,
+                )
         strategy = await prepare_account_strategy(
             project=project,
             repository=repository,
@@ -146,8 +184,22 @@ async def develop_account_strategy_tool(
             source_thread_id=thread_id,
             source_run_id=run_id,
         )
+    except IncubationJudgmentModelError as exc:
+        logger.warning(
+            "Account strategy generation failed at %s: %s",
+            exc.stage,
+            ",".join(exc.diagnostics),
+        )
+        return _terminal_account_strategy_command(
+            "账号孵化判断暂时不可用，已有项目事实、候选地图和对标证据都没有被改写。",
+            tool_call_id=runtime.tool_call_id,
+        )
     except (ValidationError, ValueError) as exc:
-        logger.warning("Account strategy generation failed contract validation: %s", type(exc).__name__)
+        diagnostics = _safe_validation_diagnostics(exc) if isinstance(exc, ValidationError) else (type(exc).__name__,)
+        logger.warning(
+            "Account strategy generation failed contract validation: %s",
+            ",".join(diagnostics),
+        )
         return _terminal_account_strategy_command(
             "这次账号孵化判断没有通过结构校验，因此没有用候选地图或对标观察替你补出定位。",
             tool_call_id=runtime.tool_call_id,

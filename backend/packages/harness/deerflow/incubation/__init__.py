@@ -105,6 +105,7 @@ from deerflow.incubation.judgment import (
 from deerflow.incubation.judgment_runtime import (
     INCUBATION_JUDGMENT_SYSTEM_PROMPT,
     MAX_JUDGMENT_MODEL_INPUT_BYTES,
+    AccountBusinessIntentDraft,
     AccountRouteOptionDraft,
     AccountStrategyProposalDraft,
     IncubationJudgmentModelError,
@@ -234,6 +235,7 @@ __all__ = [
     "ApprovalKind",
     "AssemblyStep",
     "AccountBusinessIntent",
+    "AccountBusinessIntentDraft",
     "AccountPresentationPlan",
     "AccountRouteOption",
     "AccountRouteOptionDraft",

@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A112 TikTok LIVE guild clean rerun passed business intent but failed whole-entity semantics, fact boundaries, and cost`
+- 当前结论状态：`A115 golden-gift real incubation chain passed; account-position binding fixed; cost and latency failed`
 
 ## A01 第五版与第六版边界
 
@@ -2242,3 +2242,14 @@ DeerFlow Host 最终通过 `tools/list -> domain discovery -> Child call` 搜索
 实现、许可边界与后续洁净替换规则见
 `audits/A114-single-capability-gateway-and-child-runtime.md` 和
 `decisions/ADR-032-single-capability-mcp-gateway.md`。
+
+## A115 黄金礼品真实孵化端到端
+
+2026-08-20 以“我是做黄金礼品的，我要怎么起号？”运行真实主链。系统将黄金识别为材质，将礼品与礼的社会作用推进到
+“礼如何规范人们的行为与彼此相待”，没有冻结三金、彩礼或婚礼。单一能力 MCP 网关采集并封存了真实抖音账号“断墨的笔”的 6 条作者一致作品。
+
+系统提出“礼俗观察者”与“礼器解读者”两条路线，用户选择 A 后，新建并封存 `incubation_judgment` v2，保留 v1 提案。同一任务随后交付选题“他叫你「兄」，不是跟你称兄道弟——古代书信里一个字的信号陷阱”和基础稿，持久化 `content_reading -> topic_brief -> message_plan -> draft_version`。
+
+真实运行暴露项目原始提问被错当成账号立场。失败测试先行后，已改为优先使用已确认路线的 `persona.account_role`，无确认路线才回退项目原话。五项业务验收通过；续写仍消耗 73,500 Token、4 分 37 秒，因此性能与成本明确未通过。详见
+`audits/A115-golden-gift-real-incubation-e2e.md` 与
+`evidence/a115-golden-gift-real-e2e-2026-08-20.json`。聚焦回归 `167 passed`；非 live 完整回归的业务与框架测试 `12288 passed, 75 skipped`，唯一指导文件预算失败压缩后单测复跑通过。

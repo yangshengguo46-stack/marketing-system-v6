@@ -30,45 +30,49 @@ def _runtime(tool: Any) -> ToolRuntime:
 
 def _manifest(*, callable_now: bool = True, version: str = "manifest-v1") -> dict[str, Any]:
     child: dict[str, Any] = {
-        "name": "video_search",
+        "name": "search_videos",
         "callable": callable_now,
     }
     if not callable_now:
         child["unavailable_reason"] = "auth_not_configured"
     return {
-        "domain": "search",
-        "tool_name": "douyin_search",
+        "domain": "public_evidence",
+        "tool_name": "douyin_public_evidence",
         "children": [child],
         "manifest_version": version,
     }
 
 
-def _domain_result(*, evidence_role: str = "topic_evidence") -> dict[str, Any]:
+def _domain_result(*, success: bool = True) -> dict[str, Any]:
     return {
         "data": {
+            "success": success,
             "query": "人情往来 送礼",
-            "provider": "douyin_open_platform",
-            "evidence_role": evidence_role,
-            "total_results": 1,
-            "cursor": 1,
+            "cursor": "1",
             "has_more": False,
-            "search_id": "search-session-id",
             "results": [
                 {
                     "title": "礼尚往来为什么不是等价交换",
-                    "url": "https://www.douyin.com/video/123",
-                    "content": "一条经过官方接口投影的公开视频文本。",
-                    "source_type": "douyin_video",
-                    "item_id": "123",
-                    "nickname": "人情观察",
-                    "digg_count": 88,
+                    "description": "一条经过统一公开证据能力投影的公开视频文本。",
+                    "aweme_id": "123",
+                    "author": {"nickname": "人情观察", "sec_uid": "account-1"},
+                    "metrics": {"likes": 88, "comments": 7, "shares": 3},
                 }
             ],
+            "receipt": {
+                "provider": "authenticated_public_web",
+                "revision": "fixture-v1",
+                "collection": "authenticated_public_web",
+                "requested": 3,
+                "returned": 1,
+                "limitations": ["bounded public observation"],
+            },
+            "error": "",
         },
         "warnings": [],
         "metadata": {
-            "domain": "search",
-            "child_tool": "video_search",
+            "domain": "public_evidence",
+            "child_tool": "search_videos",
             "manifest_version": "manifest-v1",
             "catalog_version": "catalog-v1",
         },
@@ -76,7 +80,7 @@ def _domain_result(*, evidence_role: str = "topic_evidence") -> dict[str, Any]:
 
 
 class _FakeDouyinSearchTool:
-    name = "douyin_search"
+    name = "douyin_public_evidence"
     metadata = {"deerflow_mcp": True}
 
     def __init__(self, responses: list[dict[str, Any]]) -> None:
@@ -105,19 +109,19 @@ async def test_topic_research_discovers_and_calls_exact_douyin_mcp_child() -> No
     discovery_args = tool.calls[0]["args"]
     execution_args = tool.calls[1]["args"]
     assert set(discovery_args) == {"runtime"}
-    assert execution_args["child_tool"] == "video_search"
+    assert execution_args["child_tool"] == "search_videos"
     assert execution_args["manifest_version"] == "manifest-v1"
     assert execution_args["arguments"] == {
-        "query": "人情往来 送礼",
-        "purpose": "topic_research",
-        "max_results": 3,
+        "keyword": "人情往来 送礼",
+        "count": 3,
     }
     assert execution_args["runtime"] is discovery_args["runtime"]
     assert [result.url for result in results] == ["https://www.douyin.com/video/123"]
     assert len(search.snapshots) == 1
     assert search.snapshots[0].evidence_role == "topic_evidence"
-    assert search.snapshots[0].collection_method == "official_openapi"
+    assert search.snapshots[0].collection_method == "authenticated_public_search"
     assert search.snapshots[0].route_receipt["manifest_version"] == "manifest-v1"
+    assert search.snapshots[0].route_receipt["child_tool"] == "search_videos"
 
 
 @pytest.mark.asyncio
@@ -133,11 +137,11 @@ async def test_topic_research_stops_at_manifest_when_douyin_auth_is_unavailable(
 
 
 @pytest.mark.asyncio
-async def test_topic_research_rejects_a_benchmark_role_from_the_mcp_route() -> None:
+async def test_topic_research_rejects_an_unsuccessful_public_evidence_receipt() -> None:
     tool = _FakeDouyinSearchTool(
         [
             _manifest(),
-            _domain_result(evidence_role="benchmark_account_candidate"),
+            _domain_result(success=False),
         ]
     )
     search = DouyinMcpTopicEvidenceSearch(_runtime(tool), clock=lambda: NOW)
