@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "adopted_with_performance_debt",
+  "status": "adopted_for_first_incubation_canary",
   "model": "glm-5-2-260617",
   "thinking_enabled": false,
   "temperature": 0,
@@ -92,8 +92,9 @@
     },
     {
       "probe_id": "automatic-research-evan-kail-recovered",
-      "result": "passed_with_performance_debt",
+      "result": "passed_first_incubation_canary",
       "entry_boundary": "accepted frozen human-relations root through current map, automatic search, evidence reading, TopicBrief, MessagePlan, and BaseDraft",
+      "measurement_scope": "first-incubation cold start, not steady-state per-topic production",
       "elapsed_seconds": 223.324,
       "model_calls": 7,
       "token_usage": {
@@ -123,7 +124,7 @@
       "limitations": [
         "Automatic source ranking was weaker than the manually bounded primary-source pack.",
         "Delivery required two repair invocations.",
-        "Latency and token use are not production-acceptable."
+        "A separate warm incremental run is required before estimating steady-state per-topic latency or token use."
       ]
     }
   ],
