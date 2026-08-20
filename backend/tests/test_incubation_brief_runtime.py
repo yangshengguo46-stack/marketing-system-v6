@@ -62,7 +62,6 @@ def test_seals_skill_supplied_prohibited_assumptions_without_turning_them_into_f
             "用户拥有大量真实客户案例",
             "用户具有真人出镜能力",
         ),
-        excluded_content_branches=("婚礼", "婚礼", "彩礼"),
     ).payload
 
     assert payload["prohibited_assumptions"] == [
@@ -71,7 +70,18 @@ def test_seals_skill_supplied_prohibited_assumptions_without_turning_them_into_f
         "用户具有真人出镜能力",
     ]
     assert all(assumption not in {fact["statement"] for fact in payload[field]} for assumption in payload["prohibited_assumptions"] for field in ("business_facts", "capabilities", "resources", "constraints", "goals", "preferences"))
-    assert payload["excluded_content_branches"] == ["婚礼", "彩礼"]
+    assert "excluded_content_branches" not in payload
+
+
+def test_legacy_keyword_gate_is_discarded_when_reading_an_old_brief() -> None:
+    brief = IncubationBrief.model_validate(
+        {
+            "subject_expression": "我是做黄金礼品的，我要怎么起号？",
+            "excluded_content_branches": ["婚礼", "彩礼"],
+        }
+    )
+
+    assert "excluded_content_branches" not in brief.model_dump(mode="json")
 
 
 @pytest.mark.parametrize(
@@ -103,7 +113,6 @@ def test_builder_has_no_model_questionnaire_or_guess_inputs() -> None:
         "source_thread_id",
         "source_run_id",
         "prohibited_assumptions",
-        "excluded_content_branches",
     }
     assert "langchain" not in module_source
     assert "questionnaire" not in module_source

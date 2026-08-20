@@ -802,8 +802,10 @@ scene cannot silently become the whole account strategy.
 
 Reusable vertical incubation knowledge stays out of the generic Lead prompt. Matching
 `incubate-*` Skills load only when needed and may contribute bounded candidate paths, an
-optional versioned default root, local-branch boundaries, and fact-boundary assumptions.
-They cannot overwrite the user's words or decide positioning, audience, format, or monetization.
+optional rejectable preferred root, and supporting-branch hints.
+They cannot overwrite the user's words, classify free-text branches, replace the model-selected
+content root, inject denied facts into the project Brief, or decide positioning, audience, format,
+or monetization.
 
 Long-lived account judgment belongs to the separate `develop_account_strategy` tool. It uses
 an owner-validated selected project when present. When the ordinary chat entry has no project

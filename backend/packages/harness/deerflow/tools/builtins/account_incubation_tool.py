@@ -205,8 +205,6 @@ async def develop_account_strategy_tool(
             created_at=datetime.now(UTC),
             source_thread_id=thread_id,
             source_run_id=run_id,
-            prohibited_assumptions=(incubation_profile.do_not_assume if incubation_profile is not None else ()),
-            excluded_content_branches=(tuple(marker.marker for marker in incubation_profile.inactive_map_branches(user_request)) if incubation_profile is not None else ()),
         )
     except IncubationJudgmentModelError as exc:
         logger.warning(

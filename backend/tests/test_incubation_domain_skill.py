@@ -47,7 +47,7 @@ def _write_profile(skill: Skill, *, skill_name: str | None = None) -> None:
     references = skill.skill_dir / "references"
     references.mkdir()
     profile_payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "skill_name": skill_name or skill.name,
         "profile_version": "1.0.0",
         "lifecycle_status": "active",
@@ -63,14 +63,15 @@ def _write_profile(skill: Skill, *, skill_name: str | None = None) -> None:
                 "rationale": "礼品是送、收和回礼的关系媒介。",
             }
         ],
-        "default_root": "人与人之间的相处与人情世故",
-        "branch_only_markers": [
+        "preferred_root_candidate": "人与人之间的相处与人情世故",
+        "supporting_branch_hints": [
             {
-                "marker": "婚礼",
+                "branch_id": "wedding-gifting",
+                "label": "婚礼与婚嫁馈赠",
+                "suggested_scope": "supporting_branch",
                 "reason": "只是礼赠与人情世界中的一个局部场景。",
             }
         ],
-        "do_not_assume": ["用户经营婚庆业务"],
     }
     (references / "incubation-profile.json").write_text(
         json.dumps(profile_payload, ensure_ascii=False),
@@ -196,12 +197,12 @@ def test_loads_a_bounded_profile_only_from_the_selected_enabled_skill(tmp_path: 
     assert profile.lifecycle_status == "active"
     assert profile.source_refs == ("docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md",)
     assert profile.candidate_paths[0].root == "人与人之间的相处与人情世故"
-    assert profile.default_root == "人与人之间的相处与人情世故"
-    assert profile.branch_only_markers[0].marker == "婚礼"
-    assert [item.marker for item in profile.inactive_map_branches("黄金礼品")] == ["婚礼"]
-    assert profile.inactive_map_branches("婚礼伴手礼") == ()
+    assert profile.preferred_root_candidate == "人与人之间的相处与人情世故"
+    assert profile.supporting_branch_hints[0].branch_id == "wedding-gifting"
+    assert profile.supporting_branch_hints[0].label == "婚礼与婚嫁馈赠"
+    assert not hasattr(profile, "inactive_map_branches")
     assert len(profile.content_sha256()) == 64
-    assert profile.decision_projection()["profile_version"] == "1.0.0"
+    assert "profile_version" not in profile.decision_projection()
 
 
 @pytest.mark.parametrize("status", ["candidate", "shadow", "contested", "superseded", "retired"])
@@ -233,7 +234,7 @@ def test_rejects_unsupported_profile_schema_with_a_migration_error(tmp_path: Pat
     profile_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     storage = SimpleNamespace(load_skills=lambda *, enabled_only: [skill])
 
-    with pytest.raises(IncubationSkillProfileError, match="schema_version.*2"):
+    with pytest.raises(IncubationSkillProfileError, match="schema_version.*3"):
         load_incubation_skill_profile(skill.name, storage=storage)
 
 
@@ -410,12 +411,12 @@ def test_rejects_a_non_incubation_skill_even_when_it_contains_a_profile(tmp_path
         load_incubation_skill_profile(skill.name, storage=storage)
 
 
-def test_rejects_a_default_root_that_is_not_one_of_the_skill_candidates(tmp_path: Path) -> None:
+def test_rejects_a_preferred_root_that_is_not_one_of_the_skill_candidates(tmp_path: Path) -> None:
     skill = _skill(tmp_path)
     _write_profile(skill)
     profile_path = skill.skill_dir / "references" / "incubation-profile.json"
     payload = json.loads(profile_path.read_text(encoding="utf-8"))
-    payload["default_root"] = "另一个未声明的内容根"
+    payload["preferred_root_candidate"] = "另一个未声明的内容根"
     profile_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     storage = SimpleNamespace(load_skills=lambda *, enabled_only: [skill])
 
@@ -456,7 +457,7 @@ def test_profile_schema_supports_an_active_principle_only_profile_without_static
     profile_path = skill.skill_dir / "references" / "incubation-profile.json"
     payload = json.loads(profile_path.read_text(encoding="utf-8"))
     payload["candidate_paths"] = []
-    payload["default_root"] = None
+    payload["preferred_root_candidate"] = None
     payload["selection_principles"] = [
         "完整食物品类可以保持为根；中间载体应与它最终完成的食物对象比较。",
         "不要把商品、食用场景和社交功能拼成混合内容根。",
@@ -464,53 +465,56 @@ def test_profile_schema_supports_an_active_principle_only_profile_without_static
     profile = IncubationSkillProfile.model_validate(payload)
 
     assert profile.candidate_paths == ()
-    assert profile.default_root is None
+    assert profile.preferred_root_candidate is None
     assert profile.decision_projection()["selection_principles"] == payload["selection_principles"]
 
 
-@pytest.mark.parametrize(
-    "source_object",
-    [
-        "我做黄金礼品，但不做婚礼",
-        "我做黄金礼品，跟婚礼无关",
-        "非婚礼业务的商务礼赠",
-        "我做黄金礼品，跟婚礼没关系",
-        "我做黄金礼品，别讲婚礼",
-        "我做黄金礼品，不想碰婚礼",
-        "我做黄金礼品，不要讲婚礼",
-        "我做黄金礼品，别往婚礼上扯",
-        "我做黄金礼品，和婚礼完全没关系",
-        "我不是做婚礼的，我做礼品",
-        "婚礼不在我的业务范围内，我做商务礼赠",
-        "我做黄金礼品，婚礼跟我没有任何关系",
-        "我做黄金礼品，婚礼业务压根不碰",
-    ],
-)
-def test_negated_local_scene_does_not_reactivate_the_branch(tmp_path: Path, source_object: str) -> None:
+def test_supporting_branch_hints_are_advice_and_never_classify_user_text(tmp_path: Path) -> None:
     skill = _skill(tmp_path)
     _write_profile(skill)
     storage = SimpleNamespace(load_skills=lambda *, enabled_only: [skill])
     profile = load_incubation_skill_profile(skill.name, storage=storage)
 
-    assert [item.marker for item in profile.inactive_map_branches(source_object)] == ["婚礼"]
+    projection = profile.decision_projection()
+    assert set(projection) == {
+        "domain",
+        "candidate_paths",
+        "selection_principles",
+        "preferred_root_candidate",
+        "supporting_branch_hints",
+    }
+    assert "incubation_skill" not in projection
+    assert "profile_version" not in projection
+    assert "profile_sha256" not in projection
+    assert "applies_to" not in projection
+    assert "does_not_apply_to" not in projection
+    assert "do_not_assume" not in projection
+    assert "source_refs" not in projection
+    assert "lifecycle_status" not in projection
+    assert projection["supporting_branch_hints"] == [
+        {
+            "branch_id": "wedding-gifting",
+            "label": "婚礼与婚嫁馈赠",
+            "suggested_scope": "supporting_branch",
+            "reason": "只是礼赠与人情世界中的一个局部场景。",
+        }
+    ]
+    assert "branch_only_markers" not in projection
+    assert not hasattr(profile, "is_branch_only")
+    assert not hasattr(profile, "inactive_map_branches")
 
 
-@pytest.mark.parametrize(
-    "source_object",
-    [
-        "我是做别墅婚礼策划的",
-        "我是做非遗婚礼礼俗内容的",
-        "我不只是做婚礼，也做商务礼赠",
-        "婚礼不是我唯一业务，但确实是主营之一",
-    ],
-)
-def test_positive_local_scene_business_activates_the_branch(tmp_path: Path, source_object: str) -> None:
+def test_vertical_profile_cannot_inject_fact_denials_into_the_project_brief(tmp_path: Path) -> None:
     skill = _skill(tmp_path)
     _write_profile(skill)
+    profile_path = skill.skill_dir / "references" / "incubation-profile.json"
+    payload = json.loads(profile_path.read_text(encoding="utf-8"))
+    payload["do_not_assume"] = ["用户经营婚庆或婚嫁业务"]
+    profile_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     storage = SimpleNamespace(load_skills=lambda *, enabled_only: [skill])
-    profile = load_incubation_skill_profile(skill.name, storage=storage)
 
-    assert profile.inactive_map_branches(source_object) == ()
+    with pytest.raises(IncubationSkillProfileError, match="invalid"):
+        load_incubation_skill_profile(skill.name, storage=storage)
 
 
 @pytest.mark.parametrize(
@@ -562,7 +566,7 @@ def test_rejects_a_profile_without_paths_or_selection_principles(tmp_path: Path)
     profile_path = skill.skill_dir / "references" / "incubation-profile.json"
     payload = json.loads(profile_path.read_text(encoding="utf-8"))
     payload["candidate_paths"] = []
-    payload["default_root"] = None
+    payload["preferred_root_candidate"] = None
     payload["selection_principles"] = []
     profile_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     storage = SimpleNamespace(load_skills=lambda *, enabled_only: [skill])
@@ -591,17 +595,18 @@ def test_bundled_gift_skill_is_discoverable_and_owns_its_profile() -> None:
     assert parts is not None
     assert skill.category == SkillCategory.PUBLIC
     assert parts.metadata["license"] == "MIT"
-    assert parts.metadata["metadata"]["version"] == "1.0.1"
+    assert parts.metadata["metadata"]["version"] == "1.1.0"
     assert parts.metadata["metadata"]["lifecycle"] == "active"
     assert profile.skill_name == skill.name
-    assert profile.schema_version == 2
-    assert profile.profile_version == "1.0.1"
+    assert profile.schema_version == 3
+    assert profile.profile_version == "1.1.0"
     assert profile.lifecycle_status == "active"
     assert profile.candidate_paths[0].root == "人与人之间的相处与人情世故"
-    assert profile.default_root == "人与人之间的相处与人情世故"
+    assert profile.preferred_root_candidate == "人与人之间的相处与人情世故"
+    assert profile.supporting_branch_hints[0].suggested_scope == "supporting_branch"
     assert (skill.skill_dir / "references" / "incubation-profile.json").is_file()
     assert 'incubation_skill="incubate-gift-human-relations"' in skill_body
-    assert "does not choose the final account route" in skill_body
+    assert "does not choose the root or final account route" in skill_body
     assert eval_manifest["skill_name"] == skill.name
     case_kinds = {case["case_kind"] for case in eval_manifest["evals"]}
     assert case_kinds == {"trigger", "anti_trigger", "behavior", "held_out"}
@@ -625,7 +630,7 @@ def test_food_world_candidate_is_shadowed_outside_the_runtime_registry() -> None
     assert profile.skill_name == "incubate-food-world"
     assert profile.lifecycle_status == "shadow"
     assert profile.candidate_paths == ()
-    assert profile.default_root is None
+    assert profile.preferred_root_candidate is None
     assert any("中间载体" in principle for principle in profile.selection_principles)
     assert any("混合内容根" in principle for principle in profile.selection_principles)
     assert eval_manifest.acceptance.status == "failed"

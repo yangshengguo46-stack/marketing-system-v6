@@ -206,7 +206,6 @@ async def test_account_strategy_carries_vertical_skill_assumptions_into_the_seal
             "用户因经营身份就拥有大量真实客户案例或一手见闻",
             "用户已有可拍素材或表演能力",
         ),
-        excluded_content_branches=("婚礼", "彩礼"),
     )
 
     brief_payload = seen_input["incubation_brief"]["payload"]
@@ -218,9 +217,9 @@ async def test_account_strategy_carries_vertical_skill_assumptions_into_the_seal
     brief_parent = next(parent for parent in prepared.judgment_artifact.parents if parent.artifact_type == "incubation_brief")
     stored_brief = repository.artifacts[brief_parent.artifact_id]
     assert stored_brief.payload["prohibited_assumptions"] == brief_payload["prohibited_assumptions"]
-    assert brief_payload["excluded_content_branches"] == ["婚礼", "彩礼"]
-    assert seen_input["content_branch_boundary"] == {"excluded_unless_explicit_in_business": ["婚礼", "彩礼"]}
-    assert stored_brief.payload["excluded_content_branches"] == ["婚礼", "彩礼"]
+    assert "excluded_content_branches" not in brief_payload
+    assert "content_branch_boundary" not in seen_input
+    assert "excluded_content_branches" not in stored_brief.payload
 
 
 def test_current_account_strategy_can_be_resolved_for_the_exact_candidate_map() -> None:

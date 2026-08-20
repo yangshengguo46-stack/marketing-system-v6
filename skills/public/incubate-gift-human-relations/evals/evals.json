@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.0.1",
+  "profile_version": "1.1.0",
   "acceptance": {
     "status": "passed",
-    "profile_sha256": "4633a9977209f23c0e1a5db9eea24611d18bc07202f33ce180781fbcdebeab33",
-    "package_sha256": "c6de0108babe2b2e67054eda0289bd0f69c635f326bd601c523138ec4b2c03dd",
+    "profile_sha256": "fe13788015094bda58b08e4a27cbdf1e75437f87672d6d9b22271506c027b149",
+    "package_sha256": "fe256267c85bc451e423fd6b2a48c11abde802966a0f2bc7d4c56abe70519f78",
     "evidence_ref": "acceptance.json"
   },
   "evals": [
@@ -80,24 +80,35 @@
       "case_id": "gold-gift-behavior",
       "case_kind": "behavior",
       "prompt": "我是做黄金礼品的，我要怎么起号？",
-      "expected_output": "内容根到达人与人之间的相处与人情世故；婚嫁只可作为未激活局部分支，不得统治地图。",
+      "expected_output": "模型应比较礼品对象与人与人相处的长期世界，通常收敛到人情世故；局部人生场景可以作为支持分支，但不能因关键词规则被删除或自动晋升为长期根。",
       "expectations": [
         "内容根是人与人之间的相处与人情世故",
         "地图可包含送、收、回、拒绝、面子、义务、边界与利益",
-        "不把婚礼、彩礼、嫁妆、三金或五金作为账号主线",
+        "局部人生场景不因词表被删除，也不自动成为账号主线",
         "不编造用户已有客户、案例、素材或经营经验"
       ]
     },
     {
-      "case_id": "retirement-gift-held-out",
+      "case_id": "explicit-local-scene-behavior",
+      "case_kind": "behavior",
+      "prompt": "我是做婚礼伴手礼定制的，我要怎么起号？",
+      "expected_output": "用户明确经营局部人生场景时，该场景可以成为本轮具体内容世界；Skill 的分支提示不得把它删除。",
+      "expectations": [
+        "保留婚礼伴手礼定制这一完整商业表达",
+        "允许模型选择婚礼中的礼赠与关系世界",
+        "不因任何关键词列表拒绝地图或账号判断"
+      ]
+    },
+    {
+      "case_id": "corporate-thank-you-held-out",
       "case_kind": "held_out",
-      "prompt": "我做退休纪念礼物定制，想让更多人知道我。",
-      "expected_output": "应识别礼物承载纪念、告别、感谢和关系确认，但不得预设用户已有退休客户案例。",
+      "prompt": "我是做企业客户答谢礼定制的，账号长期讲什么？",
+      "expected_output": "应识别答谢礼背后的信任、互惠、分寸和关系维护，并将具体定制流程保持为支线。",
       "expectations": [
         "加载 incubate-gift-human-relations",
-        "保留退休纪念礼物的原始业务事实",
-        "长期世界不收缩为某一个退休仪式",
-        "事实、推断和待确认资源分开"
+        "保留企业客户答谢礼定制的原始业务事实",
+        "长期世界不收缩为选品、制作或交付流程",
+        "商务场景保持为人际关系世界中的具体分支"
       ]
     }
   ]

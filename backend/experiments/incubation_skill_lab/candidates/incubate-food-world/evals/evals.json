@@ -4,7 +4,7 @@
   "profile_version": "0.1.0",
   "acceptance": {
     "status": "failed",
-    "profile_sha256": "ccee20b6c79eaf89cd13d16c4877b0a40678a0b4f0a896c9a1737f1f645e8316",
+    "profile_sha256": "8d1430546c97a397f13e34ca080b28fee79a71194532f1f9a48c0e97621da0bb",
     "evidence_ref": "docs/content-intelligence-v6/evidence/a118-domain-skill-governance-and-food-shadow-2026-08-20.json"
   },
   "evals": [

@@ -171,8 +171,6 @@ INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
 - 信息不足时保留 null、空列表和 unknowns，不为完整感编造能力、资源、数据或结论。
 - user_fact_boundary 是服务端从 incubation_brief 投影出的事实边界。allowed_user_fact_statements、confirmed_capabilities 和 confirmed_resources 之外的用户优势均未成立；prohibited_assumptions 中每一项更是当前明确不能成立的默认前提。
 - 不得在 business_connection、account_role、rationale、推荐理由或其他字段中把未成立的优势改写成用户已有的经历、案例、客户、素材或能力；只能继续保留为未知、条件或 resource_requirements。
-- content_branch_boundary 是当前按需行业 Skill 的局部内容边界。excluded_unless_explicit_in_business 中的场景没有被用户本轮业务表达激活。
-- 不得在业务人群、定位、内容主体、受众、人设、形式、变现、理由、未知或示例中重新引入该局部场景；用户明确经营或要求该场景时，调用方不会把它列入边界。
 - 业务身份不等于资源所有权。只有 brief 明示的 capabilities 和 resources 才是已知资源；路线还需要的其他条件必须写入 resource_requirements 和 unknowns，并使用条件语气，不能作为推荐理由中的既有优势。
 - 不要求固定模板。
 - 不要求数字配额。
@@ -196,10 +194,6 @@ class IncubationJudgmentModelError(RuntimeError):
         self.diagnostics = diagnostics
 
 
-class _ExcludedContentBranchError(ValueError):
-    """A model draft reintroduced a Skill-scoped inactive local branch."""
-
-
 def _safe_contract_diagnostics(error: BaseException) -> tuple[str, ...]:
     """Return bounded schema locations without values or provider payloads."""
 
@@ -207,8 +201,6 @@ def _safe_contract_diagnostics(error: BaseException) -> tuple[str, ...]:
     visited: set[int] = set()
     while current is not None and id(current) not in visited:
         visited.add(id(current))
-        if isinstance(current, _ExcludedContentBranchError):
-            return ("excluded_content_branch",)
         if isinstance(current, ValidationError):
             diagnostics: list[str] = []
             for item in current.errors(include_url=False, include_context=False, include_input=False)[:8]:
@@ -318,14 +310,6 @@ def _compile_proposal(
         raise ValueError("proposal basis artifact ids must come from allowed proposal inputs")
 
     brief = IncubationBrief.model_validate(brief_artifact.payload)
-    rendered_draft = json.dumps(
-        draft.model_dump(mode="json"),
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).casefold()
-    if any(branch.casefold() in rendered_draft for branch in brief.excluded_content_branches):
-        raise _ExcludedContentBranchError("proposal reintroduced an inactive local content branch")
     routes = tuple(
         _compile_route_option(
             route,
@@ -435,12 +419,6 @@ def _user_fact_boundary_projection(brief: IncubationBrief) -> dict[str, object]:
     }
 
 
-def _content_branch_boundary_projection(brief: IncubationBrief) -> dict[str, object]:
-    return {
-        "excluded_unless_explicit_in_business": list(brief.excluded_content_branches),
-    }
-
-
 def _evidence_input(
     artifact: ArtifactEnvelope,
     *,
@@ -500,7 +478,6 @@ def _render_model_input(
             payload=brief_artifact.payload,
         ),
         "user_fact_boundary": _user_fact_boundary_projection(brief),
-        "content_branch_boundary": _content_branch_boundary_projection(brief),
         "candidate_content_map": _artifact_input(
             content_world_artifact,
             payload=_content_world_projection(content_world_artifact),

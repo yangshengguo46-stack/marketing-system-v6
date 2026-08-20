@@ -595,7 +595,7 @@ async def test_optional_shared_world_failure_preserves_other_root_candidates() -
 
 
 @pytest.mark.asyncio
-async def test_reviewed_cross_domain_semantic_family_cannot_be_lost_when_root_judge_reselects_product() -> None:
+async def test_reviewed_cross_domain_world_remains_a_candidate_without_overriding_the_root_judge() -> None:
     model = SequencedStructuredFakeModel(
         {
             SemanticReadingDraft: {
@@ -676,8 +676,9 @@ async def test_reviewed_cross_domain_semantic_family_cannot_be_lost_when_root_ju
     )
 
     assert bundle.content_world.content_entry == "纸质契约文书"
-    assert bundle.content_world.content_root == "人们如何用约定建立并维持关系"
-    assert "人们如何用约定建立并维持关系" in model.message_batches[-1][1].content
+    assert bundle.content_world.content_root == "纸质契约文书"
+    assert "纸质契约文书" in model.message_batches[-1][1].content
+    assert any(candidate.label == "人们如何用约定建立并维持关系" for candidate in bundle.content_world.root_candidates)
 
 
 class StubLexicalEvidenceProvider:
@@ -1819,7 +1820,7 @@ async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_dec
     assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
 
 
-def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors() -> None:
+def test_vertical_skill_adds_reviewable_roots_without_hard_demoting_local_scenes() -> None:
     semantic = SemanticReadingDraft.model_validate(
         {
             "source_object": "黄金礼品",
@@ -1837,7 +1838,7 @@ def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors
     )
     profile = IncubationSkillProfile.model_validate(
         {
-            "schema_version": 2,
+            "schema_version": 3,
             "skill_name": "incubate-gift-human-relations",
             "profile_version": "1.0.0",
             "lifecycle_status": "active",
@@ -1853,14 +1854,15 @@ def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors
                     "rationale": "礼品是送、收和回礼的关系媒介。",
                 }
             ],
-            "default_root": "人与人之间的相处与人情世故",
-            "branch_only_markers": [
+            "preferred_root_candidate": "人与人之间的相处与人情世故",
+            "supporting_branch_hints": [
                 {
-                    "marker": "婚礼",
+                    "branch_id": "wedding-gifting",
+                    "label": "婚礼馈赠",
+                    "suggested_scope": "supporting_branch",
                     "reason": "婚礼只是礼赠世界的一个局部场景。",
                 }
             ],
-            "do_not_assume": ["用户经营婚庆业务"],
         }
     )
 
@@ -1873,15 +1875,15 @@ def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors
 
     by_label = {candidate.label: candidate for candidate in candidate_set.candidates}
     assert by_label["人与人之间的相处与人情世故"].scope_role == "root_candidate"
-    assert by_label["婚礼馈赠与礼仪"].scope_role == "example_branch"
+    assert by_label["婚礼馈赠与礼仪"].scope_role == "root_candidate"
     assert by_label["婚礼馈赠"].scope_role == "example_branch"
 
 
 @pytest.mark.asyncio
-async def test_vertical_skill_default_root_beats_a_variable_generic_root_judgment() -> None:
+async def test_vertical_skill_preferred_root_remains_a_soft_prior_and_local_branches_survive() -> None:
     profile = IncubationSkillProfile.model_validate(
         {
-            "schema_version": 2,
+            "schema_version": 3,
             "skill_name": "incubate-gift-human-relations",
             "profile_version": "1.0.0",
             "lifecycle_status": "active",
@@ -1897,14 +1899,15 @@ async def test_vertical_skill_default_root_beats_a_variable_generic_root_judgmen
                     "rationale": "礼品是送、收和回礼的关系媒介。",
                 }
             ],
-            "default_root": "人与人之间的相处与人情世故",
-            "branch_only_markers": [
+            "preferred_root_candidate": "人与人之间的相处与人情世故",
+            "supporting_branch_hints": [
                 {
-                    "marker": "婚礼",
+                    "branch_id": "wedding-gifting",
+                    "label": "婚礼馈赠",
+                    "suggested_scope": "supporting_branch",
                     "reason": "婚礼只在用户明确经营该业务时进入地图。",
                 }
             ],
-            "do_not_assume": [],
         }
     )
     model = SequencedStructuredFakeModel(
@@ -1982,15 +1985,16 @@ async def test_vertical_skill_default_root_beats_a_variable_generic_root_judgmen
         incubation_profile=profile,
     )
 
-    assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
+    assert bundle.content_world.content_root == "礼如何规范人们的行为与彼此相待"
     decision_input = model.message_batches[4][1].content
-    assert '"incubation_skill": "incubate-gift-human-relations"' in decision_input
     assert '"root": "人与人之间的相处与人情世故"' in decision_input
-    assert '"default_root": "人与人之间的相处与人情世故"' in decision_input
+    assert '"preferred_root_candidate": "人与人之间的相处与人情世故"' in decision_input
+    assert "incubate-gift-human-relations" not in decision_input
+    assert '"profile_version"' not in decision_input
+    assert '"profile_sha256"' not in decision_input
     map_input = model.message_batches[5][1].content
-    assert '"excluded_local_branches"' in map_input
-    assert '"marker": "婚礼"' in map_input
-    assert [dimension.name for dimension in bundle.content_world.dimensions] == ["日常关系"]
+    assert '"excluded_local_branches"' not in map_input
+    assert [dimension.name for dimension in bundle.content_world.dimensions] == ["日常关系", "婚礼馈赠"]
 
 
 def test_shared_world_input_exposes_bounded_modifier_candidates_without_full_product() -> None:

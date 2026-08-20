@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -25,18 +24,6 @@ ACTIVE_INCUBATION_SKILL_STATUS = "active"
 REQUIRED_INCUBATION_EVAL_KINDS = frozenset({"trigger", "anti_trigger", "behavior", "held_out"})
 INCUBATION_ACCEPTANCE_EVIDENCE_DIR = Path("evidence")
 
-_CLAUSE_BOUNDARIES = "，,。；;！？!?\n"
-_BUSINESS_NEGATION_PREFIX = re.compile(
-    r"(?:不|没|未)(?:是)?(?:想|打算|准备|愿意|会)?(?:再)?"
-    r"(?:做|经营|承接|从事|涉及|包含|提供|碰|接触|主营)[\s、：:]*$"
-)
-_EDITORIAL_NEGATION_PREFIX = re.compile(r"(?:不要|别|勿)(?:再)?(?:讲|提|聊|说|碰)[\s、：:]*$")
-_RELATION_NEGATION_SUFFIX = re.compile(
-    r"^(?:业务)?(?:跟|和|与)?(?:我|我们|本店|本公司|本业务)?(?:压根|完全|根本)?"
-    r"(?:没有任何关系|没有关系|没关系|无关|不相关|不做|不碰|不涉及|不承接|不经营|不提供)"
-)
-_SCOPE_NEGATION_SUFFIX = re.compile(r"^(?:不在|不属于)[^，,。；;！？!?]{0,12}(?:范围|业务)")
-
 
 class IncubationSkillProfileError(ValueError):
     """Raised when a selected Skill cannot provide a trustworthy domain profile."""
@@ -54,8 +41,10 @@ class IncubationCandidatePath(ContractModel):
         return self
 
 
-class IncubationBranchOnlyMarker(ContractModel):
-    marker: NonEmptyStr
+class IncubationSupportingBranchHint(ContractModel):
+    branch_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,79}$")
+    label: NonEmptyStr
+    suggested_scope: Literal["supporting_branch"] = "supporting_branch"
     reason: NonEmptyStr
 
 
@@ -176,7 +165,7 @@ def incubation_activation_package_sha256(
 class IncubationSkillProfile(ContractModel):
     """Domain hypotheses supplied by a Skill, never an adopted root decision."""
 
-    schema_version: Literal[2]
+    schema_version: Literal[3]
     skill_name: NonEmptyStr
     profile_version: str = Field(pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$")
     lifecycle_status: Literal["candidate", "shadow", "active", "contested", "superseded", "retired"]
@@ -186,9 +175,8 @@ class IncubationSkillProfile(ContractModel):
     domain: NonEmptyStr
     candidate_paths: tuple[IncubationCandidatePath, ...] = Field(default=(), max_length=8)
     selection_principles: tuple[NonEmptyStr, ...] = Field(default=(), max_length=16)
-    default_root: NonEmptyStr | None = None
-    branch_only_markers: tuple[IncubationBranchOnlyMarker, ...] = Field(default=(), max_length=32)
-    do_not_assume: tuple[NonEmptyStr, ...] = Field(default=(), max_length=32)
+    preferred_root_candidate: NonEmptyStr | None = None
+    supporting_branch_hints: tuple[IncubationSupportingBranchHint, ...] = Field(default=(), max_length=32)
 
     @model_validator(mode="after")
     def reject_duplicate_profile_entries(self) -> IncubationSkillProfile:
@@ -197,17 +185,16 @@ class IncubationSkillProfile(ContractModel):
         roots = [item.root for item in self.candidate_paths]
         if len(roots) != len(set(roots)):
             raise ValueError("incubation profile candidate roots must be unique")
-        if self.default_root is not None and self.default_root not in roots:
-            raise ValueError("incubation profile default_root must identify one candidate path")
-        markers = [item.marker for item in self.branch_only_markers]
-        if len(markers) != len(set(markers)):
-            raise ValueError("incubation profile branch-only markers must be unique")
+        if self.preferred_root_candidate is not None and self.preferred_root_candidate not in roots:
+            raise ValueError("incubation profile preferred_root_candidate must identify one candidate path")
+        branch_ids = [item.branch_id for item in self.supporting_branch_hints]
+        if len(branch_ids) != len(set(branch_ids)):
+            raise ValueError("incubation profile supporting branch ids must be unique")
         for field_name in (
             "source_refs",
             "applies_to",
             "does_not_apply_to",
             "selection_principles",
-            "do_not_assume",
         ):
             entries = getattr(self, field_name)
             normalized = [entry.casefold() for entry in entries]
@@ -228,32 +215,13 @@ class IncubationSkillProfile(ContractModel):
         )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
-    def is_branch_only(self, label: str, *, source_object: str) -> bool:
-        """Return true for a local scene unless the user's object names it explicitly."""
-
-        normalized_label = label.casefold()
-        return any(marker.marker.casefold() in normalized_label and not _mentions_marker_positively(marker.marker, source_object) for marker in self.branch_only_markers)
-
-    def inactive_map_branches(self, source_object: str) -> tuple[IncubationBranchOnlyMarker, ...]:
-        """Return local branches that this business expression did not activate."""
-
-        return tuple(marker for marker in self.branch_only_markers if not _mentions_marker_positively(marker.marker, source_object))
-
     def decision_projection(self) -> dict[str, Any]:
         return {
-            "incubation_skill": self.skill_name,
-            "profile_version": self.profile_version,
-            "lifecycle_status": self.lifecycle_status,
-            "source_refs": list(self.source_refs),
-            "applies_to": list(self.applies_to),
-            "does_not_apply_to": list(self.does_not_apply_to),
             "domain": self.domain,
             "candidate_paths": [item.model_dump(mode="json") for item in self.candidate_paths],
             "selection_principles": list(self.selection_principles),
-            "default_root": self.default_root,
-            "branch_only_markers": [item.model_dump(mode="json") for item in self.branch_only_markers],
-            "do_not_assume": list(self.do_not_assume),
-            "profile_sha256": self.content_sha256(),
+            "preferred_root_candidate": self.preferred_root_candidate,
+            "supporting_branch_hints": [item.model_dump(mode="json") for item in self.supporting_branch_hints],
         }
 
 
@@ -371,31 +339,6 @@ def validate_incubation_activation_evidence(
     return package_sha256
 
 
-def _mentions_marker_positively(marker: str, source_object: str) -> bool:
-    normalized_marker = marker.casefold()
-    normalized_source = source_object.casefold()
-    cursor = 0
-    while (index := normalized_source.find(normalized_marker, cursor)) >= 0:
-        after_start = index + len(normalized_marker)
-        clause_start = max((normalized_source.rfind(boundary, 0, index) for boundary in _CLAUSE_BOUNDARIES), default=-1) + 1
-        clause_ends = [end for boundary in _CLAUSE_BOUNDARIES if (end := normalized_source.find(boundary, after_start)) >= 0]
-        clause_end = min(clause_ends, default=len(normalized_source))
-        before = normalized_source[clause_start:index]
-        after = normalized_source[after_start:clause_end]
-        negated = (
-            _BUSINESS_NEGATION_PREFIX.search(before)
-            or _EDITORIAL_NEGATION_PREFIX.search(before)
-            or (before.rstrip().endswith("非") and re.match(r"^\s*(?:业务|服务|赛道|领域)", after))
-            or (re.search(r"(?:不要|别|勿)(?:再)?往\s*$", before) and re.match(r"^\s*上?(?:扯|带|引)", after))
-            or _RELATION_NEGATION_SUFFIX.search(after)
-            or _SCOPE_NEGATION_SUFFIX.search(after)
-        )
-        if not negated:
-            return True
-        cursor = after_start
-    return False
-
-
 def load_incubation_skill_profile(
     skill_name: str,
     *,
@@ -446,8 +389,8 @@ def load_incubation_skill_profile(
         payload = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise IncubationSkillProfileError("The selected incubation profile is invalid.") from exc
-    if not isinstance(payload, dict) or payload.get("schema_version") != 2:
-        raise IncubationSkillProfileError("Unsupported incubation profile schema_version; expected 2.")
+    if not isinstance(payload, dict) or payload.get("schema_version") != 3:
+        raise IncubationSkillProfileError("Unsupported incubation profile schema_version; expected 3.")
     try:
         profile = IncubationSkillProfile.model_validate(payload)
     except ValueError as exc:
@@ -513,7 +456,6 @@ __all__ = [
     "MAX_INCUBATION_ACCEPTANCE_RECEIPT_BYTES",
     "ACTIVE_INCUBATION_SKILL_STATUS",
     "REQUIRED_INCUBATION_EVAL_KINDS",
-    "IncubationBranchOnlyMarker",
     "IncubationCandidatePath",
     "IncubationEvalAcceptance",
     "IncubationEvalCase",
@@ -521,6 +463,7 @@ __all__ = [
     "IncubationTriggerEvalCase",
     "IncubationCaseAcceptanceResult",
     "IncubationPackageAcceptanceReceipt",
+    "IncubationSupportingBranchHint",
     "IncubationSkillProfile",
     "IncubationSkillProfileError",
     "incubation_activation_package_sha256",

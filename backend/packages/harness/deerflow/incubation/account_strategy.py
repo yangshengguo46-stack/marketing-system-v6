@@ -181,7 +181,6 @@ async def prepare_account_strategy(
     source_run_id: str,
     account: PlatformAccountRef | None = None,
     prohibited_assumptions: tuple[str, ...] = (),
-    excluded_content_branches: tuple[str, ...] = (),
 ) -> PreparedAccountStrategy:
     """Create or reuse the project's versioned account-incubation judgment.
 
@@ -215,7 +214,6 @@ async def prepare_account_strategy(
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
         prohibited_assumptions=prohibited_assumptions,
-        excluded_content_branches=excluded_content_branches,
     )
     brief_artifact = await repository.put_artifact(brief_artifact)
 

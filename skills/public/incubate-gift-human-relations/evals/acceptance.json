@@ -1,76 +1,84 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.0.1",
-  "package_sha256": "c6de0108babe2b2e67054eda0289bd0f69c635f326bd601c523138ec4b2c03dd",
+  "profile_version": "1.1.0",
+  "package_sha256": "fe256267c85bc451e423fd6b2a48c11abde802966a0f2bc7d4c56abe70519f78",
   "decision": "active",
-  "evaluated_at": "2026-08-21T00:00:00+08:00",
+  "evaluated_at": "2026-08-21T02:58:41+08:00",
   "source_refs": [
     {
       "evidence_id": "acceptance-evidence",
       "path": "evidence/acceptance-evidence.json",
-      "sha256": "e8e77cb81926daa53dd1e501c0ae1895dc9112be0e9784e56456e62d0ba1b2ec"
+      "sha256": "3b0bb6d2cb7783a31c660090b8d07e0fa946e8c9778941e0a77c8861ebb8f31e"
     }
   ],
   "case_results": [
     {
       "case_id": "gold-gift-trigger",
       "outcome": "passed",
-      "observation": "The deferred index selected the gift Skill for gold gifts in all three v1.0.1 rounds.",
+      "observation": "The name-and-description routing projection is byte-identical to the three-round v1.0.1 routing acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "corporate-gift-trigger",
       "outcome": "passed",
-      "observation": "The deferred index selected the gift Skill for corporate gift customization in all three rounds.",
+      "observation": "The unchanged routing projection remains covered by the three-round corporate-gift acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "souvenir-trigger",
       "outcome": "passed",
-      "observation": "The deferred index selected the gift Skill for local souvenirs in all three rounds.",
+      "observation": "The unchanged routing projection remains covered by the three-round souvenir acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "gold-investment-guard",
       "outcome": "passed",
-      "observation": "The deferred index rejected the gift Skill for gold recycling and investment bars in all three rounds.",
+      "observation": "The unchanged routing projection remains covered by the three-round gold-investment anti-trigger acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "jewelry-guard",
       "outcome": "passed",
-      "observation": "The deferred index rejected the gift Skill for jewelry design in all three rounds.",
+      "observation": "The unchanged routing projection remains covered by the three-round jewelry anti-trigger acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "wedding-service-guard",
       "outcome": "passed",
-      "observation": "The deferred index rejected the gift Skill when wedding planning itself was the business.",
+      "observation": "The unchanged routing projection remains covered by the wedding-service anti-trigger acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "watch-guard",
       "outcome": "passed",
-      "observation": "The deferred index rejected the gift Skill when watches, rather than gifting, were the business object.",
+      "observation": "The unchanged routing projection remains covered by the watch anti-trigger acceptance.",
       "evidence_ref": "acceptance-evidence"
     },
     {
       "case_id": "gold-gift-behavior",
       "outcome": "passed",
-      "observation": "The accepted live run froze the human-relations root, excluded inactive wedding branches, and preserved unsupported resources as unknown.",
+      "observation": "The final-package live GLM run selected and froze the human-relations root without a Skill override, governance metadata, or free-text branch rejection.",
       "evidence_ref": "acceptance-evidence"
     },
     {
-      "case_id": "retirement-gift-held-out",
+      "case_id": "explicit-local-scene-behavior",
       "outcome": "passed",
-      "observation": "The untouched held-out run selected the human-relations root and explicitly marked customer cases, footage, and operating scope as unknown.",
+      "observation": "A final-package live GLM run preserved the exact local business and local map paths without a denylist, although it still selected the broader preferred root.",
+      "evidence_ref": "acceptance-evidence"
+    },
+    {
+      "case_id": "corporate-thank-you-held-out",
+      "outcome": "passed",
+      "observation": "The final-package held-out selected the human-relations root on one documented full-chain recovery run after the initial final-map payload remained empty through built-in repair.",
       "evidence_ref": "acceptance-evidence"
     }
   ],
   "limitations": [
     "Acceptance is bounded to businesses where gifting is the stated commercial object.",
-    "It does not establish correctness for every gift subcategory or every language variant.",
+    "It does not establish correctness for every gift subcategory, every language variant, or repeated-run stability.",
+    "The explicit-local run preserved local paths but did not promote them to the root, so the soft preference may still be too strong.",
+    "One held-out required a manual full-chain recovery run after structured-output repair was exhausted.",
     "The full incubation chain still carries documented latency and token-cost debt."
   ]
 }

@@ -1,47 +1,148 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.0.1",
+  "profile_version": "1.1.0",
+  "routing_projection": {
+    "fields": [
+      "name",
+      "description"
+    ],
+    "previous_sha256": "3634447078a370a14e2c11752ff64e747a3465244c0ebf973d2ebcc3de06652e",
+    "current_sha256": "3634447078a370a14e2c11752ff64e747a3465244c0ebf973d2ebcc3de06652e",
+    "unchanged": true,
+    "prior_three_round_evidence": "docs/content-intelligence-v6/evidence/a118-domain-skill-governance-and-food-shadow-2026-08-20.json"
+  },
+  "runtime_contract": {
+    "profile_schema_version": 3,
+    "preferred_root_is_model_rejectable": true,
+    "supporting_branch_hints_are_not_text_classifiers": true,
+    "routing_metadata_is_absent_from_root_decision_projection": true,
+    "skill_identity_version_and_profile_hash_are_absent_from_root_decision_projection": true,
+    "vertical_profile_cannot_inject_fact_denials_into_project_brief": true,
+    "model_selected_entry_and_map_root_are_not_overwritten": true,
+    "legacy_excluded_content_branches_are_discarded_on_read": true
+  },
   "records": [
     {
-      "evidence_id": "routing-v1.0.1",
-      "case_ids": [
-        "gold-gift-trigger",
-        "corporate-gift-trigger",
-        "souvenir-trigger",
-        "gold-investment-guard",
-        "jewelry-guard",
-        "wedding-service-guard",
-        "watch-guard"
-      ],
-      "result": "passed",
-      "observation": "The same deferred-index protocol scored 8/8 in three consecutive rounds.",
-      "audit_ref": "docs/content-intelligence-v6/evidence/a118-domain-skill-governance-and-food-shadow-2026-08-20.json"
-    },
-    {
-      "evidence_id": "gold-gift-live",
+      "evidence_id": "gold-gift-soft-skill-final",
       "case_ids": [
         "gold-gift-behavior"
       ],
       "result": "passed",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": false,
+      "temperature": 0,
+      "duration_seconds": 106.516,
+      "model_calls": 5,
+      "token_usage": {
+        "input_tokens": 10420,
+        "output_tokens": 4325,
+        "total_tokens": 14745
+      },
+      "record_id": "ci-1c6d03adabc0aeb6f7bc",
+      "content_map_version_id": "content-map-4ead048320dde42e",
+      "source_object": "黄金礼品",
+      "content_entry": "人与人之间的相处与人情世故",
       "content_root": "人与人之间的相处与人情世故",
-      "content_map_artifact_id": "artifact_54284231eea6a19d381e4ef782b2745d14386cc86130f75cc24895cf68a5328b",
-      "judgment_artifact_id": "artifact_e09292e1ecdbce4c98af8f9a19037de581df35a420ffc364e6a57d7ae86aa207",
-      "inactive_branch_terms_found": [],
-      "unsupported_existing_experience_claims": [],
-      "audit_ref": "docs/content-intelligence-v6/evidence/a116-vertical-incubation-skill-live-2026-08-20.json"
+      "map_dimensions": [
+        "请客与饭局中的权力与关系信号",
+        "借钱与还钱中的人情博弈",
+        "托人办事与还人情的关系链条",
+        "亲戚关系中的边界与摩擦",
+        "职场中的非正式关系运作",
+        "邻里关系中的日常协商",
+        "人情表达的地域与文化差异",
+        "人情规则的历史变化",
+        "关系中的面子与台阶",
+        "人情中的信息传递与话外之音"
+      ],
+      "local_scene_result": "Local life-event examples survived only as supporting paths and did not replace the frozen root."
     },
     {
-      "evidence_id": "retirement-gift-held-out",
+      "evidence_id": "explicit-local-scene",
       "case_ids": [
-        "retirement-gift-held-out"
+        "explicit-local-scene-behavior"
       ],
       "result": "passed",
-      "record_id": "ci-30021e7fed6d41bc6d93",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": false,
+      "temperature": 0,
+      "duration_seconds": 108.776,
+      "model_calls": 6,
+      "token_usage": {
+        "input_tokens": 12273,
+        "output_tokens": 4774,
+        "total_tokens": 17047
+      },
+      "source_object": "婚礼伴手礼定制",
+      "content_entry": "人与人之间的相处与人情世故",
       "content_root": "人与人之间的相处与人情世故",
-      "fact_boundary": "Customer cases, firsthand experiences, footage, and operating scope remained unknown.",
-      "audit_ref": "docs/content-intelligence-v6/evidence/a119-domain-skill-package-acceptance-2026-08-21.json"
+      "record_id": "ci-0b274fe1bf71e784c921",
+      "content_map_version_id": "content-map-64557fa1fb3a9317",
+      "local_business_result": "The exact local business expression survived, and wedding or gifting paths remained in the map, but this run still selected the broader human-relations root.",
+      "soft_preference_limitation": "The run proves absence of a keyword denylist, not stable promotion of an explicitly local business world."
+    },
+    {
+      "evidence_id": "corporate-thank-you-held-out",
+      "case_ids": [
+        "corporate-thank-you-held-out"
+      ],
+      "result": "passed",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": false,
+      "temperature": 0,
+      "duration_seconds": 79.3,
+      "model_calls": 5,
+      "token_usage": {
+        "input_tokens": 9943,
+        "output_tokens": 3319,
+        "total_tokens": 13262
+      },
+      "record_id": "ci-b31febfe70a588d80b5f",
+      "content_map_version_id": "content-map-98fd7473fe69b912",
+      "source_object": "企业客户答谢礼定制",
+      "content_entry": "人与人之间的相处与人情世故",
+      "content_root": "人与人之间的相处与人情世故",
+      "implementation_paths_remained_narrower": true
     }
+  ],
+  "runtime_recovery_events": [
+    {
+      "case_id": "corporate-thank-you-held-out",
+      "initial_attempt": {
+        "result": "failed",
+        "duration_seconds": 145.695,
+        "error_type": "ValidationError",
+        "error_summary": "The final FrozenContentMapDraft was empty after its built-in schema repair."
+      },
+      "bounded_full_chain_retry": {
+        "result": "passed",
+        "duration_seconds": 79.3,
+        "record_id": "ci-b31febfe70a588d80b5f"
+      },
+      "production_limitation": "The current runtime does not automatically repeat the entire chain after the bounded structured-output repair is exhausted."
+    }
+  ],
+  "development_failures": [
+    {
+      "stage": "soft-profile-before-domain-comparison-principle",
+      "actual_root": "礼如何规范人与人之间的相处",
+      "duration_seconds": 155.96,
+      "disposition": "rejected"
+    },
+    {
+      "stage": "after-domain-principle-before-generic-override-removal",
+      "selected_entry": "人与人之间的相处与人情世故",
+      "overwritten_map_root": "人们以礼相待时如何确立彼此关系与共同秩序",
+      "duration_seconds": 145.19,
+      "disposition": "rejected"
+    }
+  ],
+  "limitations": [
+    "The final gold and explicit-local cases were run once; the corporate held-out required one documented full-chain recovery run after an empty structured map.",
+    "The content-world chain took 79.3 to 108.776 seconds in successful final-package runs and consumed 13262 to 17047 total tokens per run.",
+    "The explicit-local run preserved its business and local map paths but still selected the broader preferred root, so soft-prior strength is not yet calibrated across industries.",
+    "This evidence covers content-root and map behavior, not production, publication, or outcome learning."
   ],
   "secrets_included": false
 }

@@ -1,12 +1,14 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.0.1",
+  "profile_version": "1.1.0",
   "lifecycle_status": "active",
   "source_refs": [
     "docs/content-intelligence-v6/audits/A115-golden-gift-real-incubation-e2e.md",
     "docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md",
-    "docs/content-intelligence-v6/decisions/ADR-033-vertical-incubation-skills.md"
+    "docs/content-intelligence-v6/decisions/ADR-033-vertical-incubation-skills.md",
+    "docs/content-intelligence-v6/audits/A120-vertical-skill-hard-gate-audit.md",
+    "docs/content-intelligence-v6/decisions/ADR-035-soft-domain-skill-advice.md"
   ],
   "applies_to": [
     "礼品、礼物、伴手礼、纪念礼或馈赠是用户实际经营对象",
@@ -22,7 +24,8 @@
   "selection_principles": [
     "先区分材质、礼品用途和用户实际经营对象；材质不能自动成为内容根。",
     "比较礼品对象与反复发生的送、收、回、拒绝、感谢和记住等关系行为。",
-    "单一人生场景只能作为分支，不能覆盖人与人长期相处的更大世界。"
+    "比较局部人生场景与更长期的人际关系世界；局部场景通常适合作为支持分支，但本轮语义和用户目标可以推翻这项偏好。",
+    "若候选高度重叠，优先普通观众能直接理解并能容纳更多具体人物、事件、关系选择与人情变化的生活世界；不能仅因某个礼制或礼仪解释框架理论层次更多就判它更优。"
   ],
   "candidate_paths": [
     {
@@ -36,49 +39,31 @@
       "rationale": "礼品不只是一件物品，它反复进入送、收、回、拒绝与记住等关系行为；这些行为又会显露情感、人情、体面、义务、边界、地位与利益。"
     }
   ],
-  "default_root": "人与人之间的相处与人情世故",
-  "branch_only_markers": [
+  "preferred_root_candidate": "人与人之间的相处与人情世故",
+  "supporting_branch_hints": [
     {
-      "marker": "婚礼",
-      "reason": "婚礼是礼赠与人情世界中的一个局部场景，不得代替长期内容世界。"
+      "branch_id": "daily-reciprocity",
+      "label": "日常人情往来",
+      "suggested_scope": "supporting_branch",
+      "reason": "请客、随礼、回礼、求人、致谢与拒绝等行为可以具体呈现长期关系世界。"
     },
     {
-      "marker": "婚嫁",
-      "reason": "婚嫁馈赠是一个局部人生场景。"
+      "branch_id": "life-ritual-gifting",
+      "label": "人生仪式中的馈赠",
+      "suggested_scope": "supporting_branch",
+      "reason": "出生、成年、成家、退休与告别等仪式通常是关系世界中的具体观察窗口。"
     },
     {
-      "marker": "婚庆",
-      "reason": "婚庆只在用户明说经营该业务时才可作为根候选。"
+      "branch_id": "workplace-business-gifting",
+      "label": "职场与商务馈赠",
+      "suggested_scope": "supporting_branch",
+      "reason": "礼物可以显露身份、分寸、互惠、边界与利益，但该提示不预设具体故事结论。"
     },
     {
-      "marker": "结婚",
-      "reason": "结婚是礼赠与人情世界中的一个局部人生事件。"
-    },
-    {
-      "marker": "婚丧嫁娶",
-      "reason": "婚丧嫁娶只是人情往来中的一组局部人生事件。"
-    },
-    {
-      "marker": "彩礼",
-      "reason": "彩礼是婚嫁场景中的局部制度与物品分支。"
-    },
-    {
-      "marker": "嫁妆",
-      "reason": "嫁妆是婚嫁场景中的局部物品分支。"
-    },
-    {
-      "marker": "三金",
-      "reason": "三金是婚嫁礼赠中的局部品类。"
-    },
-    {
-      "marker": "五金",
-      "reason": "五金是婚嫁礼赠中的局部品类。"
+      "branch_id": "public-diplomatic-gifting",
+      "label": "公共礼仪、国礼与跨文化馈赠",
+      "suggested_scope": "supporting_branch",
+      "reason": "公共事件与跨文化礼仪可以扩展时间和空间，但具体人物与事件必须另行取证。"
     }
-  ],
-  "do_not_assume": [
-    "用户经营婚庆或婚嫁业务",
-    "用户的主营业务是黄金投资或珠宝首饰",
-    "用户已有可拍客户案例、素材、供应链或表演能力",
-    "用户因经营身份就拥有大量真实客户案例、一手见闻或可公开讲述的亲历"
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "skill_name": "incubate-food-world",
   "profile_version": "0.1.0",
   "lifecycle_status": "shadow",
@@ -28,13 +28,6 @@
     "最终只选择一个最小完整内容根，不得把商品、中间载体、消费场景或社交功能拼成混合内容根。"
   ],
   "candidate_paths": [],
-  "default_root": null,
-  "branch_only_markers": [],
-  "do_not_assume": [
-    "用户是果农、渔民、厨师、配方师、工厂主或餐厅老板",
-    "用户拥有产地、捕捞、种植、加工或门店的一手素材",
-    "用户已有客户案例、供应链优势、地域权威或可公开的经营数据",
-    "用户具备营养、医疗或食品安全专业资质",
-    "具体产地、价格、配方、健康功效或平台表现已经得到外部证据支持"
-  ]
+  "preferred_root_candidate": null,
+  "supporting_branch_hints": []
 }

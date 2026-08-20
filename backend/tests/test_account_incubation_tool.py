@@ -203,13 +203,6 @@ async def test_account_strategy_loads_the_named_vertical_skill_without_changing_
     repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
     profile = SimpleNamespace(
         skill_name="incubate-gift-human-relations",
-        do_not_assume=("用户拥有大量真实客户案例",),
-        inactive_map_branches=Mock(
-            return_value=(
-                SimpleNamespace(marker="婚礼"),
-                SimpleNamespace(marker="彩礼"),
-            )
-        ),
     )
     artifact = SimpleNamespace(
         artifact_type="incubation_judgment",
@@ -236,7 +229,7 @@ async def test_account_strategy_loads_the_named_vertical_skill_without_changing_
         {
             "name": "develop_account_strategy",
             "args": {
-                "user_request": "我是做黄金礼品的，我要怎么起号？",
+                "user_request": "我是做婚礼伴手礼定制的，我要怎么起号？",
                 "incubation_skill": "incubate-gift-human-relations",
                 "runtime": _runtime(project_id="golden-gift"),
             },
@@ -250,11 +243,10 @@ async def test_account_strategy_loads_the_named_vertical_skill_without_changing_
         user_id="user-1",
     )
     request = analysis.await_args.args[0]
-    assert request.user_request == "我是做黄金礼品的，我要怎么起号？"
+    assert request.user_request == "我是做婚礼伴手礼定制的，我要怎么起号？"
     assert analysis.await_args.kwargs["incubation_profile"] is profile
-    assert prepare.await_args.kwargs["prohibited_assumptions"] == ("用户拥有大量真实客户案例",)
-    profile.inactive_map_branches.assert_called_once_with("我是做黄金礼品的，我要怎么起号？")
-    assert prepare.await_args.kwargs["excluded_content_branches"] == ("婚礼", "彩礼")
+    assert "prohibited_assumptions" not in prepare.await_args.kwargs
+    assert "excluded_content_branches" not in prepare.await_args.kwargs
 
 
 @pytest.mark.asyncio

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
@@ -57,8 +57,17 @@ class IncubationBrief(IncubationContract):
     goals: tuple[BriefFact, ...] = ()
     preferences: tuple[BriefFact, ...] = ()
     prohibited_assumptions: tuple[NonEmptyStr, ...] = Field(default=(), max_length=32)
-    excluded_content_branches: tuple[NonEmptyStr, ...] = Field(default=(), max_length=32)
     unknowns: tuple[NonEmptyStr, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def discard_retired_keyword_gate(cls, value: Any) -> Any:
+        """Read historical briefs without carrying their retired denylist forward."""
+
+        if isinstance(value, dict) and "excluded_content_branches" in value:
+            value = dict(value)
+            value.pop("excluded_content_branches", None)
+        return value
 
     def all_facts(self) -> tuple[BriefFact, ...]:
         return (

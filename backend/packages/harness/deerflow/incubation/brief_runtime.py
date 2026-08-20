@@ -27,7 +27,6 @@ def build_minimal_incubation_brief(
     source_thread_id: str,
     source_run_id: str,
     prohibited_assumptions: tuple[str, ...] = (),
-    excluded_content_branches: tuple[str, ...] = (),
 ) -> ArtifactEnvelope:
     """Seal only the business subject proven by the user's exact words."""
 
@@ -47,12 +46,6 @@ def build_minimal_incubation_brief(
         raise ValueError("prohibited assumptions must not contain blank entries")
     if any(len(item) > 500 for item in normalized_assumptions):
         raise ValueError("a prohibited assumption exceeds the length limit")
-    normalized_excluded_branches = tuple(dict.fromkeys(item.strip() for item in excluded_content_branches))
-    if any(not item for item in normalized_excluded_branches):
-        raise ValueError("excluded content branches must not contain blank entries")
-    if any(len(item) > 120 for item in normalized_excluded_branches):
-        raise ValueError("an excluded content branch exceeds the length limit")
-
     brief = IncubationBrief(
         subject_expression=verbatim_user_request,
         business_facts=(
@@ -63,7 +56,6 @@ def build_minimal_incubation_brief(
             ),
         ),
         prohibited_assumptions=normalized_assumptions,
-        excluded_content_branches=normalized_excluded_branches,
         unknowns=(_MINIMAL_BRIEF_UNKNOWN,),
     )
     return seal_incubation_brief(

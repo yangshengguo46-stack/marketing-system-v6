@@ -46,14 +46,12 @@ def _brief_artifact(
     *,
     project: ProjectRef = PROJECT,
     prohibited_assumptions: tuple[str, ...] = (),
-    excluded_content_branches: tuple[str, ...] = (),
 ) -> ArtifactEnvelope:
     return seal_incubation_brief(
         project=project,
         brief=IncubationBrief(
             subject_expression="我是做黄金礼品的，我要怎么起号？",
             prohibited_assumptions=prohibited_assumptions,
-            excluded_content_branches=excluded_content_branches,
             unknowns=("尚不知道用户是否愿意出镜。",),
         ),
         created_at=NOW,
@@ -269,38 +267,33 @@ async def test_runtime_binds_exact_brief_world_and_optional_evidence_parents() -
         "confirmed_resources": [],
         "prohibited_assumptions": [prohibited_assumption],
     }
-    assert model_input["content_branch_boundary"] == {
-        "excluded_unless_explicit_in_business": [],
-    }
+    assert "content_branch_boundary" not in model_input
 
 
 @pytest.mark.asyncio
-async def test_runtime_rejects_a_route_that_reintroduces_a_skill_excluded_branch() -> None:
-    brief = _brief_artifact(excluded_content_branches=("婚礼", "彩礼"))
+async def test_runtime_allows_a_local_branch_as_supporting_context() -> None:
+    brief = _brief_artifact()
     world = _content_world_artifact()
     payload = _judgment_payload(basis_ids=(brief.artifact_id, world.artifact_id))
-    payload["business_intent"]["target_people"] = "准备婚礼并需要彩礼方案的人"
+    payload["route_options"][0]["content_subject"] = "从婚礼伴手礼等局部馈赠场景观察人情、礼节和关系判断"
 
     async def structured_model(schema, messages):
         model_input = json.loads(messages[1].content)
-        assert model_input["content_branch_boundary"] == {
-            "excluded_unless_explicit_in_business": ["婚礼", "彩礼"],
-        }
+        assert "content_branch_boundary" not in model_input
         return payload
 
-    with pytest.raises(IncubationJudgmentModelError) as captured:
-        await generate_incubation_judgment(
-            project=PROJECT,
-            brief_artifact=brief,
-            content_world_artifact=world,
-            structured_model=structured_model,
-            created_at=NOW,
-            source_thread_id="thread-1",
-            source_run_id="run-2",
-        )
+    sealed = await generate_incubation_judgment(
+        project=PROJECT,
+        brief_artifact=brief,
+        content_world_artifact=world,
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-2",
+    )
 
-    assert captured.value.stage == "binding"
-    assert captured.value.diagnostics == ("excluded_content_branch",)
+    assert sealed.payload["business_intent"]["target_people"] == "正在为具体关系和场合选择礼物的人"
+    assert sealed.payload["route_options"][0]["positioning"]["decision"] == "从婚礼伴手礼等局部馈赠场景观察人情、礼节和关系判断"
 
 
 @pytest.mark.asyncio

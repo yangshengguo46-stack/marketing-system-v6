@@ -163,11 +163,14 @@ when the object also spans people, history, events, regions, or works.
 
 Only `map_root` enters the map; topics bind its version and receipt. `explore_content_world` cannot decide
 strategy; generic search is `topic_evidence`, not competitor evidence. At most one active `incubate-*`
-Skill may add bounded candidates, principles, exclusions, and fact boundaries without changing user text
-or deciding strategy. Discovery hashes its prose, schema-v2 Profile, evals, triggers, all-pass receipt,
-and local evidence. Receipts use aware timestamps and hashed `evals/evidence/` files; any mismatch hides
-the Skill. Non-active packages stay experimental. Negation does not reactivate excluded branches. See the
-skills module guide for details.
+Skill may add bounded candidates, inspectable principles, a rejectable preferred root, supporting-branch
+hints without changing user text or deciding strategy. Discovery hashes its prose,
+schema-v3 Profile, evals, triggers, all-pass receipt, and local evidence. Receipts use aware timestamps and
+hashed `evals/evidence/` files; any mismatch hides the Skill. Routing apply/exclusion text, Skill identity,
+Profile version, lifecycle, sources, and content hash stay out of root-decision context. A Skill must not
+own fact denials, classify free text, delete map fields, reject a Draft by substring, or overwrite the
+model-selected entry/root. Project facts remain the generic Brief's responsibility. Non-active packages
+stay experimental. See the skills module guide for details.
 
 Parse and normalize shared-world provider payloads before reconciliation. Withdraw worlds with no
 semantic path, missing constitutive context, or labels that erase it; keep these invariants out of the
