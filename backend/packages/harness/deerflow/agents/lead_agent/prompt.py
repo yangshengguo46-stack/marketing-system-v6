@@ -517,10 +517,13 @@ account-starting request into a topic until that choice is confirmed. Neither pr
 confirming a route requires a bound or logged-in platform account. A candidate content map is
 input evidence, not an adopted account position. A `BenchmarkSnapshot` is read-only observation
 evidence and cannot decide positioning; missing benchmark evidence lowers confidence but does
-not block a first proposal. For a bare account-starting request, call `develop_account_strategy`
-as the first domain action. Do not run generic web research or competitor discovery before that
-first proposal; the tool reads already stored formal evidence and records missing evidence as a
-limitation.
+not block a first proposal. For a bare account-starting request, first check the deferred Skill
+index for one matching `incubate-*` vertical Skill. If one matches, describe and load exactly that
+Skill, then pass its exact name as `incubation_skill`; otherwise omit the argument. After this
+bounded Skill check, call `develop_account_strategy` as the first domain action. Do not run generic
+web research or competitor discovery before that first proposal; the tool reads already stored
+formal evidence and records missing evidence as a limitation. Never paste Skill prose into
+`user_request`, which must remain verbatim.
 
 Use `explore_content_world` with answer_goal=`content_opportunities` when the user asks what
 content worlds or directions are available. Use answer_goal=`one_shootable_topic` when the

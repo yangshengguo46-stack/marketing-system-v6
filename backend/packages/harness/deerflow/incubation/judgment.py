@@ -56,6 +56,8 @@ class IncubationBrief(IncubationContract):
     constraints: tuple[BriefFact, ...] = ()
     goals: tuple[BriefFact, ...] = ()
     preferences: tuple[BriefFact, ...] = ()
+    prohibited_assumptions: tuple[NonEmptyStr, ...] = Field(default=(), max_length=32)
+    excluded_content_branches: tuple[NonEmptyStr, ...] = Field(default=(), max_length=32)
     unknowns: tuple[NonEmptyStr, ...] = ()
 
     def all_facts(self) -> tuple[BriefFact, ...]:

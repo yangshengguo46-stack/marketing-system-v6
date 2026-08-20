@@ -39,6 +39,7 @@ from deerflow.content_intelligence.analyzer import (
     _render_shared_world_input,
     _render_shared_world_review_input,
 )
+from deerflow.content_intelligence.incubation_skill import IncubationSkillProfile
 from deerflow.content_intelligence.lexical_evidence import (
     LexicalComponentEvidence,
     LexicalEntryEvidence,
@@ -1816,6 +1817,168 @@ async def test_gold_modifier_value_cannot_reenter_shared_world_or_lobby_root_dec
     assert '"overreach_risk"' not in decision_input
     assert "贵重赠予与价值传承" not in decision_input
     assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
+
+
+def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors() -> None:
+    semantic = SemanticReadingDraft.model_validate(
+        {
+            "source_object": "黄金礼品",
+            "lexical_head": "礼品",
+            "offering_role": "complete_object_or_service",
+            "role_rationale": "黄金是材质，礼品是完整对象。",
+            "social_or_cultural_frames": ["婚礼馈赠"],
+        }
+    )
+    shared_world = SharedWorldSynthesisDraft.model_validate(
+        {
+            "world_label": "婚礼馈赠与礼仪",
+            "semantic_path": ["礼品", "婚礼馈赠与礼仪"],
+        }
+    )
+    profile = IncubationSkillProfile.model_validate(
+        {
+            "schema_version": 1,
+            "skill_name": "incubate-gift-human-relations",
+            "domain": "礼赠与人情关系",
+            "candidate_paths": [
+                {
+                    "path": ["礼品", "送与收", "人情往来", "人与人之间的相处与人情世故"],
+                    "root": "人与人之间的相处与人情世故",
+                    "rationale": "礼品是送、收和回礼的关系媒介。",
+                }
+            ],
+            "default_root": "人与人之间的相处与人情世故",
+            "branch_only_markers": [
+                {
+                    "marker": "婚礼",
+                    "reason": "婚礼只是礼赠世界的一个局部场景。",
+                }
+            ],
+            "do_not_assume": ["用户经营婚庆业务"],
+        }
+    )
+
+    candidate_set = _build_root_candidate_set(
+        semantic,
+        SemanticFamilyExpansionDraft(),
+        shared_world,
+        incubation_profile=profile,
+    )
+
+    by_label = {candidate.label: candidate for candidate in candidate_set.candidates}
+    assert by_label["人与人之间的相处与人情世故"].scope_role == "root_candidate"
+    assert by_label["婚礼馈赠与礼仪"].scope_role == "example_branch"
+    assert by_label["婚礼馈赠"].scope_role == "example_branch"
+
+
+@pytest.mark.asyncio
+async def test_vertical_skill_default_root_beats_a_variable_generic_root_judgment() -> None:
+    profile = IncubationSkillProfile.model_validate(
+        {
+            "schema_version": 1,
+            "skill_name": "incubate-gift-human-relations",
+            "domain": "礼赠与人情关系",
+            "candidate_paths": [
+                {
+                    "path": ["礼品", "送与收", "人情往来", "人与人之间的相处与人情世故"],
+                    "root": "人与人之间的相处与人情世故",
+                    "rationale": "礼品是送、收和回礼的关系媒介。",
+                }
+            ],
+            "default_root": "人与人之间的相处与人情世故",
+            "branch_only_markers": [
+                {
+                    "marker": "婚礼",
+                    "reason": "婚礼只在用户明确经营该业务时进入地图。",
+                }
+            ],
+            "do_not_assume": [],
+        }
+    )
+    model = SequencedStructuredFakeModel(
+        {
+            SemanticReadingDraft: {
+                "source_object": "黄金礼品",
+                "lexical_head": "礼品",
+                "offering_role": "complete_object_or_service",
+                "role_rationale": "黄金是材质，礼品是完整对象。",
+            },
+            SemanticFamilyExpansionDraft: {
+                "components": [
+                    {
+                        "term": "礼",
+                        "component_of": "礼品",
+                        "role": "cultural_institution",
+                        "relation_to_subject": "礼品以物承载礼意。",
+                    }
+                ],
+                "branches": [
+                    {
+                        "component": "礼",
+                        "expression": "礼仪",
+                        "semantic_domain": "交往规范",
+                        "continuity": "保留关系分寸。",
+                    },
+                    {
+                        "component": "礼",
+                        "expression": "礼制",
+                        "semantic_domain": "公共秩序",
+                        "continuity": "保留角色秩序。",
+                    },
+                ],
+            },
+            SharedWorldSynthesisDraft: {
+                "world_label": "礼如何规范人们的行为与彼此相待",
+                "semantic_path": ["礼", "交往规范", "礼如何规范人们的行为与彼此相待"],
+            },
+            SharedWorldReviewDraft: {
+                "reviewed_world_label": "礼如何规范人们的行为与彼此相待",
+                "entry_path_is_explanatory": True,
+                "substitution_counterfactual": "路径成立。",
+                "rationale": "礼的语义连续。",
+            },
+            ContentRootDecisionDraft: {
+                "selected_candidate_index": 3,
+                "map_root_candidate_index": 3,
+                "root_rationale": "通用比较器本轮选择了礼制世界。",
+            },
+            FrozenContentMapDraft: {
+                "editorial_promise": "解释人与人相处中的分寸、义务、利益与情感。",
+                "recurring_lens": "从具体人物、事件和关系变化进入。",
+                "map_directions": [
+                    {
+                        "dimension": "日常关系",
+                        "actual_directions": ["饭局中座位和买单如何改变关系"],
+                    },
+                    {
+                        "dimension": "婚礼馈赠",
+                        "actual_directions": ["婚礼礼金如何体现关系远近"],
+                    },
+                ],
+                "named_candidates": [],
+            },
+        }
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+        incubation_profile=profile,
+    )
+
+    assert bundle.content_world.content_root == "人与人之间的相处与人情世故"
+    decision_input = model.message_batches[4][1].content
+    assert '"incubation_skill": "incubate-gift-human-relations"' in decision_input
+    assert '"root": "人与人之间的相处与人情世故"' in decision_input
+    assert '"default_root": "人与人之间的相处与人情世故"' in decision_input
+    map_input = model.message_batches[5][1].content
+    assert '"excluded_local_branches"' in map_input
+    assert '"marker": "婚礼"' in map_input
+    assert [dimension.name for dimension in bundle.content_world.dimensions] == ["日常关系"]
 
 
 def test_shared_world_input_exposes_bounded_modifier_candidates_without_full_product() -> None:

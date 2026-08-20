@@ -12,7 +12,9 @@ from pydantic import ValidationError
 from deerflow.content_intelligence import (
     AnalysisFocus,
     ContentIntelligenceRequest,
+    IncubationSkillProfileError,
     analyze_content_intelligence,
+    load_incubation_skill_profile,
 )
 from deerflow.incubation import (
     IncubationJudgmentModelError,
@@ -81,6 +83,7 @@ def _terminal_account_strategy_command(
 async def develop_account_strategy_tool(
     runtime: Runtime,
     user_request: str,
+    incubation_skill: str | None = None,
 ) -> Command:
     """Create or revise the current thread project's long-lived account incubation strategy.
 
@@ -92,6 +95,7 @@ async def develop_account_strategy_tool(
 
     Args:
         user_request: The user's current account-starting or positioning request, copied verbatim.
+        incubation_skill: Exact name of one already discovered and loaded vertical incubation Skill, when applicable.
     """
 
     owner_user_id = runtime_context_text(runtime, "user_id")
@@ -138,6 +142,23 @@ async def develop_account_strategy_tool(
             tool_call_id=runtime.tool_call_id,
         )
 
+    incubation_profile = None
+    if incubation_skill is not None:
+        try:
+            incubation_profile = load_incubation_skill_profile(
+                incubation_skill,
+                user_id=owner_user_id,
+            )
+        except IncubationSkillProfileError as exc:
+            logger.warning(
+                "Selected incubation skill profile was unavailable: %s",
+                type(exc).__name__,
+            )
+            return _terminal_account_strategy_command(
+                "当前选中的行业孵化 Skill 不可用，因此没有用一份未校验的行业经验生成定位。",
+                tool_call_id=runtime.tool_call_id,
+            )
+
     try:
         model = create_content_intelligence_model(runtime.config)
         bundle = await analyze_content_intelligence(
@@ -150,6 +171,7 @@ async def develop_account_strategy_tool(
             model=model,
             runnable_config=runtime.config,
             lexical_evidence_provider=create_lexical_evidence_provider(),
+            incubation_profile=incubation_profile,
         )
         content_world = getattr(bundle, "content_world", None)
         content_root = getattr(content_world, "content_root", None)
@@ -183,6 +205,8 @@ async def develop_account_strategy_tool(
             created_at=datetime.now(UTC),
             source_thread_id=thread_id,
             source_run_id=run_id,
+            prohibited_assumptions=(incubation_profile.do_not_assume if incubation_profile is not None else ()),
+            excluded_content_branches=(tuple(marker.marker for marker in incubation_profile.inactive_map_branches(user_request)) if incubation_profile is not None else ()),
         )
     except IncubationJudgmentModelError as exc:
         logger.warning(

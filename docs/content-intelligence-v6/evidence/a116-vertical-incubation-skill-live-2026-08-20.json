@@ -1,0 +1,82 @@
+{
+  "audit": "A116",
+  "date": "2026-08-20",
+  "status": "first_vertical_skill_live_accepted_with_performance_debt",
+  "input": "我是做黄金礼品的，我要怎么起号？",
+  "skill": {
+    "name": "incubate-gift-human-relations",
+    "profile_schema_version": 1,
+    "candidate_path": [
+      "礼品",
+      "送与收",
+      "人情往来",
+      "人与人之间的相处与人情世故"
+    ],
+    "default_root": "人与人之间的相处与人情世故",
+    "profile_is_progressively_loaded": true,
+    "user_request_was_rewritten": false
+  },
+  "accepted_full_run": {
+    "thread_id": "a116-golden-gift-direct-20260820-1330",
+    "source_run_id": "direct-run-1",
+    "project_id": "thread_6b9a4de5fa9419df5fd5575cdbb24761",
+    "benchmark_artifact_id": "artifact_5f1fed4564c98138e282286069153303e2b16b2693d79b850f8854f60c85a79f",
+    "content_reading_artifact_id": "artifact_9e727e8b5d6bb014ebbdc3a995f1b54c89df0147f9851a4e85baad635e1a9550",
+    "content_map_artifact_id": "artifact_54284231eea6a19d381e4ef782b2745d14386cc86130f75cc24895cf68a5328b",
+    "brief_artifact_id": "artifact_464a15bad301f72ff9a38db4cb07d51ed6044d39803661bba88a530989ca05ac",
+    "judgment_artifact_id": "artifact_2050a1600e7d1f523838d5f4f147c3d567d46267e3e4a1bd7e70a5ceda18c736",
+    "content_root": "人与人之间的相处与人情世故",
+    "map_direction_count": 10,
+    "inactive_branch_terms_found_in_map": [],
+    "inactive_branch_terms_found_in_judgment": [],
+    "remaining_failure": "一条 business_connection 仍先断言经营身份带来大量场景，再补未确认。"
+  },
+  "accepted_fact_boundary_rerun": {
+    "thread_id": "a116-golden-gift-judgment-20260820-1340",
+    "source_run_id": "direct-run-1",
+    "reused_immutable_brief": "artifact_464a15bad301f72ff9a38db4cb07d51ed6044d39803661bba88a530989ca05ac",
+    "reused_immutable_content_map": "artifact_54284231eea6a19d381e4ef782b2745d14386cc86130f75cc24895cf68a5328b",
+    "reused_immutable_benchmark": "artifact_5f1fed4564c98138e282286069153303e2b16b2693d79b850f8854f60c85a79f",
+    "judgment_artifact_id": "artifact_e09292e1ecdbce4c98af8f9a19037de581df35a420ffc364e6a57d7ae86aa207",
+    "recommended_option_id": "route_a",
+    "unsupported_existing_experience_claims": [],
+    "conditional_requirement_example": "如果用户在日常业务中接触真实送礼场景并观察到来访者的选择逻辑与关系背景，这些观察可以成为账号内容素材的来源；此连接依赖用户确认具备上述接触条件，目前未经验证。",
+    "inactive_branch_terms_found_in_judgment": []
+  },
+  "failed_runs_retained": [
+    {
+      "thread_id": "a116-golden-gift-20260820-1200",
+      "failure": "root passed but downstream invented existing insight and first-hand experience"
+    },
+    {
+      "thread_id": "a116-golden-gift-direct-20260820-1210",
+      "failure": "generic root judge replaced the vertical candidate with a narrower ritual-order root"
+    },
+    {
+      "thread_id": "a116-golden-gift-direct-20260820-1300",
+      "failure": "map boundary passed but account judgment reintroduced an inactive local branch"
+    }
+  ],
+  "contract_verification": {
+    "skill_profile_size_limit_bytes": 16384,
+    "exact_enabled_skill_required": true,
+    "path_escape_rejected": true,
+    "inactive_branch_persisted_in_brief": true,
+    "inactive_branch_checked_before_judgment_persistence": true,
+    "unmatched_industries_keep_generic_path": true
+  },
+  "automated_verification": {
+    "focused_regression_passed": 124,
+    "full_suite_passed": 12302,
+    "full_suite_skipped": 75,
+    "full_suite_initial_failure": "backend/AGENTS.md exceeded its soft byte budget",
+    "guidance_budget_retest_passed": 1,
+    "lint_passed": true,
+    "skill_validation_passed": true
+  },
+  "performance": {
+    "status": "failed",
+    "observation": "The complete live path still required several minutes and multiple model calls; optimization is intentionally separate from this correctness change."
+  },
+  "secrets_included": false
+}

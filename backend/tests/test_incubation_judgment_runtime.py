@@ -42,11 +42,18 @@ def test_judgment_runtime_is_exported_from_the_incubation_package() -> None:
     assert exported_generate_incubation_judgment is generate_incubation_judgment
 
 
-def _brief_artifact(*, project: ProjectRef = PROJECT) -> ArtifactEnvelope:
+def _brief_artifact(
+    *,
+    project: ProjectRef = PROJECT,
+    prohibited_assumptions: tuple[str, ...] = (),
+    excluded_content_branches: tuple[str, ...] = (),
+) -> ArtifactEnvelope:
     return seal_incubation_brief(
         project=project,
         brief=IncubationBrief(
             subject_expression="我是做黄金礼品的，我要怎么起号？",
+            prohibited_assumptions=prohibited_assumptions,
+            excluded_content_branches=excluded_content_branches,
             unknowns=("尚不知道用户是否愿意出镜。",),
         ),
         created_at=NOW,
@@ -208,7 +215,8 @@ def _judgment_payload(*, basis_ids: tuple[str, ...]) -> dict[str, Any]:
 
 @pytest.mark.asyncio
 async def test_runtime_binds_exact_brief_world_and_optional_evidence_parents() -> None:
-    brief = _brief_artifact()
+    prohibited_assumption = "用户的业务身份不能证明其拥有行业经验或客户案例"
+    brief = _brief_artifact(prohibited_assumptions=(prohibited_assumption,))
     world = _content_world_artifact()
     benchmark = _evidence_artifact(
         artifact_type="benchmark_snapshot",
@@ -254,6 +262,45 @@ async def test_runtime_binds_exact_brief_world_and_optional_evidence_parents() -
     assert world.artifact_id in prompt_input
     assert benchmark.artifact_id in prompt_input
     assert audience.artifact_id in prompt_input
+    model_input = json.loads(prompt_input)
+    assert model_input["user_fact_boundary"] == {
+        "allowed_user_fact_statements": [],
+        "confirmed_capabilities": [],
+        "confirmed_resources": [],
+        "prohibited_assumptions": [prohibited_assumption],
+    }
+    assert model_input["content_branch_boundary"] == {
+        "excluded_unless_explicit_in_business": [],
+    }
+
+
+@pytest.mark.asyncio
+async def test_runtime_rejects_a_route_that_reintroduces_a_skill_excluded_branch() -> None:
+    brief = _brief_artifact(excluded_content_branches=("婚礼", "彩礼"))
+    world = _content_world_artifact()
+    payload = _judgment_payload(basis_ids=(brief.artifact_id, world.artifact_id))
+    payload["business_intent"]["target_people"] = "准备婚礼并需要彩礼方案的人"
+
+    async def structured_model(schema, messages):
+        model_input = json.loads(messages[1].content)
+        assert model_input["content_branch_boundary"] == {
+            "excluded_unless_explicit_in_business": ["婚礼", "彩礼"],
+        }
+        return payload
+
+    with pytest.raises(IncubationJudgmentModelError) as captured:
+        await generate_incubation_judgment(
+            project=PROJECT,
+            brief_artifact=brief,
+            content_world_artifact=world,
+            structured_model=structured_model,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-2",
+        )
+
+    assert captured.value.stage == "binding"
+    assert captured.value.diagnostics == ("excluded_content_branch",)
 
 
 @pytest.mark.asyncio
@@ -439,5 +486,9 @@ async def test_monetization_stays_in_judgment_and_cannot_rewrite_content_map() -
     assert "不要求数字配额" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "不要求实验" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "业务身份不等于资源所有权" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "user_fact_boundary" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "不得在 business_connection、account_role、rationale" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "不得把经营身份写成天然的判断力" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
+    assert "先断言再补未确认仍然属于编造" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "已知资源" in INCUBATION_JUDGMENT_SYSTEM_PROMPT
     assert "resource_requirements" in INCUBATION_JUDGMENT_SYSTEM_PROMPT

@@ -634,6 +634,15 @@ def test_system_prompt_template_has_a_fixed_overhead_budget():
     assert len(prompt_module.SYSTEM_PROMPT_TEMPLATE.encode("utf-8")) <= 9_000
 
 
+def test_system_prompt_routes_vertical_incubation_without_domain_answers() -> None:
+    template = prompt_module.SYSTEM_PROMPT_TEMPLATE
+
+    assert "matching `incubate-*` vertical Skill" in template
+    assert "Never paste Skill prose into" in template
+    for domain_answer in ("黄金", "三金", "彩礼", "婚礼", "人情世故"):
+        assert domain_answer not in template
+
+
 def _make_minimal_app_config():
     return SimpleNamespace(
         sandbox=SimpleNamespace(mounts=[]),

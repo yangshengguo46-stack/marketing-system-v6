@@ -53,6 +53,13 @@ from deerflow.content_intelligence.delivery import (
     render_shooting_delivery,
     synthesize_shooting_delivery,
 )
+from deerflow.content_intelligence.incubation_skill import (
+    IncubationBranchOnlyMarker,
+    IncubationCandidatePath,
+    IncubationSkillProfile,
+    IncubationSkillProfileError,
+    load_incubation_skill_profile,
+)
 from deerflow.content_intelligence.lexical_evidence import (
     CedictLexicalEvidenceProvider,
     LexicalComponentEvidence,
@@ -97,6 +104,10 @@ __all__ = [
     "EvidenceReadingDraft",
     "GroundedStatement",
     "Interpretation",
+    "IncubationBranchOnlyMarker",
+    "IncubationCandidatePath",
+    "IncubationSkillProfile",
+    "IncubationSkillProfileError",
     "CedictLexicalEvidenceProvider",
     "LexicalComponentEvidence",
     "LexicalEntryEvidence",
@@ -137,6 +148,7 @@ __all__ = [
     "Unknown",
     "analyze_content_intelligence",
     "build_cc_cedict_index",
+    "load_incubation_skill_profile",
     "enrich_content_world_with_research",
     "render_content_world_narration",
     "render_shooting_delivery",

@@ -10,6 +10,7 @@ from deerflow.incubation.judgment import (
 )
 
 _MINIMAL_BRIEF_UNKNOWN = "除用户逐字陈述的业务主体外，能力、资源、约束、目标、偏好、受众、变现方式和平台均未确认。"
+_BUSINESS_ROLE_IS_NOT_CAPABILITY = "用户的业务身份本身不能证明其拥有相关专业能力、经验、客户案例、素材、供应链、销售渠道、出镜或制作能力。"
 
 
 def _require_nonblank(value: str, *, field_name: str) -> None:
@@ -25,6 +26,8 @@ def build_minimal_incubation_brief(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    prohibited_assumptions: tuple[str, ...] = (),
+    excluded_content_branches: tuple[str, ...] = (),
 ) -> ArtifactEnvelope:
     """Seal only the business subject proven by the user's exact words."""
 
@@ -32,6 +35,23 @@ def build_minimal_incubation_brief(
     _require_nonblank(source_object, field_name="source_object")
     if source_object not in verbatim_user_request:
         raise ValueError("source_object must be one contiguous verbatim span of verbatim_user_request")
+    normalized_assumptions = tuple(
+        dict.fromkeys(
+            (
+                _BUSINESS_ROLE_IS_NOT_CAPABILITY,
+                *(item.strip() for item in prohibited_assumptions),
+            )
+        )
+    )
+    if any(not item for item in normalized_assumptions):
+        raise ValueError("prohibited assumptions must not contain blank entries")
+    if any(len(item) > 500 for item in normalized_assumptions):
+        raise ValueError("a prohibited assumption exceeds the length limit")
+    normalized_excluded_branches = tuple(dict.fromkeys(item.strip() for item in excluded_content_branches))
+    if any(not item for item in normalized_excluded_branches):
+        raise ValueError("excluded content branches must not contain blank entries")
+    if any(len(item) > 120 for item in normalized_excluded_branches):
+        raise ValueError("an excluded content branch exceeds the length limit")
 
     brief = IncubationBrief(
         subject_expression=verbatim_user_request,
@@ -42,6 +62,8 @@ def build_minimal_incubation_brief(
                 source_quote=source_object,
             ),
         ),
+        prohibited_assumptions=normalized_assumptions,
+        excluded_content_branches=normalized_excluded_branches,
         unknowns=(_MINIMAL_BRIEF_UNKNOWN,),
     )
     return seal_incubation_brief(

@@ -41,6 +41,10 @@ from deerflow.content_intelligence.contracts import (
     TopicBrief,
     Unknown,
 )
+from deerflow.content_intelligence.incubation_skill import (
+    IncubationBranchOnlyMarker,
+    IncubationSkillProfile,
+)
 from deerflow.content_intelligence.lexical_evidence import (
     LexicalEvidence,
     LexicalEvidenceMode,
@@ -265,6 +269,7 @@ class RootCandidateDraft(ContractModel):
         "served_object_or_activity",
         "defining_function_or_use",
         "social_or_cultural_world",
+        "domain_skill_candidate",
         "other",
     ]
     label: NonEmptyStr
@@ -500,6 +505,9 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 - 只能在输入索引中选择，不能把较窄对象与较宽关系世界拼成折中混合根。
 - relation_to_business 是上游已经形成并经审查的语义连续路径，不是候选宣传语。与原表达的语义相关性已由上游解决；当前不得重新判定“能不能从商品走到这里”。
 - social_or_cultural_world 候选已通过独立语义路径审查；你不得再次裁决这条连续性是否成立。距离商品较远不等于内容漂移，也不得以“离商品较远”为由推翻它。
+- incubation_skill_context 若存在，只是用户当前启用的行业 Skill 提供的可审查候选路径和局部场景边界，不是已采用答案。必须与其他候选比较，不得据此补造用户资源或市场事实。
+- incubation_skill_context.default_root 若存在，是该可版本化行业 Skill 的默认地图根；你仍要比较候选并留下理由，但通用比较意见不会静默覆盖这个已选行业默认。最终账号路线仍由下游 Lead 提案并由用户确认。
+- 被 incubation_skill_context 标为 branch_only 的场景已从可选根中移除。不得用同义改写把它恢复成地图根。
 - 你仍可比较内容容量、具体性与长期编辑价值，并在该候选只是空泛口号、缺少可反复研究的人事时选择其他候选。
 - map_root_candidate_index 应指向本次最值得展开的最大有效内容世界：它必须具体，并能持续长出真实的人、事、关系、知识与共同经验。“最大”指有效内容容量，不是抽象层级；候选与原表达的连接已经不是本节点的裁决对象。
 - 内容根选择不是品类定义测验。完整商品或服务没有先验优先权；对象能够脱离某个场景独立存在，不足以否决与原表达直接相连、解释力更强的人类活动或关系世界。
@@ -548,6 +556,7 @@ FROZEN_CONTENT_MAP_SYSTEM_PROMPT = """<content_intelligence_method>
 - 地图只提供可研究节点及其关系；叙事组织由后续选题模块负责，不得在地图阶段编排故事或制造戏剧阻碍。
 - 关系差异应按差异、协商、角色互动或融合表达，不得升级为戏剧阻碍、对抗结构或故事线。
 - 地图方向涉及多方时，必须写出参与者、可观察行为和关系变化，用具体的协商、让步、调整或融合描述；不得用概括性的关系理论标签代替实际发生的事情。故事组织留给后续表达模块。
+- 输入若包含 excluded_local_branches，它们是当前按需行业 Skill 中尚未被用户业务表达激活的局部场景。不得围绕这些场景生成地图方向、命名候选、编辑承诺或稳定观察方法；用户明确经营相应场景时，调用方不会传入该边界。
 - 具体命名人物、事件、作品或日期只能作为待核验候选，并提供 verification_query；不得把它们混入已经成立的概念方向。
 - 输出严格使用 editorial_promise、recurring_lens、drift_boundaries、map_directions、named_candidates 和 unknowns 合同字段。
 
@@ -579,9 +588,14 @@ async def analyze_content_intelligence(
     model: Any,
     runnable_config: dict[str, Any] | None = None,
     lexical_evidence_provider: LexicalEvidenceProvider | None = None,
+    incubation_profile: IncubationSkillProfile | None = None,
 ) -> ContentIntelligenceBundle:
     sources = _build_sources(request)
-    record_id = _build_record_id(request.subject_expression, sources)
+    record_id = _build_record_id(
+        request.subject_expression,
+        sources,
+        context_fingerprint=(incubation_profile.content_sha256() if incubation_profile is not None else None),
+    )
     if request.focus == AnalysisFocus.CONTENT_WORLD:
         return await _analyze_focused_content_world(
             request,
@@ -590,6 +604,7 @@ async def analyze_content_intelligence(
             record_id=record_id,
             sources=sources,
             lexical_evidence_provider=lexical_evidence_provider,
+            incubation_profile=incubation_profile,
         )
 
     messages = (
@@ -764,6 +779,7 @@ async def _analyze_focused_content_world(
     record_id: str,
     sources: tuple[SourceItem, ...],
     lexical_evidence_provider: LexicalEvidenceProvider | None,
+    incubation_profile: IncubationSkillProfile | None,
 ) -> ContentIntelligenceBundle:
     semantic_messages = (
         SystemMessage(content=SEMANTIC_READING_SYSTEM_PROMPT),
@@ -885,10 +901,21 @@ async def _analyze_focused_content_world(
             container_fields=set(),
         )
         shared_world = _apply_shared_world_review(shared_world, shared_world_review)
-    candidate_set = _build_root_candidate_set(semantic, semantic_family, shared_world)
+    candidate_set = _build_root_candidate_set(
+        semantic,
+        semantic_family,
+        shared_world,
+        incubation_profile=incubation_profile,
+    )
     decision_messages = (
         SystemMessage(content=CONTENT_ROOT_DECISION_SYSTEM_PROMPT),
-        HumanMessage(content=_render_root_decision_input(candidate_set, offering_role=semantic.offering_role)),
+        HumanMessage(
+            content=_render_root_decision_input(
+                candidate_set,
+                offering_role=semantic.offering_role,
+                incubation_profile=incubation_profile,
+            )
+        ),
     )
     decision = await _invoke_structured(
         model,
@@ -901,14 +928,25 @@ async def _analyze_focused_content_world(
     root = _resolve_root_selection(
         candidate_set,
         decision,
-        reviewed_family_map_root=_reviewed_cross_domain_family_map_root(
-            semantic_family,
-            shared_world,
+        reviewed_family_map_root=(
+            None
+            if incubation_profile is not None
+            else _reviewed_cross_domain_family_map_root(
+                semantic_family,
+                shared_world,
+            )
         ),
+        skill_default_root=(incubation_profile.default_root if incubation_profile is not None else None),
     )
+    inactive_map_branches = incubation_profile.inactive_map_branches(root.source_object) if incubation_profile is not None else ()
     map_messages = (
         SystemMessage(content=FROZEN_CONTENT_MAP_SYSTEM_PROMPT),
-        HumanMessage(content=_render_frozen_map_input(root)),
+        HumanMessage(
+            content=_render_frozen_map_input(
+                root,
+                excluded_local_branches=inactive_map_branches,
+            )
+        ),
     )
     content_map = await _invoke_structured(
         model,
@@ -917,6 +955,10 @@ async def _analyze_focused_content_world(
         runnable_config=runnable_config,
         include_raw=True,
         container_fields={"drift_boundaries", "map_directions", "named_candidates", "unknowns"},
+    )
+    content_map = _apply_excluded_local_branches(
+        content_map,
+        excluded_local_branches=inactive_map_branches,
     )
     world = FocusedContentWorldDraft(
         source_object=root.source_object,
@@ -1251,7 +1293,12 @@ def _build_sources(request: ContentIntelligenceRequest) -> tuple[SourceItem, ...
     )
 
 
-def _build_record_id(subject_expression: str, sources: tuple[SourceItem, ...]) -> str:
+def _build_record_id(
+    subject_expression: str,
+    sources: tuple[SourceItem, ...],
+    *,
+    context_fingerprint: str | None = None,
+) -> str:
     payload = {
         "subject_expression": subject_expression,
         "sources": [
@@ -1266,6 +1313,8 @@ def _build_record_id(subject_expression: str, sources: tuple[SourceItem, ...]) -
             for source in sources
         ],
     }
+    if context_fingerprint is not None:
+        payload["context_fingerprint"] = context_fingerprint
     canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return f"ci-{hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:20]}"
 
@@ -1474,6 +1523,7 @@ def _render_root_decision_input(
     candidate_set: ContentRootCandidateSetDraft,
     *,
     offering_role: OfferingRole,
+    incubation_profile: IncubationSkillProfile | None = None,
 ) -> str:
     root_candidates = [
         {
@@ -1488,6 +1538,8 @@ def _render_root_decision_input(
         "offering_role": offering_role,
         "root_candidates": root_candidates,
     }
+    if incubation_profile is not None:
+        payload["incubation_skill_context"] = incubation_profile.decision_projection()
     return "--- BEGIN CONTENT ROOT DECISION INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END CONTENT ROOT DECISION INPUT ---"
 
 
@@ -1582,6 +1634,8 @@ def _build_root_candidate_set(
     semantic: SemanticReadingDraft,
     semantic_family: SemanticFamilyExpansionDraft,
     shared_world: SharedWorldSynthesisDraft,
+    *,
+    incubation_profile: IncubationSkillProfile | None = None,
 ) -> ContentRootCandidateSetDraft:
     candidates: list[RootCandidateDraft] = []
     seen_labels: set[str] = set()
@@ -1598,15 +1652,23 @@ def _build_root_candidate_set(
             "served_object_or_activity",
             "defining_function_or_use",
             "social_or_cultural_world",
+            "domain_skill_candidate",
             "other",
         ],
         label: str,
         scope_role: Literal["root_candidate", "example_branch"],
         relation: str,
+        strength: str = "由上游语义记录直接识别",
+        overreach_risk: str = "仍需与其他已绑定候选比较边界与解释力",
     ) -> None:
         normalized = label.strip()
         if not normalized or normalized in seen_labels:
             return
+        if incubation_profile is not None and incubation_profile.is_branch_only(
+            normalized,
+            source_object=semantic.source_object,
+        ):
+            scope_role = "example_branch"
         seen_labels.add(normalized)
         candidates.append(
             RootCandidateDraft(
@@ -1614,8 +1676,8 @@ def _build_root_candidate_set(
                 label=normalized,
                 scope_role=scope_role,
                 relation_to_business=relation,
-                strength="由上游语义记录直接识别",
-                overreach_risk="仍需与其他已绑定候选比较边界与解释力",
+                strength=strength,
+                overreach_risk=overreach_risk,
             )
         )
 
@@ -1689,6 +1751,18 @@ def _build_root_candidate_set(
             relation=" -> ".join(shared_world.semantic_path),
         )
 
+    if incubation_profile is not None:
+        assumptions = "、".join(incubation_profile.do_not_assume)
+        for candidate_path in incubation_profile.candidate_paths:
+            add(
+                level="domain_skill_candidate",
+                label=candidate_path.root,
+                scope_role="root_candidate",
+                relation=" -> ".join(candidate_path.path),
+                strength=(f"由已启用行业 Skill {incubation_profile.skill_name} 提供的可审查候选路径；{candidate_path.rationale}"),
+                overreach_risk=(f"不得因此假设：{assumptions}" if assumptions else "仍需与其他候选比较，不自动成为地图根"),
+            )
+
     frames = semantic.unmodified_subject_frames
     if frames is None:
         frames = semantic.social_or_cultural_frames
@@ -1733,6 +1807,7 @@ def _resolve_root_selection(
     decision: ContentRootDecisionDraft,
     *,
     reviewed_family_map_root: str | None = None,
+    skill_default_root: str | None = None,
 ) -> ContentRootSelectionDraft:
     eligible_indices = tuple(index for index, candidate in enumerate(candidate_set.candidates) if candidate.scope_role == "root_candidate")
     if not 0 <= decision.selected_candidate_index < len(eligible_indices):
@@ -1753,7 +1828,17 @@ def _resolve_root_selection(
         if reviewed_index is not None:
             map_root_candidate_index = reviewed_index
 
-    if map_root_candidate_index == selected_candidate_index:
+    if skill_default_root is not None:
+        skill_default_index = next(
+            (index for index in eligible_indices if candidate_set.candidates[index].label == skill_default_root),
+            None,
+        )
+        if skill_default_index is None:
+            raise ValueError("skill default root must identify an explicit root candidate")
+        selected_candidate_index = skill_default_index
+        map_root_candidate_index = skill_default_index
+        root_rationale = f"{skill_default_root} 是当前启用行业 Skill 的可版本化默认内容根；通用候选比较仍作为审查意见保留，但不能在本轮静默替换该行业默认。"
+    elif map_root_candidate_index == selected_candidate_index:
         root_rationale = decision.root_rationale
     else:
         entry = candidate_set.candidates[selected_candidate_index].label
@@ -1772,11 +1857,44 @@ def _resolve_root_selection(
 
 def _render_frozen_map_input(
     root: ContentRootSelectionDraft,
+    *,
+    excluded_local_branches: tuple[IncubationBranchOnlyMarker, ...] = (),
 ) -> str:
     payload = {
         "primary_content_center": root.map_root,
     }
+    if excluded_local_branches:
+        payload["excluded_local_branches"] = [marker.model_dump(mode="json") for marker in excluded_local_branches]
     return "--- BEGIN FROZEN CONTENT MAP INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN CONTENT MAP INPUT ---"
+
+
+def _apply_excluded_local_branches(
+    content_map: FrozenContentMapDraft,
+    *,
+    excluded_local_branches: tuple[IncubationBranchOnlyMarker, ...],
+) -> FrozenContentMapDraft:
+    if not excluded_local_branches:
+        return content_map
+
+    markers = tuple(marker.marker.casefold() for marker in excluded_local_branches)
+
+    def contains_excluded_branch(value: Any) -> bool:
+        if isinstance(value, ContractModel):
+            value = value.model_dump(mode="json")
+        rendered = json.dumps(value, ensure_ascii=False, sort_keys=True).casefold()
+        return any(marker in rendered for marker in markers)
+
+    if contains_excluded_branch(content_map.editorial_promise) or contains_excluded_branch(content_map.recurring_lens):
+        raise ValueError("frozen content map centered an inactive local branch")
+
+    return content_map.model_copy(
+        update={
+            "drift_boundaries": tuple(item for item in content_map.drift_boundaries if not contains_excluded_branch(item)),
+            "map_directions": tuple(item for item in content_map.map_directions if not contains_excluded_branch(item)),
+            "named_candidates": tuple(item for item in content_map.named_candidates if not contains_excluded_branch(item)),
+            "unknowns": tuple(item for item in content_map.unknowns if not contains_excluded_branch(item)),
+        }
+    )
 
 
 def _bind_draft(

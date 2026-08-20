@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A115 golden-gift real incubation chain passed; account-position binding fixed; cost and latency failed`
+- 当前结论状态：`A116 first vertical incubation Skill accepted live; golden-gift root and branch isolation passed; performance debt remains`
 
 ## A01 第五版与第六版边界
 
@@ -2245,11 +2245,21 @@ DeerFlow Host 最终通过 `tools/list -> domain discovery -> Child call` 搜索
 
 ## A115 黄金礼品真实孵化端到端
 
-2026-08-20 以“我是做黄金礼品的，我要怎么起号？”运行真实主链。系统将黄金识别为材质，将礼品与礼的社会作用推进到
-“礼如何规范人们的行为与彼此相待”，没有冻结三金、彩礼或婚礼。单一能力 MCP 网关采集并封存了真实抖音账号“断墨的笔”的 6 条作者一致作品。
+2026-08-20 以“我是做黄金礼品的，我要怎么起号？”运行真实主链。系统将黄金识别为材质，并把根推进到
+“礼如何规范人们的行为与彼此相待”；但人工复核确认它仍停在抽象礼制，没有到达“人与人之间的相处与人情世故”，因此核心内容根未通过。单一能力 MCP 网关采集并封存了真实抖音账号“断墨的笔”的 6 条作者一致作品。
 
 系统提出“礼俗观察者”与“礼器解读者”两条路线，用户选择 A 后，新建并封存 `incubation_judgment` v2，保留 v1 提案。同一任务随后交付选题“他叫你「兄」，不是跟你称兄道弟——古代书信里一个字的信号陷阱”和基础稿，持久化 `content_reading -> topic_brief -> message_plan -> draft_version`。
 
-真实运行暴露项目原始提问被错当成账号立场。失败测试先行后，已改为优先使用已确认路线的 `persona.account_role`，无确认路线才回退项目原话。五项业务验收通过；续写仍消耗 73,500 Token、4 分 37 秒，因此性能与成本明确未通过。详见
+真实运行暴露项目原始提问被错当成账号立场。失败测试先行后，已改为优先使用已确认路线的 `persona.account_role`，无确认路线才回退项目原话。对标、持久化、确认和下游工件链通过；核心根、性能与成本未通过。详见
 `audits/A115-golden-gift-real-incubation-e2e.md` 与
 `evidence/a115-golden-gift-real-e2e-2026-08-20.json`。聚焦回归 `167 passed`；非 live 完整回归的业务与框架测试 `12288 passed, 75 skipped`，唯一指导文件预算失败压缩后单测复跑通过。
+
+## A116 行业孵化知识拆为按需 Skill
+
+2026-08-20 将行业特有经验从通用主脑拆到延迟加载的 `incubate-*` Skill。通用 Lead 最多选择一个匹配 Skill；`develop_account_strategy` 从该已启用包中读取不超过 16 KB 的结构化 Profile。Profile 可以提供候选路径、可选的版本化默认内容根、条件局部分支和不可假设项，但不能修改用户原话或决定账号定位、受众、人设、形式与变现。
+
+首个 `incubate-gift-human-relations` 提供 `礼品 -> 送与收 -> 人情往来 -> 人与人之间的相处与人情世故` 路径和默认根。未被用户业务表达激活的局部分支会贯穿地图、Brief、路线输入与持久化前校验；用户明确经营相应场景时不传入该边界。真实运行先后暴露候选根被覆盖、路线层重新引入局部分支和经营身份冒充经验三类失败，均保留记录后修复。最终内容地图根准确，地图和路线不再出现未激活分支，事实连接只以待确认条件表达。性能与 Token 尚未通过。详见
+`audits/A116-vertical-incubation-skills.md` 与
+`decisions/ADR-033-vertical-incubation-skills.md`，机器证据为
+`evidence/a116-vertical-incubation-skill-live-2026-08-20.json`。聚焦回归 `124 passed`；完整非 live 测试
+`12302 passed, 75 skipped`，唯一指导文件预算失败修复后定向复验通过。

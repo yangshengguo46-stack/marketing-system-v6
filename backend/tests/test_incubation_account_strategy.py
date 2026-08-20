@@ -180,6 +180,49 @@ async def test_account_strategy_reuses_identical_inputs_and_versions_real_change
     assert repository.artifacts[first.judgment_artifact.artifact_id] == first.judgment_artifact
 
 
+@pytest.mark.asyncio
+async def test_account_strategy_carries_vertical_skill_assumptions_into_the_sealed_model_input() -> None:
+    repository = _MemoryRepository()
+    bundle = _bundle()
+    map_version = bundle.content_world.content_map_version_id()
+    seen_input: dict[str, object] = {}
+
+    async def structured_model(schema, messages):
+        nonlocal seen_input
+        seen_input = json.loads(messages[1].content)
+        basis_ids = tuple(seen_input["allowed_basis_artifact_ids"][:2])
+        return _proposal_payload(map_version=map_version, basis_ids=basis_ids)
+
+    prepared = await prepare_account_strategy(
+        project=PROJECT,
+        repository=repository,
+        bundle=bundle,
+        verbatim_user_request="我是做黄金礼品的，我要怎么起号？",
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+        prohibited_assumptions=(
+            "用户因经营身份就拥有大量真实客户案例或一手见闻",
+            "用户已有可拍素材或表演能力",
+        ),
+        excluded_content_branches=("婚礼", "彩礼"),
+    )
+
+    brief_payload = seen_input["incubation_brief"]["payload"]
+    assert brief_payload["prohibited_assumptions"] == [
+        "用户的业务身份本身不能证明其拥有相关专业能力、经验、客户案例、素材、供应链、销售渠道、出镜或制作能力。",
+        "用户因经营身份就拥有大量真实客户案例或一手见闻",
+        "用户已有可拍素材或表演能力",
+    ]
+    brief_parent = next(parent for parent in prepared.judgment_artifact.parents if parent.artifact_type == "incubation_brief")
+    stored_brief = repository.artifacts[brief_parent.artifact_id]
+    assert stored_brief.payload["prohibited_assumptions"] == brief_payload["prohibited_assumptions"]
+    assert brief_payload["excluded_content_branches"] == ["婚礼", "彩礼"]
+    assert seen_input["content_branch_boundary"] == {"excluded_unless_explicit_in_business": ["婚礼", "彩礼"]}
+    assert stored_brief.payload["excluded_content_branches"] == ["婚礼", "彩礼"]
+
+
 def test_current_account_strategy_can_be_resolved_for_the_exact_candidate_map() -> None:
     project = PROJECT
     first = ArtifactEnvelope.seal(

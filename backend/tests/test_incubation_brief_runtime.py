@@ -51,7 +51,27 @@ def test_leaves_unstated_facts_empty_and_explicitly_unknown() -> None:
 
     for field in ("capabilities", "resources", "constraints", "goals", "preferences"):
         assert payload[field] == []
+    assert payload["prohibited_assumptions"] == ["用户的业务身份本身不能证明其拥有相关专业能力、经验、客户案例、素材、供应链、销售渠道、出镜或制作能力。"]
     assert payload["unknowns"] == ["除用户逐字陈述的业务主体外，能力、资源、约束、目标、偏好、受众、变现方式和平台均未确认。"]
+
+
+def test_seals_skill_supplied_prohibited_assumptions_without_turning_them_into_facts() -> None:
+    payload = _build(
+        prohibited_assumptions=(
+            "用户拥有大量真实客户案例",
+            "用户拥有大量真实客户案例",
+            "用户具有真人出镜能力",
+        ),
+        excluded_content_branches=("婚礼", "婚礼", "彩礼"),
+    ).payload
+
+    assert payload["prohibited_assumptions"] == [
+        "用户的业务身份本身不能证明其拥有相关专业能力、经验、客户案例、素材、供应链、销售渠道、出镜或制作能力。",
+        "用户拥有大量真实客户案例",
+        "用户具有真人出镜能力",
+    ]
+    assert all(assumption not in {fact["statement"] for fact in payload[field]} for assumption in payload["prohibited_assumptions"] for field in ("business_facts", "capabilities", "resources", "constraints", "goals", "preferences"))
+    assert payload["excluded_content_branches"] == ["婚礼", "彩礼"]
 
 
 @pytest.mark.parametrize(
@@ -82,6 +102,8 @@ def test_builder_has_no_model_questionnaire_or_guess_inputs() -> None:
         "created_at",
         "source_thread_id",
         "source_run_id",
+        "prohibited_assumptions",
+        "excluded_content_branches",
     }
     assert "langchain" not in module_source
     assert "questionnaire" not in module_source

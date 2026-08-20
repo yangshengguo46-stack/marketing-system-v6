@@ -1,7 +1,7 @@
 {
   "audit": "A115",
   "date": "2026-08-20",
-  "status": "business_chain_passed_cost_failed",
+  "status": "partial_downstream_passed_content_root_failed",
   "input": "我是做黄金礼品的，我要怎么起号？",
   "thread_id": "a8d0b374-4cf2-4ba7-b74f-7e21ba998bca",
   "project_id": "thread_1182e7caecf16f89d0a1093a23f9deb7",
@@ -14,7 +14,16 @@
     "source_expression": "黄金礼品",
     "lexical_head": "礼品",
     "material_modifier": "黄金",
-    "content_root": "礼如何规范人们的行为与彼此相待"
+    "content_root": "礼如何规范人们的行为与彼此相待",
+    "human_review_passed": false,
+    "required_path": [
+      "黄金礼品",
+      "礼品",
+      "送与收",
+      "人情往来",
+      "人与人之间的相处与人情世故"
+    ],
+    "failure": "冻结根停在礼制与行为规范的中间层，没有到达人情世故；下游结果依赖用户续写时再次显式约束。"
   },
   "benchmark": {
     "provider": "pazwusimple-netizen/douyin-mcp",
@@ -55,6 +64,11 @@
     "fix": "confirmed persona.account_role wins; project subject is fallback only",
     "focused_regression_passed": true,
     "live_reverification_pending": true
+  },
+  "review_correction": {
+    "superseded_claim": "golden gift incubation chain passed",
+    "corrected_by": "A116",
+    "reason": "下游工件成功不能替代首次内容根的人工作业验收。"
   },
   "secrets_included": false
 }

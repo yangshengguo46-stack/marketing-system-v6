@@ -164,10 +164,10 @@ dependency-ordered semantic chain: intermediate labels are inspectable evidence,
 One venue, purchase, consumption, or social scene stays a map branch when the object also expands
 into people, history, events, regions, or works outside that scene.
 
-Root selection chooses `content_entry` and `map_root`; reviewed shared worlds remain candidates and
-cannot override it. The map sees only `map_root`; every topic binds its exact map version and evidence
-receipt. Generic search is `topic_evidence`, never competitor evidence. `explore_content_world` may
-return opportunities or one shootable topic, but cannot decide account strategy.
+Only `map_root` enters the map; topics bind its version and receipt. `explore_content_world` cannot decide
+strategy; generic search is `topic_evidence`, not competitor evidence. One lazy `incubate-*` Skill may add
+candidates, a default root, branch exclusions, and fact boundaries; it cannot alter user text or decide
+strategy. Exclusions persist unless current business text activates them.
 
 Parse shared-world provider payloads before reconciliation. Normalize explicit null collections and
 discard misplaced non-constitutive modifiers only when the world remains valid. Deterministically
