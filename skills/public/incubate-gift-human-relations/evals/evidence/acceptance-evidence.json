@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "skill_name": "incubate-gift-human-relations",
+  "profile_version": "1.0.1",
+  "records": [
+    {
+      "evidence_id": "routing-v1.0.1",
+      "case_ids": [
+        "gold-gift-trigger",
+        "corporate-gift-trigger",
+        "souvenir-trigger",
+        "gold-investment-guard",
+        "jewelry-guard",
+        "wedding-service-guard",
+        "watch-guard"
+      ],
+      "result": "passed",
+      "observation": "The same deferred-index protocol scored 8/8 in three consecutive rounds.",
+      "audit_ref": "docs/content-intelligence-v6/evidence/a118-domain-skill-governance-and-food-shadow-2026-08-20.json"
+    },
+    {
+      "evidence_id": "gold-gift-live",
+      "case_ids": [
+        "gold-gift-behavior"
+      ],
+      "result": "passed",
+      "content_root": "人与人之间的相处与人情世故",
+      "content_map_artifact_id": "artifact_54284231eea6a19d381e4ef782b2745d14386cc86130f75cc24895cf68a5328b",
+      "judgment_artifact_id": "artifact_e09292e1ecdbce4c98af8f9a19037de581df35a420ffc364e6a57d7ae86aa207",
+      "inactive_branch_terms_found": [],
+      "unsupported_existing_experience_claims": [],
+      "audit_ref": "docs/content-intelligence-v6/evidence/a116-vertical-incubation-skill-live-2026-08-20.json"
+    },
+    {
+      "evidence_id": "retirement-gift-held-out",
+      "case_ids": [
+        "retirement-gift-held-out"
+      ],
+      "result": "passed",
+      "record_id": "ci-30021e7fed6d41bc6d93",
+      "content_root": "人与人之间的相处与人情世故",
+      "fact_boundary": "Customer cases, firsthand experiences, footage, and operating scope remained unknown.",
+      "audit_ref": "docs/content-intelligence-v6/evidence/a119-domain-skill-package-acceptance-2026-08-21.json"
+    }
+  ],
+  "secrets_included": false
+}

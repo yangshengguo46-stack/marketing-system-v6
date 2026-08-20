@@ -156,23 +156,22 @@ from deerflow.config import get_app_config
 
 ### V6 Content Incubation Core
 
-`content_intelligence/` owns the normal chain `ComprehensionRecord -> ContentWorldView ->
-TopicBrief -> MessagePlan -> BaseDraft`. Explicit downstream requests may continue through
-`FormatDecision -> AdaptedDraft -> ProductionPlan`. `ContentWorldView` is a
-content-addressed candidate opportunity map, not adopted account positioning. Keep ADR-020's
-dependency-ordered semantic chain: intermediate labels are inspectable evidence, never hard gates.
-One venue, purchase, consumption, or social scene stays a map branch when the object also expands
-into people, history, events, regions, or works outside that scene.
+`content_intelligence/` owns `ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan ->
+BaseDraft`; explicit requests may continue downstream. `ContentWorldView` is a candidate map, not
+positioning. Preserve ADR-020's order: labels are evidence, never gates; local scenes stay branches
+when the object also spans people, history, events, regions, or works.
 
 Only `map_root` enters the map; topics bind its version and receipt. `explore_content_world` cannot decide
-strategy; generic search is `topic_evidence`, not competitor evidence. One lazy `incubate-*` Skill may add
-candidates, a default root, branch exclusions, and fact boundaries; it cannot alter user text or decide
-strategy. Exclusions persist unless current business text activates them.
+strategy; generic search is `topic_evidence`, not competitor evidence. At most one active `incubate-*`
+Skill may add bounded candidates, principles, exclusions, and fact boundaries without changing user text
+or deciding strategy. Discovery hashes its prose, schema-v2 Profile, evals, triggers, all-pass receipt,
+and local evidence. Receipts use aware timestamps and hashed `evals/evidence/` files; any mismatch hides
+the Skill. Non-active packages stay experimental. Negation does not reactivate excluded branches. See the
+skills module guide for details.
 
-Parse shared-world provider payloads before reconciliation. Normalize explicit null collections and
-discard misplaced non-constitutive modifiers only when the world remains valid. Deterministically
-withdraw worlds with no semantic path, missing constitutive context, or labels that erase it; keep
-these invariants out of the provider-facing parser.
+Parse and normalize shared-world provider payloads before reconciliation. Withdraw worlds with no
+semantic path, missing constitutive context, or labels that erase it; keep these invariants out of the
+provider-facing parser.
 
 `deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
 `RootFeedbackRecord` is append-only, exact-map-bound episodic evidence. Do not inject, retrieve, or promote it

@@ -1,0 +1,42 @@
+[
+  {
+    "query": "我是做黄金礼品的，我要怎么起号？",
+    "should_trigger": true,
+    "rationale": "黄金是材质，礼品是用户明确经营的完整对象。"
+  },
+  {
+    "query": "我是做企业礼品定制的，账号长期讲什么？",
+    "should_trigger": true,
+    "rationale": "企业礼品仍以礼赠与关系为主要用途。"
+  },
+  {
+    "query": "我卖地方伴手礼，想做一个长期账号。",
+    "should_trigger": true,
+    "rationale": "伴手礼是用户实际经营的礼赠对象。"
+  },
+  {
+    "query": "我做退休纪念礼物定制，想让更多人知道我。",
+    "should_trigger": true,
+    "rationale": "纪念礼物明确承载感谢、告别和关系确认。"
+  },
+  {
+    "query": "我是做水贝黄金回收和投资金条的，该怎么起号？",
+    "should_trigger": false,
+    "rationale": "业务对象是黄金回收、投资和保值，不是礼赠。"
+  },
+  {
+    "query": "我是做珠宝首饰设计的，想做个人 IP。",
+    "should_trigger": false,
+    "rationale": "首饰可能被送礼，但用户没有把礼赠声明为实际业务对象。"
+  },
+  {
+    "query": "我是婚庆策划师，怎么起号？",
+    "should_trigger": false,
+    "rationale": "婚庆服务是实际业务对象，礼赠不是。"
+  },
+  {
+    "query": "我是卖腕表的，账号应该讲什么？",
+    "should_trigger": false,
+    "rationale": "腕表可以作为礼物，但不能因此把礼赠视为用户主营。"
+  }
+]

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "skill_name": "incubate-gift-human-relations",
+  "profile_version": "1.0.1",
+  "acceptance": {
+    "status": "passed",
+    "profile_sha256": "4633a9977209f23c0e1a5db9eea24611d18bc07202f33ce180781fbcdebeab33",
+    "package_sha256": "c6de0108babe2b2e67054eda0289bd0f69c635f326bd601c523138ec4b2c03dd",
+    "evidence_ref": "acceptance.json"
+  },
+  "evals": [
+    {
+      "case_id": "gold-gift-trigger",
+      "case_kind": "trigger",
+      "prompt": "我是做黄金礼品的，我要怎么起号？",
+      "expected_output": "应加载礼赠与人情 Skill；保留黄金礼品原始业务对象，把黄金视为材质、礼品视为用途入口。",
+      "expectations": [
+        "加载 incubate-gift-human-relations",
+        "用户原话不被改写",
+        "不把黄金投资或普通珠宝当作主营"
+      ]
+    },
+    {
+      "case_id": "corporate-gift-trigger",
+      "case_kind": "trigger",
+      "prompt": "我是做企业礼品定制的，账号长期讲什么？",
+      "expected_output": "应加载礼赠与人情 Skill，并比较礼物本身与长期存在的送、收、回和关系世界。",
+      "expectations": [
+        "加载 incubate-gift-human-relations",
+        "企业客户不被擅自改写为已有客户案例"
+      ]
+    },
+    {
+      "case_id": "souvenir-trigger",
+      "case_kind": "trigger",
+      "prompt": "我卖地方伴手礼，想做一个长期账号。",
+      "expected_output": "应加载礼赠与人情 Skill；地方与材质可以成为分支，但不能自动取代礼赠用途。",
+      "expectations": [
+        "加载 incubate-gift-human-relations",
+        "保留地方伴手礼这一完整商业表达"
+      ]
+    },
+    {
+      "case_id": "gold-investment-guard",
+      "case_kind": "anti_trigger",
+      "prompt": "我是做水贝黄金回收和投资金条的，该怎么起号？",
+      "expected_output": "不得加载礼赠与人情 Skill；业务对象是黄金回收、投资和保值。",
+      "expectations": [
+        "不加载 incubate-gift-human-relations"
+      ]
+    },
+    {
+      "case_id": "jewelry-guard",
+      "case_kind": "anti_trigger",
+      "prompt": "我是做珠宝首饰设计的，想做个人 IP。",
+      "expected_output": "不得仅因首饰可能被赠送就加载礼赠与人情 Skill。",
+      "expectations": [
+        "不加载 incubate-gift-human-relations"
+      ]
+    },
+    {
+      "case_id": "wedding-service-guard",
+      "case_kind": "anti_trigger",
+      "prompt": "我是婚庆策划师，怎么起号？",
+      "expected_output": "不得加载礼赠与人情 Skill；婚庆服务本身是业务对象。",
+      "expectations": [
+        "不加载 incubate-gift-human-relations"
+      ]
+    },
+    {
+      "case_id": "watch-guard",
+      "case_kind": "anti_trigger",
+      "prompt": "我是卖腕表的，账号应该讲什么？",
+      "expected_output": "不得因腕表可以送礼而加载礼赠与人情 Skill。",
+      "expectations": [
+        "不加载 incubate-gift-human-relations"
+      ]
+    },
+    {
+      "case_id": "gold-gift-behavior",
+      "case_kind": "behavior",
+      "prompt": "我是做黄金礼品的，我要怎么起号？",
+      "expected_output": "内容根到达人与人之间的相处与人情世故；婚嫁只可作为未激活局部分支，不得统治地图。",
+      "expectations": [
+        "内容根是人与人之间的相处与人情世故",
+        "地图可包含送、收、回、拒绝、面子、义务、边界与利益",
+        "不把婚礼、彩礼、嫁妆、三金或五金作为账号主线",
+        "不编造用户已有客户、案例、素材或经营经验"
+      ]
+    },
+    {
+      "case_id": "retirement-gift-held-out",
+      "case_kind": "held_out",
+      "prompt": "我做退休纪念礼物定制，想让更多人知道我。",
+      "expected_output": "应识别礼物承载纪念、告别、感谢和关系确认，但不得预设用户已有退休客户案例。",
+      "expectations": [
+        "加载 incubate-gift-human-relations",
+        "保留退休纪念礼物的原始业务事实",
+        "长期世界不收缩为某一个退休仪式",
+        "事实、推断和待确认资源分开"
+      ]
+    }
+  ]
+}

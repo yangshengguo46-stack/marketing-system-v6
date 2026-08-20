@@ -1,7 +1,29 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "skill_name": "incubate-gift-human-relations",
+  "profile_version": "1.0.1",
+  "lifecycle_status": "active",
+  "source_refs": [
+    "docs/content-intelligence-v6/audits/A115-golden-gift-real-incubation-e2e.md",
+    "docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md",
+    "docs/content-intelligence-v6/decisions/ADR-033-vertical-incubation-skills.md"
+  ],
+  "applies_to": [
+    "礼品、礼物、伴手礼、纪念礼或馈赠是用户实际经营对象",
+    "材质修饰的礼品，例如黄金礼品、木质礼品或定制礼品",
+    "企业礼赠、商务礼赠或其他以送与收为核心用途的业务"
+  ],
+  "does_not_apply_to": [
+    "黄金投资、金价、回收或保值业务",
+    "珠宝首饰、腕表或其他物件业务，但礼赠不是主要用途",
+    "婚礼、婚庆或婚嫁服务，但礼赠不是用户实际经营对象"
+  ],
   "domain": "礼赠、馈赠及其承载的人际关系",
+  "selection_principles": [
+    "先区分材质、礼品用途和用户实际经营对象；材质不能自动成为内容根。",
+    "比较礼品对象与反复发生的送、收、回、拒绝、感谢和记住等关系行为。",
+    "单一人生场景只能作为分支，不能覆盖人与人长期相处的更大世界。"
+  ],
   "candidate_paths": [
     {
       "path": [

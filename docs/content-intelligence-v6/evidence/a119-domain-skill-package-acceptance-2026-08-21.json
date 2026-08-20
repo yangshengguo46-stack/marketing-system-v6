@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "audit_id": "A119",
+  "date": "2026-08-21",
+  "package": {
+    "skill_name": "incubate-gift-human-relations",
+    "profile_version": "1.0.1",
+    "profile_sha256": "4633a9977209f23c0e1a5db9eea24611d18bc07202f33ce180781fbcdebeab33",
+    "activation_package_sha256": "c6de0108babe2b2e67054eda0289bd0f69c635f326bd601c523138ec4b2c03dd",
+    "bound_components": [
+      "SKILL.md",
+      "references/incubation-profile.json",
+      "evals/evals.json excluding self-referential package_sha256",
+      "evals/trigger_eval_set.json",
+      "evals/acceptance.json excluding self-referential package_sha256",
+      "evals/evidence/acceptance-evidence.json by recorded SHA-256"
+    ],
+    "acceptance_receipt": "skills/public/incubate-gift-human-relations/evals/acceptance.json"
+  },
+  "review_findings_closed": {
+    "model_visible_skill_text_is_hash_bound": true,
+    "trigger_eval_set_is_hash_bound": true,
+    "typed_eval_manifest_is_hash_bound": true,
+    "receipt_must_exist_inside_skill_package": true,
+    "acceptance_receipt_content_is_hash_bound": true,
+    "acceptance_timestamp_must_be_timezone_aware": true,
+    "acceptance_evidence_must_stay_inside_package": true,
+    "acceptance_evidence_sha256_is_verified": true,
+    "receipt_must_cover_exactly_all_declared_case_ids": true,
+    "every_receipt_case_must_pass": true,
+    "parser_and_runtime_share_the_same_evidence_validator": true,
+    "explicit_negation_regression_cases": 13,
+    "positive_business_contrast_cases": 4
+  },
+  "held_out_run": {
+    "case_id": "retirement-gift-held-out",
+    "input": "我做退休纪念礼物定制，想让更多人知道我。",
+    "subject_expression": "我做退休纪念礼物定制",
+    "model_name": "glm-5-2-260617",
+    "thinking_enabled": false,
+    "temperature": 0,
+    "record_id": "ci-30021e7fed6d41bc6d93",
+    "duration_seconds": 105.38,
+    "actual_content_root": "人与人之间的相处与人情世故",
+    "accepted": true,
+    "dimension_names": [
+      "随礼与人情往来的具体决策",
+      "请客吃饭中的关系运作",
+      "求人办事与帮忙的人情逻辑",
+      "亲疏远近的关系维护与变化",
+      "面子与体面在日常社交中的具体运作",
+      "人情中的亏欠、回报与平衡",
+      "代际与时代变迁中的人情规则变化",
+      "职场与组织内的人情运作",
+      "冲突、和解与关系修复",
+      "地域与群体差异中的人情规则比较"
+    ],
+    "fact_boundary_observation": "用户是否已有可讲述的真实客户案例、亲历见闻或可公开素材被明确记录为未知。",
+    "first_capture_attempt": "模型调用完成，但本地打印代码误用 bundle.record_id；该次不记为模型失败，也不作为验收结果。"
+  },
+  "prior_case_evidence": {
+    "trigger_and_anti_trigger": "A118: v1.0.1 completed three 8/8 deferred-index routing rounds.",
+    "gold_gift_behavior": "A116: accepted live content-root, branch-boundary, and fact-boundary run."
+  },
+  "food_shadow": {
+    "profile_version": "0.1.0",
+    "acceptance_status": "failed",
+    "eval_manifest_now_contains_all_four_case_kinds": true,
+    "promotion": false
+  },
+  "automated_verification": {
+    "focused_tests_passed": 212,
+    "guidance_budget_tests_passed": 12,
+    "full_non_live_tests_passed": 12359,
+    "full_non_live_tests_skipped": 75,
+    "full_non_live_warnings": 17,
+    "skill_review_findings": 0,
+    "lint_passed": true,
+    "independent_review_p1_p2_findings": 0
+  },
+  "secrets_included": false
+}

@@ -1837,8 +1837,14 @@ def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors
     )
     profile = IncubationSkillProfile.model_validate(
         {
-            "schema_version": 1,
+            "schema_version": 2,
             "skill_name": "incubate-gift-human-relations",
+            "profile_version": "1.0.0",
+            "lifecycle_status": "active",
+            "source_refs": ["docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md"],
+            "applies_to": ["礼品是用户实际经营对象"],
+            "does_not_apply_to": ["用户实际经营婚庆业务而非礼品"],
+            "selection_principles": ["礼品应与送、收、回和关系世界比较。"],
             "domain": "礼赠与人情关系",
             "candidate_paths": [
                 {
@@ -1875,8 +1881,14 @@ def test_vertical_skill_adds_reviewable_roots_and_demotes_local_scene_attractors
 async def test_vertical_skill_default_root_beats_a_variable_generic_root_judgment() -> None:
     profile = IncubationSkillProfile.model_validate(
         {
-            "schema_version": 1,
+            "schema_version": 2,
             "skill_name": "incubate-gift-human-relations",
+            "profile_version": "1.0.0",
+            "lifecycle_status": "active",
+            "source_refs": ["docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md"],
+            "applies_to": ["礼品是用户实际经营对象"],
+            "does_not_apply_to": ["用户实际经营婚庆业务而非礼品"],
+            "selection_principles": ["礼品应与送、收、回和关系世界比较。"],
             "domain": "礼赠与人情关系",
             "candidate_paths": [
                 {

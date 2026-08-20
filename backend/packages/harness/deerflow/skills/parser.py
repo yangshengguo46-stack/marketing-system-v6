@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from pathlib import Path
@@ -10,6 +11,74 @@ logger = logging.getLogger(__name__)
 
 # Valid POSIX environment-variable name.
 _ENV_VAR_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_INCUBATION_PROFILE_PATH = Path("references/incubation-profile.json")
+_INCUBATION_EVAL_PATH = Path("evals/evals.json")
+_MAX_INCUBATION_PROFILE_BYTES = 16_384
+_MAX_INCUBATION_EVAL_BYTES = 65_536
+
+
+def _read_bounded_package_json(skill_file: Path, relative_path: Path, *, max_bytes: int) -> dict[str, object] | None:
+    try:
+        skill_root = skill_file.parent.resolve(strict=True)
+        target = (skill_file.parent / relative_path).resolve(strict=True)
+        target.relative_to(skill_root)
+        raw = target.read_bytes()
+        if not target.is_file() or len(raw) > max_bytes:
+            return None
+        payload = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _has_nonempty_text(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _is_active_incubation_package(
+    skill_file: Path,
+    *,
+    skill_markdown: str,
+    name: str,
+    metadata: dict[str, object],
+) -> bool:
+    package_metadata = metadata.get("metadata")
+    if not isinstance(package_metadata, dict):
+        return False
+    version = package_metadata.get("version")
+    if package_metadata.get("lifecycle") != "active" or not _has_nonempty_text(version):
+        return False
+
+    profile = _read_bounded_package_json(skill_file, _INCUBATION_PROFILE_PATH, max_bytes=_MAX_INCUBATION_PROFILE_BYTES)
+    manifest = _read_bounded_package_json(skill_file, _INCUBATION_EVAL_PATH, max_bytes=_MAX_INCUBATION_EVAL_BYTES)
+    if profile is None or manifest is None:
+        return False
+
+    # Ordinary Skill discovery stays light; an incubation package pays for its
+    # domain contracts only when the reserved namespace is actually present.
+    from deerflow.content_intelligence.incubation_skill import (
+        IncubationEvalManifest,
+        IncubationSkillProfile,
+        validate_incubation_activation_evidence,
+    )
+
+    try:
+        profile_record = IncubationSkillProfile.model_validate(profile)
+        manifest_record = IncubationEvalManifest.model_validate(manifest)
+    except ValueError:
+        return False
+    if profile_record.skill_name != name or profile_record.profile_version != version or profile_record.lifecycle_status != "active" or manifest_record.skill_name != name or manifest_record.profile_version != version:
+        return False
+    try:
+        validate_incubation_activation_evidence(
+            skill_root=skill_file.parent.resolve(strict=True),
+            skill_markdown=skill_markdown,
+            profile=profile_record,
+            eval_manifest=manifest_record,
+        )
+    except (OSError, ValueError):
+        return False
+    return True
 
 
 def _format_yaml_error(skill_file: Path, exc: yaml.YAMLError, source: str) -> str:
@@ -162,6 +231,19 @@ def parse_skill_file(skill_file: Path, category: SkillCategory, relative_path: P
 
         if not name or not description:
             return None
+
+        if name.startswith("incubate-"):
+            if not _is_active_incubation_package(
+                skill_file,
+                skill_markdown=content,
+                name=name,
+                metadata=metadata,
+            ):
+                logger.warning(
+                    "Skipping incubation Skill %s because its activation package is incomplete or inconsistent",
+                    skill_file,
+                )
+                return None
 
         license_text = metadata.get("license")
         if license_text is not None:

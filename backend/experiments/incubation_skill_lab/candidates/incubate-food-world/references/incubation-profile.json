@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "skill_name": "incubate-food-world",
+  "profile_version": "0.1.0",
+  "lifecycle_status": "shadow",
+  "source_refs": [
+    "backend/experiments/content_root_lab/datasets/development_v1.json",
+    "docs/content-intelligence-v6/decisions/ADR-017-account-level-editorial-map.md",
+    "docs/content-intelligence-v6/audits/A117-open-source-domain-skill-architecture.md"
+  ],
+  "applies_to": [
+    "水果、海鲜等本身可形成完整内容世界的食物品类",
+    "火锅底料等用于完成一个明确成品饮食对象的中间载体",
+    "带地域、材质、工艺或销售容器修饰的食物与饮品对象"
+  ],
+  "does_not_apply_to": [
+    "厨具、餐具或厨房设备业务",
+    "营养咨询、疾病管理或医疗建议服务",
+    "餐厅经营、空间体验或到店服务本身是实际商业对象"
+  ],
+  "domain": "食物、饮食对象及其历史、地域、人物、事件与文化世界",
+  "selection_principles": [
+    "先分别识别用户出售的完整对象、它可能完成的食物或饮品、卖方操作、购买步骤、食用场景与社交功能。",
+    "水果、海鲜等本身已能持续展开品种、产地、季节、人物、历史、贸易与饮食文化的完整对象，可以保持为内容根。",
+    "底料、料包等中间载体若主要为了完成一个有明确名称且内容容量更大的食物对象，应把该完整食物对象作为必须比较的根候选。",
+    "地域、材质、工艺、包装和经营容器若移除后完整食物世界仍成立，只能控制分支或差异，不能自动成为根。",
+    "购买、制作、食用和同桌社交可以成为地图分支；当完整食物对象已包含这些活动时，不得让单一活动取代它。",
+    "最终只选择一个最小完整内容根，不得把商品、中间载体、消费场景或社交功能拼成混合内容根。"
+  ],
+  "candidate_paths": [],
+  "default_root": null,
+  "branch_only_markers": [],
+  "do_not_assume": [
+    "用户是果农、渔民、厨师、配方师、工厂主或餐厅老板",
+    "用户拥有产地、捕捞、种植、加工或门店的一手素材",
+    "用户已有客户案例、供应链优势、地域权威或可公开的经营数据",
+    "用户具备营养、医疗或食品安全专业资质",
+    "具体产地、价格、配方、健康功效或平台表现已经得到外部证据支持"
+  ]
+}

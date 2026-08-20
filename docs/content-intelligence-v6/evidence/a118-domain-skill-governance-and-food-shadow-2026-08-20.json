@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "audit_id": "A118",
+  "date": "2026-08-20",
+  "model": {
+    "name": "glm-5-2-260617",
+    "thinking_enabled": false,
+    "temperature": 0
+  },
+  "runtime_contract": {
+    "profile_schema_version": 2,
+    "generic_skill_parser_rejects_non_active_incubation": true,
+    "active_status_required_by_runtime_loader": true,
+    "skill_metadata_must_match_profile": true,
+    "activation_package_is_cross_file_atomic": true,
+    "eval_manifest_version_must_match_profile": true,
+    "eval_cases_require_prompt_and_expected_result": true,
+    "passing_acceptance_receipt_required": true,
+    "acceptance_receipt_binds_profile_sha256": true,
+    "required_eval_case_kinds": [
+      "trigger",
+      "anti_trigger",
+      "behavior",
+      "held_out"
+    ],
+    "negated_local_branch_marker_remains_inactive": true,
+    "principle_only_profiles_supported": true,
+    "profiles_without_paths_or_principles_rejected": true
+  },
+  "gift_skill": {
+    "name": "incubate-gift-human-relations",
+    "profile_version": "1.0.1",
+    "lifecycle_status": "active",
+    "profile_sha256": "4633a9977209f23c0e1a5db9eea24611d18bc07202f33ce180781fbcdebeab33",
+    "eval_case_kinds": [
+      "trigger",
+      "anti_trigger",
+      "behavior",
+      "held_out"
+    ],
+    "live_behavior_basis": "A116",
+    "trigger_selection_eval": {
+      "protocol": "same GLM model sees only the deferred Skill name and description and selects at most one exact Skill",
+      "version_1_0_0": {
+        "round_scores": [
+          "7/8"
+        ],
+        "failure": "gold gifts were incorrectly excluded because the compressed description made jewelry and investment exclusions unconditional"
+      },
+      "version_1_0_1": {
+        "round_scores": [
+          "8/8",
+          "8/8",
+          "8/8"
+        ],
+        "positive_cases": 4,
+        "negative_cases": 4
+      }
+    }
+  },
+  "food_skill_candidate": {
+    "name": "incubate-food-world",
+    "profile_version": "0.1.0",
+    "lifecycle_status": "shadow",
+    "profile_sha256": "ccee20b6c79eaf89cd13d16c4877b0a40678a0b4f0a896c9a1737f1f645e8316",
+    "registered_in_runtime": false,
+    "public_skill_package_present": false
+  },
+  "comparison": {
+    "no_skill_baseline": [
+      {
+        "case_id": "fruit-shop",
+        "input": "我是开水果店的，我要怎么起号？",
+        "actual_root": "水果",
+        "accepted": true
+      },
+      {
+        "case_id": "seafood",
+        "input": "我是做海鲜的，我要怎么起号？",
+        "actual_root": "海鲜",
+        "accepted": true
+      },
+      {
+        "case_id": "hotpot-base",
+        "input": "我是卖重庆火锅底料的，我要怎么起号？",
+        "actual_root": "火锅底料与围炉共食的世界",
+        "accepted": false,
+        "failure": "把商品、完整食物和社交场景拼成混合内容根"
+      }
+    ],
+    "shadow_profile_known_cases": [
+      {
+        "case_id": "fruit-shop",
+        "expected_root": "水果",
+        "actual_root": "水果",
+        "accepted": true
+      },
+      {
+        "case_id": "seafood",
+        "expected_root": "海鲜",
+        "actual_root": "海鲜",
+        "accepted": true
+      },
+      {
+        "case_id": "hotpot-base",
+        "expected_root": "火锅",
+        "actual_root": "火锅",
+        "accepted": true,
+        "candidate_recall": [
+          "重庆火锅底料",
+          "底料",
+          "火锅",
+          "调味基底熬煮",
+          "人们围坐火锅前共同涮煮食物的聚餐"
+        ]
+      }
+    ],
+    "shadow_profile_held_out": [
+      {
+        "case_id": "coffee-capsule-held-out",
+        "input": "我是卖咖啡胶囊的，我要怎么起号？",
+        "expected_root": "咖啡",
+        "actual_root": "咖啡胶囊",
+        "accepted": false,
+        "candidate_recall": [
+          "咖啡胶囊",
+          "冲泡并饮用咖啡",
+          "日常咖啡消费",
+          "提供便捷的咖啡冲泡方式",
+          "作为标准化咖啡制备的载体"
+        ],
+        "failure": "完整饮品对象咖啡没有进入候选集，选择原则无法选择一个不存在的候选"
+      }
+    ]
+  },
+  "acceptance": {
+    "known_case_score": "3/3",
+    "held_out_score": "0/1",
+    "promote_food_skill": false,
+    "decision": "keep_shadow",
+    "next_hypothesis": "行业 Skill 需要帮助语义层召回可比较的完整对象，而不能只在候选生成后影响根裁决"
+  }
+}

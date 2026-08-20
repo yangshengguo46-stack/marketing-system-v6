@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "skill_name": "incubate-food-world",
+  "profile_version": "0.1.0",
+  "acceptance": {
+    "status": "failed",
+    "profile_sha256": "ccee20b6c79eaf89cd13d16c4877b0a40678a0b4f0a896c9a1737f1f645e8316",
+    "evidence_ref": "docs/content-intelligence-v6/evidence/a118-domain-skill-governance-and-food-shadow-2026-08-20.json"
+  },
+  "evals": [
+    {
+      "case_id": "food-object-trigger",
+      "case_kind": "trigger",
+      "prompt": "我是做进口水果和海鲜零售的，我要怎么起号？",
+      "expected_output": "应把食物本身是实际经营对象识别为食材与饮食世界候选的适用条件。",
+      "expectations": [
+        "识别水果和海鲜均为完整食物对象",
+        "不因用户是零售商就把经营操作选为内容根"
+      ]
+    },
+    {
+      "case_id": "fruit-shop",
+      "case_kind": "behavior",
+      "prompt": "我是开水果店的，我要怎么起号？",
+      "expected_root": "水果",
+      "forbidden_root_fragments": ["水果店经营", "买卖", "健康生活"],
+      "expectations": [
+        "水果店保留为商业对象或经营容器",
+        "水果是单一内容根",
+        "地图可展开品种、产地、季节、人物、历史与饮食文化"
+      ]
+    },
+    {
+      "case_id": "seafood",
+      "case_kind": "behavior",
+      "prompt": "我是做海鲜的，我要怎么起号？",
+      "expected_root": "海鲜",
+      "forbidden_root_fragments": ["采购", "售卖", "餐桌", "宴请"],
+      "expectations": [
+        "海鲜是单一内容根",
+        "采购、售卖、烹饪和食用保持为分支",
+        "地图可展开物种、海域、捕捞、历史、人物、贸易与各地饮食"
+      ]
+    },
+    {
+      "case_id": "hotpot-base",
+      "case_kind": "behavior",
+      "prompt": "我是卖重庆火锅底料的，我要怎么起号？",
+      "expected_root": "火锅",
+      "forbidden_root_fragments": ["底料与", "围炉共食的世界", "重庆饮食"],
+      "expectations": [
+        "重庆火锅底料保留为商业对象",
+        "重庆是地域修饰、底料是完成火锅的中间载体",
+        "火锅是单一内容根",
+        "围炉、社交、底料工艺和地域差异只作为地图分支"
+      ]
+    },
+    {
+      "case_id": "cookware-guard",
+      "case_kind": "anti_trigger",
+      "prompt": "我是卖火锅电磁炉和锅具的，我要怎么起号？",
+      "expected_output": "不得仅因商品用于火锅就自动加载食材与饮食世界候选。"
+    },
+    {
+      "case_id": "restaurant-guard",
+      "case_kind": "anti_trigger",
+      "prompt": "我是开亲子餐厅的，主打儿童游乐空间，我要怎么起号？",
+      "expected_output": "实际商业对象是餐厅空间与亲子体验时，不得强行选择食物品类为根。"
+    },
+    {
+      "case_id": "coffee-capsule-held-out",
+      "case_kind": "held_out",
+      "prompt": "我是卖咖啡胶囊的，我要怎么起号？",
+      "expected_root": "咖啡",
+      "forbidden_root_fragments": ["胶囊与", "咖啡机", "办公室生活"],
+      "expectations": [
+        "咖啡胶囊保留为商业对象和制作咖啡的中间载体",
+        "咖啡是单一内容根",
+        "胶囊工艺、冲泡方式和饮用场景只作为地图分支"
+      ]
+    }
+  ]
+}

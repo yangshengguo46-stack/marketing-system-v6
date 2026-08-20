@@ -1,12 +1,16 @@
 ---
 name: incubate-gift-human-relations
 description: >-
-  Use for account incubation when the user's actual business object is gifts,
-  presents, gifting, corporate gifts, souvenirs, or a material-qualified gift
-  such as gold gifts. Helps compare gift objects with the broader recurring
-  world of giving, receiving, reciprocity, relationships, face, obligation,
-  boundaries, and human relations. Do not use for jewelry, gold investment, or
-  a wedding business unless gifting is itself the stated business object.
+  Use when business sells gifts, souvenirs, or material-qualified gifts,
+  including gold gifts. Expands gifting into human relations. Excludes jewelry
+  or investment when gifting is not the business.
+license: MIT
+compatibility: DeerFlow v6 incubation profiles
+metadata:
+  author: DeerFlow v6 content-intelligence project
+  version: "1.0.1"
+  lifecycle: active
+  source: docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md
 ---
 
 # Gift And Human Relations Incubation
@@ -31,4 +35,13 @@ develop_account_strategy(
 )
 ```
 
-The tool loads `references/incubation-profile.json` itself. Do not copy that file into the user request. Its `default_root` is the current versioned map default for this vertical, not a user-confirmed account positioning decision.
+Runtime resources:
+
+- [Incubation profile](references/incubation-profile.json)
+- [Evaluation manifest](evals/evals.json)
+- [Acceptance receipt](evals/acceptance.json)
+- [Acceptance evidence](evals/evidence/acceptance-evidence.json)
+
+The tool loads the incubation profile itself. Do not copy it into the user request. The profile's default root is the current versioned map default for this vertical, not a user-confirmed account positioning decision.
+
+Runtime exposure requires all four resources to match the complete activation package. The evaluation files govern activation; they are not extra instructions for the marketing decision.

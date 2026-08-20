@@ -2278,3 +2278,33 @@ contested -> superseded/retired`，触发准确、行为增益、反例、事实
 验收。现成营销 Skill 只作 L2 逐项审计来源，不整包安装。详见
 `audits/A117-open-source-domain-skill-architecture.md` 与
 `decisions/ADR-034-domain-skill-layering-and-lifecycle.md`。
+
+## A118 行业 Skill 治理与食材影子评测
+
+2026-08-20 将 A117 落到 Profile schema v2：新增语义版本、生命周期、来源、适用/反触发边界和
+无静态答案的选择原则。现役发现与 loader 把 `SKILL.md`、Profile、评测和通过回执视为一个激活包；
+名称、版本、生命周期与被验收 Profile 哈希不一致时，不向主脑披露正文。每类评测必须有真实输入和预期，
+不能用空壳清单绕过；非 active 行业包在通用 Skill 发现阶段已被排除。礼赠包固定为 `1.0.1 / active`，
+补齐许可、来源和四类评测。标准审查识别 4 正/4 反触发；GLM 延迟索引选择在 `1.0.0`
+暴露黄金礼品假阴性 `7/8`，修正描述后 `1.0.1` 连续三轮 `8/8`。否定婚礼的用户原话也不再反向解禁该分支。
+
+食材与饮食候选保持在实验目录的 `0.1.0 / shadow`。同模型真实对照中，水果、海鲜保真，
+火锅底料从混合根改进为“火锅”；但新留出的咖啡胶囊仍收敛为“咖啡胶囊”，上游没有召回
+“咖啡”候选。因此已知案例 `3/3`、新留出 `0/1`，不晋级。详见
+`audits/A118-domain-skill-governance-and-food-shadow-eval.md` 与
+`evidence/a118-domain-skill-governance-and-food-shadow-2026-08-20.json`。
+
+## A119 行业 Skill 完整包验收
+
+2026-08-21 独立复核确认 A118 只绑定 Profile 仍不够：修改模型可见的 Skill 描述、正文或触发集时，
+旧回执仍可能有效。本轮将 `SKILL.md`、Profile、类型化四类评测、正/反触发集、包内回执和带摘要的包内
+证据绑定为一个激活原子。回执必须带时区时间、逐项覆盖精确 case id 且全部通过；证据必须存在于自己的
+`evals/evidence/` 目录且 SHA-256 一致。通用 parser 与运行时 loader 共用该校验器；任一内容、版本、
+摘要、回执、证据或结果不一致，行业 Skill 都不会进入主脑。
+
+否定分支识别改为明确语言结构，冻结十三种排除表达和四种正向对照，避免误伤“别墅婚礼”“非遗婚礼”及
+“不只是做婚礼”。礼赠 `1.0.1` 新留出“退休纪念礼”真实运行仍选择
+“人与人之间的相处与人情世故”，展开随礼、请客、求人、面子、人情债、职场和关系修复等方向；客户案例、
+亲历和素材继续记为未知。食材候选补齐触发类型但留出结果不变，仍是 `shadow`。详见
+`audits/A119-domain-skill-package-acceptance.md` 与
+`evidence/a119-domain-skill-package-acceptance-2026-08-21.json`。
