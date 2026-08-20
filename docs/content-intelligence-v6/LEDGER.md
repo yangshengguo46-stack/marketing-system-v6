@@ -2308,3 +2308,15 @@ contested -> superseded/retired`，触发准确、行为增益、反例、事实
 亲历和素材继续记为未知。食材候选补齐触发类型但留出结果不变，仍是 `shadow`。详见
 `audits/A119-domain-skill-package-acceptance.md` 与
 `evidence/a119-domain-skill-package-acceptance-2026-08-21.json`。
+
+## A120 行业 Skill 硬门独立审计
+
+2026-08-21 对 `048ad1e2` 做独立只读审计。结论是按需行业 Skill、单 Skill 上限、包完整性、事实边界
+和用户确认可以保留，但礼赠实现已形成“Profile 默认答案、确定性覆盖模型选根、提示词禁止局部分支、
+Draft 全文子串拒绝”四层硬控。它会令“婚礼只是人情世界中的一个支持分支”也无法持久化，违背
+“局部分支可以存在但不能抢占长期根”，并重现第四版多层共同控制营销判断的失败模式。
+
+下一修正边界是将默认根与局部分支降级为带 ID 和理由的软候选，删除自然语言 denylist、地图字段删除和
+Draft 子串硬拒绝；确定性代码只校验候选关系、父级、版本及局部分支不得冒充主根。A119 关于否定作用域
+不参与营销判断的描述由本审计明确修正。详见
+`audits/A120-vertical-skill-hard-gate-audit.md`。独立聚焦验证 `139 passed`，本轮未修改运行时代码。
