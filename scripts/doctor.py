@@ -713,68 +713,85 @@ def _resolved_mcp_env_value(raw_value: object) -> str:
 
 
 def check_douyin_openapi(project_root: Path) -> list[CheckResult]:
-    """Check the real Douyin gateway prerequisites without printing secrets."""
+    """Check the unified capability gateway without printing credentials."""
 
     config_path = project_root / "extensions_config.json"
     if not config_path.exists():
-        return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
+        return [CheckResult("DeerFlow capability gateway", "skip", "not configured")]
     try:
         payload = json.loads(config_path.read_text(encoding="utf-8"))
         servers = payload.get("mcpServers")
         if not isinstance(servers, dict):
-            return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
+            return [CheckResult("DeerFlow capability gateway", "skip", "not configured")]
 
-        direct_server = servers.get("douyin_openapi")
-        official_server = servers.get("douyin_official_mcp")
-        enabled_servers = [server for server in (direct_server, official_server) if isinstance(server, dict) and server.get("enabled", True)]
-        configured_servers = [server for server in (direct_server, official_server) if isinstance(server, dict)]
-        if not configured_servers:
-            return [CheckResult("Douyin OpenAPI gateway", "skip", "not configured")]
-        if not enabled_servers:
-            return [CheckResult("Douyin OpenAPI gateway", "skip", "disabled")]
+        legacy_names = {
+            "douyin_openapi",
+            "douyin_official_mcp",
+            "douyin_community_evidence",
+        }
+        if legacy_names.intersection(servers):
+            return [
+                CheckResult(
+                    "DeerFlow capability gateway",
+                    "fail",
+                    "legacy parallel Douyin MCP entries detected",
+                    fix="Replace them with the deerflow_capabilities entry from extensions_config.example.json",
+                )
+            ]
+
+        gateway = servers.get("deerflow_capabilities")
+        if not isinstance(gateway, dict):
+            return [CheckResult("DeerFlow capability gateway", "skip", "not configured")]
+        if not gateway.get("enabled", True):
+            return [CheckResult("DeerFlow capability gateway", "skip", "disabled")]
 
         results: list[CheckResult] = []
-        for server in enabled_servers:
-            command = server.get("command")
-            command_name = command.strip() if isinstance(command, str) else ""
-            local_command = project_root / "backend" / ".venv" / "bin" / command_name
-            if command_name and (shutil.which(command_name) or local_command.is_file()):
-                results.append(CheckResult("Douyin MCP executable", "ok", command_name))
-            else:
-                results.append(
-                    CheckResult(
-                        "Douyin MCP executable",
-                        "fail",
-                        command_name or "missing command",
-                        fix=f"Run `make install` so backend/.venv/bin/{command_name or 'the MCP command'} exists",
-                    )
-                )
-
-        server_envs = [server.get("env") if isinstance(server.get("env"), dict) else {} for server in enabled_servers]
-        has_key = all(bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_KEY"))) for env in server_envs)
-        has_secret = all(bool(_resolved_mcp_env_value(env.get("DOUYIN_CLIENT_SECRET"))) for env in server_envs)
-        if has_key and has_secret:
-            results.append(CheckResult("Douyin application credentials", "ok", "configured locally"))
+        command = gateway.get("command")
+        command_name = command.strip() if isinstance(command, str) else ""
+        local_command = project_root / "backend" / ".venv" / "bin" / command_name
+        if command_name and (shutil.which(command_name) or local_command.is_file()):
+            results.append(CheckResult("DeerFlow capability gateway", "ok", command_name))
         else:
             results.append(
                 CheckResult(
-                    "Douyin application credentials",
+                    "DeerFlow capability gateway",
                     "fail",
-                    "missing Client Key or Client Secret",
-                    fix="Add DOUYIN_CLIENT_KEY and DOUYIN_CLIENT_SECRET to the root .env file",
+                    command_name or "missing command",
+                    fix=f"Run `make install` so backend/.venv/bin/{command_name or 'the MCP command'} exists",
                 )
             )
 
-        if isinstance(direct_server, dict) and direct_server.get("enabled", True):
-            raw_env = direct_server.get("env")
-            env = raw_env if isinstance(raw_env, dict) else {}
+        raw_env = gateway.get("env")
+        env = raw_env if isinstance(raw_env, dict) else {}
+        client_key = _resolved_mcp_env_value(env.get("DOUYIN_CLIENT_KEY"))
+        client_secret = _resolved_mcp_env_value(env.get("DOUYIN_CLIENT_SECRET"))
+        if client_key and client_secret:
+            results.append(
+                CheckResult(
+                    "Douyin official API provider",
+                    "ok",
+                    "application credentials configured locally",
+                )
+            )
             scopes = {part.strip() for part in _resolved_mcp_env_value(env.get("DOUYIN_APPROVED_SCOPES")).split(",") if part.strip()}
             v1_scope = "aweme.dy.video_search"
             v2_scope = "aweme.dy.video_search_v2"
             if v1_scope in scopes:
-                results.append(CheckResult("Douyin video-search contract", "ok", f"v1 ({v1_scope})"))
+                results.append(
+                    CheckResult(
+                        "Douyin video-search contract",
+                        "ok",
+                        f"v1 ({v1_scope})",
+                    )
+                )
             elif v2_scope in scopes:
-                results.append(CheckResult("Douyin video-search contract", "ok", f"v2 compatibility ({v2_scope})"))
+                results.append(
+                    CheckResult(
+                        "Douyin video-search contract",
+                        "ok",
+                        f"v2 compatibility ({v2_scope})",
+                    )
+                )
             else:
                 results.append(
                     CheckResult(
@@ -784,19 +801,66 @@ def check_douyin_openapi(project_root: Path) -> list[CheckResult]:
                         fix=f"Set DOUYIN_APPROVED_SCOPES to the exact approved Scope, normally {v1_scope}",
                     )
                 )
-
-        if isinstance(official_server, dict) and official_server.get("enabled", True):
+        elif client_key or client_secret:
             results.append(
                 CheckResult(
-                    "Douyin official MCP bridge",
-                    "warn",
-                    "configured; live tools/list acceptance is still required",
-                    fix="Verify that the requested service is approved in Douyin MCP Service Marketplace",
+                    "Douyin official API provider",
+                    "fail",
+                    "partial application credentials",
+                    fix="Configure both DOUYIN_CLIENT_KEY and DOUYIN_CLIENT_SECRET",
+                )
+            )
+        else:
+            results.append(
+                CheckResult(
+                    "Douyin official API provider",
+                    "skip",
+                    "not configured",
+                )
+            )
+
+        public_root_value = _resolved_mcp_env_value(env.get("DOUYIN_PUBLIC_EVIDENCE_ROOT"))
+        if public_root_value:
+            public_root = Path(public_root_value).expanduser()
+            uv_command = _resolved_mcp_env_value(env.get("DOUYIN_PUBLIC_EVIDENCE_UV")) or "uv"
+            runtime_ready = public_root.is_dir() and (public_root / "readonly_server.py").is_file() and bool(shutil.which(uv_command) or Path(uv_command).is_file())
+            if runtime_ready:
+                results.append(
+                    CheckResult(
+                        "Douyin public-evidence provider",
+                        "ok",
+                        "reviewed child runtime configured locally",
+                    )
+                )
+            else:
+                results.append(
+                    CheckResult(
+                        "Douyin public-evidence provider",
+                        "fail",
+                        "configured child runtime is unavailable",
+                        fix="Restore the pinned local provider and its readonly_server.py facade",
+                    )
+                )
+        else:
+            results.append(
+                CheckResult(
+                    "Douyin public-evidence provider",
+                    "skip",
+                    "not configured",
+                )
+            )
+
+        if not client_key and not client_secret and not public_root_value:
+            results.append(
+                CheckResult(
+                    "Douyin live provider",
+                    "fail",
+                    "no official or authenticated public-web provider configured",
                 )
             )
         return results
     except Exception as exc:
-        return [CheckResult("Douyin OpenAPI gateway", "fail", str(exc))]
+        return [CheckResult("DeerFlow capability gateway", "fail", str(exc))]
 
 
 # ---------------------------------------------------------------------------
@@ -862,8 +926,8 @@ def main() -> int:
     ]
     sections.append(("Web Capabilities", search_checks))
 
-    # ── Douyin OpenAPI ─────────────────────────────────────────────────
-    sections.append(("Douyin OpenAPI", check_douyin_openapi(project_root)))
+    # ── Capability Gateway ─────────────────────────────────────────────
+    sections.append(("Capability Gateway", check_douyin_openapi(project_root)))
 
     # ── Sandbox ──────────────────────────────────────────────────────────────
     sandbox_checks = check_sandbox(config_path)

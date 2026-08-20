@@ -251,45 +251,50 @@ class TestCheckDouyinOpenAPI:
         *,
         enabled: bool = True,
         scope: str = "aweme.dy.video_search",
-        official_enabled: bool = False,
+        public_root: Path | None = None,
     ) -> None:
+        (tmp_path / "backend/.venv/bin").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "backend/.venv/bin/deerflow-capability-mcp").touch()
         servers = {
-            "douyin_openapi": {
+            "deerflow_capabilities": {
                 "enabled": enabled,
                 "type": "stdio",
-                "command": "douyin-openapi-mcp",
+                "command": "deerflow-capability-mcp",
                 "env": {
                     "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
                     "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
                     "DOUYIN_APPROVED_SCOPES": scope,
+                    "DOUYIN_PUBLIC_EVIDENCE_ROOT": (str(public_root) if public_root is not None else ""),
+                    "DOUYIN_PUBLIC_EVIDENCE_UV": "uv",
                 },
             }
         }
-        if official_enabled:
-            servers["douyin_official_mcp"] = {
-                "enabled": True,
-                "type": "stdio",
-                "command": "douyin-official-mcp",
-                "env": {
-                    "DOUYIN_CLIENT_KEY": "$DOUYIN_CLIENT_KEY",
-                    "DOUYIN_CLIENT_SECRET": "$DOUYIN_CLIENT_SECRET",
-                },
-            }
         (tmp_path / "extensions_config.json").write_text(
             json.dumps({"mcpServers": servers}),
             encoding="utf-8",
         )
 
-    def test_enabled_gateway_reports_missing_real_credentials_without_values(self, tmp_path, monkeypatch):
-        self._write_extensions_config(tmp_path)
+    def test_public_evidence_provider_can_be_ready_without_official_credentials(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        provider_root = tmp_path / "provider"
+        provider_root.mkdir()
+        (provider_root / "readonly_server.py").touch()
+        self._write_extensions_config(tmp_path, public_root=provider_root)
         monkeypatch.delenv("DOUYIN_CLIENT_KEY", raising=False)
         monkeypatch.delenv("DOUYIN_CLIENT_SECRET", raising=False)
+        monkeypatch.setattr(doctor.shutil, "which", lambda command: f"/usr/local/bin/{command}")
 
         results = doctor.check_douyin_openapi(tmp_path)
 
-        credential = next(result for result in results if result.label == "Douyin application credentials")
-        assert credential.status == "fail"
-        assert "DOUYIN_CLIENT_KEY" in (credential.fix or "")
+        gateway = next(result for result in results if result.label == "DeerFlow capability gateway")
+        public = next(result for result in results if result.label == "Douyin public-evidence provider")
+        official = next(result for result in results if result.label == "Douyin official API provider")
+        assert gateway.status == "ok"
+        assert public.status == "ok"
+        assert official.status == "skip"
         rendered = "\n".join(f"{result.label} {result.detail} {result.fix}" for result in results)
         assert "client-secret-value" not in rendered
 
@@ -301,7 +306,9 @@ class TestCheckDouyinOpenAPI:
 
         results = doctor.check_douyin_openapi(tmp_path)
 
-        assert all(result.status == "ok" for result in results)
+        assert not any(result.status == "fail" for result in results)
+        official = next(result for result in results if result.label == "Douyin official API provider")
+        assert official.status == "ok"
         scope = next(result for result in results if result.label == "Douyin video-search contract")
         assert "v1" in scope.detail
         rendered = "\n".join(f"{result.label} {result.detail} {result.fix}" for result in results)
@@ -320,29 +327,36 @@ class TestCheckDouyinOpenAPI:
         assert scope.status == "ok"
         assert "v2" in scope.detail
 
-    def test_official_mcp_bridge_is_reported_separately_from_live_tools(self, tmp_path, monkeypatch):
-        self._write_extensions_config(tmp_path, official_enabled=True)
-        monkeypatch.setenv("DOUYIN_CLIENT_KEY", "client-key-value")
-        monkeypatch.setenv("DOUYIN_CLIENT_SECRET", "client-secret-value")
-        monkeypatch.setattr(doctor.shutil, "which", lambda command: f"/usr/local/bin/{command}")
-
-        results = doctor.check_douyin_openapi(tmp_path)
-
-        bridge = next(result for result in results if result.label == "Douyin official MCP bridge")
-        assert bridge.status == "warn"
-        assert "tools/list" in bridge.detail
-        executables = [result.detail for result in results if result.label == "Douyin MCP executable"]
-        assert executables == ["douyin-openapi-mcp", "douyin-official-mcp"]
-
     def test_disabled_gateway_is_skipped(self, tmp_path):
         self._write_extensions_config(tmp_path, enabled=False)
 
         results = doctor.check_douyin_openapi(tmp_path)
 
         assert len(results) == 1
-        assert results[0].label == "Douyin OpenAPI gateway"
+        assert results[0].label == "DeerFlow capability gateway"
         assert results[0].status == "skip"
         assert results[0].detail == "disabled"
+
+    def test_legacy_parallel_douyin_servers_require_migration(self, tmp_path):
+        (tmp_path / "extensions_config.json").write_text(
+            json.dumps(
+                {
+                    "mcpServers": {
+                        "douyin_openapi": {"enabled": True},
+                        "douyin_official_mcp": {"enabled": False},
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        results = doctor.check_douyin_openapi(tmp_path)
+
+        assert len(results) == 1
+        assert results[0].label == "DeerFlow capability gateway"
+        assert results[0].status == "fail"
+        assert results[0].detail == "legacy parallel Douyin MCP entries detected"
+        assert "deerflow_capabilities" in (results[0].fix or "")
 
 
 # ---------------------------------------------------------------------------

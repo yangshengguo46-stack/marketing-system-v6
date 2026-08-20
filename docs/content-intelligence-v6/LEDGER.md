@@ -2207,3 +2207,38 @@ Pydantic 校验。修复后运行使用 8 次调用、32,074 Token，已经把�
 删除，但必须保留完整商业实体、并行引入外部事实证据，并禁止下游从业务身份反推用户资源。详见
 `audits/A112-tiktok-live-guild-clean-rerun.md` 与
 `evidence/a112-tiktok-live-guild-clean-rerun-2026-08-20.json`。本轮没有修改运行代码或继续调提示词。
+
+## A113 免费开源抖音数据通道真实验收
+
+2026-08-20 按用户要求停止继续修补自研抖音抓取器，并排除所有付费 API。`dy-cli`、
+`tamnd/douyin-cli` 和 `cmsjin/douyin` 在同一台机器、同一登录态下分别出现 `verify_check`、核心接口
+风控或搜索空结果；F2 当前关键能力不完整，MediaCrawler 又明确限制非商业使用。
+
+`pazwusimple-netizen/douyin-mcp` 固定提交
+`ab9eb3b36cd47e9091e520f9a5faabf72f1f16e4` 真实通过搜索、详情、账号资料、账号作品和评论五项验收。
+这些读取能力不需要 API Key，只使用权限为 `0600` 的本机登录态。关闭上游 stealth 脚本和特殊浏览器
+参数后，普通 Playwright 仍返回 5 条真实结果，因此本地副本不保留反检测实现。
+
+上游 5 条搜索和 5 条作品原始回包分别约 198 KB 与 531 KB，本轮增加只读有界侧车，只暴露 7 个读取
+工具，删除临时媒体地址与原始页面字段，并伪名化可见评论者。4 项投影测试和真实 MCP 五段链均通过，
+最大单项回包约 3.1 KB。DeerFlow 随后成功发现 7 个带前缀工具，并用“黄金礼品 人情世故”取得 3 条
+真实抖音结果；本机未获批 OpenAPI 和零工具官方 MCP 暂时停用。
+
+仓库 LICENSE 为 MIT，但 README 同时声明非商业用途，故当前只批准本机研发验证，生产许可仍待作者
+澄清或洁净实现。详见 `audits/A113-cross-platform-social-data-skills-and-mcp.md` 与
+`evidence/douyin-community-mcp-a113-2026-08-20.json`。
+
+## A114 单一能力 MCP 网关
+
+2026-08-20 将 A113 的七项真实抖音读取能力接入既有 Manifest/领域路由，形成唯一第一方入口
+`deerflow-capability-mcp`。Agent 顶层只发现 17 个领域 Tool，搜索、详情、评论、回复、创作者资料、作品
+和分享链接解析只在 `douyin_public_evidence` Manifest 内披露。旧 `douyin-openapi-mcp`、
+`douyin-official-mcp` console entrypoint 以及本机三个并列抖音 MCP 注册项已退出；官方目录、官方 SSE 和
+登录态公开页面成为内部 Provider。
+
+真实 Router 七项全链无错误；长驻 Child 会话的搜索、详情和作品链只启动一次子进程，约 7.44 秒。
+DeerFlow Host 最终通过 `tools/list -> domain discovery -> Child call` 搜索“黄金礼品 人情世故”并取得 3 条
+真实结果，未暴露裸 Child 或旧社区前缀。高层对标与孵化工具继续作为业务调用者，不被塞入 MCP。
+实现、许可边界与后续洁净替换规则见
+`audits/A114-single-capability-gateway-and-child-runtime.md` 和
+`decisions/ADR-032-single-capability-mcp-gateway.md`。

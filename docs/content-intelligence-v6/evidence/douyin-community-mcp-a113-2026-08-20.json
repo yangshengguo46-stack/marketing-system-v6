@@ -1,0 +1,59 @@
+{
+  "audit_id": "A113",
+  "recorded_at": "2026-08-20",
+  "provider": {
+    "repository": "https://github.com/pazwusimple-netizen/douyin-mcp",
+    "revision": "ab9eb3b36cd47e9091e520f9a5faabf72f1f16e4",
+    "license_file_sha256": "62af7e26909a05b922cbda9e8dfb104cd191a754c1c23cb715d21d73bac7aa71",
+    "lock_file_sha256": "04135579d8231f2e311676932152e5340d90e62eb86f94a75c674f41758a1b04",
+    "license_status": "MIT file conflicts with README non-commercial disclaimer; local experiment only"
+  },
+  "credentials": {
+    "api_key_required": false,
+    "local_login_state_used": true,
+    "credential_values_recorded": false,
+    "credential_file_mode": "0600"
+  },
+  "browser_policy": {
+    "standard_playwright": true,
+    "stealth_script": false,
+    "anti_detection_launch_arguments": false,
+    "plain_browser_search_results": 5
+  },
+  "upstream_live_acceptance": {
+    "query": "大能 腕表",
+    "search_results": 5,
+    "video_detail": "passed",
+    "comments": 5,
+    "profile": "passed",
+    "profile_display_name": "大能",
+    "posts": 5
+  },
+  "readonly_facade": {
+    "tool_count": 7,
+    "tests": {
+      "passed": 4,
+      "failed": 0
+    },
+    "live_acceptance": "passed",
+    "payload_bytes": {
+      "search": 2494,
+      "detail": 836,
+      "comments": 1874,
+      "profile": 679,
+      "posts": 3080
+    },
+    "raw_upstream_payload_bytes": {
+      "search": 198260,
+      "posts": 531062
+    }
+  },
+  "deerflow_acceptance": {
+    "tool_discovery": 7,
+    "query": "黄金礼品 人情世故",
+    "results": 3,
+    "tool_payload_bytes": 1850,
+    "status": "passed"
+  },
+  "production_status": "not_approved_pending_license_clarification_and_formal_benchmark_snapshot_acceptance"
+}

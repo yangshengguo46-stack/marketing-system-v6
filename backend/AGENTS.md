@@ -195,12 +195,12 @@ the only account-position fact. `MessagePlan` and `BaseDraft` cannot invent expe
 materials, sales, quantities, or publishing decisions. Every `ResourceMatch` needs at least one
 user-material artifact parent; unknown resources remain unknown.
 
-Douyin topic and competitor evidence roles cannot mix. `benchmark_account_candidate` is not a
-formal `BenchmarkSnapshot`; the latter requires stable identity and author-consistent multi-post
-coverage, remains read-only, and cannot write strategy. Credentials, raw pages, local paths, and
-temporary URLs never enter artifacts. Loaded MCP domains do not prove live access. Video search
-selects v1 or retained v2 from declared Scope; it needs a provider receipt. App clients use the
-`douyin_openapi.client_token` stable endpoint; stdio caches separately. Production, MediaKit,
+Douyin topic and competitor evidence cannot mix. A `benchmark_account_candidate` is not a formal
+`BenchmarkSnapshot`, which needs stable identity and author-consistent multi-post coverage, stays
+read-only, and cannot write strategy. Credentials, raw pages, paths, and temporary URLs never enter
+artifacts. The Host registers only `deerflow-capability-mcp`; official API/SSE and public
+collection are internal versioned Children. A loaded Child still needs a receipt. Public
+collection remains local-only pending licensing. Business tools stay callers; MediaKit,
 publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/`.
 
 Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance

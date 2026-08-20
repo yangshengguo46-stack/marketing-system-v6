@@ -80,31 +80,37 @@ For Docker, point `url` at the OpenViking address reachable from the Gateway
 container, such as `http://openviking:1933/mcp` for a shared Compose network or
 `http://host.docker.internal:1933/mcp` for a host-installed server.
 
-## Douyin OpenAPI Gateway
+## DeerFlow Capability Gateway
 
-The first-party `douyin-openapi-mcp` stdio server follows progressive domain
-disclosure. Its checked-in catalog snapshot contains all 119 rows from the
-official mobile/website-app OpenAPI index, including OAuth flows, outbound APIs,
-inbound webhooks, provider-implemented endpoints, and a local encryption
-contract. Only reviewed outbound contracts with an implemented adapter and the
-current app's declared Scope become callable Children.
+The first-party `deerflow-capability-mcp` is the single product-facing MCP
+entry. It follows the Manifest/Child/runtime pattern: the Host sees bounded
+domain tools, each empty domain call returns an authorized Child Manifest, and
+an exact Child call revalidates `manifest_version`, authorization, risk, input
+Schema, output Schema, and result size. Provider MCPs, browser collectors, and
+official APIs are internal runtimes rather than parallel Host registrations.
 
-1. Set `DOUYIN_CLIENT_KEY` and `DOUYIN_CLIENT_SECRET` in local environment
-   configuration. Never put literal values in the checked-in JSON or YAML.
-2. Set `DOUYIN_APPROVED_SCOPES` to the exact comma-separated Scopes shown as
-   approved for this app. Current video-search documentation uses
-   `aweme.dy.video_search`; applications previously approved for
-   `aweme.dy.video_search_v2` remain supported. Image-text search uses
-   `aweme.experience.search`.
-3. Add `douyin-openapi-mcp` to
-   `DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST`; it is a first-party installed console
-   script but is not added to the generic API-registration allowlist by default.
-4. Copy the disabled `douyin_openapi` example from
-   `extensions_config.example.json`, enable it, and restart or reset the MCP
-   cache.
-5. Run `make doctor`. Seeing 16 MCP domain tools only proves that the local MCP
-   protocol loaded. `Douyin application credentials` and the exact search
-   contract must also pass before making a live provider request.
+The initial gateway contains the 119-row official Douyin mobile/website-app
+catalog plus one reviewed authenticated-public-web domain. The official catalog
+remains an evidence inventory; it is not a claim that all 119 adapters work.
+The public-web domain exposes seven bounded read-only Children: search, video
+detail, visible comments, comment replies, public creator profile, creator
+posts, and share-link resolution. Raw pages, Cookie values, temporary media
+URLs, and unreviewed write operations cannot cross the gateway Schema.
+
+1. Copy the disabled `deerflow_capabilities` entry from
+   `extensions_config.example.json` and enable it.
+2. Add `deerflow-capability-mcp` to
+   `DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST` when enabling it through the Gateway
+   API. Direct trusted configuration is still operator-controlled.
+3. For official APIs, set `DOUYIN_CLIENT_KEY`, `DOUYIN_CLIENT_SECRET`, and the
+   exact comma-separated `DOUYIN_APPROVED_SCOPES`. Never commit literal values.
+4. For the locally reviewed public-evidence Child, set
+   `DOUYIN_PUBLIC_EVIDENCE_ROOT` to its pinned local directory and optionally
+   `DOUYIN_PUBLIC_EVIDENCE_UV` to the `uv` executable. Login state remains in
+   the provider's local ignored credential store.
+5. Run `make doctor`, reset the MCP cache, and make one real Child call. Seeing
+   the current 17 domain tools proves protocol loading only; each Provider has
+   a separate readiness result.
 
 Public search uses a two-hour application token, obtained from the Client Key and
 Client Secret without user login. All application-level clients call the official
@@ -115,10 +121,12 @@ the same token instead of invalidating each other. Own-account, customer-account
 publishing, fan, and other user-authorized APIs use a separate OAuth
 `access_token + open_id`: the user first authorizes the exact Scope, the callback
 code is exchanged server-side, and refresh tokens must be stored outside model
-context. The current gateway implements the public video and image-text search
-adapters only; the 119-row catalog is not 119 connected adapters.
+context. The official Provider currently implements the public video and
+image-text search adapters only. The authenticated-public-web Provider supplies
+seven separately reviewed read-only contracts; it does not grant official API
+Scope. The 119-row catalog is not 119 connected adapters.
 
-The server exposes 16 mutually exclusive top-level domains rather than one tool
+The server currently exposes 17 mutually exclusive top-level domains rather than one tool
 per catalog row. Call one best-matching domain with no arguments, then call one
 returned Child with `arguments` and the exact `manifest_version`. Opening every
 domain speculatively defeats the context-budget design. A Scope change, auth
@@ -138,23 +146,14 @@ and exact live receipt as separate states. Regenerate it with
 `backend/.venv/bin/python scripts/render_douyin_openapi_readiness.py`; its
 credential-free observation input is committed beside the report.
 
-### Official Douyin MCP service marketplace
+### Internal Douyin Providers
 
 Douyin also operates a remote MCP SSE endpoint at
-`https://open.douyin.com/sse`. The first-party `douyin-official-mcp` stdio
-bridge obtains and caches the documented two-hour application token through the
-shared stable-token implementation, adds it to the remote connection only in memory, and forwards live
-`tools/list` and exact read-only tool calls. It exists because a token embedded
-directly in `extensions_config.json` would both leak a credential and expire.
-
-Enable the disabled `douyin_official_mcp` example only after configuring the
-same local Client Key and Client Secret. Leave `DOUYIN_MCP_TOOL_GROUP_AIDS`
-empty to request every MCP tool currently approved for the application, or set
-the exact comma-separated tool-group IDs shown by the service marketplace.
-The bridge never logs the tokenized URL. Tools explicitly marked mutating, or
-without an explicit provider read-only annotation, are discoverable but cannot
-be called through this generic bridge; they require a reviewed domain adapter
-with the normal business approval boundary.
+`https://open.douyin.com/sse`. Its token-refreshing bridge remains an internal
+Provider implementation and no longer has a separate console entry or
+`extensions_config.json` registration. A remote tool can become a Child only
+after its live contract and risk have been reviewed; a provider-supplied
+read-only hint alone does not bypass the gateway contract.
 
 An initialized connection with an empty `tools/list` is not a successful
 capability acceptance. It means the application currently has no effective MCP
@@ -169,7 +168,9 @@ filter but does not replace service approval.
 The current search product page points to a beta application while the active
 search guide calls the capability experimental and not generally open. A valid
 stable token plus `28001018` therefore means provider approval is absent; do not
-change token code, declare the Scope approved, or fall back to browser scraping.
+change token code or declare the Scope approved. The separately authorized
+public-page Child may still provide bounded public observations, but its receipt
+must remain distinct from official OpenAPI evidence.
 
 ## Routing Hints
 

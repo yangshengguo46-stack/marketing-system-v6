@@ -9,7 +9,9 @@ import pytest
 from deerflow.community.douyin_openapi.benchmark_candidates import (
     BenchmarkCandidateCollectionError,
     BenchmarkCandidateRequest,
+    BenchmarkDiscoveryRequest,
     collect_benchmark_account_candidate,
+    discover_benchmark_account_candidates,
     seal_benchmark_account_candidate,
 )
 from deerflow.community.douyin_openapi.catalog import load_official_catalog
@@ -33,20 +35,234 @@ def _context() -> CapabilityContext:
 def _video(
     item_id: str,
     *,
-    nickname: str,
+    nickname: str | None,
     title: str | None = None,
     digg_count: int = 10,
 ) -> dict[str, Any]:
-    return {
+    result = {
         "title": title or f"作品 {item_id}",
         "url": f"https://www.douyin.com/video/{item_id}",
         "content": f"作品 {item_id} 的公开文本",
         "source_type": "douyin_video",
         "item_id": item_id,
-        "nickname": nickname,
         "create_time": 1_700_000_000 + int(item_id),
         "digg_count": digg_count,
     }
+    if nickname is not None:
+        result["nickname"] = nickname
+    return result
+
+
+@pytest.mark.asyncio
+async def test_unknown_candidate_discovery_groups_unicode_labels_and_ranks_by_distinct_posts() -> None:
+    calls: list[dict[str, Any]] = []
+
+    async def handler(arguments: dict[str, Any], context: CapabilityContext) -> dict[str, Any]:
+        del context
+        calls.append(arguments)
+        if arguments["cursor"] == 0:
+            return _page(
+                arguments,
+                cursor=20,
+                has_more=True,
+                search_id="discovery-session-1",
+                results=[
+                    _video("101", nickname="Ａ　表", digg_count=1),
+                    _video("102", nickname="先见账号", digg_count=1),
+                    _video("103", nickname="a表", digg_count=2),
+                    _video("104", nickname=None, digg_count=9_999_999),
+                    _video("105", nickname="后见高赞账号", digg_count=9_999_999),
+                ],
+            )
+        return _page(
+            arguments,
+            cursor=40,
+            has_more=False,
+            search_id="discovery-session-1",
+            results=[
+                _video("101", nickname="a表", digg_count=9_999_999),
+                _video("106", nickname="Ａ表", digg_count=3),
+                _video("107", nickname="先见账号", digg_count=2),
+                _video("108", nickname="后见高赞账号", digg_count=9_999_999),
+                _video("109", nickname="只有一条但赞很多", digg_count=99_999_999),
+            ],
+        )
+
+    snapshot = await discover_benchmark_account_candidates(
+        BenchmarkDiscoveryRequest(
+            query="腕表 账号",
+            max_accounts=3,
+            max_posts_per_account=2,
+            max_pages=2,
+        ),
+        router=DomainRouter(
+            load_official_catalog(),
+            handlers={"search.video_search": handler},
+        ),
+        context=_context(),
+        captured_at=NOW,
+    )
+
+    assert [item.source_ref for item in snapshot.items] == [
+        "douyin:video:101",
+        "douyin:video:103",
+        "douyin:video:102",
+        "douyin:video:107",
+        "douyin:video:105",
+        "douyin:video:108",
+    ]
+    assert [item.actor_label for item in snapshot.items] == [
+        "Ａ　表",
+        "Ａ　表",
+        "先见账号",
+        "先见账号",
+        "后见高赞账号",
+        "后见高赞账号",
+    ]
+    assert snapshot.evidence_role == "benchmark_account_candidate"
+    assert snapshot.collection_method == "official_openapi_multi_page_search"
+    assert snapshot.coverage.duplicate_count == 1
+    assert snapshot.coverage.excluded_count == 2
+    assert snapshot.route_receipt["target_identity_status"] == "multiple_display_name_candidates"
+    assert snapshot.route_receipt["account_candidates"] == [
+        {
+            "display_name": "Ａ　表",
+            "sample_count": 2,
+            "observed_distinct_post_count": 3,
+        },
+        {
+            "display_name": "先见账号",
+            "sample_count": 2,
+            "observed_distinct_post_count": 2,
+        },
+        {
+            "display_name": "后见高赞账号",
+            "sample_count": 2,
+            "observed_distinct_post_count": 2,
+        },
+    ]
+    assert calls[1]["search_id"] == "discovery-session-1"
+    raw = snapshot.model_dump_json()
+    assert "stable_account_id" not in raw
+    assert "external_account_id" not in raw
+    assert any("not a BenchmarkSnapshot" in limitation for limitation in snapshot.limitations)
+    assert any("not success causes" in limitation for limitation in snapshot.limitations)
+
+
+@pytest.mark.asyncio
+async def test_unknown_candidate_discovery_enforces_default_account_post_and_page_caps() -> None:
+    calls = 0
+
+    async def handler(arguments: dict[str, Any], context: CapabilityContext) -> dict[str, Any]:
+        nonlocal calls
+        del context
+        page_number = calls
+        calls += 1
+        return _page(
+            arguments,
+            cursor=(page_number + 1) * 20,
+            has_more=True,
+            search_id="discovery-session-2",
+            results=[
+                _video(
+                    str(page_number * 20 + index + 200),
+                    nickname=f"账号{index % 10}",
+                )
+                for index in range(20)
+            ],
+        )
+
+    snapshot = await discover_benchmark_account_candidates(
+        BenchmarkDiscoveryRequest(query="直播公会"),
+        router=DomainRouter(
+            load_official_catalog(),
+            handlers={"search.video_search": handler},
+        ),
+        context=_context(),
+        captured_at=NOW,
+    )
+
+    candidates = snapshot.route_receipt["account_candidates"]
+    assert calls == 5
+    assert len(candidates) == 8
+    assert all(candidate["sample_count"] == 6 for candidate in candidates)
+    assert len(snapshot.items) == 48
+    assert snapshot.route_receipt["stopped_reason"] == "max_pages_reached"
+    assert snapshot.coverage.has_more is True
+
+    with pytest.raises(ValueError):
+        BenchmarkDiscoveryRequest(query="直播公会", max_accounts=9)
+    with pytest.raises(ValueError):
+        BenchmarkDiscoveryRequest(query="直播公会", max_posts_per_account=7)
+    with pytest.raises(ValueError):
+        BenchmarkDiscoveryRequest(query="直播公会", max_pages=6)
+
+
+@pytest.mark.asyncio
+async def test_unknown_candidate_discovery_keeps_partial_groups_after_later_failure() -> None:
+    calls = 0
+
+    async def handler(arguments: dict[str, Any], context: CapabilityContext) -> dict[str, Any]:
+        nonlocal calls
+        del context
+        calls += 1
+        if calls == 1:
+            return _page(
+                arguments,
+                cursor=20,
+                has_more=True,
+                search_id="discovery-session-3",
+                results=[
+                    _video("301", nickname="MENA直播观察"),
+                    _video("302", nickname=None),
+                ],
+            )
+        return {
+            "error": "Douyin video search error 28001018",
+            "message": "应用未获得该能力",
+            "log_id": "provider-secret-log-id",
+            "query": arguments["query"],
+        }
+
+    snapshot = await discover_benchmark_account_candidates(
+        BenchmarkDiscoveryRequest(query="TikTok LIVE MENA"),
+        router=DomainRouter(
+            load_official_catalog(),
+            handlers={"search.video_search": handler},
+        ),
+        context=_context(),
+        captured_at=NOW,
+    )
+
+    assert [item.source_ref for item in snapshot.items] == ["douyin:video:301"]
+    assert snapshot.coverage.excluded_count == 1
+    assert snapshot.coverage.has_more is True
+    assert snapshot.route_receipt["pages_succeeded"] == 1
+    assert snapshot.route_receipt["stopped_reason"] == "provider_error_after_partial_result"
+    assert any("provider failure" in warning for warning in snapshot.warnings)
+    assert "provider-secret-log-id" not in snapshot.model_dump_json()
+
+
+@pytest.mark.asyncio
+async def test_unknown_candidate_discovery_rejects_first_page_failure() -> None:
+    async def handler(arguments: dict[str, Any], context: CapabilityContext) -> dict[str, Any]:
+        del context
+        return {
+            "error": "Douyin video search error 28001018",
+            "message": "应用未获得该能力",
+            "query": arguments["query"],
+        }
+
+    with pytest.raises(BenchmarkCandidateCollectionError, match="before any page"):
+        await discover_benchmark_account_candidates(
+            BenchmarkDiscoveryRequest(query="黄金礼品"),
+            router=DomainRouter(
+                load_official_catalog(),
+                handlers={"search.video_search": handler},
+            ),
+            context=_context(),
+            captured_at=NOW,
+        )
 
 
 def _page(

@@ -439,24 +439,24 @@ explicit, model-selected MCP tool path can run alongside the separate automatic
 OpenViking memory backend; it does not replace automatic turn capture or recall. See the
 [OpenViking MCP tools configuration](backend/docs/MCP_SERVER.md#openviking-mcp-tools).
 
-This repository also includes a disabled-by-default, first-party Douyin OpenAPI
-MCP gateway. It snapshots all 119 rows in the official mobile/website-app
-catalog but exposes only a bounded set of mutually exclusive domain tools.
+This repository also includes a disabled-by-default, first-party DeerFlow
+capability MCP gateway. It is the single product-facing MCP entry and currently
+contains the official Douyin catalog plus a reviewed authenticated-public-web
+Provider. It snapshots all 119 rows in the official mobile/website-app catalog
+but exposes only a bounded set of mutually exclusive domain tools.
 Calling one domain with an empty request returns the currently authorized Child
 manifest and `manifest_version`; an exact Child call then revalidates capability
 state plus its input and output schemas. Catalog presence is not treated as
-runtime availability. The initial adopted Children are official public video
-search and image-text/experience search. See the
-[Douyin gateway setup](backend/docs/MCP_SERVER.md#douyin-openapi-gateway).
+runtime availability. The adopted public-page Children cover search, video
+detail, visible comments and replies, creator profile, creator posts, and share
+link resolution with bounded outputs. See the
+[capability gateway setup](backend/docs/MCP_SERVER.md#deerflow-capability-gateway).
 
 For capabilities published through Douyin's official MCP service marketplace,
-the optional `douyin-official-mcp` bridge connects to the official SSE endpoint
-with an automatically refreshed application token. Its tool list comes from the
-application's live approvals rather than the 119-row documentation snapshot. A
-successful MCP handshake with zero tools therefore remains unavailable, not
-production-ready; generic bridge calls are limited to tools the provider marks
-read-only. See the
-[official service-market bridge](backend/docs/MCP_SERVER.md#official-douyin-mcp-service-marketplace).
+the token-refreshing SSE bridge is now an internal Provider rather than a second
+MCP registration. Its tool list still comes from the application's live
+approvals rather than the 119-row documentation snapshot. A successful MCP
+handshake with zero tools therefore remains unavailable, not production-ready.
 The generated [capability readiness matrix](docs/content-intelligence-v6/evidence/douyin-openapi-readiness-2026-08-19.md)
 keeps catalog presence, local adapters, declared Scope, provider approval, and
 real receipts separate. It also separates mobile/website-app capabilities from
@@ -972,13 +972,12 @@ bind an exact ready-plan action, assembly step, reviewed user material, dynamic 
 `trim-video` arguments to a resulting `MediaArtifact`. It is a backend execution boundary, not
 yet a user-facing content-tool or Gateway action.
 
-Content-world research reaches official Douyin video search through the configured
-`douyin_search` MCP domain. It discovers the current Manifest, calls the exact `video_search`
-child as `topic_research`, and seals only official snapshots whose public URLs survive final
-evidence reading. Direct search and the official Douyin MCP bridge now share one stable
-application-token implementation: each process caches locally, while Douyin's idempotent
-`stable_client_token` endpoint prevents separate MCP processes from rotating one another's
-two-hour token. Local credentials remain in ignored configuration and never enter Git, logs,
+Content-world research reaches official Douyin video search through the unified gateway's
+`douyin_search` domain. It discovers the current Manifest, calls the exact `video_search`
+Child as `topic_research`, and seals only official snapshots whose public URLs survive final
+evidence reading. Direct official search and the internal official-SSE Provider share one stable
+application-token implementation. Douyin's idempotent `stable_client_token` endpoint also
+protects overlapping process lifetimes during upgrades. Local credentials remain in ignored configuration and never enter Git, logs,
 artifacts, or model context. Live probes on 2026-08-19 obtained the application token and
 initialized the official SSE, but `tools/list` returned zero and both video-search contracts
 returned `28001018`. The current official search guide still marks access as experimental and

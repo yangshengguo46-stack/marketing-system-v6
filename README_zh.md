@@ -303,11 +303,13 @@ DeerFlow 支持可配置的 MCP Server 和 skills，用来扩展能力。
 第六版发行配置默认启用渐进发现：MCP Schema、Skill 元数据以及 `tool_search.defer_tools` 指定的
 通用本地工具按需披露，不再每轮全部塞给模型。渐进发现只改变可见性，不绕过原有授权与 Skill 策略。
 
-本仓库还内置了一个默认关闭的抖音 OpenAPI MCP 网关。它对官方移动/网站应用目录的
+本仓库还内置了一个默认关闭的 DeerFlow 统一能力 MCP 网关。它是产品唯一对外的 MCP 入口，
+当前内部包含抖音官方目录和一个经过审阅的登录态公开页面 Provider。它对官方移动/网站应用目录的
 119 条记录做了可追溯快照，但只向 Agent 暴露少量边界互斥的领域工具。空请求用于发现当前身份已授权的
 Child Manifest 和 `manifest_version`；精确 Child 调用会再次校验能力状态及输入/输出 Schema。
-“官方目录里有”不等于“当前应用能调”；首批已采用 Child 为官方公开视频搜索和图文/经验搜索。
-配置方法见 [抖音网关指南](backend/docs/MCP_SERVER.md#douyin-openapi-gateway)。
+“官方目录里有”不等于“当前应用能调”；已采用的公开页面 Child 覆盖视频搜索、详情、可见评论及回复、
+创作者资料、创作者作品和分享链接解析，所有回包都有大小与字段边界。
+配置方法见 [统一能力网关指南](backend/docs/MCP_SERVER.md#deerflow-capability-gateway)。
 
 详细说明见 [MCP Server 指南](backend/docs/MCP_SERVER.md)。
 
@@ -611,7 +613,7 @@ Lead 现在可以通过单个高层 `collect_douyin_benchmark_candidate` 工具�
 结果仍可作为只读证据使用；有服务端注入的项目 ID 时，系统先校验认证用户的所有权，
 再将完整快照归属到当前会话和运行。台账写入失败会单独标记，不会丢掉已采集证据。
 产品界面的项目选择器和 OAuth 账号授权仍待验收。启用后先运行 `make doctor`：
-MCP 能列出 16 个领域只证明本地协议载入成功，不代表 Client Key/Secret 已经进入真实调用环境。
+统一 MCP 能列出当前 17 个领域只证明本地协议载入成功，不代表任一 Provider 已经通过真实调用验收。
 
 本地 CC-CEDICT 结构化索引可在两个首轮结果合流时，用整词义项、严格真子成分和有界词族
 关系校验模型候选。它不作为答案注入首轮工作者。词典只提供可检查的证据：缺失或损坏时自动保留原有纯模型路径，词典命中

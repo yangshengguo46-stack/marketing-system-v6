@@ -698,24 +698,11 @@ tools:
   #   # auth_level: 1
   #   # api_key: $WEB_SEARCH_API_KEY
 
-  # Official Douyin public video search. Keep this alongside web_search: the
-  # content research layer interleaves both evidence sources. The stable token
-  # is cached server-side and is never returned to the model.
-  # Documentation: https://developer.open-douyin.com/docs/resource/zh-CN/dop/develop/openapi/douyin-search-capability/aweme-dy-video-search
-  # - name: douyin_video_search
-  #   group: web
-  #   use: deerflow.community.douyin_search.tools:douyin_video_search_tool
-  #   max_results: 5
-  #   client_key: $DOUYIN_CLIENT_KEY
-  #   client_secret: $DOUYIN_CLIENT_SECRET
-  #   # device_id: $DOUYIN_DEVICE_ID  # Optional; the provider permits a random number.
-
-  # Full official Douyin OpenAPI access is exposed separately through the
-  # disabled `douyin_openapi` entry in extensions_config.example.json. It uses
-  # bounded domain manifests instead of registering every catalog row as a Lead
-  # tool. Set DOUYIN_APPROVED_SCOPES to the exact comma-separated scopes approved
-  # for the current application; a catalog entry is not treated as callable just
-  # because it appears in the official documentation.
+  # Douyin platform access is registered only through the disabled
+  # `deerflow_capabilities` entry in extensions_config.example.json. The single
+  # gateway routes official APIs and reviewed authenticated-public-web Children
+  # through bounded domain manifests instead of registering duplicate direct
+  # tools. Set DOUYIN_APPROVED_SCOPES only to exact provider-approved scopes.
 
   # Web search tool (uses SearXNG, self-hosted, no API key required)
   # SearXNG is a free internet metasearch engine which aggregates results from

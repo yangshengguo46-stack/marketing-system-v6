@@ -42,6 +42,13 @@ _DEFINITIONS = (
         "account analysis, fan portraits, publishing",
     ),
     DomainDefinition(
+        "public_evidence",
+        "douyin_public_evidence",
+        "Authenticated public-page evidence for Douyin videos, creators, posts, visible comments, and share links. Excludes own-account analytics, raw credentials, and marketing judgment.",
+        "bounded public video, creator, post, and visible-audience observations",
+        "own-account analytics, credentials, raw pages, positioning decisions",
+    ),
+    DomainDefinition(
         "messaging",
         "douyin_messaging",
         "Private-message business cards, mini-app guide-card templates, and message image upload. Excludes ordinary content publishing and CRM decisions.",
