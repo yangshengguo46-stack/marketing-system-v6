@@ -8,7 +8,7 @@
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A116 first vertical incubation Skill accepted live; golden-gift root and branch isolation passed; performance debt remains`
+- 当前结论状态：`A117 domain Skill layering accepted; DeerFlow runtime retained; Skill TDD and lifecycle govern expansion`
 
 ## A01 第五版与第六版边界
 
@@ -2263,3 +2263,18 @@ DeerFlow Host 最终通过 `tools/list -> domain discovery -> Child call` 搜索
 `decisions/ADR-033-vertical-incubation-skills.md`，机器证据为
 `evidence/a116-vertical-incubation-skill-live-2026-08-20.json`。聚焦回归 `124 passed`；完整非 live 测试
 `12302 passed, 75 skipped`，唯一指导文件预算失败修复后定向复验通过。
+
+## A117 开源领域 Skill 架构审计
+
+2026-08-20 对照 Agent Skills、LangChain Deep Agents、Superpowers、现成营销/社媒 Skill 以及科学与安全
+领域 Skill 库。结论是第六版现有 DeerFlow 已具备延迟发现、按需读取、工具权限、Skill 管理、审查和有/无 Skill
+评测设施，不需要第二 Agent 或 Skill 运行时。Superpowers 只吸收“先观察无 Skill 失败、再写最小 Skill、
+多次对照并收紧漏洞”的 Skill TDD，不采用任何任务前强制调用 Skill 或固定业务流程。
+
+孵化架构固定为四层：L0 通用孵化内核、L1 一次最多一个 `incubate-*` 行业 Skill、L2 按任务组合的横向创作与
+运营 Skill、L3 抖音 MCP/MediaKit/HLLM 等确定性证据与执行工具。行业 Skill 按可跨多个商业对象复用的语义与
+内容世界机制组织，不按 SKU 建包。生命周期固定为 `discovered -> candidate -> shadow -> active ->
+contested -> superseded/retired`，触发准确、行为增益、反例、事实边界、真实端到端、成本和运行方差必须独立
+验收。现成营销 Skill 只作 L2 逐项审计来源，不整包安装。详见
+`audits/A117-open-source-domain-skill-architecture.md` 与
+`decisions/ADR-034-domain-skill-layering-and-lifecycle.md`。
