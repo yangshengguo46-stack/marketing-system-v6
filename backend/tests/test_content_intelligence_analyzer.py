@@ -1994,6 +1994,11 @@ async def test_vertical_skill_preferred_root_remains_a_soft_prior_and_local_bran
     assert '"profile_sha256"' not in decision_input
     map_input = model.message_batches[5][1].content
     assert '"excluded_local_branches"' not in map_input
+    assert '"supporting_branch_hints"' in map_input
+    assert '"label": "婚礼馈赠"' in map_input
+    assert '"suggested_scope": "supporting_branch"' in map_input
+    assert '"profile_version"' not in map_input
+    assert "incubate-gift-human-relations" not in map_input
     assert [dimension.name for dimension in bundle.content_world.dimensions] == ["日常关系", "婚礼馈赠"]
 
 
@@ -2247,6 +2252,8 @@ def test_frozen_map_prompt_defines_content_opportunities_without_account_positio
     assert "概括性的关系理论标签" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "故事组织留给后续表达模块" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
     assert "把冻结根替换成大量无关对象" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "可拒绝的分支候选" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
+    assert "不是必选清单或数量配额" in FROZEN_CONTENT_MAP_SYSTEM_PROMPT
 
 
 @pytest.mark.asyncio

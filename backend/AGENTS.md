@@ -171,6 +171,9 @@ Profile version, lifecycle, sources, and content hash stay out of root-decision 
 own fact denials, classify free text, delete map fields, reject a Draft by substring, or overwrite the
 model-selected entry/root. Project facts remain the generic Brief's responsibility. Non-active packages
 stay experimental. See the skills module guide for details.
+After the root is frozen, only the selected Skill's `supporting_branch_hints` may continue into the map
+input. They remain rejectable candidates rather than required coverage or quotas; Skill identity, version,
+routing, lifecycle, source, hash, apply/exclusion text, and root preference stay outside the map input.
 
 Parse and normalize shared-world provider payloads before reconciliation. Withdraw worlds with no
 semantic path, missing constitutive context, or labels that erase it; keep these invariants out of the
@@ -196,6 +199,11 @@ format, adaptation, and production are never an automatic tail. Position uses co
 `persona.account_role`, else project subject. `MessagePlan` and `BaseDraft` cannot invent experience, facts,
 materials, sales, quantities, or publishing decisions. Every `ResourceMatch` needs at least one
 user-material artifact parent; unknown resources remain unknown.
+
+When `TopicBrief.narrative_frame` is present, the delivery model must receive its protagonist,
+goal, obstacle, action or choice, stakes, outcome, evidence refs, and limitations. The BaseDraft
+advances that action chain before revealing the topic claim; it must not flatten the frame into
+case analysis or add unsupported inner thoughts and causality. A null frame stays non-narrative.
 
 Douyin topic and competitor evidence cannot mix. A `benchmark_account_candidate` is not a formal
 `BenchmarkSnapshot`, which needs stable identity and author-consistent multi-post coverage, stays

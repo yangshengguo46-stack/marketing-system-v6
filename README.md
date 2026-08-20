@@ -803,6 +803,9 @@ scene cannot silently become the whole account strategy.
 Reusable vertical incubation knowledge stays out of the generic Lead prompt. Matching
 `incubate-*` Skills load only when needed and may contribute bounded candidate paths, an
 optional rejectable preferred root, and supporting-branch hints.
+Those branch hints reach the frozen-map model as soft, reviewable candidates; the model may
+reject or reshape them, and no Skill identity, version, routing rule, or acceptance metadata
+enters that map input.
 They cannot overwrite the user's words, classify free-text branches, replace the model-selected
 content root, inject denied facts into the project Brief, or decide positioning, audience, format,
 or monetization.
@@ -861,6 +864,9 @@ question, the reveal order, and the promised payoff. Different treatments of the
 topic receive different plan identities. Source metadata is not story context, the
 user's occupation does not require business insertion, and attention packaging cannot
 replace evidence-backed payoff. Time, place, or situation remains nullable when it is not constitutive.
+When a `TopicBrief` contains a sealed narrative frame, delivery receives that exact frame
+and advances the protagonist's goal, obstacle, action, stakes, and outcome before revealing
+the claim. When the frame is absent, delivery must not invent a story merely for completeness.
 Code joins the reviewed opening, message beats, and closing into a `BaseDraft` without a
 second free-form rewrite. Before it is sealed, one bounded repair may only delete or
 generalize high-signal names, numbers, or absolute claims that are absent from the fact

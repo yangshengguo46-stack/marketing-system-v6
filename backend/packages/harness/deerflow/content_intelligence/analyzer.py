@@ -538,6 +538,8 @@ FROZEN_CONTENT_MAP_SYSTEM_PROMPT = """<content_intelligence_method>
 你是独立的候选内容机会地图子智能体。输入只包含已冻结的地图根和输出结构。你的产物是一张供账号孵化层选择的候选内容机会地图，不是账号定位，也不是一次性的选题单。将该根视为本任务的完整主题边界，只围绕它展开内容机会，不得重新选根。
 
 - 这张地图不决定受众、人设、表现形式或变现，也不因生成完成就自动成为账号采用的长期方向。
+- 输入若有 supporting_branch_hints，它们是按需行业 Skill 提供的可拒绝的分支候选，不是必选清单或数量配额。逐项检查其与冻结根的意义连续性和内容价值；成立时可展开或重组，不成立时可拒绝，不得由此补造用户资源或外部事实。
+- 一条分支若能沿冻结根显出不同时间、地域、群体、公共事件中的真实人物行动与关系变化，不得仅因它跨地域、跨文化或不属于日常熟人场景就排除。
 
 - editorial_promise 回答观众长期关注后会反复获得什么理解或价值。它必须由内容根支持，不能写成涨粉、获客、成交或空泛品牌口号。
 - recurring_lens 回答这个账号会怎样持续观察和解释具体的人、地方、时间、事件与变化。它是稳定的编辑视角，不是口播、微短剧、图文等表现形式，也不是某一条内容的开头或故事结构。
@@ -924,7 +926,12 @@ async def _analyze_focused_content_world(
     root = _resolve_root_selection(candidate_set, decision)
     map_messages = (
         SystemMessage(content=FROZEN_CONTENT_MAP_SYSTEM_PROMPT),
-        HumanMessage(content=_render_frozen_map_input(root)),
+        HumanMessage(
+            content=_render_frozen_map_input(
+                root,
+                incubation_profile=incubation_profile,
+            )
+        ),
     )
     content_map = await _invoke_structured(
         model,
@@ -1781,10 +1788,16 @@ def _resolve_root_selection(
     )
 
 
-def _render_frozen_map_input(root: ContentRootSelectionDraft) -> str:
+def _render_frozen_map_input(
+    root: ContentRootSelectionDraft,
+    *,
+    incubation_profile: IncubationSkillProfile | None = None,
+) -> str:
     payload = {
         "primary_content_center": root.map_root,
     }
+    if incubation_profile is not None and incubation_profile.supporting_branch_hints:
+        payload["supporting_branch_hints"] = [item.model_dump(mode="json") for item in incubation_profile.supporting_branch_hints]
     return "--- BEGIN FROZEN CONTENT MAP INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN CONTENT MAP INPUT ---"
 
 

@@ -173,6 +173,11 @@ SHOOTING_DELIVERY_SYSTEM_PROMPT = """<content_intelligence_delivery>
 - 不得重新选择内容根、更换 TopicBrief 的具体问题，也不得把地图重新扩写成百科全书。
 - 讲述方案必须兑现账号长期承诺并服从稳定观察方法，但不得把这两句话生硬复述进正文。当前热点只能增加这条内容的当日入口，不能让成稿脱离地图路径。
 - 你的任务是将已经选定并取证的一条内容，收敛成今天可以继续制作的具体方案。
+- 输入有已封存的叙事骨架时，它是这条基础文案的故事主脊；保留主角、目标、阻碍、行动或选择、代价与结果变化，不得把它压平成抽象说理。
+- 叙事基础文案要先让观众看到人如何行动、如何遇阻、如何选择以及关系或处境如何变化，再从变化中显出 TopicBrief 的道理；不要开场先宣布道理，再用人物作例子。
+- 叙事时 opening 和 message_beats 必须按发生顺序推进具体事件，不得用“先看、再看、这说明、所以”把故事改写成案例分析；道理留到人物选择已产生结果后再点破。
+- 只能写证据或题设支持的动作、话语、心理与因果；不得把“接收者第一反应”、“他心里怎么想”或单一因果写成已知事实。证据不足时保留悬问或限定语。
+- 没有叙事骨架时不得硬编主角、冲突或结局；说明、比较、知识或历史梳理可以用非叙事结构。
 - message_plan 必须说清：谁在什么情境下遇到了什么具体事情或问题，账号从用户的真实立场给出什么明确观点。
 - focal_subject 是这条内容中真正被讲述的人、群体或具体对象；不得用“某些人”、“相关人群”等空话代替。
 - context 描述内容世界里的时间、地点、场合或处境，只在它真正影响这件事时填写；不得填写来源名称、资料年代、检索过程，也不得为了对称强行补齐。
@@ -408,6 +413,20 @@ def _render_delivery_input(
             "证据限制": topic.limitations,
             "待研究": topic.research_needed,
         },
+        "叙事骨架": (
+            {
+                "主角": topic.narrative_frame.protagonist,
+                "具体目标": topic.narrative_frame.goal,
+                "阻碍": topic.narrative_frame.obstacle,
+                "行动或选择": topic.narrative_frame.action_or_choice,
+                "失败或放弃的代价": topic.narrative_frame.stakes_or_consequence,
+                "结果或变化": topic.narrative_frame.outcome_or_change,
+                "证据引用": [item.model_dump(mode="json") for item in topic.narrative_frame.basis_refs],
+                "限制": topic.narrative_frame.limitations,
+            }
+            if topic.narrative_frame is not None
+            else None
+        ),
         "已读观察": evidence_observations,
         "来源回执": [
             source.model_dump(

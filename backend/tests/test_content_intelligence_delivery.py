@@ -13,6 +13,7 @@ from deerflow.content_intelligence import (
     ContentPathStep,
     ContentWorldView,
     MessagePlanDraft,
+    NarrativeFrame,
     Observation,
     SourceItem,
     TopicBrief,
@@ -152,6 +153,50 @@ def _message_plan_payload() -> dict[str, Any]:
     }
 
 
+def _narrative_bundle() -> ContentIntelligenceBundle:
+    bundle = _evidence_bound_bundle()
+    assert bundle.topic_brief is not None
+    story_source = SourceItem(
+        source_id="source-story-1",
+        kind="web_page",
+        evidence_role="topic_evidence",
+        title="A bounded account of one banquet guest",
+        uri="https://example.com/banquet-guest",
+        content="A bounded account records a first-time guest observing the toast order and adjusting his response.",
+    )
+    story_observation = Observation(
+        observation_id="observation-story-1",
+        claim="A first-time guest wanted to respond respectfully, did not understand the local toast order, observed the table, adjusted his response, and then understood that the occasion expressed both courtesy and relationships.",
+        source_refs=(story_source.source_id,),
+    )
+    evidence_ref = BasisRef(kind="observation", ref_id=story_observation.observation_id)
+    return bundle.model_copy(
+        update={
+            "record": bundle.record.model_copy(
+                update={
+                    "sources": (*bundle.record.sources, story_source),
+                    "observations": (*bundle.record.observations, story_observation),
+                }
+            ),
+            "topic_brief": bundle.topic_brief.model_copy(
+                update={
+                    "evidence_refs": (*bundle.topic_brief.evidence_refs, evidence_ref),
+                    "narrative_frame": NarrativeFrame(
+                        protagonist="一位第一次参加当地宴席的外地客人",
+                        goal="得体地回应主家的款待",
+                        obstacle="他不理解酒桌上敬酒与回应的当地礼数",
+                        action_or_choice="他观察席间人物的先后顺序并调整自己的回应",
+                        stakes_or_consequence="回应失当可能被误解为不尊重对方",
+                        outcome_or_change="他开始理解这张酒桌表达的不只是酒量，还有关系与礼数",
+                        basis_refs=(evidence_ref,),
+                        limitations=("当前回执只能支持这条行动链作为有界故事线索。",),
+                    ),
+                }
+            ),
+        }
+    )
+
+
 def _incubation_judgment(bundle: ContentIntelligenceBundle) -> IncubationJudgment:
     assert bundle.content_world is not None
     return IncubationJudgment(
@@ -225,6 +270,43 @@ async def test_topic_brief_becomes_a_concrete_shooting_delivery_from_the_users_p
     assert "business_semantics" not in prompt_input
     assert "map_dimensions" not in prompt_input
     assert "A bounded public record" not in prompt_input
+
+
+@pytest.mark.asyncio
+async def test_evidence_bound_narrative_frame_reaches_delivery_as_the_story_spine() -> None:
+    bundle = _narrative_bundle()
+    payload = _message_plan_payload()
+    payload.update(
+        {
+            "topic_title": "一个外地人，为什么在这张酒桌上突然不会喝酒了？",
+            "focal_subject": "一位第一次参加当地宴席的外地客人",
+            "concrete_event_or_question": "外地客人想得体回应款待，却因不懂敬酒顺序而迟疑",
+            "entry_point": "从主家突然端起第一杯酒的那一刻讲起",
+            "telling_lens": "跟着这位客人的观察、迟疑和调整往前推进",
+            "opening": "主家端起第一杯酒时，这位外地客人突然不知道自己该不该起身。",
+            "message_beats": [
+                "他本来只想得体地回应款待，却看不懂这张桌上谁先敬、谁后回的顺序。",
+                "他开始观察席间人物的动作，再调整自己的回应，因为一个失当的动作可能被误解为不尊重。",
+            ],
+            "closing": "那一刻他才明白，这张酒桌表达的不只是酒量，还有关系与礼数。",
+        }
+    )
+    model = StructuredDeliveryFakeModel(payload)
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="我是卖白酒的，该怎么起号？",
+        model=model,
+    )
+
+    assert delivery is not None
+    assert delivery.base_draft.text.startswith("主家端起第一杯酒时")
+    prompt_input = model.message_batches[0][1].content
+    assert '"叙事骨架"' in prompt_input
+    assert '"具体目标": "得体地回应主家的款待"' in prompt_input
+    assert '"阻碍": "他不理解酒桌上敬酒与回应的当地礼数"' in prompt_input
+    assert '"行动或选择"' in prompt_input
+    assert '"结果或变化"' in prompt_input
 
 
 @pytest.mark.asyncio
@@ -387,6 +469,12 @@ def test_delivery_prompt_separates_internal_exploration_from_the_shootable_answe
     assert "不得改写成用户做久了、见过、经手过" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "只推进一条连贯的论证主线" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "来源名称本身不是内容" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "已封存的叙事骨架" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "先让观众看到人如何行动" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "按发生顺序推进具体事件" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "把故事改写成案例分析" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "接收者第一反应" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "没有叙事骨架时不得硬编" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "红薯" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "白酒" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
 

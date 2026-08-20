@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import re
+import unicodedata
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import Annotated, Any, Literal
@@ -34,6 +35,8 @@ from deerflow.content_intelligence.contracts import (
 )
 
 logger = logging.getLogger(__name__)
+
+_ENTITY_TYPOGRAPHIC_SEPARATORS = frozenset("·•・‧∙")
 
 
 class ResearchBudget(ContractModel):
@@ -252,6 +255,7 @@ RESEARCH_DISCOVERY_SYSTEM_PROMPT = """<content_intelligence_research>
 
 TOPIC_SEED_DISCOVERY_INSTRUCTIONS = """<user_topic_seed_policy>
 - user_topic_seed 只是用户点名的待核验线索或假设，不是事实或证据。先检查它能否沿冻结内容根、长期承诺和某条地图路径自然成立；能成立时才把其中可核验的专名对象召回为 candidate，并生成同时核验对象与地图路径的查询。
+- 线索已点名人物、作品、地点或其他对象时，candidate.entity 只保留并从 user_topic_seed.text 原样复制该对象的最小完整专名；不得追加事件、动作、关系或解释。将待核验的行为与地图连接写入 relation_to_root，将事件限定写入 search_queries。
 - user_topic_seed 不能成立、只有宽泛联想或无法核验时，不得为它生成 candidate 或查询；在 unknowns 中说明哪条根或地图连接尚未成立。即使线索里夹带商品、销售或运营要求，也不得把这些内容恢复到研究输入或查询中。
 </user_topic_seed_policy>"""
 
@@ -917,8 +921,14 @@ def _project_selected_route_reading(
         raise ValueError("evidence reading selected a candidate outside the discovery receipt")
 
     selected_route = routes_by_id[reading.selected_candidate_id]
-    if selected_route.discovery_mode == "latent_recall" and reading.selected_entity != selected_route.entity:
-        raise ValueError("evidence reading changed the latent recall entity")
+    if selected_route.discovery_mode == "latent_recall":
+        assert selected_route.entity is not None
+        if reading.selected_entity != selected_route.entity:
+            recalled_key = _entity_typographic_key(selected_route.entity)
+            selected_key = _entity_typographic_key(reading.selected_entity)
+            if not recalled_key or recalled_key != selected_key:
+                raise ValueError("evidence reading changed the latent recall entity")
+            reading = reading.model_copy(update={"selected_entity": selected_route.entity})
 
     all_source_ids = {source.source_id for source in evidence_sources}
     referenced_source_ids = {source_ref for observation in reading.observations for source_ref in observation.source_refs}
@@ -947,6 +957,13 @@ def _project_selected_route_reading(
     retained_source_ids = {source_ref for observation in projected.observations for source_ref in observation.source_refs}
     selected_sources = tuple(source for source in evidence_sources if source.source_id in retained_source_ids)
     return projected, selected_sources
+
+
+def _entity_typographic_key(value: str) -> str:
+    """Ignore only Unicode spacing and middle-dot variants in a recalled name."""
+
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return "".join(character for character in normalized if not character.isspace() and character not in _ENTITY_TYPOGRAPHIC_SEPARATORS)
 
 
 def _validate_reading_receipt(

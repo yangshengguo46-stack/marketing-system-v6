@@ -31,6 +31,7 @@ from deerflow.content_intelligence.research import (
     EVIDENCE_READING_SYSTEM_PROMPT,
     RESEARCH_DISCOVERY_SYSTEM_PROMPT,
     TOPIC_EDITOR_SYSTEM_PROMPT,
+    TOPIC_SEED_DISCOVERY_INSTRUCTIONS,
 )
 
 
@@ -417,6 +418,14 @@ async def test_user_topic_seed_reaches_discovery_as_an_unverified_lead() -> None
     assert "1914 Christmas Truce shared meal primary source" in seen_queries
 
 
+def test_topic_seed_candidate_entity_keeps_only_the_named_subject() -> None:
+    assert "最小完整专名" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
+    assert "原样复制" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
+    assert "不得追加事件、动作、关系或解释" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
+    assert "relation_to_root" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
+    assert "search_queries" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
+
+
 @pytest.mark.asyncio
 async def test_topic_seed_candidate_must_bind_an_existing_frozen_map_dimension() -> None:
     bundle = await _content_world_bundle()
@@ -783,6 +792,44 @@ async def test_research_without_topic_seed_preserves_the_existing_discovery_inpu
         "shared meal documented changes in the shared meal over time",
         "shared meal documented public event",
     }
+
+
+@pytest.mark.asyncio
+async def test_latent_recall_accepts_only_typographic_middle_dot_aliases() -> None:
+    bundle = await _content_world_bundle()
+    discovery = _discovery_payload()
+    discovery["candidates"][0]["entity"] = "埃文凯尔"
+    discovery["candidates"][0]["search_queries"] = ["埃文凯尔 相册 捐赠"]
+    reading = _reading_payload(source_ref="source-web-2")
+    reading["selected_entity"] = "埃文·凯尔"
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: discovery,
+            EvidenceReadingDraft: reading,
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        return (
+            ResearchSearchResult(
+                title=query,
+                url=f"https://example.com/{abs(hash(query))}",
+                content=f"Evidence for {query}.",
+            ),
+        )
+
+    enriched = await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        budget=ResearchBudget(max_queries=3, max_results_per_query=1, max_evidence_items=3),
+    )
+
+    assert enriched.topic_brief is not None
+    assert research_model.call_schemas.count(EvidenceReadingDraft) == 1
+    editorial_input = research_model.message_batches[2][1].content
+    assert '"selected_entity": "埃文凯尔"' in editorial_input
 
 
 @pytest.mark.asyncio

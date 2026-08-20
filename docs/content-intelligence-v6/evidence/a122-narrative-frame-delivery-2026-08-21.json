@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "status": "adopted_with_performance_debt",
+  "model": "glm-5-2-260617",
+  "thinking_enabled": false,
+  "temperature": 0,
+  "tests": {
+    "delivery_red": "2 failed, 9 passed",
+    "delivery_green": "11 passed",
+    "map_research_delivery_regression": "100 passed",
+    "broad_regression": "183 passed",
+    "domain_skill_boundary_regression": "104 passed",
+    "test_files": [
+      "backend/tests/test_content_intelligence_analyzer.py",
+      "backend/tests/test_content_intelligence_delivery.py",
+      "backend/tests/test_content_intelligence_research.py"
+    ]
+  },
+  "probes": [
+    {
+      "probe_id": "user-authored-workplace-gift-scenario",
+      "result": "partial_failed",
+      "elapsed_seconds": 17.381,
+      "model_calls": 1,
+      "token_usage": {
+        "input_tokens": 2729,
+        "output_tokens": 809,
+        "total_tokens": 3538
+      },
+      "reason": "The story spine survived, but the draft added unsupported motives and recipient thoughts and drifted back into case analysis."
+    },
+    {
+      "probe_id": "evan-kail-bounded-evidence-story",
+      "result": "passed_for_local_canary",
+      "elapsed_seconds": 38.794,
+      "model_calls": 2,
+      "token_usage": {
+        "input_tokens": 6644,
+        "output_tokens": 1903,
+        "total_tokens": 8547
+      },
+      "message_plan_id": "message-plan-8d4088cb553e3fe6",
+      "draft_id": "base-draft-633770354e1d62dd",
+      "story_chain": [
+        "receives the album",
+        "faces unresolved provenance and historical-value questions",
+        "corrects an earlier description",
+        "contacts the Chinese consulate",
+        "donates the album",
+        "receives a state-gift porcelain response",
+        "the event continues as a public-memory and people-to-people relationship"
+      ],
+      "sources": [
+        "https://english.news.cn/20241127/64c121ea6a8e4bc38347d05124f09228/c.html",
+        "https://www.ynrd.gov.cn/html/2022/tashanzhishi_1213/19898.html",
+        "https://www.gjbmj.gov.cn/n1/2025/0205/c409080-40412485.html"
+      ]
+    },
+    {
+      "probe_id": "automatic-research-evan-kail-initial",
+      "result": "failed_closed",
+      "error_chain": [
+        "evidence reading changed the latent recall entity",
+        "evidence reading grounded the selected candidate entity with another candidate's evidence"
+      ],
+      "secondary_environment_limit": "The configured Jina fallback had no API key and timed out, so the reader retained bounded search snippets."
+    },
+    {
+      "probe_id": "stale-map-topic-seed-rejection",
+      "result": "failed_closed",
+      "elapsed_seconds": 20.293,
+      "model_calls": 1,
+      "token_usage": {
+        "input_tokens": 7194,
+        "output_tokens": 566,
+        "total_tokens": 7760
+      },
+      "reason": "The persisted pre-v1.1 map had only everyday acquaintance-network branches, so discovery incorrectly rejected the cross-cultural gift event before search."
+    },
+    {
+      "probe_id": "current-semantic-and-map-before-branch-wiring",
+      "result": "partial_failed",
+      "elapsed_seconds": 124.236,
+      "model_calls": 6,
+      "token_usage": {
+        "input_tokens": 12673,
+        "output_tokens": 5214,
+        "total_tokens": 17887
+      },
+      "content_root": "人与人之间的相处与人情世故",
+      "reason": "The root judge explicitly recognized public and cross-cultural gifting, but the map model never received the Skill's supporting-branch hints and narrowed back to everyday relationships."
+    },
+    {
+      "probe_id": "automatic-research-evan-kail-recovered",
+      "result": "passed_with_performance_debt",
+      "entry_boundary": "accepted frozen human-relations root through current map, automatic search, evidence reading, TopicBrief, MessagePlan, and BaseDraft",
+      "elapsed_seconds": 223.324,
+      "model_calls": 7,
+      "token_usage": {
+        "input_tokens": 27419,
+        "output_tokens": 9447,
+        "total_tokens": 36866
+      },
+      "content_map_version_id": "content-map-bdfea9f80880f6bb",
+      "topic_title": "国礼瓷没有被转手：当回赠物变成记住，关系就不靠还清维系",
+      "message_plan_id": "message-plan-1e93ae16138d03f9",
+      "draft_id": "base-draft-9ad9ee66c93ea443",
+      "narrative_frame": null,
+      "narrative_frame_reason": "Search snippets supported the chronological action chain but not the protagonist's inner goal and obstacle, so the strict optional frame correctly remained null.",
+      "story_chain": [
+        "buys the wartime album",
+        "donates it to China with help from Chinese netizens",
+        "receives state-gift porcelain",
+        "keeps and revisits the porcelain",
+        "travels to China intending to visit places recorded in the album",
+        "the draft reveals that some relationships persist through remembering rather than equivalent repayment"
+      ],
+      "automatic_sources": [
+        "https://www.ctdsb.net/c1476_202411/2306784.html",
+        "https://user.guancha.cn/main/content?id=1374435&s=fwzlwzbt",
+        "https://news.qq.com/rain/a/20241118A022C800"
+      ],
+      "limitations": [
+        "Automatic source ranking was weaker than the manually bounded primary-source pack.",
+        "Delivery required two repair invocations.",
+        "Latency and token use are not production-acceptable."
+      ]
+    }
+  ],
+  "secrets_included": false
+}
