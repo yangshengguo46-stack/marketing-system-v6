@@ -24,7 +24,15 @@ related:
 - 不让模型选择或覆盖 `owner_user_id`、`logical_account_id`。
 - 不根据一次结果自动更新账号程序性方法。
 - 不因采用语义记忆而默认引入向量数据库。
-- 本 ADR 接受前，不把当前 `AccountLaunchPlan` 实验接入 Lead。
+- 不把 `AccountLaunchPlan` 变成默认工作流、TopicBrief 前置门或平台成功保证。
+
+## 2026-08-21 实施断点
+
+`LogicalAccountRef`、数据库迁移、Gateway 可信绑定、账号策略到制作计划的工件隔离，以及双账号测试已
+完成。`AccountLaunchPlan` 只以用户明确请求时调用的可选 Lead 工具接入，读取已确认策略和同账号冻结
+地图；它不阻断日常选题，也不依赖平台登录。
+
+ADR 仍保持 `proposed`，因为可重建 Account Skill 投影及完整真实模型链路尚未验收。
 
 ## 接受条件
 

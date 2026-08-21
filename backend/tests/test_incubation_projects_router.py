@@ -24,6 +24,7 @@ from deerflow.incubation import (
     seal_media_observation_snapshot,
     seal_media_source_receipt,
 )
+from deerflow.incubation.contracts import LogicalAccountRecord, LogicalAccountRef
 from deerflow.incubation.media import VideoFormatMetadata, VideoStreamMetadata
 from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
 
@@ -44,6 +45,7 @@ def _user() -> User:
 class _FakeLedger:
     def __init__(self) -> None:
         self.projects: dict[tuple[str, str], ProjectRecord] = {}
+        self.logical_accounts: dict[tuple[str, str, str], LogicalAccountRecord] = {}
         self.artifacts: dict[str, ArtifactEnvelope] = {}
         self.grants: dict[str, ApprovalGrant] = {}
 
@@ -63,6 +65,44 @@ class _FakeLedger:
     async def list_projects(self, owner_user_id: str, *, limit: int = 100, offset: int = 0) -> list[ProjectRecord]:
         rows = [record for (owner, _project_id), record in self.projects.items() if owner == owner_user_id]
         return rows[offset : offset + limit]
+
+    async def create_logical_account(
+        self,
+        logical_account: LogicalAccountRef,
+        *,
+        display_name: str,
+    ) -> LogicalAccountRecord:
+        record = LogicalAccountRecord(
+            logical_account=logical_account,
+            display_name=display_name,
+            created_at=NOW,
+            updated_at=NOW,
+        )
+        key = (
+            logical_account.owner_user_id,
+            logical_account.project_id,
+            logical_account.logical_account_id,
+        )
+        self.logical_accounts[key] = record
+        return record
+
+    async def get_logical_account(
+        self,
+        logical_account: LogicalAccountRef,
+    ) -> LogicalAccountRecord | None:
+        return self.logical_accounts.get(
+            (
+                logical_account.owner_user_id,
+                logical_account.project_id,
+                logical_account.logical_account_id,
+            )
+        )
+
+    async def list_logical_accounts(
+        self,
+        project: ProjectRef,
+    ) -> list[LogicalAccountRecord]:
+        return [record for (owner, project_id, _logical_account_id), record in self.logical_accounts.items() if owner == project.owner_user_id and project_id == project.project_id]
 
     async def get_artifact(self, artifact_id: str, *, owner_user_id: str) -> ArtifactEnvelope | None:
         artifact = self.artifacts.get(artifact_id)
@@ -123,6 +163,50 @@ def test_create_list_and_get_projects_do_not_expose_owner_identity() -> None:
     assert fetched.json()["display_name"] == "黄金礼品账号"
 
 
+def test_create_list_and_get_logical_accounts_are_project_and_owner_scoped() -> None:
+    app, ledger, _thread_store = _build_app()
+
+    async def seed() -> None:
+        project = ProjectRef(owner_user_id=USER_ID, project_id="portfolio")
+        await ledger.create_project(project, display_name="账号组合")
+        await ledger.create_project(
+            ProjectRef(owner_user_id=OTHER_USER_ID, project_id="portfolio"),
+            display_name="其他用户账号组合",
+        )
+        await ledger.create_logical_account(
+            LogicalAccountRef(
+                owner_user_id=OTHER_USER_ID,
+                project_id="portfolio",
+                logical_account_id="other-account",
+            ),
+            display_name="其他用户账号",
+        )
+
+    asyncio.run(seed())
+
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/incubation/projects/portfolio/logical-accounts",
+            json={
+                "logical_account_id": "golden-gift",
+                "display_name": "黄金礼品账号",
+            },
+        )
+        listed = client.get("/api/incubation/projects/portfolio/logical-accounts")
+        fetched = client.get("/api/incubation/projects/portfolio/logical-accounts/golden-gift")
+        cross_user = client.get("/api/incubation/projects/portfolio/logical-accounts/other-account")
+
+    assert created.status_code == 201, created.text
+    assert created.json()["project_id"] == "portfolio"
+    assert created.json()["logical_account_id"] == "golden-gift"
+    assert "owner_user_id" not in created.text
+    assert listed.status_code == 200, listed.text
+    assert [item["logical_account_id"] for item in listed.json()] == ["golden-gift"]
+    assert fetched.status_code == 200, fetched.text
+    assert fetched.json()["display_name"] == "黄金礼品账号"
+    assert cross_user.status_code == 404
+
+
 def test_thread_binding_requires_owned_project_and_rehydrates_binding() -> None:
     app, ledger, thread_store = _build_app()
 
@@ -155,6 +239,201 @@ def test_thread_binding_requires_owned_project_and_rehydrates_binding() -> None:
     assert current.status_code == 200
     assert current.json()["project"]["project_id"] == "golden-gift"
     assert missing.status_code == 404
+    thread = asyncio.run(thread_store.get("thread-1", user_id=USER_ID))
+    assert thread["metadata"]["incubation_project_id"] == "golden-gift"
+    assert thread["metadata"]["incubation_logical_account_id"] is None
+
+
+def test_thread_logical_account_binding_sets_project_and_supports_explicit_switch() -> None:
+    app, ledger, thread_store = _build_app()
+
+    async def seed() -> None:
+        await thread_store.create("thread-accounts", user_id=USER_ID)
+        project = ProjectRef(owner_user_id=USER_ID, project_id="portfolio")
+        await ledger.create_project(project, display_name="账号组合")
+        for logical_account_id, display_name in (
+            ("golden-gift", "黄金礼品"),
+            ("fruit-store", "水果店"),
+        ):
+            await ledger.create_logical_account(
+                LogicalAccountRef(
+                    owner_user_id=USER_ID,
+                    project_id=project.project_id,
+                    logical_account_id=logical_account_id,
+                ),
+                display_name=display_name,
+            )
+
+    asyncio.run(seed())
+
+    with TestClient(app) as client:
+        first = client.put(
+            "/api/incubation/threads/thread-accounts/logical-account",
+            json={"project_id": "portfolio", "logical_account_id": "golden-gift"},
+        )
+        switched = client.put(
+            "/api/incubation/threads/thread-accounts/logical-account",
+            json={"project_id": "portfolio", "logical_account_id": "fruit-store"},
+        )
+        current = client.get("/api/incubation/threads/thread-accounts/logical-account")
+
+    assert first.status_code == 200, first.text
+    assert first.json()["logical_account"]["logical_account_id"] == "golden-gift"
+    assert switched.status_code == 200, switched.text
+    assert current.status_code == 200, current.text
+    assert current.json()["logical_account"]["logical_account_id"] == "fruit-store"
+    thread = asyncio.run(thread_store.get("thread-accounts", user_id=USER_ID))
+    assert thread["metadata"] == {
+        "incubation_project_id": "portfolio",
+        "incubation_logical_account_id": "fruit-store",
+    }
+
+
+def test_thread_logical_account_binding_fails_closed_across_project_or_owner() -> None:
+    app, ledger, thread_store = _build_app()
+
+    async def seed() -> None:
+        await thread_store.create(
+            "thread-bound-project",
+            user_id=USER_ID,
+            metadata={"incubation_project_id": "project-a"},
+        )
+        for owner, project_id in (
+            (USER_ID, "project-a"),
+            (USER_ID, "project-b"),
+            (OTHER_USER_ID, "project-a"),
+        ):
+            await ledger.create_project(
+                ProjectRef(owner_user_id=owner, project_id=project_id),
+                display_name=f"{owner}:{project_id}",
+            )
+        await ledger.create_logical_account(
+            LogicalAccountRef(
+                owner_user_id=USER_ID,
+                project_id="project-b",
+                logical_account_id="wrong-project",
+            ),
+            display_name="错误项目账号",
+        )
+        await ledger.create_logical_account(
+            LogicalAccountRef(
+                owner_user_id=OTHER_USER_ID,
+                project_id="project-a",
+                logical_account_id="other-owner",
+            ),
+            display_name="其他用户账号",
+        )
+
+    asyncio.run(seed())
+
+    with TestClient(app) as client:
+        cross_project = client.put(
+            "/api/incubation/threads/thread-bound-project/logical-account",
+            json={
+                "project_id": "project-b",
+                "logical_account_id": "wrong-project",
+            },
+        )
+        cross_owner = client.put(
+            "/api/incubation/threads/thread-bound-project/logical-account",
+            json={
+                "project_id": "project-a",
+                "logical_account_id": "other-owner",
+            },
+        )
+
+    assert cross_project.status_code == 409
+    assert cross_owner.status_code == 404
+
+
+def test_project_binding_cannot_orphan_a_logical_account_and_project_unbind_clears_both() -> None:
+    app, ledger, thread_store = _build_app()
+
+    async def seed() -> None:
+        for project_id in ("project-a", "project-b"):
+            await ledger.create_project(
+                ProjectRef(owner_user_id=USER_ID, project_id=project_id),
+                display_name=project_id,
+            )
+        await ledger.create_logical_account(
+            LogicalAccountRef(
+                owner_user_id=USER_ID,
+                project_id="project-a",
+                logical_account_id="account-a",
+            ),
+            display_name="账号 A",
+        )
+        await thread_store.create(
+            "thread-project-switch",
+            user_id=USER_ID,
+            metadata={
+                "incubation_project_id": "project-a",
+                "incubation_logical_account_id": "account-a",
+            },
+        )
+
+    asyncio.run(seed())
+
+    with TestClient(app) as client:
+        rejected = client.put(
+            "/api/incubation/threads/thread-project-switch/project",
+            json={"project_id": "project-b"},
+        )
+        unbound = client.delete("/api/incubation/threads/thread-project-switch/project")
+
+    assert rejected.status_code == 409
+    assert unbound.status_code == 200, unbound.text
+    thread = asyncio.run(thread_store.get("thread-project-switch", user_id=USER_ID))
+    assert thread["metadata"]["incubation_project_id"] is None
+    assert thread["metadata"]["incubation_logical_account_id"] is None
+
+
+def test_thread_logical_account_read_rejects_stale_binding_and_unbinds_cleanly() -> None:
+    app, ledger, thread_store = _build_app()
+
+    async def seed() -> None:
+        project = ProjectRef(owner_user_id=USER_ID, project_id="portfolio")
+        await ledger.create_project(project, display_name="账号组合")
+        await ledger.create_logical_account(
+            LogicalAccountRef(
+                owner_user_id=USER_ID,
+                project_id="portfolio",
+                logical_account_id="golden-gift",
+            ),
+            display_name="黄金礼品",
+        )
+        await thread_store.create(
+            "thread-live-account",
+            user_id=USER_ID,
+            metadata={
+                "incubation_project_id": "portfolio",
+                "incubation_logical_account_id": "golden-gift",
+            },
+        )
+        await thread_store.create(
+            "thread-stale-account",
+            user_id=USER_ID,
+            metadata={
+                "incubation_project_id": "portfolio",
+                "incubation_logical_account_id": "deleted-account",
+            },
+        )
+
+    asyncio.run(seed())
+
+    with TestClient(app) as client:
+        stale = client.get("/api/incubation/threads/thread-stale-account/logical-account")
+        unbound = client.delete("/api/incubation/threads/thread-live-account/logical-account")
+        current = client.get("/api/incubation/threads/thread-live-account/logical-account")
+
+    assert stale.status_code == 409
+    assert unbound.status_code == 200, unbound.text
+    assert unbound.json()["logical_account"] is None
+    assert current.status_code == 200, current.text
+    assert current.json()["logical_account"] is None
+    thread = asyncio.run(thread_store.get("thread-live-account", user_id=USER_ID))
+    assert thread["metadata"]["incubation_project_id"] == "portfolio"
+    assert thread["metadata"]["incubation_logical_account_id"] is None
 
 
 def test_thread_binding_rejects_unknown_thread() -> None:

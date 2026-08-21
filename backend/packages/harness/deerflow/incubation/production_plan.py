@@ -10,6 +10,7 @@ from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
     IncubationContract,
+    LogicalAccountRef,
     NonEmptyStr,
     ProjectRef,
 )
@@ -264,6 +265,7 @@ def seal_production_plan(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     user_material_artifacts: tuple[ArtifactEnvelope, ...] = (),
 ) -> ArtifactEnvelope:
     """Seal executable production instructions without reopening content choices."""
@@ -301,6 +303,7 @@ def seal_production_plan(
         artifact_type="production_plan",
         version=1,
         payload=plan.model_dump(mode="json"),
+        logical_account=logical_account,
         parents=(
             adapted_draft_artifact.to_parent_ref(),
             exact_format_ref,

@@ -18,9 +18,11 @@ from deerflow.content_intelligence import (
 )
 from deerflow.incubation import (
     IncubationJudgmentModelError,
+    LogicalAccountRef,
     ProjectRef,
     confirm_account_strategy,
     implicit_project_display_name,
+    implicit_thread_logical_account_ref,
     implicit_thread_project_ref,
     prepare_account_strategy,
     seal_benchmark_snapshot,
@@ -112,6 +114,21 @@ async def develop_account_strategy_tool(
         project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
     else:
         project = implicit_thread_project_ref(owner_user_id=owner_user_id, thread_id=thread_id)
+    logical_account_id = runtime_context_text(
+        runtime,
+        "incubation_logical_account_id",
+    )
+    if logical_account_id is not None:
+        logical_account = LogicalAccountRef(
+            owner_user_id=owner_user_id,
+            project_id=project.project_id,
+            logical_account_id=logical_account_id,
+        )
+    else:
+        logical_account = implicit_thread_logical_account_ref(
+            project=project,
+            thread_id=thread_id,
+        )
     repository = get_incubation_repository()
     if repository is None:
         return _terminal_account_strategy_command(
@@ -134,6 +151,16 @@ async def develop_account_strategy_tool(
             except Exception:
                 # A concurrent first request may have created the deterministic project.
                 if await repository.get_project(project) is None:
+                    raise
+        logical_account_record = await repository.get_logical_account(logical_account)
+        if logical_account_record is None:
+            try:
+                await repository.create_logical_account(
+                    logical_account,
+                    display_name=implicit_project_display_name(user_request),
+                )
+            except Exception:
+                if await repository.get_logical_account(logical_account) is None:
                     raise
     except Exception as exc:
         logger.warning("Account strategy project bootstrap was unavailable: %s", type(exc).__name__)
@@ -189,6 +216,7 @@ async def develop_account_strategy_tool(
                             snapshot=benchmark,
                             source_thread_id=thread_id,
                             source_run_id=run_id,
+                            logical_account=logical_account,
                         )
                     )
             except Exception as exc:
@@ -198,6 +226,7 @@ async def develop_account_strategy_tool(
                 )
         strategy = await prepare_account_strategy(
             project=project,
+            logical_account=logical_account,
             repository=repository,
             bundle=bundle,
             verbatim_user_request=user_request,
@@ -240,6 +269,7 @@ async def develop_account_strategy_tool(
         persistence={
             "status": "reused" if strategy.reused else "stored",
             "project_id": project.project_id,
+            "logical_account_id": logical_account.logical_account_id,
             "artifact_type": artifact.artifact_type,
             "artifact_id": artifact.artifact_id,
             "content_sha256": artifact.content_sha256,
@@ -277,8 +307,23 @@ async def confirm_account_strategy_tool(
         project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
     else:
         project = implicit_thread_project_ref(owner_user_id=owner_user_id, thread_id=thread_id)
+    logical_account_id = runtime_context_text(
+        runtime,
+        "incubation_logical_account_id",
+    )
+    if logical_account_id is not None:
+        logical_account = LogicalAccountRef(
+            owner_user_id=owner_user_id,
+            project_id=project.project_id,
+            logical_account_id=logical_account_id,
+        )
+    else:
+        logical_account = implicit_thread_logical_account_ref(
+            project=project,
+            thread_id=thread_id,
+        )
     repository = get_incubation_repository()
-    if repository is None or await repository.get_project(project) is None:
+    if repository is None or await repository.get_project(project) is None or await repository.get_logical_account(logical_account) is None:
         return _terminal_account_strategy_command(
             "当前选择的孵化项目不可用，因此没有记录这次路线选择。",
             tool_call_id=runtime.tool_call_id,
@@ -288,6 +333,7 @@ async def confirm_account_strategy_tool(
     try:
         confirmed = await confirm_account_strategy(
             project=project,
+            logical_account=logical_account,
             repository=repository,
             option_id=option_id,
             created_at=datetime.now(UTC),
@@ -317,6 +363,7 @@ async def confirm_account_strategy_tool(
         persistence={
             "status": "reused" if confirmed.reused else "stored",
             "project_id": project.project_id,
+            "logical_account_id": logical_account.logical_account_id,
             "artifact_type": artifact.artifact_type,
             "artifact_id": artifact.artifact_id,
             "content_sha256": artifact.content_sha256,

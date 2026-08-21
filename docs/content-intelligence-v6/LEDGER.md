@@ -2362,3 +2362,32 @@ decisions/ADR-035-soft-domain-skill-advice.md。
 内容地图/研究/故事交付 `100 passed`、内容宽回归 `183 passed`、行业 Skill 边界 `104 passed`。详见
 `audits/A122-narrative-frame-delivery-and-live-story.md`，机器回执为
 `evidence/a122-narrative-frame-delivery-2026-08-21.json`。
+
+## A123 短视频起号与 7/30 天计划审计
+
+2026-08-21 对照第四、第五版台账与官方创作者资料，明确 7 天只是方向与真实产能验证期，30 天只是
+形成第一版可重复运营系统的滚动视窗。发布不是每日硬门，节奏不得伪装成平台规律；计划题眼也不能冒充
+已取证 `TopicBrief`。计划读取已确认账号战略与同版本地图，不重新决定定位、受众、人设、形式或变现。
+详见 `audits/A123-short-video-launch-planning-audit.md` 与
+`decisions/ADR-036-versioned-account-launch-plan.md`。
+
+## A124 账号脑、账号 Skill 与长期记忆架构
+
+2026-08-21 外部研究与 DeerFlow 代码审计确认：一个账号应对应一个平台无关的 `AccountBrain` 作用域，
+而不是一个持续膨胀、可随意改写的大 Skill。结构化台账保存稳定事实，账号资料库保存经历与证据，私有
+Account Skill 只做可重建的程序性投影，本轮任务只加载有界上下文。逻辑账号先于抖音等平台登录，平台
+绑定只增加数据和执行通道。详见 `audits/A124-account-brain-memory-and-skill-architecture.md` 与
+`decisions/ADR-037-logical-account-scoped-account-brain.md`。
+
+## A125 逻辑账号编排实施与起号计划接线
+
+2026-08-21 新增正式 `LogicalAccountRef`、`0015` 迁移、Gateway 可信线程绑定和完整账号工件隔离。
+旧平台账号被稳定回填到 legacy 逻辑账号，旧工件继续保留原 canonical ID 与父引用。同一用户、同一项目
+的两个未登录账号拥有独立策略、地图、内容与计划；调用方伪造账号上下文失败关闭。
+
+`plan_account_launch` 与 `confirm_account_launch_plan` 已作为明确请求才调用的可选 Lead 能力接入。计划
+必须读取同逻辑账号的已确认路线和冻结地图，不改变定位、不阻断单条选题，也不承诺起号成功。开发者侧
+安装的两项科研 Skill 只服务 Codex 研究审计，没有进入产品运行时。聚焦账号/计划回归 `31 passed`，
+Gateway 回归 `226 passed, 1 warning`，迁移回归 `29 passed`。Account Skill 投影及真实模型双账号全链
+仍待后续验收。正式认证环境的全量非 live 回归为 `12379 passed, 75 skipped, 17 warnings`，退出码 `0`。
+详见 `audits/A125-logical-account-orchestration-implementation.md`。

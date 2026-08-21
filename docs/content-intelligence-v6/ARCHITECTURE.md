@@ -12,14 +12,17 @@
 ```mermaid
 flowchart LR
     USER["用户或定时任务"] --> LEAD["DeerFlow Lead"]
-    LEAD --> OPPORTUNITY["语义 / 候选内容机会地图"]
+    LEAD --> ACCOUNT["平台无关 LogicalAccountRef"]
+    ACCOUNT --> OPPORTUNITY["语义 / 候选内容机会地图"]
     BENCH["可选对标账号只读证据"] --> PROPOSAL["2 至 5 条账号路线提案"]
     FACTS["项目 / 可选账号 / 受众 / 复盘事实"] --> PROPOSAL
     OPPORTUNITY --> PROPOSAL
     PROPOSAL --> RECOMMEND["Agent 推荐并说明依据"]
     RECOMMEND --> CHOICE["用户选择"]
     CHOICE --> STRATEGY["已确认账号孵化判断 vN"]
+    STRATEGY --> LAUNCH["可选 7/30 天 AccountLaunchPlan"]
     STRATEGY --> CONTENT["内容循环"]
+    LAUNCH --> CONTENT
     OPPORTUNITY --> CONTENT
     TOPIC_EVIDENCE["热点 / 人物 / 事件 / 作品资料"] --> CONTENT
     CONTENT --> MEDIA["MediaKit 感知与制作"]
@@ -36,6 +39,8 @@ flowchart LR
 复盘也不得自行重选内容根或修改共享业务真相。只有账号孵化判断层能形成长期路线，并通过新版本
 响应新证据。首次起号先给 2 至 5 条完整候选路线；Agent 的推荐不是用户确认，只有用户选择后
 才形成可供后续选题读取的 `confirmed` 版本。项目级提案和确认都不要求先绑定或登录平台账号。
+逻辑账号在首次孵化时即可创建，一个逻辑账号随后可以连接多个平台账号；平台授权不会重建此前战略、
+地图或计划。7/30 天计划只在用户明确要求时生成，不是 TopicBrief 的前置门。
 完整决策、产物合同、硬门边界和迁移原则见
 [`ADR-018`](decisions/ADR-018-artifact-graph-orchestration.md)；工作包与验收顺序见
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)。
@@ -58,8 +63,8 @@ Lead 不直接看全量抖音 Child，当前只注册一个高层对标候选工
 搜索语、目标作者显示名和样本上限，内部复用 DomainRouter 与候选聚合器。未选项目时
 返回只读证据；选中项目时，项目 ID 由 Gateway 上下文转发，所有者始终从服务端认证
 身份解析并在平台请求前检查。项目写入失败不会丢弃已采集证据，但会显式标记未保存。
-Gateway 已提供 owner-scoped 项目创建、读取、线程绑定和解绑 API；运行请求中的项目 ID 被视为
-不可信输入并清除，`start_run` 只重水化线程上的服务端绑定。前端项目选择器仍属 W07，真实抖音
+Gateway 已提供 owner-scoped 项目与逻辑账号创建、读取、线程绑定和解绑 API；运行请求中的项目/账号
+ID 被视为不可信输入并清除，`start_run` 只重水化线程上的服务端绑定。前端项目选择器仍属 W07，真实抖音
 凭据验收仍是 W02 未完成项。
 
 ### 资料证据、对标证据与媒体感知
@@ -131,6 +136,8 @@ flowchart LR
     ROUTES --> WAIT["等待用户选择"]
     WAIT -->|"精确 option_id"| CONFIRM["confirm_account_strategy"]
     CONFIRM --> STRATEGY["confirmed IncubationJudgment vN"]
+    STRATEGY -->|"用户明确要求"| LAUNCHPLAN["可选 AccountLaunchPlan"]
+    LAUNCHPLAN -. "选择计划题眼，仍须取证" .-> NAMED
     TOOL --> SEM["业务语义专家"]
     TOOL --> LEX["词义世界专家"]
     SEM -->|"lexical_head"| EVIDENCE["可选本地词义证据"]

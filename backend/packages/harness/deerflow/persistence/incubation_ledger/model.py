@@ -30,12 +30,44 @@ class IncubationProjectRow(Base):
     __table_args__ = (Index("ix_incubation_projects_owner_updated", "owner_user_id", "updated_at"),)
 
 
+class IncubationLogicalAccountRow(Base):
+    __tablename__ = "incubation_logical_accounts"
+
+    owner_user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    logical_account_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utc_now,
+        onupdate=_utc_now,
+    )
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_user_id", "project_id"],
+            ["incubation_projects.owner_user_id", "incubation_projects.project_id"],
+            name="fk_incubation_logical_accounts_project",
+            ondelete="CASCADE",
+        ),
+        Index(
+            "ix_incubation_logical_accounts_project_updated",
+            "owner_user_id",
+            "project_id",
+            "updated_at",
+        ),
+    )
+
+
 class IncubationPlatformAccountRow(Base):
     __tablename__ = "incubation_platform_accounts"
 
     owner_user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     project_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     account_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    logical_account_id: Mapped[str] = mapped_column(String(64), nullable=False)
     platform: Mapped[str] = mapped_column(String(32), nullable=False)
     external_account_id: Mapped[str] = mapped_column(String(255), nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -54,6 +86,16 @@ class IncubationPlatformAccountRow(Base):
             name="fk_incubation_accounts_project",
             ondelete="CASCADE",
         ),
+        ForeignKeyConstraint(
+            ["owner_user_id", "project_id", "logical_account_id"],
+            [
+                "incubation_logical_accounts.owner_user_id",
+                "incubation_logical_accounts.project_id",
+                "incubation_logical_accounts.logical_account_id",
+            ],
+            name="fk_incubation_platform_accounts_logical_account",
+            ondelete="RESTRICT",
+        ),
         Index(
             "ix_incubation_accounts_owner_platform",
             "owner_user_id",
@@ -68,6 +110,7 @@ class IncubationArtifactRow(Base):
     artifact_id: Mapped[str] = mapped_column(String(80), primary_key=True)
     owner_user_id: Mapped[str] = mapped_column(String(64), nullable=False)
     project_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    logical_account_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     account_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     account_platform: Mapped[str | None] = mapped_column(String(32), nullable=True)
     artifact_type: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -89,6 +132,16 @@ class IncubationArtifactRow(Base):
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
+            ["owner_user_id", "project_id", "logical_account_id"],
+            [
+                "incubation_logical_accounts.owner_user_id",
+                "incubation_logical_accounts.project_id",
+                "incubation_logical_accounts.logical_account_id",
+            ],
+            name="fk_incubation_artifacts_logical_account",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
             ["owner_user_id", "project_id", "account_id"],
             [
                 "incubation_platform_accounts.owner_user_id",
@@ -108,6 +161,13 @@ class IncubationArtifactRow(Base):
             "ix_incubation_artifacts_project_type",
             "owner_user_id",
             "project_id",
+            "artifact_type",
+        ),
+        Index(
+            "ix_incubation_artifacts_logical_account_type",
+            "owner_user_id",
+            "project_id",
+            "logical_account_id",
             "artifact_type",
         ),
         Index(

@@ -8,10 +8,12 @@ from deerflow.config.database_config import DatabaseConfig
 from deerflow.incubation import (
     ArtifactEnvelope,
     IncubationLedgerRepository,
+    LogicalAccountRef,
     MediaKitExecutionReceipt,
     MediaObservationSnapshot,
     MediaSourceReceipt,
     MissingAccountError,
+    MissingLogicalAccountError,
     MissingParentArtifactError,
     PlatformAccountRef,
     ProjectRef,
@@ -56,12 +58,26 @@ def _account(
     )
 
 
+def _logical_account(
+    *,
+    owner: str = "user-1",
+    project_id: str = "project-1",
+    logical_account_id: str = "account-brain-1",
+) -> LogicalAccountRef:
+    return LogicalAccountRef(
+        owner_user_id=owner,
+        project_id=project_id,
+        logical_account_id=logical_account_id,
+    )
+
+
 def _artifact(
     *,
     project: ProjectRef | None = None,
     artifact_type: str = "content_world",
     payload: dict | None = None,
     account: PlatformAccountRef | None = None,
+    logical_account: LogicalAccountRef | None = None,
     parents=(),
     evidence_role: str | None = None,
 ) -> ArtifactEnvelope:
@@ -71,6 +87,7 @@ def _artifact(
         version=1,
         payload=payload or {"content_root": "礼与人与人相处"},
         account=account,
+        logical_account=logical_account,
         parents=parents,
         evidence_role=evidence_role,
         created_at=NOW,
@@ -116,6 +133,26 @@ def test_artifact_rejects_cross_owner_account_and_parent() -> None:
         _artifact(parents=(parent.to_parent_ref(),))
 
 
+def test_artifact_rejects_cross_logical_account_lineage() -> None:
+    first = _logical_account(logical_account_id="golden-gift")
+    second = _logical_account(logical_account_id="fruit-store")
+    parent = _artifact(logical_account=first)
+
+    with pytest.raises(ValidationError, match="parent logical account must match"):
+        _artifact(
+            logical_account=second,
+            parents=(parent.to_parent_ref(),),
+        )
+
+
+def test_logical_account_is_part_of_artifact_identity() -> None:
+    first = _artifact(logical_account=_logical_account(logical_account_id="golden-gift"))
+    second = _artifact(logical_account=_logical_account(logical_account_id="fruit-store"))
+
+    assert first.content_sha256 == second.content_sha256
+    assert first.artifact_id != second.artifact_id
+
+
 @pytest.mark.parametrize(
     "payload",
     [
@@ -137,8 +174,11 @@ async def test_projects_and_accounts_are_owner_scoped(tmp_path) -> None:
 
     await repo.create_project(alice, display_name="Alice IP")
     await repo.create_project(bob, display_name="Bob IP")
+    alice_brain = _logical_account(owner="alice", project_id="shared-name")
+    await repo.create_logical_account(alice_brain, display_name="Alice main account")
     await repo.connect_account(
         _account(owner="alice", project_id="shared-name"),
+        logical_account=alice_brain,
         external_account_id="alice-open-id",
         display_name="Alice Douyin",
     )
@@ -148,6 +188,22 @@ async def test_projects_and_accounts_are_owner_scoped(tmp_path) -> None:
     assert await repo.get_project(_project(owner="mallory", project_id="shared-name")) is None
     assert await repo.get_account(_account(owner="alice", project_id="shared-name")) is not None
     assert await repo.get_account(_account(owner="bob", project_id="shared-name")) is None
+
+
+@pytest.mark.asyncio
+async def test_logical_accounts_exist_before_platform_login_and_are_project_scoped(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project()
+    await repo.create_project(project, display_name="Two account portfolio")
+    golden = _logical_account(logical_account_id="golden-gift")
+    fruit = _logical_account(logical_account_id="fruit-store")
+
+    await repo.create_logical_account(golden, display_name="Golden Gift")
+    await repo.create_logical_account(fruit, display_name="Fruit Store")
+
+    assert await repo.get_logical_account(golden) is not None
+    assert await repo.get_logical_account(fruit) is not None
+    assert [record.logical_account.logical_account_id for record in await repo.list_logical_accounts(project)] == ["fruit-store", "golden-gift"]
 
 
 @pytest.mark.asyncio
@@ -168,10 +224,26 @@ async def test_artifact_write_requires_bound_account_and_existing_parent(tmp_pat
     repo = await _make_repo(tmp_path)
     project = _project()
     await repo.create_project(project, display_name="Golden Gift")
+    logical_account = _logical_account()
+    await repo.create_logical_account(logical_account, display_name="Golden Gift")
 
     unbound_account = _account()
     with pytest.raises(MissingAccountError):
-        await repo.put_artifact(_artifact(project=project, account=unbound_account))
+        await repo.put_artifact(
+            _artifact(
+                project=project,
+                account=unbound_account,
+                logical_account=logical_account,
+            )
+        )
+
+    with pytest.raises(MissingLogicalAccountError):
+        await repo.put_artifact(
+            _artifact(
+                project=project,
+                logical_account=_logical_account(logical_account_id="missing"),
+            )
+        )
 
     missing_parent = _artifact(project=project).to_parent_ref()
     child = _artifact(
@@ -189,20 +261,28 @@ async def test_artifact_lineage_is_owner_scoped_and_idempotent(tmp_path) -> None
     repo = await _make_repo(tmp_path)
     project = _project()
     account = _account()
+    logical_account = _logical_account()
     await repo.create_project(project, display_name="Golden Gift")
+    await repo.create_logical_account(logical_account, display_name="Golden Gift")
     await repo.connect_account(
         account,
+        logical_account=logical_account,
         external_account_id="douyin-open-id-1",
         display_name="Golden Gift Douyin",
     )
 
-    parent = _artifact(project=project, account=account)
+    parent = _artifact(
+        project=project,
+        account=account,
+        logical_account=logical_account,
+    )
     first = await repo.put_artifact(parent)
     replay = await repo.put_artifact(parent)
     child = _artifact(
         project=project,
         artifact_type="topic_brief",
         account=account,
+        logical_account=logical_account,
         payload={"question": "美国收到自由女神意味着什么？"},
         parents=(parent.to_parent_ref(),),
     )
@@ -212,6 +292,43 @@ async def test_artifact_lineage_is_owner_scoped_and_idempotent(tmp_path) -> None
     assert stored_child.parents == (parent.to_parent_ref(),)
     assert await repo.get_artifact(parent.artifact_id, owner_user_id="user-1") == parent
     assert await repo.get_artifact(parent.artifact_id, owner_user_id="user-2") is None
+
+
+@pytest.mark.asyncio
+async def test_account_scoped_artifact_queries_do_not_mix_two_logical_accounts(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project()
+    golden = _logical_account(logical_account_id="golden-gift")
+    fruit = _logical_account(logical_account_id="fruit-store")
+    await repo.create_project(project, display_name="Portfolio")
+    await repo.create_logical_account(golden, display_name="Golden Gift")
+    await repo.create_logical_account(fruit, display_name="Fruit Store")
+
+    golden_strategy = _artifact(
+        project=project,
+        artifact_type="incubation_judgment",
+        payload={"route": "人情世故"},
+        logical_account=golden,
+    )
+    fruit_strategy = _artifact(
+        project=project,
+        artifact_type="incubation_judgment",
+        payload={"route": "水果世界"},
+        logical_account=fruit,
+    )
+    await repo.put_artifact(golden_strategy)
+    await repo.put_artifact(fruit_strategy)
+
+    assert await repo.list_artifacts(
+        project,
+        logical_account=golden,
+        artifact_type="incubation_judgment",
+    ) == [golden_strategy]
+    assert await repo.list_artifacts(
+        project,
+        logical_account=fruit,
+        artifact_type="incubation_judgment",
+    ) == [fruit_strategy]
 
 
 @pytest.mark.asyncio

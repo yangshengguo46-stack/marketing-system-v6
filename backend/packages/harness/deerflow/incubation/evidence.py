@@ -13,6 +13,7 @@ from deerflow.incubation.contracts import (
     ArtifactParentRef,
     EvidenceRole,
     IncubationContract,
+    LogicalAccountRef,
     NonEmptyStr,
     PlatformAccountRef,
     ProjectRef,
@@ -170,6 +171,7 @@ def seal_evidence_snapshot(
     snapshot: EvidenceSnapshot,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
     parents: tuple[ArtifactParentRef, ...] = (),
 ) -> ArtifactEnvelope:
@@ -178,6 +180,7 @@ def seal_evidence_snapshot(
         artifact_type="evidence_snapshot",
         version=1,
         payload=snapshot.model_dump(mode="json"),
+        logical_account=logical_account,
         account=account,
         parents=parents,
         evidence_role=snapshot.evidence_role,

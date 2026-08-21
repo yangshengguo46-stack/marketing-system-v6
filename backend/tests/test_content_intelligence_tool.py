@@ -420,10 +420,19 @@ async def test_confirmed_topic_context_rehydrates_the_exact_map_bound_to_the_jud
     from datetime import UTC, datetime
 
     from deerflow.content_intelligence import ComprehensionRecord, ContentIntelligenceBundle, ContentWorldView, SourceItem
-    from deerflow.incubation import ArtifactEnvelope, ProjectRef, seal_content_run_artifacts
+    from deerflow.incubation import (
+        ArtifactEnvelope,
+        ProjectRef,
+        implicit_thread_logical_account_ref,
+        seal_content_run_artifacts,
+    )
 
     now = datetime(2026, 8, 20, 8, 0, tzinfo=UTC)
     project = ProjectRef(owner_user_id="user-1", project_id="old-books")
+    logical_account = implicit_thread_logical_account_ref(
+        project=project,
+        thread_id="thread-1",
+    )
     record = ComprehensionRecord(
         record_id="record-old-books",
         subject_expression="我是开旧书店的",
@@ -452,6 +461,7 @@ async def test_confirmed_topic_context_rehydrates_the_exact_map_bound_to_the_jud
         created_at=now,
         source_thread_id="thread-original",
         source_run_id="run-original",
+        logical_account=logical_account,
     )
     judgment = ArtifactEnvelope.seal(
         project=project,
@@ -464,6 +474,7 @@ async def test_confirmed_topic_context_rehydrates_the_exact_map_bound_to_the_jud
             "alternatives": [],
         },
         parents=(artifacts.content_world.to_parent_ref(),),
+        logical_account=logical_account,
         created_at=now,
         source_thread_id="thread-confirmation",
         source_run_id="run-confirmation",

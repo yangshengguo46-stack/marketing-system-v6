@@ -12,6 +12,7 @@ from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
     IncubationContract,
+    LogicalAccountRef,
     NonEmptyStr,
     ProjectRef,
 )
@@ -312,6 +313,7 @@ def seal_format_decision(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
     resource_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
 ) -> ArtifactEnvelope:
@@ -358,6 +360,7 @@ def seal_format_decision(
         artifact_type="format_decision",
         version=1,
         payload=decision.model_dump(mode="json"),
+        logical_account=logical_account,
         parents=parents,
         created_at=created_at,
         source_thread_id=source_thread_id,

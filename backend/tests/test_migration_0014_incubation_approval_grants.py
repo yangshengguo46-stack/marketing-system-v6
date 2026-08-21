@@ -44,7 +44,7 @@ async def test_0014_adds_incubation_approval_grants_to_versioned_database(tmp_pa
         columns = {row[1]: row for row in connection.execute("PRAGMA table_info(incubation_approval_grants)").fetchall()}
         foreign_keys = connection.execute("PRAGMA foreign_key_list(incubation_approval_grants)").fetchall()
 
-    assert version == ("0014_incubation_approval_grants",)
+    assert version == ("0015_incubation_logical_accounts",)
     assert {
         "grant_id",
         "owner_user_id",

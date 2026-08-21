@@ -37,12 +37,14 @@ from deerflow.incubation import (
     ArtifactEnvelope,
     EvidenceSnapshot,
     FormatDecision,
+    LogicalAccountRef,
     PreparedAccountStrategy,
     ProductionPlan,
     ProjectRef,
     generate_adapted_draft,
     generate_format_decision,
     generate_production_plan,
+    implicit_thread_logical_account_ref,
     seal_content_run_artifacts,
     seal_evidence_snapshot,
     select_current_account_strategy,
@@ -81,6 +83,30 @@ _DIRECT_FETCH_MAX_BYTES = 2_000_000
 _DIRECT_FETCH_MAX_REDIRECTS = 3
 _DIRECT_FETCH_USER_AGENT = "Mozilla/5.0 (compatible; DeerFlowContentResearch/1.0)"
 _direct_readability_extractor = ReadabilityExtractor()
+
+
+def _runtime_logical_account(
+    runtime: Runtime,
+    *,
+    project: ProjectRef,
+) -> LogicalAccountRef | None:
+    logical_account_id = _runtime_context_text(
+        runtime,
+        "incubation_logical_account_id",
+    )
+    if logical_account_id is not None:
+        return LogicalAccountRef(
+            owner_user_id=project.owner_user_id,
+            project_id=project.project_id,
+            logical_account_id=logical_account_id,
+        )
+    thread_id = _runtime_context_text(runtime, "thread_id")
+    if thread_id is None:
+        return None
+    return implicit_thread_logical_account_ref(
+        project=project,
+        thread_id=thread_id,
+    )
 
 
 class ToolAnalysisFocus(StrEnum):
@@ -137,6 +163,9 @@ async def _persist_content_run(
             owner_user_id=owner_user_id,
             project_id=project_id,
         )
+        logical_account = _runtime_logical_account(runtime, project=project)
+        if logical_account is None:
+            return failure
         repository = _get_incubation_repository()
         if repository is None or await repository.get_project(project) is None:
             return failure
@@ -151,6 +180,7 @@ async def _persist_content_run(
                 snapshot=snapshot,
                 source_thread_id=thread_id,
                 source_run_id=run_id,
+                logical_account=logical_account,
             )
             evidence_artifacts[artifact.artifact_id] = artifact
         stored_receipts: list[dict[str, str]] = []
@@ -173,6 +203,7 @@ async def _persist_content_run(
             created_at=created_at,
             source_thread_id=thread_id,
             source_run_id=run_id,
+            logical_account=logical_account,
             reading_parents=tuple(evidence_parents),
             incubation_judgment_artifact=incubation_judgment_artifact,
         )
@@ -192,6 +223,7 @@ async def _persist_content_run(
             try:
                 resource_artifacts = await repository.list_artifacts(
                     project,
+                    logical_account=logical_account,
                     artifact_type="media_observation",
                     evidence_role="user_material",
                 )
@@ -208,6 +240,7 @@ async def _persist_content_run(
                     created_at=created_at,
                     source_thread_id=thread_id,
                     source_run_id=run_id,
+                    logical_account=logical_account,
                 )
                 format_artifact = await repository.put_artifact(format_artifact)
                 stored_receipts.append(_artifact_receipt(format_artifact))
@@ -221,6 +254,7 @@ async def _persist_content_run(
                     created_at=created_at,
                     source_thread_id=thread_id,
                     source_run_id=run_id,
+                    logical_account=logical_account,
                 )
                 adapted_artifact = await repository.put_artifact(adapted_artifact)
                 stored_receipts.append(_artifact_receipt(adapted_artifact))
@@ -236,6 +270,7 @@ async def _persist_content_run(
                         created_at=created_at,
                         source_thread_id=thread_id,
                         source_run_id=run_id,
+                        logical_account=logical_account,
                     )
                     production_artifact = await repository.put_artifact(production_artifact)
                     stored_receipts.append(_artifact_receipt(production_artifact))
@@ -249,6 +284,7 @@ async def _persist_content_run(
         result: dict[str, Any] = {
             "status": "stored",
             "project_id": project_id,
+            "logical_account_id": logical_account.logical_account_id,
             "artifacts": stored_receipts,
         }
         if answer_sections:
@@ -278,14 +314,19 @@ async def _load_current_account_strategy(
     if repository is None:
         return None
     project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    logical_account = _runtime_logical_account(runtime, project=project)
+    if logical_account is None:
+        return None
     if await repository.get_project(project) is None:
         return None
     artifacts = await repository.list_artifacts(
         project,
+        logical_account=logical_account,
         artifact_type="incubation_judgment",
     )
     return select_current_account_strategy(
         artifacts,
+        logical_account=logical_account,
         content_map_version_id=world.content_map_version_id(),
         require_confirmed=True,
     )
@@ -322,12 +363,19 @@ async def _load_confirmed_topic_context(
     if repository is None:
         return None
     project = ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+    logical_account = _runtime_logical_account(runtime, project=project)
+    if logical_account is None:
+        return None
     if await repository.get_project(project) is None:
         return None
 
-    artifacts = await repository.list_artifacts(project)
+    artifacts = await repository.list_artifacts(
+        project,
+        logical_account=logical_account,
+    )
     strategy = select_current_account_strategy(
         artifacts,
+        logical_account=logical_account,
         require_confirmed=True,
     )
     if strategy is None:

@@ -112,6 +112,7 @@ def test_builder_has_no_model_questionnaire_or_guess_inputs() -> None:
         "created_at",
         "source_thread_id",
         "source_run_id",
+        "logical_account",
         "prohibited_assumptions",
     }
     assert "langchain" not in module_source

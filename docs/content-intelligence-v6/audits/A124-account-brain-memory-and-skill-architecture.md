@@ -16,6 +16,8 @@ sources:
   - backend/packages/harness/deerflow/agents/thread_state.py
   - backend/packages/harness/deerflow/incubation/contracts.py
   - backend/packages/harness/deerflow/persistence/incubation_ledger/model.py
+  - backend/packages/harness/deerflow/persistence/migrations/versions/0015_incubation_logical_accounts.py
+  - backend/app/gateway/routers/incubation_projects.py
 ---
 
 # A124 账号脑、账号 Skill 与长期记忆架构审计
@@ -103,7 +105,7 @@ LogicalAccountRef(owner_user_id, project_id, logical_account_id)
 同一个 IP 可以随后绑定抖音、小红书或 TikTok；平台授权只是执行与数据连接，不重新定义此前账号资产。
 线程中的 `logical_account_id` 必须由服务端可信上下文注入，不能由模型或前端任意伪造。
 
-## DeerFlow 现状与缺口
+## DeerFlow 实施状态与缺口
 
 现有 DeerFlow 已具备：
 
@@ -111,16 +113,22 @@ LogicalAccountRef(owner_user_id, project_id, logical_account_id)
 - Skill 校验、写入、发现、激活、历史和回滚；
 - 线程状态、工件台账与项目级查询。
 
-尚缺：
+2026-08-21 已完成：
 
-- Skill 和工件的 `logical_account_id` 隔离；
-- 未绑定平台时的正式 `LogicalAccountRef`；
-- 按可信账号 ID 确定性加载唯一账号 Skill；
+- 未绑定平台时创建正式 `LogicalAccountRef`；
+- 账号策略、内容、形式、适配、制作和起号计划工件的 `logical_account_id` 隔离；
+- Gateway 从可信线程元数据注入账号，剥离调用方伪造字段；
+- 同一线程可在同项目内切换账号，解绑项目时同步清理账号；
+- 旧平台账号稳定回填至 legacy 逻辑账号，旧工件保持原 ID 与父引用。
+
+仍缺：
+
+- 按可信账号 ID 确定性生成和加载唯一只读 Account Skill 投影；
 - 账号 Skill 与源工件版本/hash 不一致时的重建；
-- 同一线程切换账号时清理旧账号上下文。
+- 真实模型完成未登录双账号的“定位 -> 地图 -> 计划 -> TopicBrief”全链验收。
 
-因此不能直接把账号资料写进现有用户级 Skill。最小实现应先增加逻辑账号，再让现有私有 Skill 存储
-承载确定性命名的 `account-{logical_account_id}` 投影。
+因此仍不能直接把账号资料写进现有用户级 Skill。下一切片只允许现有私有 Skill 存储承载确定性命名、
+可从台账重建的 `account-{logical_account_id}` 只读投影。
 
 ## 学习提升规则
 
@@ -141,7 +149,8 @@ LogicalAccountRef(owner_user_id, project_id, logical_account_id)
 `AccountLaunchPlan` 属于语义层的版本化运营状态，不属于 Skill 正文。Skill 只说明如何读取、执行和复盘
 计划。计划中的每个真正拍摄题仍须生成独立 `TopicBrief`，发布结果再进入情景层。
 
-在 `LogicalAccountRef`、账号隔离和投影边界完成前，现有起号计划实现只能保持隔离实验，不能接入 Lead。
+`LogicalAccountRef`、账号隔离和可信线程绑定已完成，因此起号计划可以作为明确请求才调用的可选 Lead
+能力接入。它不是默认阶段，不阻断单条选题；账号 Skill 投影完成前，它仍只从结构化台账读取父工件。
 
 ## 验收
 

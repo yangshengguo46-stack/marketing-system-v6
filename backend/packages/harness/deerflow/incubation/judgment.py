@@ -9,6 +9,7 @@ from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
     IncubationContract,
+    LogicalAccountRef,
     NonEmptyStr,
     PlatformAccountRef,
     ProjectRef,
@@ -256,6 +257,7 @@ def seal_incubation_brief(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     parents: tuple[ArtifactParentRef, ...] = (),
 ) -> ArtifactEnvelope:
     parent_ids = {parent.artifact_id for parent in parents}
@@ -268,6 +270,7 @@ def seal_incubation_brief(
         artifact_type="incubation_brief",
         version=1,
         payload=brief.model_dump(mode="json"),
+        logical_account=logical_account,
         parents=parents,
         created_at=created_at,
         source_thread_id=source_thread_id,
@@ -284,6 +287,7 @@ def seal_incubation_judgment(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
     evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
     previous_judgment_artifact: ArtifactEnvelope | None = None,
@@ -316,6 +320,8 @@ def seal_incubation_judgment(
         )
         if previous_judgment_artifact.account != account:
             raise ValueError("previous judgment account must match revised judgment account")
+        if previous_judgment_artifact.logical_account != logical_account:
+            raise ValueError("previous judgment logical account must match revised judgment logical account")
         if judgment.supersedes_judgment_artifact_id != previous_judgment_artifact.artifact_id:
             raise ValueError("previous judgment id must match supersedes_judgment_artifact_id")
         previous_judgment = IncubationJudgment.model_validate(previous_judgment_artifact.payload)
@@ -341,6 +347,7 @@ def seal_incubation_judgment(
         artifact_type="incubation_judgment",
         version=judgment.revision_number,
         payload=judgment.model_dump(mode="json"),
+        logical_account=logical_account,
         account=account,
         parents=tuple(artifact.to_parent_ref() for artifact in parent_artifacts),
         created_at=created_at,

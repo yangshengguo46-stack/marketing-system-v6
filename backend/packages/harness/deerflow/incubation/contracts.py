@@ -26,6 +26,7 @@ EvidenceRole = Literal[
 # the selected project but can only change it through the owner-checked
 # incubation binding API.
 INCUBATION_PROJECT_ID_KEY = "incubation_project_id"
+INCUBATION_LOGICAL_ACCOUNT_ID_KEY = "incubation_logical_account_id"
 
 _SENSITIVE_FIELD_NAMES = frozenset(
     {
@@ -83,6 +84,10 @@ class ProjectRef(IncubationContract):
     project_id: NonEmptyStr = Field(max_length=64)
 
 
+class LogicalAccountRef(ProjectRef):
+    logical_account_id: NonEmptyStr = Field(max_length=64)
+
+
 class PlatformAccountRef(ProjectRef):
     account_id: NonEmptyStr = Field(max_length=64)
     platform: NonEmptyStr = Field(max_length=32)
@@ -92,6 +97,7 @@ class ArtifactParentRef(ProjectRef):
     artifact_id: NonEmptyStr = Field(max_length=80)
     artifact_type: NonEmptyStr = Field(max_length=128)
     content_sha256: str = Field(min_length=64, max_length=64)
+    logical_account_id: NonEmptyStr | None = Field(default=None, max_length=64)
 
     @field_validator("content_sha256")
     @classmethod
@@ -108,8 +114,16 @@ class ProjectRecord(IncubationContract):
     updated_at: datetime
 
 
+class LogicalAccountRecord(IncubationContract):
+    logical_account: LogicalAccountRef
+    display_name: NonEmptyStr = Field(max_length=255)
+    created_at: datetime
+    updated_at: datetime
+
+
 class PlatformAccountRecord(IncubationContract):
     account: PlatformAccountRef
+    logical_account: LogicalAccountRef
     external_account_id: NonEmptyStr = Field(max_length=255)
     display_name: NonEmptyStr = Field(max_length=255)
     created_at: datetime
@@ -123,6 +137,7 @@ class ArtifactEnvelope(IncubationContract):
     version: int = Field(ge=1)
     payload: dict[str, JsonValue]
     content_sha256: str = Field(min_length=64, max_length=64)
+    logical_account: LogicalAccountRef | None = None
     account: PlatformAccountRef | None = None
     parents: tuple[ArtifactParentRef, ...] = ()
     evidence_role: EvidenceRole | None = None
@@ -147,11 +162,15 @@ class ArtifactEnvelope(IncubationContract):
     @model_validator(mode="after")
     def validate_integrity(self) -> ArtifactEnvelope:
         _reject_sensitive_fields(self.payload)
+        if self.logical_account is not None and (self.logical_account.owner_user_id != self.project.owner_user_id or self.logical_account.project_id != self.project.project_id):
+            raise ValueError("logical account owner and project must match artifact project")
         if self.account is not None and (self.account.owner_user_id != self.project.owner_user_id or self.account.project_id != self.project.project_id):
             raise ValueError("account owner and project must match artifact project")
         for parent in self.parents:
             if parent.owner_user_id != self.project.owner_user_id or parent.project_id != self.project.project_id:
                 raise ValueError("parent owner and project must match artifact project")
+            if parent.logical_account_id is not None and (self.logical_account is None or parent.logical_account_id != self.logical_account.logical_account_id):
+                raise ValueError("parent logical account must match artifact logical account")
 
         expected_content_sha = _sha256(self.payload)
         if self.content_sha256 != expected_content_sha:
@@ -161,6 +180,7 @@ class ArtifactEnvelope(IncubationContract):
             artifact_type=self.artifact_type,
             version=self.version,
             content_sha256=self.content_sha256,
+            logical_account=self.logical_account,
             account=self.account,
             parents=self.parents,
             evidence_role=self.evidence_role,
@@ -181,6 +201,7 @@ class ArtifactEnvelope(IncubationContract):
         source_thread_id: str,
         source_run_id: str,
         account: PlatformAccountRef | None = None,
+        logical_account: LogicalAccountRef | None = None,
         parents: tuple[ArtifactParentRef, ...] = (),
         evidence_role: EvidenceRole | None = None,
     ) -> ArtifactEnvelope:
@@ -191,6 +212,7 @@ class ArtifactEnvelope(IncubationContract):
             artifact_type=artifact_type,
             version=version,
             content_sha256=content_sha256,
+            logical_account=logical_account,
             account=account,
             parents=canonical_parents,
             evidence_role=evidence_role,
@@ -202,6 +224,7 @@ class ArtifactEnvelope(IncubationContract):
             version=version,
             payload=payload,
             content_sha256=content_sha256,
+            logical_account=logical_account,
             account=account,
             parents=canonical_parents,
             evidence_role=evidence_role,
@@ -217,19 +240,22 @@ class ArtifactEnvelope(IncubationContract):
         artifact_type: str,
         version: int,
         content_sha256: str,
+        logical_account: LogicalAccountRef | None,
         account: PlatformAccountRef | None,
         parents: tuple[ArtifactParentRef, ...],
         evidence_role: EvidenceRole | None,
     ) -> str:
-        identity = {
+        identity: dict[str, Any] = {
             "project": project.model_dump(mode="json"),
             "artifact_type": artifact_type.strip(),
             "version": version,
             "content_sha256": content_sha256,
             "account": account.model_dump(mode="json") if account is not None else None,
-            "parents": [parent.model_dump(mode="json") for parent in parents],
+            "parents": [parent.model_dump(mode="json", exclude_none=True) for parent in parents],
             "evidence_role": evidence_role,
         }
+        if logical_account is not None:
+            identity["logical_account"] = logical_account.model_dump(mode="json")
         return f"artifact_{_sha256(identity)}"
 
     def to_parent_ref(self) -> ArtifactParentRef:
@@ -239,4 +265,5 @@ class ArtifactEnvelope(IncubationContract):
             artifact_id=self.artifact_id,
             artifact_type=self.artifact_type,
             content_sha256=self.content_sha256,
+            logical_account_id=(self.logical_account.logical_account_id if self.logical_account is not None else None),
         )

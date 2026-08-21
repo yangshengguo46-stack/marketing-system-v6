@@ -1443,12 +1443,15 @@ def test_merge_run_context_overrides_does_not_trust_client_incubation_project():
         config,
         {
             "incubation_project_id": "project-1",
+            "incubation_logical_account_id": "logical-account-1",
             "incubation_owner_user_id": "spoofed-owner",
         },
     )
 
     assert "incubation_project_id" not in config["configurable"]
     assert "incubation_project_id" not in config["context"]
+    assert "incubation_logical_account_id" not in config["configurable"]
+    assert "incubation_logical_account_id" not in config["context"]
     assert "incubation_owner_user_id" not in config["configurable"]
     assert "incubation_owner_user_id" not in config["context"]
 
@@ -1481,6 +1484,31 @@ def test_inject_bound_incubation_project_context_clears_unbound_client_values():
     assert "incubation_project_id" not in config["context"]
 
 
+def test_inject_bound_incubation_logical_account_context_replaces_all_client_values():
+    from app.gateway.services import inject_bound_incubation_logical_account_context
+
+    config = {
+        "configurable": {
+            "thread_id": "thread-1",
+            "incubation_logical_account_id": "forged-configurable",
+        },
+        "context": {
+            "thread_id": "thread-1",
+            "incubation_logical_account_id": "forged-context",
+        },
+        "metadata": {
+            "incubation_logical_account_id": "forged-metadata",
+            "safe": "kept",
+        },
+    }
+
+    inject_bound_incubation_logical_account_context(config, "bound-account")
+
+    assert config["configurable"]["incubation_logical_account_id"] == "bound-account"
+    assert config["context"]["incubation_logical_account_id"] == "bound-account"
+    assert config["metadata"] == {"safe": "kept"}
+
+
 @pytest.mark.asyncio
 async def test_start_run_rehydrates_thread_project_and_overrides_client_forgery(
     _stub_app_config,
@@ -1505,7 +1533,10 @@ async def test_start_run_rehydrates_thread_project_and_overrides_client_forgery(
         user_id="user-1",
         metadata={"incubation_project_id": "bound-project"},
     )
-    ledger = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    ledger = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=None),
+    )
     request.app.state.incubation_ledger_repo = ledger
     captured = {}
 
@@ -1522,9 +1553,13 @@ async def test_start_run_rehydrates_thread_project_and_overrides_client_forgery(
                 config={
                     "context": {
                         "incubation_project_id": "forged-config-project",
+                        "incubation_logical_account_id": "forged-config-account",
                     }
                 },
-                context={"incubation_project_id": "forged-body-project"},
+                context={
+                    "incubation_project_id": "forged-body-project",
+                    "incubation_logical_account_id": "forged-body-account",
+                },
             ),
             "thread-project-bound",
             request,
@@ -1534,7 +1569,85 @@ async def test_start_run_rehydrates_thread_project_and_overrides_client_forgery(
 
     assert captured["config"]["context"]["incubation_project_id"] == "bound-project"
     assert captured["config"]["configurable"]["incubation_project_id"] == "bound-project"
+    assert "incubation_logical_account_id" not in captured["config"]["context"]
+    assert "incubation_logical_account_id" not in captured["config"]["configurable"]
     ledger.get_project.assert_awaited_once_with(ProjectRef(owner_user_id="user-1", project_id="bound-project"))
+
+
+@pytest.mark.asyncio
+async def test_start_run_rehydrates_logical_account_and_strips_every_forged_input(
+    _stub_app_config,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, patch
+
+    from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
+    from app.gateway.services import start_run
+    from deerflow.incubation.contracts import LogicalAccountRef, ProjectRef
+
+    request, _run_store, thread_store = _make_start_run_persistence_context()
+    request.state.user = SimpleNamespace(
+        id="user-1",
+        system_role="user",
+        oauth_provider=None,
+        oauth_id=None,
+    )
+    request.state.auth_source = AUTH_SOURCE_SESSION
+    await thread_store.create(
+        "thread-logical-account",
+        user_id="user-1",
+        metadata={
+            "incubation_project_id": "bound-project",
+            "incubation_logical_account_id": "bound-account",
+        },
+    )
+    ledger = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
+    request.app.state.incubation_ledger_repo = ledger
+    captured = {}
+
+    async def fake_run_agent(*_args, **kwargs):
+        captured["config"] = kwargs["config"]
+
+    with (
+        patch("app.gateway.services.resolve_agent_factory", return_value=object()),
+        patch("app.gateway.services._ensure_thread_metadata", new=AsyncMock()),
+        patch("app.gateway.services.run_agent", side_effect=fake_run_agent),
+    ):
+        record = await start_run(
+            _run_create_request(
+                config={
+                    "incubation_logical_account_id": "forged-config-root",
+                    "configurable": {
+                        "incubation_logical_account_id": "forged-configurable",
+                    },
+                },
+                context={
+                    "incubation_logical_account_id": "forged-body-context",
+                },
+                metadata={
+                    "incubation_logical_account_id": "forged-body-metadata",
+                },
+            ),
+            "thread-logical-account",
+            request,
+        )
+        assert record.task is not None
+        await record.task
+
+    assert captured["config"]["context"]["incubation_logical_account_id"] == "bound-account"
+    assert captured["config"]["configurable"]["incubation_logical_account_id"] == "bound-account"
+    assert "incubation_logical_account_id" not in captured["config"]["metadata"]
+    ledger.get_project.assert_awaited_once_with(ProjectRef(owner_user_id="user-1", project_id="bound-project"))
+    ledger.get_logical_account.assert_awaited_once_with(
+        LogicalAccountRef(
+            owner_user_id="user-1",
+            project_id="bound-project",
+            logical_account_id="bound-account",
+        )
+    )
 
 
 @pytest.mark.asyncio
@@ -1559,7 +1672,10 @@ async def test_start_run_binds_an_existing_implicit_thread_project(
     thread_id = "thread-implicit-project"
     await thread_store.create(thread_id, user_id="user-1", metadata={})
     expected_project = implicit_thread_project_ref(owner_user_id="user-1", thread_id=thread_id)
-    ledger = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    ledger = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=None),
+    )
     request.app.state.incubation_ledger_repo = ledger
     captured = {}
 
@@ -1584,6 +1700,121 @@ async def test_start_run_binds_an_existing_implicit_thread_project(
     thread = await thread_store.get(thread_id, user_id="user-1")
     assert thread["metadata"]["incubation_project_id"] == expected_project.project_id
     ledger.get_project.assert_awaited_once_with(expected_project)
+
+
+@pytest.mark.asyncio
+async def test_start_run_lazily_binds_an_existing_implicit_logical_account(
+    _stub_app_config,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, patch
+
+    from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
+    from app.gateway.services import start_run
+    from deerflow.incubation.contracts import ProjectRef
+    from deerflow.incubation.project_bootstrap import implicit_thread_logical_account_ref
+
+    request, _run_store, thread_store = _make_start_run_persistence_context()
+    request.state.user = SimpleNamespace(
+        id="user-1",
+        system_role="user",
+        oauth_provider=None,
+        oauth_id=None,
+    )
+    request.state.auth_source = AUTH_SOURCE_SESSION
+    thread_id = "thread-implicit-logical-account"
+    project = ProjectRef(owner_user_id="user-1", project_id="portfolio")
+    await thread_store.create(
+        thread_id,
+        user_id="user-1",
+        metadata={"incubation_project_id": project.project_id},
+    )
+    expected_account = implicit_thread_logical_account_ref(
+        project=project,
+        thread_id=thread_id,
+    )
+    ledger = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
+    request.app.state.incubation_ledger_repo = ledger
+    captured = {}
+
+    async def fake_run_agent(*_args, **kwargs):
+        captured["config"] = kwargs["config"]
+
+    with (
+        patch("app.gateway.services.resolve_agent_factory", return_value=object()),
+        patch("app.gateway.services._ensure_thread_metadata", new=AsyncMock()),
+        patch("app.gateway.services.run_agent", side_effect=fake_run_agent),
+    ):
+        record = await start_run(_run_create_request(), thread_id, request)
+        assert record.task is not None
+        await record.task
+
+    assert captured["config"]["context"]["incubation_logical_account_id"] == expected_account.logical_account_id
+    thread = await thread_store.get(thread_id, user_id="user-1")
+    assert thread["metadata"]["incubation_logical_account_id"] == expected_account.logical_account_id
+    ledger.get_logical_account.assert_awaited_once_with(expected_account)
+
+
+@pytest.mark.asyncio
+async def test_start_run_rejects_stale_or_cross_project_logical_account_before_agent(
+    _stub_app_config,
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, patch
+
+    from fastapi import HTTPException
+
+    from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
+    from app.gateway.services import start_run
+    from deerflow.incubation.contracts import LogicalAccountRef
+
+    request, _run_store, thread_store = _make_start_run_persistence_context()
+    request.state.user = SimpleNamespace(
+        id="user-1",
+        system_role="user",
+        oauth_provider=None,
+        oauth_id=None,
+    )
+    request.state.auth_source = AUTH_SOURCE_SESSION
+    await thread_store.create(
+        "thread-stale-logical-account",
+        user_id="user-1",
+        metadata={
+            "incubation_project_id": "current-project",
+            "incubation_logical_account_id": "account-from-another-project",
+        },
+    )
+    ledger = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=None),
+    )
+    request.app.state.incubation_ledger_repo = ledger
+    run_agent = AsyncMock()
+
+    with (
+        patch("app.gateway.services.resolve_agent_factory", return_value=object()),
+        patch("app.gateway.services.run_agent", run_agent),
+        pytest.raises(HTTPException) as exc_info,
+    ):
+        await start_run(
+            _run_create_request(),
+            "thread-stale-logical-account",
+            request,
+        )
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Thread logical account binding is stale or mismatched"
+    run_agent.assert_not_awaited()
+    ledger.get_logical_account.assert_awaited_once_with(
+        LogicalAccountRef(
+            owner_user_id="user-1",
+            project_id="current-project",
+            logical_account_id="account-from-another-project",
+        )
+    )
 
 
 @pytest.mark.asyncio

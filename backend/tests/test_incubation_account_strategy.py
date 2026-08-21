@@ -13,13 +13,25 @@ from deerflow.content_intelligence import (
 )
 from deerflow.incubation import (
     ArtifactEnvelope,
+    LogicalAccountRef,
     ProjectRef,
+    confirm_account_strategy,
     prepare_account_strategy,
     select_current_account_strategy,
 )
 
 NOW = datetime(2026, 8, 18, 8, 0, tzinfo=UTC)
 PROJECT = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+LOGICAL_ACCOUNT = LogicalAccountRef(
+    owner_user_id="user-1",
+    project_id="golden-gift",
+    logical_account_id="golden-gift-account",
+)
+SECOND_LOGICAL_ACCOUNT = LogicalAccountRef(
+    owner_user_id="user-1",
+    project_id="golden-gift",
+    logical_account_id="second-account",
+)
 
 
 class _MemoryRepository:
@@ -34,10 +46,18 @@ class _MemoryRepository:
         self,
         project: ProjectRef,
         *,
+        logical_account: LogicalAccountRef | None = None,
         artifact_type: str | None = None,
         evidence_role: str | None = None,
     ) -> list[ArtifactEnvelope]:
-        return [artifact for artifact in self.artifacts.values() if artifact.project == project and (artifact_type is None or artifact.artifact_type == artifact_type) and (evidence_role is None or artifact.evidence_role == evidence_role)]
+        return [
+            artifact
+            for artifact in self.artifacts.values()
+            if artifact.project == project
+            and (logical_account is None or artifact.logical_account == logical_account)
+            and (artifact_type is None or artifact.artifact_type == artifact_type)
+            and (evidence_role is None or artifact.evidence_role == evidence_role)
+        ]
 
 
 def _bundle() -> ContentIntelligenceBundle:
@@ -138,6 +158,7 @@ async def test_account_strategy_reuses_identical_inputs_and_versions_real_change
 
     first = await prepare_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         bundle=bundle,
         verbatim_user_request="我是做黄金礼品的，我要怎么起号？",
@@ -150,6 +171,7 @@ async def test_account_strategy_reuses_identical_inputs_and_versions_real_change
 
     repeated = await prepare_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         bundle=bundle,
         verbatim_user_request="我是做黄金礼品的，我要怎么起号？",
@@ -161,6 +183,7 @@ async def test_account_strategy_reuses_identical_inputs_and_versions_real_change
 
     revised = await prepare_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         bundle=bundle,
         verbatim_user_request="我是做黄金礼品的，希望账号长期建立信任。",
@@ -195,6 +218,7 @@ async def test_account_strategy_carries_vertical_skill_assumptions_into_the_seal
 
     prepared = await prepare_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         bundle=bundle,
         verbatim_user_request="我是做黄金礼品的，我要怎么起号？",
@@ -248,3 +272,65 @@ def test_current_account_strategy_can_be_resolved_for_the_exact_candidate_map() 
     assert selected is not None
     assert selected.judgment_artifact == first
     assert select_current_account_strategy([first], content_map_version_id="map-2") is None
+
+
+@pytest.mark.asyncio
+async def test_two_logical_accounts_never_reuse_or_confirm_each_others_strategy() -> None:
+    repository = _MemoryRepository()
+    bundle = _bundle()
+    map_version = bundle.content_world.content_map_version_id()
+
+    async def structured_model(schema, messages):
+        model_input = json.loads(messages[1].content)
+        basis_ids = tuple(model_input["allowed_basis_artifact_ids"][:2])
+        return _proposal_payload(map_version=map_version, basis_ids=basis_ids)
+
+    first = await prepare_account_strategy(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        repository=repository,
+        bundle=bundle,
+        verbatim_user_request="我是做黄金礼品的，我要怎么起号？",
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-gift",
+        source_run_id="run-gift",
+    )
+    second = await prepare_account_strategy(
+        project=PROJECT,
+        logical_account=SECOND_LOGICAL_ACCOUNT,
+        repository=repository,
+        bundle=bundle,
+        verbatim_user_request="这是同一项目里的另一个黄金礼品账号。",
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-second",
+        source_run_id="run-second",
+    )
+
+    assert first.judgment_artifact.artifact_id != second.judgment_artifact.artifact_id
+    assert first.judgment_artifact.logical_account == LOGICAL_ACCOUNT
+    assert second.judgment_artifact.logical_account == SECOND_LOGICAL_ACCOUNT
+
+    confirmed_first = await confirm_account_strategy(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        repository=repository,
+        option_id="route_a",
+        created_at=NOW,
+        source_thread_id="thread-gift",
+        source_run_id="confirm-gift",
+    )
+    second_rows = await repository.list_artifacts(
+        PROJECT,
+        logical_account=SECOND_LOGICAL_ACCOUNT,
+    )
+    current_second = select_current_account_strategy(
+        second_rows,
+        logical_account=SECOND_LOGICAL_ACCOUNT,
+    )
+
+    assert confirmed_first.judgment.decision_status == "confirmed"
+    assert current_second is not None
+    assert current_second.judgment.decision_status == "proposed"
+    assert all(artifact.logical_account == SECOND_LOGICAL_ACCOUNT for artifact in second_rows)

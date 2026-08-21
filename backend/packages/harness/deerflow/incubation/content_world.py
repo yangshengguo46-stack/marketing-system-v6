@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
+    LogicalAccountRef,
     PlatformAccountRef,
     ProjectRef,
 )
@@ -21,6 +22,7 @@ def seal_content_world_version(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
     parents: tuple[ArtifactParentRef, ...] = (),
 ) -> ArtifactEnvelope:
@@ -45,6 +47,7 @@ def seal_content_world_version(
         artifact_type="content_map_candidate",
         version=1,
         payload=payload,
+        logical_account=logical_account,
         account=account,
         parents=parents,
         created_at=created_at,

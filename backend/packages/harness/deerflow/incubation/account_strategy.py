@@ -6,7 +6,12 @@ from typing import TYPE_CHECKING, Protocol
 
 from deerflow.incubation.brief_runtime import build_minimal_incubation_brief
 from deerflow.incubation.content_run import seal_content_run_artifacts
-from deerflow.incubation.contracts import ArtifactEnvelope, PlatformAccountRef, ProjectRef
+from deerflow.incubation.contracts import (
+    ArtifactEnvelope,
+    LogicalAccountRef,
+    PlatformAccountRef,
+    ProjectRef,
+)
 from deerflow.incubation.judgment import IncubationJudgment, seal_incubation_judgment
 from deerflow.incubation.judgment_runtime import StructuredJudgmentModel, generate_incubation_judgment
 from deerflow.incubation.project_evidence import select_project_judgment_evidence
@@ -22,6 +27,7 @@ class AccountStrategyRepository(Protocol):
         self,
         project: ProjectRef,
         *,
+        logical_account: LogicalAccountRef | None = None,
         artifact_type: str | None = None,
         evidence_role: str | None = None,
     ) -> list[ArtifactEnvelope]: ...
@@ -37,13 +43,14 @@ class PreparedAccountStrategy:
 def select_current_account_strategy(
     artifacts: list[ArtifactEnvelope] | tuple[ArtifactEnvelope, ...],
     *,
+    logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
     content_map_version_id: str | None = None,
     require_confirmed: bool = False,
 ) -> PreparedAccountStrategy | None:
     candidates: list[tuple[IncubationJudgment, ArtifactEnvelope]] = []
     for artifact in artifacts:
-        if artifact.artifact_type != "incubation_judgment" or artifact.account != account:
+        if artifact.artifact_type != "incubation_judgment" or artifact.logical_account != logical_account or artifact.account != account:
             continue
         judgment = IncubationJudgment.model_validate(artifact.payload)
         if artifact.version != judgment.revision_number:
@@ -97,6 +104,7 @@ def _proposal_parent_artifacts(
 async def confirm_account_strategy(
     *,
     project: ProjectRef,
+    logical_account: LogicalAccountRef,
     repository: AccountStrategyRepository,
     option_id: str,
     created_at: datetime,
@@ -106,8 +114,15 @@ async def confirm_account_strategy(
 ) -> PreparedAccountStrategy:
     """Confirm one offered route without requiring a bound platform account."""
 
-    artifacts = await repository.list_artifacts(project)
-    current = select_current_account_strategy(artifacts, account=account)
+    artifacts = await repository.list_artifacts(
+        project,
+        logical_account=logical_account,
+    )
+    current = select_current_account_strategy(
+        artifacts,
+        logical_account=logical_account,
+        account=account,
+    )
     if current is None:
         raise ValueError("account strategy proposal is unavailable")
     proposal = current.judgment
@@ -148,6 +163,7 @@ async def confirm_account_strategy(
         content_world_artifact=content_map_artifact,
         evidence_artifacts=evidence_artifacts,
         previous_judgment_artifact=current.judgment_artifact,
+        logical_account=logical_account,
         account=account,
         created_at=created_at,
         source_thread_id=source_thread_id,
@@ -172,6 +188,7 @@ def _same_strategy_inputs(
 async def prepare_account_strategy(
     *,
     project: ProjectRef,
+    logical_account: LogicalAccountRef,
     repository: AccountStrategyRepository,
     bundle: ContentIntelligenceBundle,
     verbatim_user_request: str,
@@ -196,6 +213,7 @@ async def prepare_account_strategy(
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
+        logical_account=logical_account,
     )
     stored_prerequisites: dict[str, ArtifactEnvelope] = {}
     for artifact in prerequisites.storage_order():
@@ -213,17 +231,22 @@ async def prepare_account_strategy(
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
+        logical_account=logical_account,
         prohibited_assumptions=prohibited_assumptions,
     )
     brief_artifact = await repository.put_artifact(brief_artifact)
 
-    artifacts = await repository.list_artifacts(project)
+    artifacts = await repository.list_artifacts(
+        project,
+        logical_account=logical_account,
+    )
     selected_evidence = select_project_judgment_evidence(
         project=project,
         artifacts=artifacts,
     )
     current = select_current_account_strategy(
         artifacts,
+        logical_account=logical_account,
         account=account,
     )
     current_inputs = (
@@ -243,6 +266,7 @@ async def prepare_account_strategy(
         benchmark_evidence_artifacts=selected_evidence.benchmark_evidence_artifacts,
         audience_evidence_artifacts=selected_evidence.audience_evidence_artifacts,
         previous_judgment_artifact=(current.judgment_artifact if current is not None else None),
+        logical_account=logical_account,
         account=account,
         created_at=created_at,
         source_thread_id=source_thread_id,

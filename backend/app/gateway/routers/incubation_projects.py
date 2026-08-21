@@ -22,7 +22,16 @@ from deerflow.community.mediakit import (
     MediaKitPricingConfigurationError,
 )
 from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ApprovalGrant, ProjectRecord, ProjectRef
-from deerflow.persistence.incubation_ledger import ApprovalGrantConflictError, ProjectConflictError
+from deerflow.incubation.contracts import (
+    INCUBATION_LOGICAL_ACCOUNT_ID_KEY,
+    LogicalAccountRecord,
+    LogicalAccountRef,
+)
+from deerflow.persistence.incubation_ledger import (
+    ApprovalGrantConflictError,
+    LogicalAccountConflictError,
+    ProjectConflictError,
+)
 from deerflow.utils.thread_id import ThreadId
 
 router = APIRouter(prefix="/api/incubation", tags=["incubation"])
@@ -42,6 +51,21 @@ class IncubationProjectResponse(BaseModel):
     updated_at: datetime
 
 
+class LogicalAccountCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    logical_account_id: str | None = Field(default=None, min_length=1, max_length=64)
+    display_name: str = Field(min_length=1, max_length=255)
+
+
+class LogicalAccountResponse(BaseModel):
+    project_id: str
+    logical_account_id: str
+    display_name: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class ThreadProjectBindingRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -51,6 +75,18 @@ class ThreadProjectBindingRequest(BaseModel):
 class ThreadProjectBindingResponse(BaseModel):
     thread_id: str
     project: IncubationProjectResponse | None
+
+
+class ThreadLogicalAccountBindingRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    project_id: str = Field(min_length=1, max_length=64)
+    logical_account_id: str = Field(min_length=1, max_length=64)
+
+
+class ThreadLogicalAccountBindingResponse(BaseModel):
+    thread_id: str
+    logical_account: LogicalAccountResponse | None
 
 
 class MediaKitCloudApprovalConfirmRequest(BaseModel):
@@ -133,9 +169,39 @@ def _project_ref(owner_user_id: str, project_id: str) -> ProjectRef:
         raise HTTPException(status_code=422, detail="Invalid incubation project identity") from exc
 
 
+def _logical_account_ref(
+    owner_user_id: str,
+    project_id: str,
+    logical_account_id: str,
+) -> LogicalAccountRef:
+    try:
+        return LogicalAccountRef(
+            owner_user_id=owner_user_id,
+            project_id=project_id,
+            logical_account_id=logical_account_id,
+        )
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid logical account identity",
+        ) from exc
+
+
 def _response(record: ProjectRecord) -> IncubationProjectResponse:
     return IncubationProjectResponse(
         project_id=record.project.project_id,
+        display_name=record.display_name,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+def _logical_account_response(
+    record: LogicalAccountRecord,
+) -> LogicalAccountResponse:
+    return LogicalAccountResponse(
+        project_id=record.logical_account.project_id,
+        logical_account_id=record.logical_account.logical_account_id,
         display_name=record.display_name,
         created_at=record.created_at,
         updated_at=record.updated_at,
@@ -308,6 +374,78 @@ async def get_incubation_project(
     if record is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return _response(record)
+
+
+@router.post(
+    "/projects/{project_id}/logical-accounts",
+    response_model=LogicalAccountResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@require_permission("threads", "write")
+async def create_logical_account(
+    project_id: str,
+    body: LogicalAccountCreateRequest,
+    request: Request,
+) -> LogicalAccountResponse:
+    owner_user_id = await _effective_owner_user_id(request)
+    project = _project_ref(owner_user_id, project_id)
+    ledger = get_incubation_ledger_repo(request)
+    if await ledger.get_project(project) is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    logical_account_id = body.logical_account_id or f"account_{uuid.uuid4().hex}"
+    logical_account = _logical_account_ref(
+        owner_user_id,
+        project_id,
+        logical_account_id,
+    )
+    if await ledger.get_logical_account(logical_account) is not None:
+        raise HTTPException(status_code=409, detail="Logical account already exists")
+    try:
+        record = await ledger.create_logical_account(
+            logical_account,
+            display_name=body.display_name,
+        )
+    except LogicalAccountConflictError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Logical account already exists",
+        ) from exc
+    return _logical_account_response(record)
+
+
+@router.get(
+    "/projects/{project_id}/logical-accounts",
+    response_model=list[LogicalAccountResponse],
+)
+@require_permission("threads", "read")
+async def list_logical_accounts(
+    project_id: str,
+    request: Request,
+) -> list[LogicalAccountResponse]:
+    owner_user_id = await _effective_owner_user_id(request)
+    project = _project_ref(owner_user_id, project_id)
+    ledger = get_incubation_ledger_repo(request)
+    if await ledger.get_project(project) is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    records = await ledger.list_logical_accounts(project)
+    return [_logical_account_response(record) for record in records]
+
+
+@router.get(
+    "/projects/{project_id}/logical-accounts/{logical_account_id}",
+    response_model=LogicalAccountResponse,
+)
+@require_permission("threads", "read")
+async def get_logical_account(
+    project_id: str,
+    logical_account_id: str,
+    request: Request,
+) -> LogicalAccountResponse:
+    owner_user_id = await _effective_owner_user_id(request)
+    record = await get_incubation_ledger_repo(request).get_logical_account(_logical_account_ref(owner_user_id, project_id, logical_account_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="Logical account not found")
+    return _logical_account_response(record)
 
 
 @router.post(
@@ -505,12 +643,24 @@ async def bind_thread_project(
         thread_id=thread_id,
         owner_user_id=owner_user_id,
     )
+    thread = await thread_store.get(thread_id, user_id=owner_user_id)
+    metadata = thread.get("metadata") if thread is not None else None
+    bound_project_id = metadata.get(INCUBATION_PROJECT_ID_KEY) if isinstance(metadata, dict) else None
+    bound_logical_account_id = metadata.get(INCUBATION_LOGICAL_ACCOUNT_ID_KEY) if isinstance(metadata, dict) else None
+    if isinstance(bound_logical_account_id, str) and bound_logical_account_id and bound_project_id != body.project_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Unbind the thread logical account before changing projects",
+        )
     record = await get_incubation_ledger_repo(request).get_project(_project_ref(owner_user_id, body.project_id))
     if record is None:
         raise HTTPException(status_code=404, detail="Project not found")
     await thread_store.update_metadata(
         thread_id,
-        {INCUBATION_PROJECT_ID_KEY: record.project.project_id},
+        {
+            INCUBATION_PROJECT_ID_KEY: record.project.project_id,
+            INCUBATION_LOGICAL_ACCOUNT_ID_KEY: (bound_logical_account_id if bound_project_id == record.project.project_id and isinstance(bound_logical_account_id, str) and bound_logical_account_id else None),
+        },
         touch=False,
         user_id=owner_user_id,
     )
@@ -560,8 +710,138 @@ async def unbind_thread_project(
     )
     await thread_store.update_metadata(
         thread_id,
-        {INCUBATION_PROJECT_ID_KEY: None},
+        {
+            INCUBATION_PROJECT_ID_KEY: None,
+            INCUBATION_LOGICAL_ACCOUNT_ID_KEY: None,
+        },
         touch=False,
         user_id=owner_user_id,
     )
     return ThreadProjectBindingResponse(thread_id=thread_id, project=None)
+
+
+@router.put(
+    "/threads/{thread_id}/logical-account",
+    response_model=ThreadLogicalAccountBindingResponse,
+)
+@require_permission("threads", "write")
+async def bind_thread_logical_account(
+    thread_id: ThreadId,
+    body: ThreadLogicalAccountBindingRequest,
+    request: Request,
+) -> ThreadLogicalAccountBindingResponse:
+    owner_user_id = await _effective_owner_user_id(request)
+    thread_store = await _require_thread(
+        request,
+        thread_id=thread_id,
+        owner_user_id=owner_user_id,
+    )
+    thread = await thread_store.get(thread_id, user_id=owner_user_id)
+    metadata = thread.get("metadata") if thread is not None else None
+    bound_project_id = metadata.get(INCUBATION_PROJECT_ID_KEY) if isinstance(metadata, dict) else None
+    if isinstance(bound_project_id, str) and bound_project_id and bound_project_id != body.project_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Thread is bound to a different project",
+        )
+
+    ledger = get_incubation_ledger_repo(request)
+    project = _project_ref(owner_user_id, body.project_id)
+    if await ledger.get_project(project) is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    record = await ledger.get_logical_account(
+        _logical_account_ref(
+            owner_user_id,
+            body.project_id,
+            body.logical_account_id,
+        )
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="Logical account not found")
+    await thread_store.update_metadata(
+        thread_id,
+        {
+            INCUBATION_PROJECT_ID_KEY: body.project_id,
+            INCUBATION_LOGICAL_ACCOUNT_ID_KEY: body.logical_account_id,
+        },
+        touch=False,
+        user_id=owner_user_id,
+    )
+    return ThreadLogicalAccountBindingResponse(
+        thread_id=thread_id,
+        logical_account=_logical_account_response(record),
+    )
+
+
+@router.get(
+    "/threads/{thread_id}/logical-account",
+    response_model=ThreadLogicalAccountBindingResponse,
+)
+@require_permission("threads", "read")
+async def get_thread_logical_account(
+    thread_id: ThreadId,
+    request: Request,
+) -> ThreadLogicalAccountBindingResponse:
+    owner_user_id = await _effective_owner_user_id(request)
+    thread_store = await _require_thread(
+        request,
+        thread_id=thread_id,
+        owner_user_id=owner_user_id,
+    )
+    thread = await thread_store.get(thread_id, user_id=owner_user_id)
+    metadata = thread.get("metadata") if thread is not None else None
+    project_id = metadata.get(INCUBATION_PROJECT_ID_KEY) if isinstance(metadata, dict) else None
+    logical_account_id = metadata.get(INCUBATION_LOGICAL_ACCOUNT_ID_KEY) if isinstance(metadata, dict) else None
+    if not isinstance(logical_account_id, str) or not logical_account_id:
+        return ThreadLogicalAccountBindingResponse(
+            thread_id=thread_id,
+            logical_account=None,
+        )
+    if not isinstance(project_id, str) or not project_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Thread logical account binding is stale or mismatched",
+        )
+    record = await get_incubation_ledger_repo(request).get_logical_account(
+        _logical_account_ref(
+            owner_user_id,
+            project_id,
+            logical_account_id,
+        )
+    )
+    if record is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Thread logical account binding is stale or mismatched",
+        )
+    return ThreadLogicalAccountBindingResponse(
+        thread_id=thread_id,
+        logical_account=_logical_account_response(record),
+    )
+
+
+@router.delete(
+    "/threads/{thread_id}/logical-account",
+    response_model=ThreadLogicalAccountBindingResponse,
+)
+@require_permission("threads", "write")
+async def unbind_thread_logical_account(
+    thread_id: ThreadId,
+    request: Request,
+) -> ThreadLogicalAccountBindingResponse:
+    owner_user_id = await _effective_owner_user_id(request)
+    thread_store = await _require_thread(
+        request,
+        thread_id=thread_id,
+        owner_user_id=owner_user_id,
+    )
+    await thread_store.update_metadata(
+        thread_id,
+        {INCUBATION_LOGICAL_ACCOUNT_ID_KEY: None},
+        touch=False,
+        user_id=owner_user_id,
+    )
+    return ThreadLogicalAccountBindingResponse(
+        thread_id=thread_id,
+        logical_account=None,
+    )

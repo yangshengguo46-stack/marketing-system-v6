@@ -25,6 +25,7 @@ from deerflow.persistence.feedback.model import FeedbackRow
 from deerflow.persistence.incubation_ledger.model import (
     IncubationApprovalGrantRow,
     IncubationArtifactRow,
+    IncubationLogicalAccountRow,
     IncubationPlatformAccountRow,
     IncubationProjectRow,
 )
@@ -45,6 +46,7 @@ __all__ = [
     "ChannelOAuthStateRow",
     "FeedbackRow",
     "IncubationArtifactRow",
+    "IncubationLogicalAccountRow",
     "IncubationApprovalGrantRow",
     "IncubationPlatformAccountRow",
     "IncubationProjectRow",

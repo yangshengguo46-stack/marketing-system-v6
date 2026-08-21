@@ -497,6 +497,7 @@ def test_strip_reserved_metadata_removes_user_id():
         {
             "user_id": "victim-id",
             "incubation_project_id": "forged-project",
+            "incubation_logical_account_id": "forged-account",
             "title": "ok",
         }
     )
@@ -1631,7 +1632,10 @@ def test_branch_thread_from_older_assistant_turn_creates_truncated_thread() -> N
                     "created_at": "2026-07-05T00:00:00Z",
                     "updated_at": "2026-07-05T00:00:00Z",
                     "display_name": "Original chat",
-                    "metadata": {"incubation_project_id": "project-1"},
+                    "metadata": {
+                        "incubation_project_id": "project-1",
+                        "incubation_logical_account_id": "logical-account-1",
+                    },
                 },
             )
         )
@@ -1661,6 +1665,7 @@ def test_branch_thread_from_older_assistant_turn_creates_truncated_thread() -> N
     branch_record = asyncio.run(store.aget(THREADS_NS, new_thread_id))
     assert branch_record is not None
     assert branch_record.value["metadata"]["incubation_project_id"] == "project-1"
+    assert branch_record.value["metadata"]["incubation_logical_account_id"] == "logical-account-1"
 
 
 def test_branch_thread_uses_materialized_history_and_overwrites_fresh_seed(monkeypatch) -> None:

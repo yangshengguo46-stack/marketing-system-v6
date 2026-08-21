@@ -543,6 +543,10 @@ When the user names a hotspot, person, work, event, or question that should guid
 topic, pass it as `topic_seed` only when it is one contiguous verbatim span of the current user request.
 It is an unverified research lead, not evidence or permission to change the frozen root.
 
+Use `plan_account_launch` only when the user explicitly asks for a 7-day/30-day launch plan
+after an account route is confirmed. The plan is optional working state and must not block topic
+work. When the user explicitly accepts the latest proposal, use `confirm_account_launch_plan`.
+
 The selected result is the direct answer; do not synthesize it again. When using
 `explore_content_world`, do not pair it with `web_search`, `web_fetch`, or another evidence
 tool in the same turn. Its internal post-map research begins after root freeze for

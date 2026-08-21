@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from deerflow.incubation.contracts import ArtifactEnvelope, ProjectRef
+from deerflow.incubation.contracts import ArtifactEnvelope, LogicalAccountRef, ProjectRef
 from deerflow.incubation.judgment import (
     BriefFact,
     IncubationBrief,
@@ -26,6 +26,7 @@ def build_minimal_incubation_brief(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     prohibited_assumptions: tuple[str, ...] = (),
 ) -> ArtifactEnvelope:
     """Seal only the business subject proven by the user's exact words."""
@@ -64,6 +65,7 @@ def build_minimal_incubation_brief(
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
+        logical_account=logical_account,
     )
 
 

@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from deerflow.incubation import ArtifactEnvelope, ProjectRef
+from deerflow.incubation import ArtifactEnvelope, LogicalAccountRef, ProjectRef
 from deerflow.incubation.account_strategy import (
     confirm_account_strategy,
     select_current_account_strategy,
@@ -26,6 +26,11 @@ from deerflow.incubation.judgment import (
 
 NOW = datetime(2026, 8, 18, 10, 0, tzinfo=UTC)
 PROJECT = ProjectRef(owner_user_id="user-1", project_id="gift-project")
+LOGICAL_ACCOUNT = LogicalAccountRef(
+    owner_user_id="user-1",
+    project_id="gift-project",
+    logical_account_id="gift-account",
+)
 
 
 class _MemoryRepository:
@@ -40,10 +45,18 @@ class _MemoryRepository:
         self,
         project: ProjectRef,
         *,
+        logical_account: LogicalAccountRef | None = None,
         artifact_type: str | None = None,
         evidence_role: str | None = None,
     ) -> list[ArtifactEnvelope]:
-        return [artifact for artifact in self.artifacts.values() if artifact.project == project and (artifact_type is None or artifact.artifact_type == artifact_type) and (evidence_role is None or artifact.evidence_role == evidence_role)]
+        return [
+            artifact
+            for artifact in self.artifacts.values()
+            if artifact.project == project
+            and (logical_account is None or artifact.logical_account == logical_account)
+            and (artifact_type is None or artifact.artifact_type == artifact_type)
+            and (evidence_role is None or artifact.evidence_role == evidence_role)
+        ]
 
 
 def _positioning(label: str, *, basis_ids: tuple[str, ...]) -> PositioningDecision:
@@ -138,6 +151,7 @@ def _parents() -> tuple[ArtifactEnvelope, ArtifactEnvelope]:
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
+        logical_account=LOGICAL_ACCOUNT,
     )
     world = ArtifactEnvelope.seal(
         project=PROJECT,
@@ -154,6 +168,7 @@ def _parents() -> tuple[ArtifactEnvelope, ArtifactEnvelope]:
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
+        logical_account=LOGICAL_ACCOUNT,
     )
     return brief, world
 
@@ -185,6 +200,7 @@ def _proposal() -> tuple[ArtifactEnvelope, ArtifactEnvelope, ArtifactEnvelope]:
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
+        logical_account=LOGICAL_ACCOUNT,
     )
     return brief, world, artifact
 
@@ -213,6 +229,7 @@ def test_recommendation_is_not_treated_as_user_confirmation() -> None:
     assert (
         select_current_account_strategy(
             [proposal],
+            logical_account=LOGICAL_ACCOUNT,
             content_map_version_id="map-relations-v1",
             require_confirmed=True,
         )
@@ -244,6 +261,7 @@ async def test_user_can_confirm_a_non_recommended_route_without_a_platform_accou
 
     confirmed = await confirm_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         option_id="route_b",
         created_at=NOW,
@@ -271,6 +289,7 @@ async def test_account_strategy_confirmation_rejects_an_unknown_route() -> None:
     with pytest.raises(ValueError, match="unknown account route option"):
         await confirm_account_strategy(
             project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
             repository=repository,
             option_id="route_missing",
             created_at=NOW,
@@ -286,6 +305,7 @@ async def test_replaying_the_same_confirmation_reuses_the_confirmed_revision() -
 
     first = await confirm_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         option_id="route_a",
         created_at=NOW,
@@ -294,6 +314,7 @@ async def test_replaying_the_same_confirmation_reuses_the_confirmed_revision() -
     )
     repeated = await confirm_account_strategy(
         project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
         repository=repository,
         option_id="route_a",
         created_at=NOW,

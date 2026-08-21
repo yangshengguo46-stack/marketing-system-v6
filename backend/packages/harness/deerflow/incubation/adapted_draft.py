@@ -11,6 +11,7 @@ from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
     IncubationContract,
+    LogicalAccountRef,
     NonEmptyStr,
     ProjectRef,
 )
@@ -245,6 +246,7 @@ def seal_adapted_draft(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
 ) -> ArtifactEnvelope:
     """Seal one format translation without reopening topic or evidence choices."""
 
@@ -272,6 +274,7 @@ def seal_adapted_draft(
         artifact_type="adapted_draft",
         version=1,
         payload=adapted.model_dump(mode="json"),
+        logical_account=logical_account,
         parents=(
             base_draft_artifact.to_parent_ref(),
             format_decision_artifact.to_parent_ref(),

@@ -8,6 +8,7 @@ from deerflow.reflection import resolve_variable
 from deerflow.sandbox.security import is_host_bash_allowed
 from deerflow.tools.builtins import (
     ask_clarification_tool,
+    confirm_account_launch_plan_tool,
     confirm_account_strategy_tool,
     content_intelligence_tool,
     develop_account_strategy_tool,
@@ -15,6 +16,7 @@ from deerflow.tools.builtins import (
     douyin_benchmark_candidate_tool,
     explore_content_world_tool,
     list_uploaded_files,
+    plan_account_launch_tool,
     present_file_tool,
     review_skill_package,
     task_tool,
@@ -28,10 +30,12 @@ logger = logging.getLogger(__name__)
 BUILTIN_TOOLS = [
     present_file_tool,
     ask_clarification_tool,
+    confirm_account_launch_plan_tool,
     confirm_account_strategy_tool,
     content_intelligence_tool,
     develop_account_strategy_tool,
     explore_content_world_tool,
+    plan_account_launch_tool,
     douyin_benchmark_account_tool,
     douyin_benchmark_candidate_tool,
     review_skill_package,

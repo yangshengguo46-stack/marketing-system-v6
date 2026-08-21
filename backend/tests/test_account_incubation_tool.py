@@ -10,7 +10,10 @@ from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from pydantic import BaseModel, Field, ValidationError
 
-from deerflow.incubation import implicit_thread_project_ref
+from deerflow.incubation import (
+    implicit_thread_logical_account_ref,
+    implicit_thread_project_ref,
+)
 from deerflow.tools.builtins.account_incubation_tool import (
     confirm_account_strategy_tool,
     develop_account_strategy_tool,
@@ -73,6 +76,8 @@ async def test_account_strategy_tool_bootstraps_a_thread_project_before_model_wo
     repository = SimpleNamespace(
         get_project=AsyncMock(return_value=None),
         create_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=None),
+        create_logical_account=AsyncMock(return_value=object()),
     )
     bundle = object()
     artifact = SimpleNamespace(
@@ -109,14 +114,22 @@ async def test_account_strategy_tool_bootstraps_a_thread_project_before_model_wo
 
     assert isinstance(result, Command)
     expected_project = implicit_thread_project_ref(owner_user_id="user-1", thread_id="thread-1")
+    expected_account = implicit_thread_logical_account_ref(
+        project=expected_project,
+        thread_id="thread-1",
+    )
     assert repository.create_project.await_args.args == (expected_project,)
     assert repository.create_project.await_args.kwargs["display_name"] == "我是开水果店的，我要怎么起号"
+    assert repository.create_logical_account.await_args.args == (expected_account,)
+    assert repository.create_logical_account.await_args.kwargs["display_name"] == "我是开水果店的，我要怎么起号"
     assert prepare.await_args.kwargs["project"] == expected_project
+    assert prepare.await_args.kwargs["logical_account"] == expected_account
     assert prepare.await_args.kwargs["bundle"] is bundle
     message = result.update["messages"][0]
     assert isinstance(message, ToolMessage)
     assert message.content == "# 账号路线候选"
     assert message.additional_kwargs["incubation_persistence"]["project_id"] == expected_project.project_id
+    assert message.additional_kwargs["incubation_persistence"]["logical_account_id"] == expected_account.logical_account_id
     create_model.assert_called_once()
     analysis.assert_awaited_once()
 
@@ -154,7 +167,10 @@ async def test_account_strategy_tool_redacts_implicit_project_bootstrap_failure(
 async def test_account_strategy_tool_routes_candidate_map_and_project_evidence_to_strategy_service(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
     bundle = object()
     judgment = object()
     artifact = SimpleNamespace(
@@ -200,7 +216,10 @@ async def test_account_strategy_tool_routes_candidate_map_and_project_evidence_t
 async def test_account_strategy_loads_the_named_vertical_skill_without_changing_user_words(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
     profile = SimpleNamespace(
         skill_name="incubate-gift-human-relations",
     )
@@ -256,6 +275,7 @@ async def test_account_strategy_collects_and_stores_public_benchmark_after_root_
     stored_evidence = SimpleNamespace(artifact_id="benchmark-evidence-1")
     repository = SimpleNamespace(
         get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
         put_artifact=AsyncMock(return_value=stored_evidence),
     )
     bundle = SimpleNamespace(content_world=SimpleNamespace(content_root="人们如何用礼组织人与人的相处"))
@@ -305,6 +325,13 @@ async def test_account_strategy_collects_and_stores_public_benchmark_after_root_
         snapshot=snapshot,
         source_thread_id="thread-1",
         source_run_id="run-1",
+        logical_account=implicit_thread_logical_account_ref(
+            project=implicit_thread_project_ref(
+                owner_user_id="user-1",
+                thread_id="thread-1",
+            ).model_copy(update={"project_id": "golden-gift"}),
+            thread_id="thread-1",
+        ),
     )
     repository.put_artifact.assert_awaited_once_with(sealed)
     prepare.assert_awaited_once()
@@ -314,7 +341,10 @@ async def test_account_strategy_collects_and_stores_public_benchmark_after_root_
 async def test_account_strategy_confirmation_does_not_require_a_platform_account(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
     judgment = object()
     artifact = SimpleNamespace(
         artifact_type="incubation_judgment",
@@ -345,6 +375,7 @@ async def test_account_strategy_confirmation_does_not_require_a_platform_account
 
     assert confirm.await_args.kwargs["option_id"] == "route_b"
     assert "account" not in confirm.await_args.kwargs
+    assert "logical_account" in confirm.await_args.kwargs
     message = result.update["messages"][0]
     assert message.name == "confirm_account_strategy"
     assert "已经由你确认" in message.content
@@ -354,7 +385,10 @@ async def test_account_strategy_confirmation_does_not_require_a_platform_account
 async def test_account_strategy_confirmation_reuses_the_implicit_thread_project(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    repository = SimpleNamespace(get_project=AsyncMock(return_value=object()))
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
     artifact = SimpleNamespace(
         artifact_type="incubation_judgment",
         artifact_id="artifact-strategy-implicit-confirmed",
@@ -385,5 +419,9 @@ async def test_account_strategy_confirmation_reuses_the_implicit_thread_project(
     expected_project = implicit_thread_project_ref(owner_user_id="user-1", thread_id="thread-1")
     repository.get_project.assert_awaited_once_with(expected_project)
     assert confirm.await_args.kwargs["project"] == expected_project
+    assert confirm.await_args.kwargs["logical_account"] == implicit_thread_logical_account_ref(
+        project=expected_project,
+        thread_id="thread-1",
+    )
     message = result.update["messages"][0]
     assert message.additional_kwargs["incubation_persistence"]["project_id"] == expected_project.project_id

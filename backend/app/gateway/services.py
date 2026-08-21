@@ -36,6 +36,10 @@ from deerflow.agents.middlewares.view_image_middleware import _IMAGE_CONTEXT_MES
 from deerflow.config.app_config import get_app_config
 from deerflow.config.database_config import resolve_checkpoint_graph_cache_max
 from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ProjectRef, implicit_thread_project_ref
+from deerflow.incubation.contracts import (
+    INCUBATION_LOGICAL_ACCOUNT_ID_KEY,
+    LogicalAccountRef,
+)
 from deerflow.runtime import (
     END_SENTINEL,
     HEARTBEAT_SENTINEL,
@@ -490,6 +494,10 @@ def inject_bound_incubation_project_context(
     project_id: str | None,
 ) -> None:
     """Replace caller-supplied project context with the server binding."""
+    config.pop(INCUBATION_PROJECT_ID_KEY, None)
+    metadata = config.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop(INCUBATION_PROJECT_ID_KEY, None)
     for section in ("configurable", "context"):
         values = config.setdefault(section, {})
         if not isinstance(values, dict):
@@ -497,6 +505,24 @@ def inject_bound_incubation_project_context(
         values.pop(INCUBATION_PROJECT_ID_KEY, None)
         if project_id is not None:
             values[INCUBATION_PROJECT_ID_KEY] = project_id
+
+
+def inject_bound_incubation_logical_account_context(
+    config: dict[str, Any],
+    logical_account_id: str | None,
+) -> None:
+    """Replace caller-supplied logical-account context with the server binding."""
+    config.pop(INCUBATION_LOGICAL_ACCOUNT_ID_KEY, None)
+    metadata = config.get("metadata")
+    if isinstance(metadata, dict):
+        metadata.pop(INCUBATION_LOGICAL_ACCOUNT_ID_KEY, None)
+    for section in ("configurable", "context"):
+        values = config.setdefault(section, {})
+        if not isinstance(values, dict):
+            raise TypeError(f"run {section} must be a mapping")
+        values.pop(INCUBATION_LOGICAL_ACCOUNT_ID_KEY, None)
+        if logical_account_id is not None:
+            values[INCUBATION_LOGICAL_ACCOUNT_ID_KEY] = logical_account_id
 
 
 async def resolve_bound_incubation_project_id(
@@ -538,6 +564,70 @@ async def resolve_bound_incubation_project_id(
     if project is None:
         raise HTTPException(status_code=409, detail="Thread project binding is stale")
     return project_id
+
+
+async def resolve_bound_incubation_logical_account_id(
+    request: Request,
+    *,
+    thread_store: Any,
+    thread_id: str,
+    owner_user_id: str | None,
+    project_id: str | None,
+) -> str | None:
+    """Resolve the logical account selected by trusted thread metadata."""
+    if owner_user_id is None:
+        return None
+    thread = await thread_store.get(thread_id, user_id=owner_user_id)
+    metadata = thread.get("metadata") if thread is not None else None
+    logical_account_id = metadata.get(INCUBATION_LOGICAL_ACCOUNT_ID_KEY) if isinstance(metadata, dict) else None
+    if not isinstance(logical_account_id, str) or not logical_account_id:
+        if project_id is None:
+            return None
+        ledger = getattr(request.app.state, "incubation_ledger_repo", None)
+        if ledger is None:
+            return None
+        from deerflow.incubation.project_bootstrap import (
+            implicit_thread_logical_account_ref,
+        )
+
+        implicit_account = implicit_thread_logical_account_ref(
+            project=ProjectRef(
+                owner_user_id=owner_user_id,
+                project_id=project_id,
+            ),
+            thread_id=thread_id,
+        )
+        account = await ledger.get_logical_account(implicit_account)
+        if account is None:
+            return None
+        await thread_store.update_metadata(
+            thread_id,
+            {INCUBATION_LOGICAL_ACCOUNT_ID_KEY: implicit_account.logical_account_id},
+            touch=False,
+            user_id=owner_user_id,
+        )
+        return implicit_account.logical_account_id
+
+    if project_id is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Thread logical account binding is stale or mismatched",
+        )
+    ledger = getattr(request.app.state, "incubation_ledger_repo", None)
+    if ledger is None:
+        raise HTTPException(status_code=503, detail="Incubation ledger not available")
+    account_ref = LogicalAccountRef(
+        owner_user_id=owner_user_id,
+        project_id=project_id,
+        logical_account_id=logical_account_id,
+    )
+    account = await ledger.get_logical_account(account_ref)
+    if account is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Thread logical account binding is stale or mismatched",
+        )
+    return logical_account_id
 
 
 def resolve_agent_factory(assistant_id: str | None):
@@ -1216,7 +1306,18 @@ async def start_run(
             thread_id=thread_id,
             owner_user_id=project_owner_user_id,
         )
+        bound_logical_account_id = await resolve_bound_incubation_logical_account_id(
+            request,
+            thread_store=run_ctx.thread_store,
+            thread_id=thread_id,
+            owner_user_id=project_owner_user_id,
+            project_id=bound_project_id,
+        )
         inject_bound_incubation_project_context(config, bound_project_id)
+        inject_bound_incubation_logical_account_context(
+            config,
+            bound_logical_account_id,
+        )
 
         async def run_after_metadata(record: RunRecord) -> None:
             metadata_task = asyncio.create_task(

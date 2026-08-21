@@ -12,6 +12,7 @@ from deerflow.incubation.benchmark import BenchmarkSnapshot
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     IncubationContract,
+    LogicalAccountRef,
     NonEmptyStr,
     PlatformAccountRef,
     ProjectRef,
@@ -542,6 +543,7 @@ async def generate_incubation_judgment(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
     benchmark_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
     audience_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
@@ -573,6 +575,8 @@ async def generate_incubation_judgment(
         )
         if previous_judgment_artifact.account != account:
             raise ValueError("previous judgment account must match the requested account")
+        if previous_judgment_artifact.logical_account != logical_account:
+            raise ValueError("previous judgment logical account must match the requested logical account")
         IncubationJudgment.model_validate(previous_judgment_artifact.payload)
 
     for artifact in benchmark_evidence_artifacts:
@@ -661,6 +665,7 @@ async def generate_incubation_judgment(
             *audience_evidence_artifacts,
         ),
         previous_judgment_artifact=previous_judgment_artifact,
+        logical_account=logical_account,
         account=account,
         created_at=created_at,
         source_thread_id=source_thread_id,

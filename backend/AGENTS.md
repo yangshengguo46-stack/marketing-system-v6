@@ -157,70 +157,45 @@ from deerflow.config import get_app_config
 ### V6 Content Incubation Core
 
 `content_intelligence/` owns `ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan ->
-BaseDraft`; explicit requests may continue downstream. `ContentWorldView` is a candidate map, not
-positioning. Preserve ADR-020's order: labels are evidence, never gates; local scenes stay branches
-when the object also spans people, history, events, regions, or works.
+BaseDraft`; explicit requests may continue downstream. A map is opportunity evidence, not positioning.
+Only the frozen `map_root` enters expansion, and topics bind its version. Labels are evidence, never gates;
+local scenes remain branches when a world also spans people, history, events, regions, or works.
 
-Only `map_root` enters the map; topics bind its version and receipt. `explore_content_world` cannot decide
-strategy; generic search is `topic_evidence`, not competitor evidence. At most one active `incubate-*`
-Skill may add bounded candidates, inspectable principles, a rejectable preferred root, supporting-branch
-hints without changing user text or deciding strategy. Discovery hashes its prose,
-schema-v3 Profile, evals, triggers, all-pass receipt, and local evidence. Receipts use aware timestamps and
-hashed `evals/evidence/` files; any mismatch hides the Skill. Routing apply/exclusion text, Skill identity,
-Profile version, lifecycle, sources, and content hash stay out of root-decision context. A Skill must not
-own fact denials, classify free text, delete map fields, reject a Draft by substring, or overwrite the
-model-selected entry/root. Project facts remain the generic Brief's responsibility. Non-active packages
-stay experimental. See the skills module guide for details.
-After the root is frozen, only the selected Skill's `supporting_branch_hints` may continue into the map
-input. They remain rejectable candidates rather than required coverage or quotas; Skill identity, version,
-routing, lifecycle, source, hash, apply/exclusion text, and root preference stay outside the map input.
+At most one active `incubate-*` Skill may offer bounded, rejectable root and branch advice. It cannot change
+user text, own fact denials, classify free text, delete fields, reject drafts by substring, or overwrite model
+judgment. Governance metadata stays outside model context; any package/hash/receipt mismatch hides the Skill.
+See the skills guide. Normalize provider payloads before reconciliation and withdraw worlds with no semantic
+path or constitutive context.
 
-Parse and normalize shared-world provider payloads before reconciliation. Withdraw worlds with no
-semantic path, missing constitutive context, or labels that erase it; keep these invariants out of the
-provider-facing parser.
+`deerflow.incubation` and schema `0015_incubation_logical_accounts` own owner/project/logical-account-scoped,
+parent-checked truth. A `LogicalAccountRef` exists before platform login and may later bind zero or many
+`PlatformAccountRef` records. Thread metadata is the trusted account selector; caller config, model arguments,
+and arbitrary context cannot override it. New account artifacts carry the exact logical account through strategy,
+content, format, adaptation, production, and planning. Legacy project-scoped artifacts remain readable with their
+original canonical IDs and cannot be silently promoted into an account.
+`RootFeedbackRecord` is append-only, exact-map episodic evidence; it cannot become a rule before ADR-031 approval.
+`develop_account_strategy` alone proposes routes from Brief, map, and evidence. Routes separate business target
+from content audience and form from strategy; no format-only variants or invented offers. It may recommend but
+only `confirm_account_strategy` adopts. A trusted owner/thread may lazily create and later rehydrate an internal
+project/account; stale explicit selections fail closed. Topic delivery cannot create or revise strategy.
 
-`deerflow.incubation` and schema `0012_incubation_ledger` own project-scoped, parent-checked truth.
-`RootFeedbackRecord` is append-only, exact-map-bound episodic evidence. Do not inject, retrieve, or promote it
-as a rule before the held-out approval in ADR-031; preserve alternatives, no-strong-root, conditions, and lineage.
-`develop_account_strategy` alone creates those judgments from a candidate map, Brief,
-and evidence. Routes separate subject, role, outcome, target/need/action/market, audience, persona,
-form, monetization, and resources. Target is not audience; form is not strategy.
-No format-only variants or invented offers.
-It may recommend but cannot confirm. When no explicit project is selected, a
-trusted owner/thread lazily receives a deterministic internal project on the first strategy request;
-later runs rehydrate it from the ledger. An explicitly selected stale project still fails closed.
-Only `confirm_account_strategy` adopts a route; topic delivery cannot create or revise one. A new
-account-starting request is not continuation merely because a confirmed route exists. Confirmed
-topic continuation reconstructs the exact source record and map hash; delivery words never become
-the root. A new subject must be contiguous current-user text. Drop an invalid optional topic seed.
-Research caps are ceilings, not quotas. Decode provider JSON wrappers only to the exact target type;
-otherwise fail. Normal topic delivery stops after `BaseDraft` and returns one compact topic;
-format, adaptation, and production are never an automatic tail. Position uses confirmed
-`persona.account_role`, else project subject. `MessagePlan` and `BaseDraft` cannot invent experience, facts,
-materials, sales, quantities, or publishing decisions. Every `ResourceMatch` needs at least one
-user-material artifact parent; unknown resources remain unknown.
+`plan_account_launch` is an optional continuation after confirmation. Its account-scoped 7/30-day windows are
+review horizons, not platform gates or success promises. It cannot revise strategy, invent a `TopicBrief`, or block
+topic work; confirmation only seals an explicitly accepted proposal. Research caps are ceilings. Normal topic
+delivery stops at one compact `BaseDraft`; format, adaptation, and production are explicit continuations.
+`MessagePlan`/drafts cannot invent experience, facts, materials, sales, quantities, or publishing decisions, and
+resource claims require a user-material parent.
 
-When `TopicBrief.narrative_frame` is present, the delivery model must receive its protagonist,
-goal, obstacle, action or choice, stakes, outcome, evidence refs, and limitations. The BaseDraft
-advances that action chain before revealing the topic claim; it must not flatten the frame into
-case analysis or add unsupported inner thoughts and causality. A null frame stays non-narrative.
+A narrative frame carries protagonist, goal, obstacle, action, stakes, outcome, evidence, and limitations into the
+draft; null stays non-narrative. Topic and competitor evidence never mix. Formal benchmark evidence needs stable
+identity and author-consistent multi-post coverage and cannot write strategy. Credentials, raw pages, paths, and
+temporary URLs never enter artifacts. The Host exposes only `deerflow-capability-mcp`; loaded Children still need
+receipts. MediaKit, publication, metrics, and learning remain downstream.
 
-Douyin topic and competitor evidence cannot mix. A `benchmark_account_candidate` is not a formal
-`BenchmarkSnapshot`, which needs stable identity and author-consistent multi-post coverage, stays
-read-only, and cannot write strategy. Credentials, raw pages, paths, and temporary URLs never enter
-artifacts. The Host registers only `deerflow-capability-mcp`; official API/SSE and public
-collection are internal versioned Children. A loaded Child still needs a receipt. Public
-collection remains local-only pending licensing. Business tools stay callers; MediaKit,
-publishing, metrics, and learning stay downstream. See `../docs/content-intelligence-v6/`.
-
-Keep always-on Agent instructions within their UTF-8 budgets. Detailed Tool and Skill guidance
-belongs behind progressive discovery; fixed entry overhead and real task calls are separate costs.
-
-A84/A86/A88/A90/A92 and A99/A101 are consumed; never rerun, tune, stack, import, or register them.
-Future labels require reviewed alternatives and may be conditional or have no strong root. Dictionaries stay
-optional; root recall does not gain Douyin, maps, positioning, or agents. Under ADR-028, account evidence comes
-after user facts and a candidate world: it may challenge a route but cannot select roots, invent capabilities,
-or turn a mature account into a cold-start template.
+Keep always-on instructions within UTF-8 budgets; details belong behind progressive discovery. Consumed experiments
+A84/A86/A88/A90/A92 and A99/A101 are not rerun or stacked. Dictionaries remain optional; account evidence comes
+after user facts and a candidate world and may challenge, but never select, the root. See
+`../docs/content-intelligence-v6/` for the full contracts and experiment history.
 
 ## Development Workflow
 

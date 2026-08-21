@@ -108,7 +108,7 @@ async def test_0012_database_adds_recoverable_submission_intent_fields(tmp_path:
         version = connection.execute("SELECT version_num FROM alembic_version").fetchone()
         row = connection.execute("SELECT remote_task_id, submit_arguments FROM mcp_tasks WHERE id = 'existing-task'").fetchone()
 
-    assert version == ("0014_incubation_approval_grants",)
+    assert version == ("0015_incubation_logical_accounts",)
     assert columns["remote_task_id"][3] == 0
     assert "submit_arguments" in columns
     assert row == ("remote-1", None)

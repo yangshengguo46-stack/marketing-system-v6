@@ -9,6 +9,7 @@ from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
     IncubationContract,
+    LogicalAccountRef,
     ProjectRef,
 )
 from deerflow.incubation.evidence import EvidenceSnapshot
@@ -56,6 +57,7 @@ def seal_content_run_artifacts(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     reading_parents: tuple[ArtifactParentRef, ...] = (),
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
 ) -> ContentRunArtifactSet:
@@ -71,6 +73,8 @@ def seal_content_run_artifacts(
             raise ValueError("incubation judgment project must match content run project")
         if incubation_judgment_artifact.artifact_type != "incubation_judgment":
             raise ValueError("incubation judgment parent has the wrong artifact type")
+        if incubation_judgment_artifact.logical_account != logical_account:
+            raise ValueError("incubation judgment logical account must match content run")
         if incubation_judgment_artifact.payload.get("content_map_version_id") != world.content_map_version_id():
             raise ValueError("incubation judgment content world version must match the frozen content world")
 
@@ -100,6 +104,7 @@ def seal_content_run_artifacts(
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
+        logical_account=logical_account,
         parents=reading_parents,
     )
     content_world = seal_content_world_version(
@@ -108,6 +113,7 @@ def seal_content_run_artifacts(
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
+        logical_account=logical_account,
     )
 
     topic_artifact: ArtifactEnvelope | None = None
@@ -119,6 +125,7 @@ def seal_content_run_artifacts(
             artifact_type="topic_brief",
             version=1,
             payload=bundle.topic_brief.model_dump(mode="json"),
+            logical_account=logical_account,
             parents=(
                 reading.to_parent_ref(),
                 content_world.to_parent_ref(),
@@ -138,6 +145,7 @@ def seal_content_run_artifacts(
             artifact_type="message_plan",
             version=1,
             payload=delivery.message_plan.model_dump(mode="json"),
+            logical_account=logical_account,
             parents=(
                 topic_artifact.to_parent_ref(),
                 *((incubation_judgment_artifact.to_parent_ref(),) if incubation_judgment_artifact is not None else ()),
@@ -154,6 +162,7 @@ def seal_content_run_artifacts(
                 **delivery.base_draft.model_dump(mode="json"),
                 "stage": "base",
             },
+            logical_account=logical_account,
             parents=(message_plan_artifact.to_parent_ref(),),
             created_at=created_at,
             source_thread_id=source_thread_id,

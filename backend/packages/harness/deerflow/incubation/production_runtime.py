@@ -9,7 +9,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import ValidationError
 
 from deerflow.incubation.adapted_draft import AdaptedDraft
-from deerflow.incubation.contracts import ArtifactEnvelope, ProjectRef
+from deerflow.incubation.contracts import ArtifactEnvelope, LogicalAccountRef, ProjectRef
 from deerflow.incubation.format_decision import FormatDecision
 from deerflow.incubation.production_plan import (
     ProductionPlan,
@@ -207,6 +207,7 @@ async def generate_production_plan(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
     user_material_artifacts: tuple[ArtifactEnvelope, ...] = (),
 ) -> ArtifactEnvelope:
     """Generate bounded execution instructions below an exact adapted draft."""
@@ -257,6 +258,7 @@ async def generate_production_plan(
         adapted_draft_artifact=adapted_draft_artifact,
         format_decision_artifact=format_decision_artifact,
         user_material_artifacts=used_materials,
+        logical_account=logical_account,
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,

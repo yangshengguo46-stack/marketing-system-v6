@@ -11,6 +11,8 @@ from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     ArtifactParentRef,
     EvidenceRole,
+    LogicalAccountRecord,
+    LogicalAccountRef,
     PlatformAccountRecord,
     PlatformAccountRef,
     ProjectRecord,
@@ -19,6 +21,7 @@ from deerflow.incubation.contracts import (
 from deerflow.persistence.incubation_ledger.model import (
     IncubationApprovalGrantRow,
     IncubationArtifactRow,
+    IncubationLogicalAccountRow,
     IncubationPlatformAccountRow,
     IncubationProjectRow,
 )
@@ -36,6 +39,10 @@ class MissingAccountError(IncubationLedgerError):
     """The artifact references an account that is not bound to the project."""
 
 
+class MissingLogicalAccountError(IncubationLedgerError):
+    """The artifact or platform account references an unknown logical account."""
+
+
 class MissingParentArtifactError(IncubationLedgerError):
     """The artifact lineage references a missing or mismatched parent."""
 
@@ -50,6 +57,10 @@ class ProjectConflictError(IncubationLedgerError):
 
 class AccountConflictError(IncubationLedgerError):
     """An account identity was replayed with conflicting metadata."""
+
+
+class LogicalAccountConflictError(IncubationLedgerError):
+    """A logical-account identity was replayed with conflicting metadata."""
 
 
 class ApprovalGrantConflictError(IncubationLedgerError):
@@ -136,10 +147,76 @@ class IncubationLedgerRepository:
             result = await session.execute(stmt)
             return [self._project_record(row) for row in result.scalars()]
 
+    async def create_logical_account(
+        self,
+        logical_account: LogicalAccountRef,
+        *,
+        display_name: str,
+    ) -> LogicalAccountRecord:
+        normalized_name = display_name.strip()
+        if not normalized_name:
+            raise ValueError("logical account display_name cannot be empty")
+        async with self._sf() as session:
+            await self._require_project(session, logical_account)
+            key = (
+                logical_account.owner_user_id,
+                logical_account.project_id,
+                logical_account.logical_account_id,
+            )
+            row = await session.get(IncubationLogicalAccountRow, key)
+            if row is not None:
+                if row.display_name != normalized_name:
+                    raise LogicalAccountConflictError("logical account identity already exists with different metadata")
+                return self._logical_account_record(row)
+            now = datetime.now(UTC)
+            row = IncubationLogicalAccountRow(
+                owner_user_id=logical_account.owner_user_id,
+                project_id=logical_account.project_id,
+                logical_account_id=logical_account.logical_account_id,
+                display_name=normalized_name,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(row)
+            await session.commit()
+            return self._logical_account_record(row)
+
+    async def get_logical_account(
+        self,
+        logical_account: LogicalAccountRef,
+    ) -> LogicalAccountRecord | None:
+        async with self._sf() as session:
+            row = await session.get(
+                IncubationLogicalAccountRow,
+                (
+                    logical_account.owner_user_id,
+                    logical_account.project_id,
+                    logical_account.logical_account_id,
+                ),
+            )
+            return self._logical_account_record(row) if row is not None else None
+
+    async def list_logical_accounts(
+        self,
+        project: ProjectRef,
+    ) -> list[LogicalAccountRecord]:
+        stmt = (
+            select(IncubationLogicalAccountRow)
+            .where(
+                IncubationLogicalAccountRow.owner_user_id == project.owner_user_id,
+                IncubationLogicalAccountRow.project_id == project.project_id,
+            )
+            .order_by(IncubationLogicalAccountRow.logical_account_id.asc())
+        )
+        async with self._sf() as session:
+            result = await session.execute(stmt)
+            return [self._logical_account_record(row) for row in result.scalars()]
+
     async def connect_account(
         self,
         account: PlatformAccountRef,
         *,
+        logical_account: LogicalAccountRef,
         external_account_id: str,
         display_name: str,
     ) -> PlatformAccountRecord:
@@ -147,20 +224,26 @@ class IncubationLedgerRepository:
         normalized_name = display_name.strip()
         if not normalized_external_id or not normalized_name:
             raise ValueError("account external_account_id and display_name cannot be empty")
+        if logical_account.owner_user_id != account.owner_user_id or logical_account.project_id != account.project_id:
+            raise ValueError("platform account and logical account must belong to one project")
         async with self._sf() as session:
-            if (
-                await session.get(
-                    IncubationProjectRow,
-                    (account.owner_user_id, account.project_id),
-                )
-                is None
-            ):
-                raise MissingProjectError(f"project {account.project_id!r} does not exist for owner")
+            await self._require_project(session, account)
+            await self._require_logical_account(session, logical_account)
             key = (account.owner_user_id, account.project_id, account.account_id)
             row = await session.get(IncubationPlatformAccountRow, key)
             if row is not None:
-                expected = (account.platform, normalized_external_id, normalized_name)
-                actual = (row.platform, row.external_account_id, row.display_name)
+                expected = (
+                    logical_account.logical_account_id,
+                    account.platform,
+                    normalized_external_id,
+                    normalized_name,
+                )
+                actual = (
+                    row.logical_account_id,
+                    row.platform,
+                    row.external_account_id,
+                    row.display_name,
+                )
                 if actual != expected:
                     raise AccountConflictError("account identity already exists with different metadata")
                 return self._account_record(row)
@@ -169,6 +252,7 @@ class IncubationLedgerRepository:
                 owner_user_id=account.owner_user_id,
                 project_id=account.project_id,
                 account_id=account.account_id,
+                logical_account_id=logical_account.logical_account_id,
                 platform=account.platform,
                 external_account_id=normalized_external_id,
                 display_name=normalized_name,
@@ -445,10 +529,19 @@ class IncubationLedgerRepository:
         # full envelope before opening a transaction so a stale content hash can
         # never be committed after an in-memory payload mutation.
         artifact = ArtifactEnvelope.model_validate(artifact.model_dump(mode="python"))
+        if artifact.account is not None and artifact.logical_account is None:
+            raise MissingLogicalAccountError("new platform-account artifacts require a logical account")
         async with self._sf() as session:
             await self._require_project(session, artifact.project)
+            if artifact.logical_account is not None:
+                await self._require_logical_account(session, artifact.logical_account)
             if artifact.account is not None:
-                await self._require_account(session, artifact.account)
+                assert artifact.logical_account is not None
+                await self._require_account(
+                    session,
+                    artifact.account,
+                    artifact.logical_account,
+                )
             await self._require_parents(session, artifact)
 
             existing = await session.get(IncubationArtifactRow, artifact.artifact_id)
@@ -462,13 +555,14 @@ class IncubationLedgerRepository:
                 artifact_id=artifact.artifact_id,
                 owner_user_id=artifact.project.owner_user_id,
                 project_id=artifact.project.project_id,
+                logical_account_id=(artifact.logical_account.logical_account_id if artifact.logical_account is not None else None),
                 account_id=artifact.account.account_id if artifact.account is not None else None,
                 account_platform=artifact.account.platform if artifact.account is not None else None,
                 artifact_type=artifact.artifact_type,
                 artifact_version=artifact.version,
                 payload_json=artifact.payload,
                 content_sha256=artifact.content_sha256,
-                parents_json=[parent.model_dump(mode="json") for parent in artifact.parents],
+                parents_json=[parent.model_dump(mode="json", exclude_none=True) for parent in artifact.parents],
                 evidence_role=artifact.evidence_role,
                 source_thread_id=artifact.source_thread_id,
                 source_run_id=artifact.source_run_id,
@@ -495,6 +589,7 @@ class IncubationLedgerRepository:
         self,
         project: ProjectRef,
         *,
+        logical_account: LogicalAccountRef | None = None,
         artifact_type: str | None = None,
         evidence_role: EvidenceRole | None = None,
     ) -> list[ArtifactEnvelope]:
@@ -502,6 +597,10 @@ class IncubationLedgerRepository:
             IncubationArtifactRow.owner_user_id == project.owner_user_id,
             IncubationArtifactRow.project_id == project.project_id,
         )
+        if logical_account is not None:
+            if logical_account.owner_user_id != project.owner_user_id or logical_account.project_id != project.project_id:
+                raise ValueError("logical account must belong to the queried project")
+            stmt = stmt.where(IncubationArtifactRow.logical_account_id == logical_account.logical_account_id)
         if artifact_type is not None:
             stmt = stmt.where(IncubationArtifactRow.artifact_type == artifact_type)
         if evidence_role is not None:
@@ -526,19 +625,45 @@ class IncubationLedgerRepository:
             raise MissingProjectError(f"project {project.project_id!r} does not exist for owner")
 
     @staticmethod
-    async def _require_account(session: AsyncSession, account: PlatformAccountRef) -> None:
+    async def _require_logical_account(
+        session: AsyncSession,
+        logical_account: LogicalAccountRef,
+    ) -> None:
+        row = await session.get(
+            IncubationLogicalAccountRow,
+            (
+                logical_account.owner_user_id,
+                logical_account.project_id,
+                logical_account.logical_account_id,
+            ),
+        )
+        if row is None:
+            raise MissingLogicalAccountError(f"logical account {logical_account.logical_account_id!r} does not exist for project")
+
+    @staticmethod
+    async def _require_account(
+        session: AsyncSession,
+        account: PlatformAccountRef,
+        logical_account: LogicalAccountRef,
+    ) -> None:
         row = await session.get(
             IncubationPlatformAccountRow,
             (account.owner_user_id, account.project_id, account.account_id),
         )
-        if row is None or row.platform != account.platform:
+        if row is None or row.platform != account.platform or row.logical_account_id != logical_account.logical_account_id:
             raise MissingAccountError(f"account {account.account_id!r} is not bound to the project")
 
     @staticmethod
     async def _require_parents(session: AsyncSession, artifact: ArtifactEnvelope) -> None:
         for parent in artifact.parents:
             row = await session.get(IncubationArtifactRow, parent.artifact_id)
-            if row is None or (row.owner_user_id != parent.owner_user_id or row.project_id != parent.project_id or row.artifact_type != parent.artifact_type or row.content_sha256 != parent.content_sha256):
+            if row is None or (
+                row.owner_user_id != parent.owner_user_id
+                or row.project_id != parent.project_id
+                or row.logical_account_id != parent.logical_account_id
+                or row.artifact_type != parent.artifact_type
+                or row.content_sha256 != parent.content_sha256
+            ):
                 raise MissingParentArtifactError(f"parent artifact {parent.artifact_id!r} is missing or mismatched")
 
     @staticmethod
@@ -546,6 +671,7 @@ class IncubationLedgerRepository:
         return (
             artifact.artifact_id,
             artifact.project,
+            artifact.logical_account,
             artifact.account,
             artifact.artifact_type,
             artifact.version,
@@ -592,6 +718,21 @@ class IncubationLedgerRepository:
         )
 
     @staticmethod
+    def _logical_account_record(
+        row: IncubationLogicalAccountRow,
+    ) -> LogicalAccountRecord:
+        return LogicalAccountRecord(
+            logical_account=LogicalAccountRef(
+                owner_user_id=row.owner_user_id,
+                project_id=row.project_id,
+                logical_account_id=row.logical_account_id,
+            ),
+            display_name=row.display_name,
+            created_at=_aware(row.created_at),
+            updated_at=_aware(row.updated_at),
+        )
+
+    @staticmethod
     def _account_record(row: IncubationPlatformAccountRow) -> PlatformAccountRecord:
         return PlatformAccountRecord(
             account=PlatformAccountRef(
@@ -599,6 +740,11 @@ class IncubationLedgerRepository:
                 project_id=row.project_id,
                 account_id=row.account_id,
                 platform=row.platform,
+            ),
+            logical_account=LogicalAccountRef(
+                owner_user_id=row.owner_user_id,
+                project_id=row.project_id,
+                logical_account_id=row.logical_account_id,
             ),
             external_account_id=row.external_account_id,
             display_name=row.display_name,
@@ -608,6 +754,13 @@ class IncubationLedgerRepository:
 
     @staticmethod
     def _artifact_contract(row: IncubationArtifactRow) -> ArtifactEnvelope:
+        logical_account = None
+        if row.logical_account_id is not None:
+            logical_account = LogicalAccountRef(
+                owner_user_id=row.owner_user_id,
+                project_id=row.project_id,
+                logical_account_id=row.logical_account_id,
+            )
         account = None
         if row.account_id is not None and row.account_platform is not None:
             account = PlatformAccountRef(
@@ -626,6 +779,7 @@ class IncubationLedgerRepository:
             version=row.artifact_version,
             payload=row.payload_json,
             content_sha256=row.content_sha256,
+            logical_account=logical_account,
             account=account,
             parents=tuple(ArtifactParentRef.model_validate(parent) for parent in row.parents_json),
             evidence_role=row.evidence_role,

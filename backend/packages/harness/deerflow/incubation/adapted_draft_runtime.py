@@ -14,7 +14,7 @@ from deerflow.incubation.adapted_draft import (
     validate_adapted_draft_output,
     validate_adapted_draft_parents,
 )
-from deerflow.incubation.contracts import ArtifactEnvelope, ProjectRef
+from deerflow.incubation.contracts import ArtifactEnvelope, LogicalAccountRef, ProjectRef
 
 StructuredAdaptedDraftModel = Callable[
     [type[AdaptedDraftDraft], tuple[BaseMessage, ...]],
@@ -133,6 +133,7 @@ async def generate_adapted_draft(
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    logical_account: LogicalAccountRef | None = None,
 ) -> ArtifactEnvelope:
     """Generate one bounded format translation below exact immutable parents."""
 
@@ -168,6 +169,7 @@ async def generate_adapted_draft(
         draft=draft,
         base_draft_artifact=base_draft_artifact,
         format_decision_artifact=format_decision_artifact,
+        logical_account=logical_account,
         created_at=created_at,
         source_thread_id=source_thread_id,
         source_run_id=source_run_id,
