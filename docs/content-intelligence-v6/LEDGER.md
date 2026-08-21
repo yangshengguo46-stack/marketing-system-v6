@@ -2454,3 +2454,12 @@ DeerFlow 为唯一运行时，先做无行为变化的 `PromptManifest` 影子�
 Codex App Server、不开放运行时自改 Prompt/Skill。详见
 `audits/A129-deepseek-codex-harness-reference.md` 与
 `decisions/ADR-041-selective-harness-reference-adoption.md`。
+
+## A130 Harness 业务注意力对比预注册
+
+2026-08-22 为验证外部 Harness 原则是否真正提升业务能力，冻结三臂上下文实验：现役完整 Lead Prompt、
+最小宿主 Prompt、最小宿主加薄业务注意力卡。三臂使用同一 GLM、thinking 开启、无工具和联网、每题一次
+主调用。黄金礼品、水果店和 TikTok 公会只作诊断；晋级由六个全新行业题决定。盲评只看业务理解、受众、
+长期内容世界、差异化视角、业务回路和事实边界，不奖励格式。候选只有在 held-out 胜率、平均增益、事实
+边界和单题回归四项同时通过后，才允许进入完整 DeerFlow E2E。详见
+`audits/A130-harness-business-attention-preregistration.md`。

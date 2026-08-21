@@ -1,0 +1,52 @@
+{
+  "schema_version": "harness-business-attention-dataset-v1",
+  "dataset_id": "harness-business-attention-held-out-v1",
+  "status": "frozen_before_live_run",
+  "cases": [
+    {
+      "case_id": "diagnostic-fruit-store",
+      "split": "diagnostic",
+      "prompt": "我是开水果店的，想让更多人知道我，该怎么起号？"
+    },
+    {
+      "case_id": "diagnostic-golden-gift",
+      "split": "diagnostic",
+      "prompt": "我是做黄金礼品的，想让更多人知道我，该怎么起号？"
+    },
+    {
+      "case_id": "diagnostic-tiktok-guild",
+      "split": "diagnostic",
+      "prompt": "我是做TikTok直播公会的，主要地区为MENA和CCA，想让更多人知道我们，该怎么起号？"
+    },
+    {
+      "case_id": "held-industrial-robot-maintenance",
+      "split": "held_out",
+      "prompt": "我是一名给中小制造厂做工业机器人维修保养的工程师，想做一个账号让更多工厂老板知道我，该怎么起号？"
+    },
+    {
+      "case_id": "held-old-building-elevator",
+      "split": "held_out",
+      "prompt": "我是做老旧小区加装电梯咨询和落地服务的，想做账号获客，该怎么起号？"
+    },
+    {
+      "case_id": "held-senior-smartphone-training",
+      "split": "held_out",
+      "prompt": "我开了一家帮助老年人学会用智能手机的培训工作室，想通过账号让更多人知道，该怎么起号？"
+    },
+    {
+      "case_id": "held-pet-memorial-service",
+      "split": "held_out",
+      "prompt": "我是做宠物告别和纪念服务的，想做一个长期账号，该怎么起号？"
+    },
+    {
+      "case_id": "held-corporate-confidentiality-training",
+      "split": "held_out",
+      "prompt": "我是做企业内部保密培训的，想通过账号接触更多企业客户，该怎么起号？"
+    },
+    {
+      "case_id": "held-camping-mobile-kitchen",
+      "split": "held_out",
+      "prompt": "我卖露营移动厨房设备，想做一个不只是展示产品的长期账号，该怎么起号？"
+    }
+  ]
+}
