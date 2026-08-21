@@ -2463,3 +2463,13 @@ Codex App Server、不开放运行时自改 Prompt/Skill。详见
 长期内容世界、差异化视角、业务回路和事实边界，不奖励格式。候选只有在 held-out 胜率、平均增益、事实
 边界和单题回归四项同时通过后，才允许进入完整 DeerFlow E2E。详见
 `audits/A130-harness-business-attention-preregistration.md`。
+
+## A131 A130 人工业务复核与工具合同否决
+
+2026-08-22 完成 A130 唯一冻结运行。自动结果显示候选 held-out `4/6` 胜出、平均 `+2.5`，但人工复核
+发现现役完整提示词仍要求发现 Skill，而实验关闭了全部工具；黄金礼品、TikTok 公会和宠物纪念的基线
+因此陷入重复输出，自动优势被虚高。排除无效基线后，候选为两个真实提升、两个真实退步、一个相当、
+一个伴随事实编造；黄金礼品也只到“送礼”，没有到“人与人相处与人情世故”。ADR-042 否决生产晋级，
+后继必须用同一个完整 DeerFlow 构造路径、同模型、同工具和全新 held-out 做公平 A/B。详见
+`audits/A131-a130-manual-business-review.md`、`decisions/ADR-042-reject-a130-tool-inconsistent-promotion.md`
+与 `evidence/a130-harness-business-attention-2026-08-22.json`。
