@@ -2439,3 +2439,18 @@ CC-CEDICT 精确命中时零联网，未收录表达只用原词调用一次现�
 `audits/A128-agent-owned-incubation-routing.md` 与
 `decisions/ADR-040-agent-owned-incubation-routing.md`。Lead 系统提示词由 `10,662` 字节压到 `7,907`
 字节；聚焦回归 `517 passed`，完整后端非 live 回归 `12,438 passed, 75 skipped, 17 warnings`，退出码 `0`。
+
+## A129 DeepSeek 与 Codex Harness 参考价值审计
+
+2026-08-22 对照现役 DeerFlow Harness、DeepSeek Harness 官方架构与 Codex 官方 Agent Loop/App Server。
+结论是两者参考价值很高，但都不应替换第六版底座。Codex 最值得吸收的是极简循环、渐进披露、稳定前缀、
+延迟发现和上下文成本纪律；DeepSeek 最值得吸收的是 Definition / Provider / Consumer 能力接缝，以及
+“模型可见内容必须可重建”的追加式会话原则。
+
+DeerFlow 已具备恢复、沙箱、授权、MCP、Skill、子 Agent 与前端，当前差距是最多 35 项中间件、工具 Schema、
+动态上下文、Skill、checkpoint、运行事件和业务台账之间缺少一份可解释的模型请求清单。ADR-041 决定保留
+DeerFlow 为唯一运行时，先做无行为变化的 `PromptManifest` 影子观测，把每次调用的 Prompt、动态上下文、
+工具、Skill、历史和工具结果成本按来源归账；随后才评估只读 Turn/Event 投影。不迁移 Cordis、不嵌入
+Codex App Server、不开放运行时自改 Prompt/Skill。详见
+`audits/A129-deepseek-codex-harness-reference.md` 与
+`decisions/ADR-041-selective-harness-reference-adoption.md`。
