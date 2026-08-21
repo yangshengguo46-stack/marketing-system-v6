@@ -401,12 +401,24 @@ def _direction_editorial_context(
     option = prepared.direction.selected_option
     return ResearchEditorialContext(
         route_id=option.option_id,
-        content_subject=option.long_term_content_subject,
+        content_subject=_direction_frozen_content_root(option),
         audience_promise=option.audience_promise,
         audience_people=option.content_audience_hypothesis,
         recurring_interest=None,
         account_role=option.account_role,
     )
+
+
+def _direction_frozen_content_root(option: Any) -> str:
+    configured = getattr(option, "content_root", None)
+    if isinstance(configured, str) and configured.strip():
+        return " ".join(configured.split())
+
+    subject = " ".join(str(option.long_term_content_subject).split())
+    delimiter_positions = tuple(position for delimiter in ("：", ":", "。", "；", ";") if (position := subject.find(delimiter)) > 0)
+    if delimiter_positions:
+        subject = subject[: min(delimiter_positions)].strip()
+    return subject[:160].strip()
 
 
 def _render_confirmed_direction_reference(direction) -> str:
@@ -416,7 +428,7 @@ def _render_confirmed_direction_reference(direction) -> str:
             "## 已确认账号方向",
             "",
             f"**沿用：** {option.name}",
-            f"**长期内容主体：** {option.long_term_content_subject}",
+            f"**内容根：** {_direction_frozen_content_root(option)}",
         )
     )
 
@@ -593,9 +605,13 @@ async def explore_content_world_tool(
     term_resolver = _create_term_resolver(lexical_evidence_provider)
 
     try:
+        current_direction = None
         confirmed_context = None
         if answer_goal == ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC:
-            confirmed_context = await _load_confirmed_topic_context(runtime=runtime)
+            if subject_expression is None:
+                current_direction = await _load_current_account_direction(runtime=runtime)
+            if current_direction is None:
+                confirmed_context = await _load_confirmed_topic_context(runtime=runtime)
         reuse_confirmed_context = confirmed_context is not None and (
             subject_expression is None
             or _subject_expression_matches_confirmed_context(
@@ -604,7 +620,24 @@ async def explore_content_world_tool(
                 strategy=confirmed_context[1],
             )
         )
-        if not reuse_confirmed_context:
+        if current_direction is not None:
+            confirmed_subject = _direction_frozen_content_root(current_direction.direction.selected_option)
+            request = ContentIntelligenceRequest(
+                user_request=confirmed_subject,
+                subject_expression=confirmed_subject,
+                focus=AnalysisFocus.CONTENT_WORLD,
+                source_materials=(),
+                frozen_content_root=confirmed_subject,
+            )
+            bundle = await analyze_content_intelligence(
+                request,
+                model=model,
+                runnable_config=config,
+                lexical_evidence_provider=lexical_evidence_provider,
+                term_resolver=term_resolver,
+            )
+            current_strategy = None
+        elif not reuse_confirmed_context:
             validated_subject_expression = _validate_subject_expression(user_request, subject_expression)
             request = ContentIntelligenceRequest(
                 user_request=user_request,
@@ -641,7 +674,6 @@ async def explore_content_world_tool(
                 bundle=bundle,
                 runtime=runtime,
             )
-        current_direction = await _load_current_account_direction(runtime=runtime)
         editorial_context = _direction_editorial_context(current_direction)
         if editorial_context is None:
             editorial_context = _research_editorial_context(current_strategy.judgment if current_strategy is not None else None)
@@ -664,6 +696,7 @@ async def explore_content_world_tool(
                 model=model,
                 search=search_content_evidence,
                 topic_seed=validated_topic_seed,
+                current_user_request=user_request,
                 fetch=_fetch_content_world_evidence,
                 editorial_context=editorial_context,
                 runnable_config=config,
@@ -962,7 +995,13 @@ def _render_production_plan_artifact(artifact: ArtifactEnvelope) -> str:
 
 
 def _render_shootable_topic_failure(bundle: ContentIntelligenceBundle) -> str:
-    return "# 本轮选题结果\n\n**候选内容地图已形成，但没有形成可拍选题。** 研究、证据阅读或内容交付没有形成完整合同，因此本轮不会把地图方向冒充成具体选题。\n\n" + _render_content_opportunity_map(bundle)
+    return (
+        "# 本轮选题结果\n\n"
+        "**候选内容地图已形成，但没有形成可拍选题。** "
+        "研究、证据阅读或内容交付没有形成完整合同，因此本轮不会把地图方向冒充成具体选题。"
+        "这是失败回执，不是继续创作授权；不要另行调用通用搜索或依据地图自行补写稿件，"
+        "请向用户说明本轮没有形成以及尚缺的证据或合同。\n\n" + _render_content_opportunity_map(bundle)
+    )
 
 
 def _render_confirmed_route_reference(judgment: IncubationJudgment) -> str:

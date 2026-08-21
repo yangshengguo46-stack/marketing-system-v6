@@ -102,6 +102,7 @@ class ContentIntelligenceRequest(ContractModel):
     source_materials: tuple[SourceMaterial, ...] = ()
     term_resolution_limitations: tuple[NonEmptyStr, ...] = ()
     audience_context: ContentAudienceContext | None = None
+    frozen_content_root: NonEmptyStr | None = Field(default=None, max_length=1_200)
 
 
 class BusinessSemanticDraft(ContractModel):
@@ -625,6 +626,8 @@ async def analyze_content_intelligence(
         context_parts.append(hashlib.sha256(request.audience_context.model_dump_json().encode("utf-8")).hexdigest())
     if request.term_resolution_limitations:
         context_parts.append(hashlib.sha256(json.dumps(request.term_resolution_limitations, ensure_ascii=False).encode("utf-8")).hexdigest())
+    if request.frozen_content_root is not None:
+        context_parts.append(hashlib.sha256(request.frozen_content_root.encode("utf-8")).hexdigest())
     context_fingerprint = "|".join(context_parts) if context_parts else None
     record_id = _build_record_id(
         request.subject_expression,
@@ -1041,26 +1044,32 @@ async def _analyze_focused_content_world(
         shared_world,
         incubation_profile=incubation_profile,
     )
-    decision_messages = (
-        SystemMessage(content=CONTENT_ROOT_DECISION_SYSTEM_PROMPT),
-        HumanMessage(
-            content=_render_root_decision_input(
-                candidate_set,
-                offering_role=semantic.offering_role,
-                incubation_profile=incubation_profile,
-                audience_context=request.audience_context,
-            )
-        ),
-    )
-    decision = await _invoke_structured(
-        model,
-        ContentRootDecisionDraft,
-        decision_messages,
-        runnable_config=runnable_config,
-        include_raw=True,
-        container_fields={"unknowns"},
-    )
-    root = _resolve_root_selection(candidate_set, decision)
+    if request.frozen_content_root is None:
+        decision_messages = (
+            SystemMessage(content=CONTENT_ROOT_DECISION_SYSTEM_PROMPT),
+            HumanMessage(
+                content=_render_root_decision_input(
+                    candidate_set,
+                    offering_role=semantic.offering_role,
+                    incubation_profile=incubation_profile,
+                    audience_context=request.audience_context,
+                )
+            ),
+        )
+        decision = await _invoke_structured(
+            model,
+            ContentRootDecisionDraft,
+            decision_messages,
+            runnable_config=runnable_config,
+            include_raw=True,
+            container_fields={"unknowns"},
+        )
+        root = _resolve_root_selection(candidate_set, decision)
+    else:
+        root = _freeze_confirmed_root_selection(
+            candidate_set,
+            request.frozen_content_root,
+        )
     map_messages = (
         SystemMessage(content=FROZEN_CONTENT_MAP_SYSTEM_PROMPT),
         HumanMessage(
@@ -1897,6 +1906,34 @@ def _build_root_candidate_set(
         source_object=semantic.source_object,
         candidates=tuple(candidates),
         unknowns=semantic.uncertainties,
+    )
+
+
+def _freeze_confirmed_root_selection(
+    candidate_set: ContentRootCandidateSetDraft,
+    frozen_content_root: str,
+) -> ContentRootSelectionDraft:
+    """Bind a user-confirmed root without asking the model to select it again."""
+
+    normalized_root = " ".join(frozen_content_root.split())
+    candidates = tuple(candidate for candidate in candidate_set.candidates if candidate.label != normalized_root) + (
+        RootCandidateDraft(
+            level="other",
+            label=normalized_root,
+            scope_role="root_candidate",
+            relation_to_business="用户已确认的长期内容主体。",
+            strength="决策来源清晰，可以在后续内容中稳定复用。",
+            overreach_risk="只能扩展与该内容主体存在可解释路径的人、事、关系和共同经验。",
+        ),
+    )
+    frozen_index = len(candidates) - 1
+    return ContentRootSelectionDraft(
+        source_object=candidate_set.source_object,
+        candidates=candidates,
+        selected_candidate_index=frozen_index,
+        map_root_candidate_index=frozen_index,
+        root_rationale="该内容根来自用户已确认的账号方向；本轮只扩展和收敛具体内容，不再重新选根。",
+        unknowns=candidate_set.unknowns,
     )
 
 

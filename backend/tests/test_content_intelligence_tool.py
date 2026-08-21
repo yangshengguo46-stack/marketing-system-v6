@@ -75,6 +75,36 @@ def test_content_intelligence_tool_is_available_to_the_lead_by_default() -> None
     assert "broad account-starting" not in content_intelligence_tool.description
 
 
+def test_lead_does_not_bypass_an_explicit_shootable_topic_failure() -> None:
+    normalized_prompt = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
+
+    assert "do not bypass it with generic search" in normalized_prompt
+    assert "synthesize its working material yourself" not in SYSTEM_PROMPT_TEMPLATE
+
+
+def test_lead_keeps_current_surface_exclusions_out_of_the_entire_visible_answer() -> None:
+    normalized_prompt = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
+
+    assert "explicit surface exclusions bind the entire visible answer" in normalized_prompt
+    assert "confirmed-direction reference, preface, or commercial bridge" in normalized_prompt
+
+
+def test_confirmed_direction_reference_projects_the_frozen_root_not_the_business_bearing_subject() -> None:
+    selected_option = SimpleNamespace(
+        name="关系观察向",
+        content_root="人与人的关系本身",
+        long_term_content_subject="人与人的关系本身：从商业对象切入但长期不围着商品讲",
+    )
+    direction = SimpleNamespace(selected_option=selected_option)
+
+    rendered = content_intelligence_tool_module._render_confirmed_direction_reference(direction)
+
+    assert "**沿用：** 关系观察向" in rendered
+    assert "**内容根：** 人与人的关系本身" in rendered
+    assert "长期内容主体" not in rendered
+    assert "商业对象" not in rendered
+
+
 def test_lexical_evidence_provider_is_disabled_without_a_local_index_env(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path,
@@ -329,6 +359,7 @@ async def test_content_world_tool_returns_the_concrete_shooting_delivery_before_
     render.assert_called_once_with(enriched_bundle, shooting_delivery)
     research = content_intelligence_tool_module.enrich_content_world_with_research
     assert research.await_args.kwargs["topic_seed"] is None
+    assert research.await_args.kwargs["current_user_request"] == user_request
 
 
 @pytest.mark.asyncio
@@ -475,7 +506,8 @@ async def test_confirmed_account_direction_guides_topic_without_requiring_a_boun
         "_load_confirmed_topic_context",
         AsyncMock(return_value=None),
     )
-    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    semantic_analysis = AsyncMock(return_value=bundle)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", semantic_analysis)
     monkeypatch.setattr(content_intelligence_tool_module, "_load_current_account_strategy", AsyncMock(return_value=None))
     monkeypatch.setattr(
         content_intelligence_tool_module,
@@ -521,6 +553,11 @@ async def test_confirmed_account_direction_guides_topic_without_requiring_a_boun
     )
 
     editorial_context = research.await_args.kwargs["editorial_context"]
+    semantic_request = semantic_analysis.await_args.args[0]
+    assert semantic_request.user_request == "人与人之间的相处与人情世故"
+    assert semantic_request.subject_expression == "人与人之间的相处与人情世故"
+    assert semantic_request.frozen_content_root == "人与人之间的相处与人情世故"
+    assert "今天能拍" not in semantic_request.user_request
     assert editorial_context.route_id == "direction_1"
     assert editorial_context.content_subject == "人与人之间的相处与人情世故"
     assert editorial_context.audience_people == "关心关系分寸与人情判断的人"
@@ -529,6 +566,15 @@ async def test_confirmed_account_direction_guides_topic_without_requiring_a_boun
     assert persistence.await_args.kwargs["account_direction_artifact"] is direction_artifact
     assert "已确认账号方向" in result.update["messages"][0].content
     render_direction.assert_called_once_with(direction)
+
+
+def test_confirmed_direction_uses_its_concise_subject_as_the_frozen_root() -> None:
+    option = SimpleNamespace(
+        content_root=None,
+        long_term_content_subject=("人与人的关系本身：面子、人情往来、还礼与亏欠、回报与边界。黄金礼品是人情世界中的一个工具和符号。"),
+    )
+
+    assert content_intelligence_tool_module._direction_frozen_content_root(option) == "人与人的关系本身"
 
 
 @pytest.mark.asyncio
@@ -2005,6 +2051,8 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "BenchmarkSnapshot" in normalized_section
     assert "cannot decide positioning" in normalized_section
     assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section
+    assert "asks for one concrete shootable topic or script under a confirmed direction" in normalized_section
+    assert "use `tool_search` to fetch `explore_content_world`" in normalized_section
     assert "omit `subject_expression` so the tool rehydrates that confirmed route's exact frozen map" in normalized_section
     assert "Delivery words such as topic, script, draft, or today's post are not the subject" in normalized_section
     assert "topic_seed" in normalized_section

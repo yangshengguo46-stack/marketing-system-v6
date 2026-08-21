@@ -415,6 +415,32 @@ async def test_delivery_repairs_named_numeric_and_absolute_claims_absent_from_ev
 
 
 @pytest.mark.asyncio
+async def test_delivery_allows_a_decade_implied_by_an_evidenced_year() -> None:
+    bundle = _evidence_bound_bundle()
+    assert bundle.topic_brief is not None
+    topic = bundle.topic_brief.model_copy(
+        update={
+            "question": "1933 年的一次公开争论如何改变两个人的关系？",
+            "central_claim": "1933 年的公开争论需要放回当时的关系与传播环境理解。",
+        }
+    )
+    bundle = bundle.model_copy(update={"topic_brief": topic})
+    payload = _message_plan_payload()
+    payload["context"] = "1930 年代的公开报刊争论中"
+    model = StructuredDeliveryFakeModel(payload)
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="用这个真实事件讲清一种人情世故。",
+        model=model,
+    )
+
+    assert delivery is not None
+    assert delivery.message_plan.context == "1930 年代的公开报刊争论中"
+    assert len(model.message_batches) == 1
+
+
+@pytest.mark.asyncio
 async def test_delivery_repairs_unsupported_user_experience_and_foreign_text() -> None:
     bundle = _evidence_bound_bundle()
     unsupported = _message_plan_payload()
@@ -505,6 +531,9 @@ def test_delivery_prompt_separates_internal_exploration_from_the_shootable_answe
     assert "按发生顺序推进具体事件" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "把故事改写成案例分析" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "接收者第一反应" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "账号的解释或创意判断" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "人物本人说过、判断过或出于某种动机" in SHOOTING_DELIVERY_SYSTEM_PROMPT
+    assert "不是 A 而是 B" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "没有叙事骨架时不得硬编" in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "红薯" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
     assert "白酒" not in SHOOTING_DELIVERY_SYSTEM_PROMPT
@@ -550,8 +579,8 @@ def test_rendered_delivery_is_a_compact_daily_topic_and_base_draft() -> None:
     assert "## 基础文案" in rendered
     assert "饮酒与人际礼俗" in rendered
     assert "A public record about regional drinking customs" in rendered
-    assert "**证据状态：** 3 项待补证边界；未核实内容未写成事实。" in rendered
-    assert "**待确认：** 1 项未知；未确认内容未写成事实。" in rendered
+    assert "**证据状态：** 存在 3 项待补证边界，请在拍摄前逐项核对。" in rendered
+    assert "**待确认：** 仍有 1 项未知，请勿把它写成确定事实。" in rendered
     assert "当前只有一份有界证据回执。" not in rendered
     assert "成稿前补充两地的礼俗及历史来源。" not in rendered
     assert "这份资料能否代表两地全部宴席？" not in rendered

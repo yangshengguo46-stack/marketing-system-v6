@@ -187,6 +187,15 @@ continuations. Topic and competitor evidence never mix. Formal benchmark evidenc
 author-consistent multi-post coverage and cannot write direction. Credentials, raw pages, local paths, and temporary
 URLs never enter artifacts. The Host exposes only `deerflow-capability-mcp`; every Child still needs a receipt.
 
+For one-topic work under a confirmed direction, freeze the direction's compact `content_root`; do not reinterpret its
+long rationale or business-return language as a new subject. Project the current user request into discovery, evidence
+reading, and topic convergence only as `instruction_not_evidence`. A named candidate must instantiate the terminal map
+path, its identity must not contain unverified dates, quantities, motives, or conclusions, and its first query should
+express a source-quality intent. Direct source explanations outrank creative motive inference. If the topic editor
+cannot support the requested person, event, mechanism, or exclusion boundary, return the failure receipt; the Lead must
+not bypass it with generic search or draft from the map. A synthesized interpretation is the account's view unless a
+source directly attributes it to the person.
+
 Keep always-on guidance within UTF-8 budgets; details and consumed experiment history belong in
 `../docs/content-intelligence-v6/`. Do not rerun or register consumed A132 probe middleware or its global attention
 text; A133/ADR-043 retain its seven business dimensions only as an offline evaluation rubric.

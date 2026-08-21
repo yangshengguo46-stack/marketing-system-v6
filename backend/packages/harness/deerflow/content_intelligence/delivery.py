@@ -178,6 +178,8 @@ SHOOTING_DELIVERY_SYSTEM_PROMPT = """<content_intelligence_delivery>
 - 叙事基础文案要先让观众看到人如何行动、如何遇阻、如何选择以及关系或处境如何变化，再从变化中显出 TopicBrief 的道理；不要开场先宣布道理，再用人物作例子。
 - 叙事时 opening 和 message_beats 必须按发生顺序推进具体事件，不得用“先看、再看、这说明、所以”把故事改写成案例分析；道理留到人物选择已产生结果后再点破。
 - 只能写证据或题设支持的动作、话语、心理与因果；不得把“接收者第一反应”、“他心里怎么想”或单一因果写成已知事实。证据不足时保留悬问或限定语。
+- TopicBrief 中的中心判断、机制和反面边界默认是账号的解释或创意判断，不是人物证词。除非观察记录直接支持，不得写成人物本人说过、判断过或出于某种动机；用“在这个账号看来”“可以看作”或“更值得追问的是”明确归因。
+- “不是 A 而是 B”这类排他性心理或因果判断必须有直接证据；若只是把不同观察连成一种解释，应改成非排他的有限判断，并保留其他可能性。
 - 没有叙事骨架时不得硬编主角、冲突或结局；说明、比较、知识或历史梳理可以用非叙事结构。
 - message_plan 必须说清：谁在什么情境下遇到了什么具体事情或问题，账号从用户的真实立场给出什么明确观点。
 - focal_subject 是这条内容中真正被讲述的人、群体或具体对象；不得用“某些人”、“相关人群”等空话代替。
@@ -306,9 +308,18 @@ def _unsupported_delivery_details(
             unsupported.append(token)
 
     allowed_numbers = set(_NUMBER_TOKEN_RE.findall(fact_ledger))
-    for token in _NUMBER_TOKEN_RE.findall(draft_text):
-        if token not in allowed_numbers:
-            unsupported.append(token)
+    evidenced_years = {int(token) for token in allowed_numbers if len(token) == 4 and token.isascii() and token.isdigit()}
+    for match in _NUMBER_TOKEN_RE.finditer(draft_text):
+        token = match.group(0)
+        if token in allowed_numbers:
+            continue
+        if _is_implied_decade(
+            token,
+            following_text=draft_text[match.end() :],
+            evidenced_years=evidenced_years,
+        ):
+            continue
+        unsupported.append(token)
 
     for match in _INTRODUCED_NAME_RE.finditer(draft_text):
         candidate = match.group(1).strip()
@@ -330,6 +341,22 @@ def _unsupported_delivery_details(
             unsupported.append(claim)
 
     return tuple(dict.fromkeys(unsupported))
+
+
+def _is_implied_decade(
+    token: str,
+    *,
+    following_text: str,
+    evidenced_years: set[int],
+) -> bool:
+    """Accept a decade label only when an evidenced year entails that decade."""
+
+    if len(token) != 4 or not token.isascii() or not token.isdigit():
+        return False
+    decade = int(token)
+    if decade % 10 != 0 or re.match(r"\s*年代", following_text) is None:
+        return False
+    return any(year // 10 * 10 == decade for year in evidenced_years)
 
 
 def _delivery_fact_ledger(
@@ -520,12 +547,12 @@ def render_shooting_delivery(
 
     boundary_items = tuple(dict.fromkeys((*plan.limitations, *plan.research_needed)))
     if boundary_items:
-        lines.extend(("", f"**证据状态：** {len(boundary_items)} 项待补证边界；未核实内容未写成事实。"))
+        lines.extend(("", f"**证据状态：** 存在 {len(boundary_items)} 项待补证边界，请在拍摄前逐项核对。"))
 
     unknowns_by_id = {item.unknown_id: item.question for item in bundle.record.unknowns}
     unknown_items = tuple(unknowns_by_id[ref] for ref in plan.unknown_refs if ref in unknowns_by_id)
     if unknown_items:
-        lines.extend(("", f"**待确认：** {len(unknown_items)} 项未知；未确认内容未写成事实。"))
+        lines.extend(("", f"**待确认：** 仍有 {len(unknown_items)} 项未知，请勿把它写成确定事实。"))
 
     citations = _topic_citations(bundle)
     if citations:

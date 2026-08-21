@@ -418,6 +418,49 @@ async def test_user_topic_seed_reaches_discovery_as_an_unverified_lead() -> None
     assert "1914 Christmas Truce shared meal primary source" in seen_queries
 
 
+@pytest.mark.asyncio
+async def test_current_user_request_constraints_reach_every_research_decision_without_becoming_evidence() -> None:
+    bundle = await _content_world_bundle()
+    research_model = SequencedStructuredFakeModel(
+        {
+            ResearchDiscoveryDraft: _discovery_payload(),
+            EvidenceReadingDraft: _reading_payload(),
+            TopicEditorialDecisionDraft: _editorial_payload(),
+        }
+    )
+    seen_queries: list[str] = []
+
+    async def search(query: str, max_results: int) -> tuple[ResearchSearchResult, ...]:
+        seen_queries.append(query)
+        return (
+            ResearchSearchResult(
+                title="Public archive entry",
+                url="https://example.com/archive-entry",
+                content="A dated archive snippet describing the public event and the shared meal.",
+            ),
+        )
+
+    current_user_request = "给我一个今天可以直接拍的具体选题。不要以商品为表面主题，要用一个真实公开的人物和发生在他身上的具体事件。"
+    await enrich_content_world_with_research(
+        bundle,
+        model=research_model,
+        search=search,
+        current_user_request=current_user_request,
+    )
+
+    assert len(research_model.message_batches) == 3
+    for message_batch in research_model.message_batches:
+        request_input = message_batch[1].content
+        assert '"current_request_constraints"' in request_input
+        assert f'"text": "{current_user_request}"' in request_input
+        assert '"epistemic_status": "instruction_not_evidence"' in request_input
+
+    assert "当前请求约束不是事实或证据" in research_model.message_batches[0][0].content
+    assert "不得把著作、论文、理论或一次发表行为偷换成事件" in research_model.message_batches[2][0].content
+    assert all(current_user_request not in query for query in seen_queries)
+    assert all("商品" not in query for query in seen_queries)
+
+
 def test_topic_seed_candidate_entity_keeps_only_the_named_subject() -> None:
     assert "最小完整专名" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
     assert "原样复制" in TOPIC_SEED_DISCOVERY_INSTRUCTIONS
@@ -1498,6 +1541,18 @@ def test_research_defaults_bound_cost_without_becoming_a_business_quota() -> Non
     assert "叙事主角必须是证据中的人或集体行动者" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "商品、品类、材质或抽象概念" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "人的关系、选择和变化" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "末端方向中的关键参与者、行动、关系或条件" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "最小稳定身份" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "未经取证的日期、数量、动机或结论" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "第一条检索词" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "一手讲述者、原始作品、档案、公共机构或可靠报道" in RESEARCH_DISCOVERY_SYSTEM_PROMPT
+    assert "只在同一个宽泛维度里相关" in EVIDENCE_READING_SYSTEM_PROMPT
+    assert "来源直接解释了行为原因" in EVIDENCE_READING_SYSTEM_PROMPT
+    assert "相邻路径" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "人物本人的判断、动机或原话" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "不是 A 而是 B" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "可靠来源已经直接说明原因" in TOPIC_EDITOR_SYSTEM_PROMPT
+    assert "limitations 不能把核心事件和核心机制都未核实的材料" in TOPIC_EDITOR_SYSTEM_PROMPT
     assert "KTV" not in RESEARCH_DISCOVERY_SYSTEM_PROMPT
     assert "KTV" not in TOPIC_EDITOR_SYSTEM_PROMPT
 

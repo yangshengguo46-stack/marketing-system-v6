@@ -95,6 +95,7 @@ def _proposal_args(runtime: ToolRuntime) -> dict[str, object]:
         "direction_options": [
             {
                 "name": "人情世故观察者",
+                "content_root": "人与人之间的相处与人情世故",
                 "long_term_content_subject": "人与人之间的相处与人情世故",
                 "rationale": "从礼品用途进入长期关系世界。",
                 "content_audience_hypothesis": "关心关系分寸的人",
@@ -131,6 +132,8 @@ def test_lead_treats_direction_persistence_as_optional_and_user_confirmed() -> N
     assert "does not adopt it" in normalized
     assert "explicitly accepts an exact proposal and option" in normalized
     assert "ordinary conversation" in normalized
+    assert "asks to choose or confirm before continuing" in normalized
+    assert "`tool_search`" in normalized
 
 
 @pytest.mark.asyncio
@@ -169,6 +172,7 @@ async def test_proposal_bootstraps_scope_only_when_the_tool_is_called_and_binds_
     assert repository.create_account_calls == 1
     proposal = next(artifact for artifact in repository.artifacts.values() if artifact.artifact_type == "account_direction_proposal")
     assert proposal.payload["source_user_text"] == "我是做黄金礼品的，我要怎么起号？"
+    assert proposal.payload["direction_options"][0]["content_root"] == "人与人之间的相处与人情世故"
     message = _tool_message(command)
     assert "账号方向提案" in message.content
     assert proposal.artifact_id in message.content
@@ -246,6 +250,30 @@ async def test_invalid_aggregate_proposal_does_not_leave_an_empty_implicit_proje
     assert repository.create_account_calls == 0
     assert repository.artifacts == {}
     assert "没有通过台账校验" in _tool_message(command).content
+
+
+@pytest.mark.asyncio
+async def test_proposal_accepts_a_json_encoded_unknowns_list_from_the_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = _Repository()
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    runtime = _runtime(messages=[HumanMessage(content="我是做黄金礼品的，我要怎么起号？")])
+    args = _proposal_args(runtime)
+    args["unknowns"] = '["用户是否愿意出镜", "目标平台仍未知"]'
+
+    command = await propose_account_direction_tool.ainvoke(
+        {
+            "name": "propose_account_direction",
+            "args": args,
+            "id": "direction-call",
+            "type": "tool_call",
+        }
+    )
+
+    proposal = next(artifact for artifact in repository.artifacts.values() if artifact.artifact_type == "account_direction_proposal")
+    assert proposal.payload["unknowns"] == ["用户是否愿意出镜", "目标平台仍未知"]
+    assert "账号方向提案" in _tool_message(command).content
 
 
 @pytest.mark.asyncio

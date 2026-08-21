@@ -1187,6 +1187,28 @@ async def test_content_world_focus_uses_semantic_attention_before_map_expansion(
 
 
 @pytest.mark.asyncio
+async def test_confirmed_content_root_skips_root_reselection_and_stays_exact() -> None:
+    model = _focused_model()
+    frozen_root = "火锅与共同用餐生活"
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="已确认长期讲火锅与共同用餐生活。",
+            subject_expression="火锅与共同用餐生活",
+            focus=AnalysisFocus.CONTENT_WORLD,
+            frozen_content_root=frozen_root,
+        ),
+        model=model,
+    )
+
+    assert ContentRootDecisionDraft not in model.schemas
+    assert model.schemas[-1] is FrozenContentMapDraft
+    assert bundle.content_world is not None
+    assert bundle.content_world.content_root == frozen_root
+    assert f'"primary_content_center": "{frozen_root}"' in model.message_batches[-1][1].content
+
+
+@pytest.mark.asyncio
 async def test_analyzer_recovers_provider_json_message_content_without_retry() -> None:
     model = RawContentSequencedFakeModel(
         {

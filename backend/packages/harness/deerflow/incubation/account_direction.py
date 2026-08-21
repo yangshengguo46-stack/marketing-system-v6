@@ -63,6 +63,11 @@ class AccountDirectionOptionDraft(IncubationContract):
     """One coherent account direction; optional fields may stay unknown."""
 
     name: NonEmptyStr = Field(max_length=160)
+    content_root: NonEmptyStr | None = Field(
+        default=None,
+        max_length=160,
+        description="Concise long-term content root; name the world to expand without rationale or business return text.",
+    )
     long_term_content_subject: NonEmptyStr = Field(max_length=1_200)
     rationale: NonEmptyStr = Field(max_length=2_000)
     content_audience_hypothesis: NonEmptyStr | None = Field(default=None, max_length=1_200)

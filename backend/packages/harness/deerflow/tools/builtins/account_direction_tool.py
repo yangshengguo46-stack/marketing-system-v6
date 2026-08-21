@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import json
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
 from langgraph.types import Command
+from pydantic import BeforeValidator
 
 from deerflow.incubation.account_direction import (
     AccountDirectionOptionDraft,
@@ -30,6 +32,21 @@ from deerflow.tools.types import Runtime
 from deerflow.utils.messages import get_original_user_content_text, is_real_user_message
 
 logger = logging.getLogger(__name__)
+
+
+def _decode_json_string_list(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    try:
+        decoded = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise ValueError("expected a JSON-encoded list") from exc
+    if not isinstance(decoded, list):
+        raise ValueError("expected a JSON-encoded list")
+    return decoded
+
+
+ModelStringList = Annotated[list[str], BeforeValidator(_decode_json_string_list)]
 
 
 def _terminal_direction_command(
@@ -148,8 +165,8 @@ async def propose_account_direction_tool(
     direction_options: list[AccountDirectionOptionDraft],
     recommended_option_number: int,
     business_goal: str | None = None,
-    basis_artifact_ids: list[str] | None = None,
-    unknowns: list[str] | None = None,
+    basis_artifact_ids: ModelStringList | None = None,
+    unknowns: ModelStringList | None = None,
     revision_reason: str | None = None,
 ) -> Command:
     """Persist one to three coherent account-direction candidates without selecting for the user."""
