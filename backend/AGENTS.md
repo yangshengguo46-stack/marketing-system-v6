@@ -156,63 +156,38 @@ from deerflow.config import get_app_config
 
 ### V6 Content Incubation Core
 
-`content_intelligence/` owns `ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan ->
-BaseDraft`; explicit requests may continue downstream. A map is opportunity evidence, not positioning.
-Only the frozen `map_root` enters expansion, and topics bind its version. Labels are evidence, never gates;
-local scenes remain branches when a world also spans people, history, events, regions, or works.
+`content_intelligence/` owns `ComprehensionRecord -> ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft`;
+downstream format or production runs only on explicit request. A frozen `map_root` expands content opportunities,
+not account positioning, and every topic binds its map version. Labels are evidence, never gates.
 
-At most one active `incubate-*` Skill may offer bounded, rejectable root and branch advice. It cannot change
-user text, own fact denials, classify free text, delete fields, reject drafts by substring, or overwrite model
-judgment. Governance metadata stays outside model context; any package/hash/receipt mismatch hides the Skill.
-See the skills guide. Normalize provider payloads before reconciliation and withdraw worlds with no semantic
-path or constitutive context.
+The Lead owns incubation judgment and selects the least work needed: answer, one decision question, one matching
+`incubate-*` Skill, term verification, semantics, one map, or evidence collection. None is a mandatory first stage.
+At most one active incubation Skill may offer bounded, rejectable advice; it cannot rewrite user text, own denials,
+classify free text, reject drafts by substring, or overwrite model judgment.
 
-`deerflow.incubation` and schema `0015_incubation_logical_accounts` own owner/project/logical-account-scoped,
-parent-checked truth. A `LogicalAccountRef` exists before platform login and may later bind zero or many
-`PlatformAccountRef` records. Thread metadata is the trusted account selector; caller config, model arguments,
-and arbitrary context cannot override it. New account artifacts carry the exact logical account through strategy,
-content, format, adaptation, production, and planning. Legacy project-scoped artifacts remain readable with their
-original canonical IDs and cannot be silently promoted into an account.
-`RootFeedbackRecord` is append-only, exact-map episodic evidence; it cannot become a rule before ADR-031 approval.
-The Lead owns incubation judgment and selects the least work needed. It may answer, ask one decision question,
-inspect one matching `incubate-*` Skill, verify a term, analyze semantics, build one map, or collect evidence;
-none is a mandatory first stage. The historical
-`develop_account_strategy` implementation remains for stored artifacts and offline compatibility but is not a
-default Lead tool and must not be reintroduced through prompts, middleware, or Skills.
+`deerflow.incubation` owns parent-checked owner/project/logical-account truth. Thread metadata is the trusted account
+selector; caller config, model arguments, and arbitrary context cannot override it. A logical account does not require
+platform login. Legacy project-scoped artifacts remain readable but cannot be silently promoted. ADR-044 selects a
+thin append-only `AccountDirectionProposal -> AccountDirectionVersion` bridge for explicit reusable judgments. It is
+not implemented yet: dynamic Lead answers are not durable direction, old map-bound `IncubationJudgment` is read-only
+compatibility, and legacy confirmation/launch tools stay deferred. Never restore `develop_account_strategy` as a
+default tool or mandatory workflow.
 
-`user_business` reads only user/project facts; `agent_self` reads the server-owned `HostProductProfile`. Do not let
-deictic text or tool arguments rewrite either subject. Unknown terms may get one bounded lookup; `term_evidence`
-cannot become topic/benchmark evidence or choose a root. Payer, decision maker, beneficiary, business target, and
-content audience remain distinct concepts, but the Lead asks about them only when different answers materially
-change the route. Unsupported demographics, resources, cases, channels, and authority stay unknown; asserting one
-and then softening it with uncertainty is still fabrication. Broad account-direction requests do not implicitly
-request calendars, cadence, ratios, ad spend, or 7/30-day plans. A trusted owner/thread may still scope and
-rehydrate formal account artifacts; dynamic chat judgment does not silently adopt or overwrite them.
+`user_business` reads user/project facts; `agent_self` reads only server-owned `HostProductProfile`. Unknown terms may
+get one bounded lookup, but term evidence cannot choose a root or impersonate topic/benchmark evidence. Keep payer,
+decision maker, beneficiary, business target, and content audience distinct only when the distinction changes the
+route. Unsupported demographics, resources, cases, channels, authority, quantities, and publishing decisions remain
+unknown. Broad direction requests do not imply calendars, spend, cadence, or 7/30-day plans.
 
-`plan_account_launch` is an optional continuation after confirmation. Its account-scoped 7/30-day windows are
-review horizons, not platform gates or success promises. It cannot revise strategy, invent a `TopicBrief`, or block
-topic work; confirmation only seals an explicitly accepted proposal. Research caps are ceilings. Normal topic
-delivery stops at one compact `BaseDraft`; format, adaptation, and production are explicit continuations.
-`MessagePlan`/drafts cannot invent experience, facts, materials, sales, quantities, or publishing decisions, and
-resource claims require a user-material parent.
+Topic work may read a bounded confirmed direction but cannot create or revise it. Normal delivery stops at one compact
+`BaseDraft`; format, adaptation, launch planning, production, MediaKit, publication, metrics, and learning are explicit
+continuations. Topic and competitor evidence never mix. Formal benchmark evidence needs stable identity and
+author-consistent multi-post coverage and cannot write direction. Credentials, raw pages, local paths, and temporary
+URLs never enter artifacts. The Host exposes only `deerflow-capability-mcp`; every Child still needs a receipt.
 
-A narrative frame carries protagonist, goal, obstacle, action, stakes, outcome, evidence, and limitations into the
-draft; null stays non-narrative. Topic and competitor evidence never mix. Formal benchmark evidence needs stable
-identity and author-consistent multi-post coverage and cannot write strategy. Credentials, raw pages, paths, and
-temporary URLs never enter artifacts. The Host exposes only `deerflow-capability-mcp`; loaded Children still need
-receipts. MediaKit, publication, metrics, and learning remain downstream.
-
-Keep always-on instructions within UTF-8 budgets; details belong behind progressive discovery. Consumed experiments
-A84/A86/A88/A90/A92 and A99/A101 are not rerun or stacked. Dictionaries remain optional; account evidence comes
-after user facts and a candidate world and may challenge, but never select, the root. See
-`../docs/content-intelligence-v6/` for the full contracts and experiment history.
-
-The consumed A132 Harness business-attention comparison under `experiments/harness_business_e2e_lab/` is research,
-not runtime code. Its full-DeerFlow A/B failed the preregistered threshold and manual review: a global attention card
-improved some audience chains but caused a material content-world regression and higher token use. Do not rerun or
-tune its frozen cases, and do not register its probe middleware or attention text in the Lead, Gateway, extensions,
-or Skill registry. The seven business dimensions remain an offline evaluation rubric, never a mandatory output
-workflow. See A133 and ADR-043 for the reviewed result.
+Keep always-on guidance within UTF-8 budgets; details and consumed experiment history belong in
+`../docs/content-intelligence-v6/`. Do not rerun or register consumed A132 probe middleware or its global attention
+text; A133/ADR-043 retain its seven business dimensions only as an offline evaluation rubric.
 
 ## Development Workflow
 

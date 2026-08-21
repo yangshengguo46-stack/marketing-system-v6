@@ -1057,6 +1057,8 @@ tool_search:
     - analyze_content_intelligence
     - ask_clarification
     - bash
+    - confirm_account_launch_plan
+    - confirm_account_strategy
     - glob
     - grep
     - image_search
@@ -1064,6 +1066,7 @@ tool_search:
     - explore_content_world
     - list_uploaded_files
     - ls
+    - plan_account_launch
     - present_files
     - review_skill_package
     - str_replace

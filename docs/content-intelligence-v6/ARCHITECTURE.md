@@ -6,53 +6,44 @@
 
 ## 整体运营编排
 
-内容理解是孵化输入，但不是账号定位本身。完整系统采用“一个总脑、三条循环、两个执行底座、
-一套事实台账”，并按生命周期拆开内容机会、对标证据和账号策略：
+内容理解是孵化输入，但不是账号定位本身。完整系统采用“一个总脑、三条按需循环、两个执行底座、
+一套事实台账”。A128 后 Lead 已收回账号方向判断权；A134 又确认，自由判断尚未接入长期账号工件。
+所以下图同时标出目标架构和当前断点，不能把设计图冒充已完成闭环：
 
 ```mermaid
 flowchart LR
     USER["用户或定时任务"] --> LEAD["DeerFlow Lead"]
-    LEAD --> ACCOUNT["平台无关 LogicalAccountRef"]
-    ACCOUNT --> SUBJECT["MarketingSubjectSnapshot"]
-    HOST["版本化 HostProductProfile"] -->|"仅 Agent 自营销"| SUBJECT
-    FACTS["项目 / 可选账号 / 受众 / 复盘事实"] --> SUBJECT
-    SUBJECT --> AUDIENCE["业务目标人群 / 内容受众假设"]
-    AUDIENCE -->|"已解析或用户已选择"| OPPORTUNITY["语义 / 候选内容机会地图"]
-    BENCH["可选对标账号只读证据"] --> PROPOSAL["2 至 5 条账号路线提案"]
-    FACTS --> PROPOSAL
-    AUDIENCE --> PROPOSAL
-    OPPORTUNITY --> PROPOSAL
-    PROPOSAL --> RECOMMEND["Agent 推荐并说明依据"]
-    RECOMMEND --> CHOICE["用户选择"]
-    CHOICE --> STRATEGY["已确认账号孵化判断 vN"]
-    STRATEGY --> LAUNCH["可选 7/30 天 AccountLaunchPlan"]
-    STRATEGY --> CONTENT["内容循环"]
-    LAUNCH --> CONTENT
-    OPPORTUNITY --> CONTENT
+    FACTS["用户原话 / 项目事实 / 已确认旧版本"] --> LEAD
+    SKILL["可选 Skill / 词项 / 内容地图 / 对标"] --> LEAD
+    LEAD --> ANSWER["当前账号方向判断"]
+    ANSWER -. "当前断点：尚未落账" .-> PROPOSAL["AccountDirectionProposal"]
+    PROPOSAL --> CHOICE["用户确认或选择"]
+    CHOICE --> DIRECTION["AccountDirectionVersion vN"]
+    DIRECTION --> LAUNCH["可选 7/30 天计划"]
+    DIRECTION --> CONTENT["内容循环"]
+    OPPORTUNITY["按需候选内容地图"] --> CONTENT
+    BENCH["独立只读对标 / 受众证据"] --> LEAD
     TOPIC_EVIDENCE["热点 / 人物 / 事件 / 作品资料"] --> CONTENT
     CONTENT --> MEDIA["MediaKit 感知与制作"]
     MEDIA --> PRE["预演与审批"]
     PRE --> PLATFORM["抖音 OpenAPI / 浏览器 MCP"]
     PLATFORM --> RECEIPT["发布回执"]
     RECEIPT --> LEARN["指标、受众、复盘与学习"]
-    LEARN -. "生成新策略版本" .-> STRATEGY
+    LEARN -. "提供修订证据，仍须确认" .-> PROPOSAL
     LEARN -. "修正选题" .-> CONTENT
 ```
 
-上图是产物之间的可能谱系，不是一条每次必须走完的流水线。Lead 按用户当前目标读取有界上下文，
-只调用产生所需业务产物的能力。候选内容地图没有账号定位权；对标、MediaKit、平台 API、预演和
-复盘也不得自行重选内容根或修改共享业务真相。只有账号孵化判断层能形成长期路线，并通过新版本
-响应新证据。首次起号先给 2 至 5 条完整候选路线；Agent 的推荐不是用户确认，只有用户选择后
-才形成可供后续选题读取的 `confirmed` 版本。项目级提案和确认都不要求先绑定或登录平台账号。
-逻辑账号在首次孵化时即可创建，一个逻辑账号随后可以连接多个平台账号；平台授权不会重建此前战略、
-地图或计划。7/30 天计划只在用户明确要求时生成，不是 TopicBrief 的前置门。
+上图是可能谱系，不是一条每次必须走完的流水线。Lead 可以直接回答，也可以按当前不确定性选择一次
+澄清、一个匹配 Skill、陌生词核实、候选内容地图、对标证据或受控研究。候选内容地图没有账号定位权；
+对标、MediaKit、平台 API、预演和复盘也不得修改长期账号方向。
 
-首次起号还必须在内容根之前完成两项解析。`MarketingSubjectSnapshot` 先区分用户业务与当前 Agent
-产品；“你自己”指向 Agent 时只读取服务端版本化 `HostProductProfile`，不把代词当作客户业务文本。
-随后 `AccountAudienceDecision` 分开付款或签约者、决策者、使用或受益者、业务真正需要影响的人和
-愿意长期观看内容的人。交易关系已经明确时直接解析；批发/零售、B 端/C 端等分歧会实质改变账号方向
-时，只给二至三条受众路线并停下，直到用户选择。人口统计特征没有正式证据就保持未知。该决定是冷启动
-假设，后续观察可以产生新版本，但不能倒改旧工件。详见 [`ADR-038`](decisions/ADR-038-audience-first-subject-contract.md)。
+营销主体、付款者、决策者、使用者、业务目标人群和长期内容受众仍是有效概念，但不再是必经表单。只有
+它们的差异会实质改变路线时，Lead 才问一个有界问题或把该假设写入方向提案。“你自己”指向当前 Agent
+时，仍只读取服务端版本化 `HostProductProfile`。人口统计、资源、渠道和案例没有证据就保持未知。
+
+ADR-044 的新方向工件将在 Lead 已形成可复用判断时幂等创建逻辑账号作用域；普通聊天不因一句话自动建
+项目。提案可以只有一条明确方向，也可以在确有实质分歧时包含少量完整路线。推荐不等于用户确认；确认
+产生追加式新版本。平台登录不是前置条件，7/30 天计划也只在用户明确要求时生成。
 完整决策、产物合同、硬门边界和迁移原则见
 [`ADR-018`](decisions/ADR-018-artifact-graph-orchestration.md)；工作包与验收顺序见
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)。
@@ -60,7 +51,8 @@ flowchart LR
 共享台账当前有两类读取产物：通用 `EvidenceSnapshot` 保留选题、平台规则等单次证据集；
 `BenchmarkSnapshot` 保留第三方对标账号的稳定身份、作者一致作品和真实覆盖回执。
 两者都内容寻址且只向 Lead 给出有界投影，但证据角色不能互换。对标快照只是观察；定位、受众、
-获客期/当前迁移和不可复制条件属于独立 `IncubationJudgment` 的判断，不属于快照或内容地图。
+获客期/当前迁移和不可复制条件属于独立账号方向版本的判断，不属于快照或内容地图。旧
+`IncubationJudgment` 只作地图绑定历史工件兼容。
 
 抖音读取采用官方优先路由。`search.video_search` 按应用精确获批的 Scope 选择当前 v1 合同或
 保留的 v2 兼容合同：选题检索生成
@@ -142,20 +134,16 @@ Schema 严格的运营方价格文件，重新发现本机 CLI 当前 Schema，�
 ```mermaid
 flowchart LR
     USR["用户原话"] --> LEAD["DeerFlow Lead"]
+    LEAD -->|"当前问题已足够明确"| ANSWER["即时判断或一个有界澄清"]
+    LEAD -->|"陌生或新近业务词"| TERM["可选词项核实"]
+    LEAD -->|"需要理解商业表达"| SEMANTIC["可选业务语义分析"]
     LEAD -->|"内容机会或具体选题请求"| TOOL["explore_content_world"]
-    LEAD -->|"起号、定位或长期账号策略"| ACCOUNT["develop_account_strategy"]
-    ACCOUNT --> SUBJECT["营销主体：user_business / agent_self"]
-    SUBJECT --> AUDIENCE["付款者 / 决策者 / 使用者 / 目标人群 / 内容受众"]
-    AUDIENCE -->|"存在实质分歧"| AUDWAIT["等待 audience_option_id"]
-    AUDIENCE -->|"交易关系已明确"| AUDREADY["冻结受众路线"]
-    AUDWAIT -->|"用户选择"| AUDREADY
-    AUDREADY --> TOOL
-    VERSION --> ROUTES["多条 AccountRouteOption + 推荐"]
-    AUDREADY --> ROUTES
-    ROUTES --> WAIT["等待用户选择"]
-    WAIT -->|"精确 option_id"| CONFIRM["confirm_account_strategy"]
-    CONFIRM --> STRATEGY["confirmed IncubationJudgment vN"]
-    STRATEGY -->|"用户明确要求"| LAUNCHPLAN["可选 AccountLaunchPlan"]
+    LEAD -->|"需要外部参照"| BENCH["可选只读对标 / 受众证据"]
+    LEAD -->|"形成可复用账号方向"| PROPOSAL["AccountDirectionProposal：ADR-044 待实现"]
+    PROPOSAL --> CHOICE["用户确认或选择"]
+    CHOICE --> DIRECTION["confirmed AccountDirectionVersion vN"]
+    DIRECTION -. "可选编辑上下文" .-> TOOL
+    DIRECTION -->|"用户明确要求"| LAUNCHPLAN["可选 AccountLaunchPlan"]
     LAUNCHPLAN -. "选择计划题眼，仍须取证" .-> NAMED
     TOOL --> SEM["业务语义专家"]
     TOOL --> LEX["词义世界专家"]
@@ -184,7 +172,7 @@ flowchart LR
     BASE --> FINAL["确定性渲染具体交付"]
     TOPIC -. "交付合同失败" .-> FAIL["可拍目标：明确未形成选题"]
     EDIT -. "证据不足" .-> FAIL
-    STRATEGY --> PLAN
+    DIRECTION -. "不改写选题事实" .-> PLAN
     FAIL --> FINAL
     FINAL --> MSG["带直达标记的隐藏 ToolMessage"]
     MSG --> EXIT["return_direct 结束模型循环"]
@@ -195,11 +183,12 @@ flowchart LR
     MAP --> WORLD
 ```
 
-每条账号路线必须是一套连在一起的判断：长期内容主体、给受众的承诺、账号人设、主要与辅助
-表现形式、业务连接、变现假设、资源要求和代价。真人出镜口述、无人素材旁白、数字人、AI 情景剧、
-AI 微电影、MV 等只是可选表现方式，模型应按用户业务、已知资源、候选内容地图和可选对标证据
-组合路线；不能把同一个定位仅换三种拍法冒充三条路线。缺少对标或用户资源信息时保留未知并降低
-置信度，不形成冷启动硬门。显式要求单条选题时可以不先完成定位；宽泛起号请求必须停在路线选择。
+账号方向是一套连在一起的判断：长期内容主体、给受众的承诺、账号角色、主要与辅助表现方向、业务
+连接、变现假设、已知依据、未知、资源要求和代价。真人出镜口述、无人素材旁白、数字人、AI 情景剧、
+AI 微电影、MV 等只是可选表现方式。Lead 可以给一条明确推荐；只有业务目标、受众或资源存在会实质改变
+判断的分歧时，才提供少量完整备选或问一个问题。不能把同一方向只换拍法冒充不同路线，也不能因为缺少
+对标、完整用户画像或平台登录而阻断冷启动。显式单条选题可以独立进行；宽泛起号请求也不再被固定流程
+强制停在某个表单或路线选择页。
 
 ## 共享记录
 
@@ -232,15 +221,17 @@ AI 微电影、MV 等只是可选表现方式，模型应按用户业务、已�
 受保护内容、证据边界和基础稿正文哈希，不复制或改写标题、主体、事情、观点、正文和证据。
 资源未知时允许 provisional；只有选择微短剧或情景剧时才可提示加载叙事方法。
 
-项目层在阅读投影之外保存 `IncubationBrief` 和 `IncubationJudgment`。前者只记录用户事实、授权观察
-和未知；后者是定位、受众假设、人设、账号级表现形式与变现假设的唯一长期判断，绑定精确 Brief、
-候选地图版本和实际采用的正式对标/受众证据。相同父输入复用现有版本；输入变化时生成
-`revision_number + 1`，以前一判断为父级并保存修改原因。孵化判断不能反向改写语义或候选地图。
-账号级表现形式也不替代单条内容的 `FormatDecision`；变现路径不进入 TopicBrief 或基础文案。
+项目层在阅读投影之外保留旧 `IncubationBrief` 和地图绑定的 `IncubationJudgment`，但它们只作历史工件
+兼容。ADR-044 选择新的 `AccountDirectionProposal -> AccountDirectionVersion`：前者承接 Lead 已形成的
+可复用判断，后者只由用户明确确认产生。新工件不要求候选地图、对标、完整受众表或平台账号作为父级；
+可选证据只按精确 ID 和角色引用。相同父输入与内容哈希幂等复用，修订生成 `revision_number + 1` 并记录
+修改原因。账号方向不能反向改写语义、候选地图或单条选题，账号级表现方向也不替代本条内容的
+`FormatDecision`。
 
-孵化判断运行时只接收已封存父产物。完整对标和受众快照保留在台账，模型读取各合同的有界投影；
-候选地图也只投影版本、根、可研究方向、观察方法和防漂移边界。一次判断模型输入上限为
-16,000 UTF-8 字节，避免大账号包挤掉真正需要的营销判断上下文。
+方向写入端只接受服务端认证作用域、用户原话和 Lead 显式提交的结构化判断；确定性代码负责 Schema、
+所有权、版本、哈希、幂等和确认，不从聊天结尾或 Middleware 偷抽结论。完整对标、受众和地图快照留在
+台账，内容循环只读取已确认方向的有界编辑投影。旧 `IncubationJudgment` 在迁移完成前仍可只读投影，
+但不再决定新方向工件必须走哪条认知路线。
 
 线程绑定项目时，同一次成功纵切会把运行记录与长期地图分开封存，再建立如下父级：
 
@@ -248,7 +239,8 @@ AI 微电影、MV 等只是可选表现方式，模型应按用户业务、已�
 selected topic_evidence -> content_reading
 content_reading + content_map_candidate
                 -> topic_brief
-topic_brief + optional exact-map incubation_judgment
+topic_brief + optional confirmed account_direction_version
+            + optional legacy exact-map incubation_judgment (read-only)
                 -> message_plan
                 -> draft_version
                 -> format_decision
@@ -289,7 +281,7 @@ ADR-020 因此撤下 ADR-019 的并行运行时，恢复可检查的顺序认知
 10. 两路搜索回执合并去重后，先受控打开公开正文，再由证据阅读按来源强度选择路线，区分观察、关系、状态变化、解释、限制和未知，不负责立题。
 11. 创意收敛只根据已经读出的证据形成 `TopicBrief`，证据不足时明确弃权；它不是额外的编剧 Agent。
 12. 已取证 `TopicBrief` 进入扁平 `MessagePlan`，将内部选题收敛为“谁在什么情境遇到什么事，账号站在用户什么真实位置给出什么观点”，并明确从哪里切入、沿什么视角、让观众追问什么、如何逐层揭示和最终兑现什么。交付前会检查证据外专名、数字、显式新名字和高风险绝对断言；只允许一次删除或泛化修复，仍越界则拒绝交付。
-13. 代码将已审议的开头、内容推进和收束组合成形式无关的 `BaseDraft`。可拍目标默认先返回一条地图内的“今日建议拍摄”，再附候选内容机会依据；没有精确匹配的现有账号策略时不得临时生成。账号起号或长期定位由 `develop_account_strategy` 单独处理。可拍目标无选题或交付失败时明确说明失败，不把地图正文冒充成具体选题。
+13. 代码将已审议的开头、内容推进和收束组合成形式无关的 `BaseDraft`。可拍目标默认先返回一条地图内的“今日建议拍摄”，再附候选内容机会依据。没有已确认账号方向时仍可独立生成，但具体选题不得顺手创建、确认或修订长期方向。账号起号或长期判断由 Lead 负责；可复用结论只通过 ADR-044 的显式提案与用户确认落账。可拍目标无选题或交付失败时明确说明失败，不把地图正文冒充成具体选题。
 
 用户点名的热点、人物、作品、事件或问题只能作为当前原话中的逐字 `topic_seed` 进入研究。该线索
 没有事实地位；命名召回必须把它绑定到冻结地图的精确路径，证据阅读同时验证对象和路径，最终

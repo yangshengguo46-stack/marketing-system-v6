@@ -2,13 +2,13 @@
 
 ## 当前状态
 
-- 台账日期：2026-08-20
+- 台账日期：2026-08-22
 - 第五版冻结提交：`3ee135f7`
 - 第五版归档分支：`codex/archive-v5-final`
 - 第五版归档标签：`marketing-v5-final-20260814`
 - 第六版官方 DeerFlow 起点：`cd87968aea97b487380ea9586747d1ed8cdb5865`
 - 第六版开发分支：`codex/v6-comprehension-core`
-- 当前结论状态：`A117 domain Skill layering accepted; DeerFlow runtime retained; Skill TDD and lifecycle govern expansion`
+- 当前结论状态：`A134 architecture reconciled; ADR-044 thin account-direction ledger bridge is the next mainline`
 
 ## A01 第五版与第六版边界
 
@@ -2498,3 +2498,16 @@ held-out 中候选只有三个裁判偏好，其中社区助餐同分；平均�
 维度为离线验收量表。详见 `audits/A133-a132-full-harness-business-review.md`、
 `decisions/ADR-043-reject-global-business-attention-injection.md` 与
 `evidence/a132-full-deerflow-business-attention-2026-08-22.json`。
+
+## A134 当前架构、台账与三循环对账
+
+2026-08-22 从当前 Git、现役 Lead、默认工具目录、孵化工件、内容工具、Gateway 项目重水化和单一能力
+MCP 反向核对。A128 后 Lead 已能自主判断，但首轮账号方向只存在于聊天；旧
+`IncubationJudgment` 强制绑定候选地图，隐式项目创建又仍藏在已退出默认工具的
+`develop_account_strategy` 中，导致“方向提案 -> 用户确认 -> 后续内容复用 -> 新证据修订”断链。
+
+ADR-044 决定新增薄的 `AccountDirectionProposal -> AccountDirectionVersion` 接缝，不恢复固定受众、拆词、
+地图、对标或多路线流程。旧确认与起号计划工具先进入延迟发现，防止三个当前无生产者的 Schema 占用首轮
+模型注意力。内容循环目前可独立走到 `BaseDraft`，学习循环按用户决定继续暂停；抖音对标高层工具尚需统一
+收口到 `deerflow-capability-mcp`。详见 `audits/A134-current-architecture-and-loop-reconciliation.md` 与
+`decisions/ADR-044-thin-account-direction-ledger-bridge.md`。

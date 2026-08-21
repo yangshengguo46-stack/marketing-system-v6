@@ -80,8 +80,11 @@ class TestConfigExampleToolSearchSection:
         assert {
             "analyze_content_intelligence",
             "ask_clarification",
+            "confirm_account_launch_plan",
+            "confirm_account_strategy",
             "explore_content_world",
             "inspect_agent_product_profile",
+            "plan_account_launch",
             "verify_business_term",
             "write_file",
             "list_uploaded_files",

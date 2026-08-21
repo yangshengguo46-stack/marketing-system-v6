@@ -1,7 +1,8 @@
 ---
 id: A132
-status: preregistered
+status: reviewed
 date: 2026-08-22
+consumed_by: A133-a132-full-harness-business-review.md
 sources:
   - A129-deepseek-codex-harness-reference.md
   - A131-a130-manual-business-review.md
