@@ -207,11 +207,12 @@ A84/A86/A88/A90/A92 and A99/A101 are not rerun or stacked. Dictionaries remain o
 after user facts and a candidate world and may challenge, but never select, the root. See
 `../docs/content-intelligence-v6/` for the full contracts and experiment history.
 
-The A132 Harness business-attention comparison under `experiments/harness_business_e2e_lab/` is live-test research,
-not runtime code. Both arms must be constructed through `DeerFlowClient` with identical model, tools, Skills, MCP
-routing, middleware chain, and execution limits; the candidate may differ only by its hashed short context. Do not
-register its probe middleware or attention text in the Lead, Gateway, extensions, or Skill registry. A live receipt
-cannot promote anything until the preregistered automatic checks and a separate manual business review both pass.
+The consumed A132 Harness business-attention comparison under `experiments/harness_business_e2e_lab/` is research,
+not runtime code. Its full-DeerFlow A/B failed the preregistered threshold and manual review: a global attention card
+improved some audience chains but caused a material content-world regression and higher token use. Do not rerun or
+tune its frozen cases, and do not register its probe middleware or attention text in the Lead, Gateway, extensions,
+or Skill registry. The seven business dimensions remain an offline evaluation rubric, never a mandatory output
+workflow. See A133 and ADR-043 for the reviewed result.
 
 ## Development Workflow
 

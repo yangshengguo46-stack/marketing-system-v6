@@ -2483,3 +2483,18 @@ Codex App Server、不开放运行时自改 Prompt/Skill。详见
 人工业务复核，不能直接堆入生产 Prompt。详见
 `audits/A132-full-deerflow-business-attention-preregistration.md` 与
 `backend/experiments/harness_business_e2e_lab/`。
+
+## A133 A132 完整 Harness 业务复核
+
+2026-08-22 完成唯一正式 A132 全量运行与人工复核。七题首轮基础 Prompt、十项工具、工具 Schema、模型
+合同、24 项启用 Skill 与执行预算一致；候选仅追加 1382 字节行业中立注意力上下文，实验可比较。六个
+held-out 中候选只有三个裁判偏好，其中社区助餐同分；平均得分 `-0.167`，旧衣纪念玩偶从 `14` 降到
+`6`，餐饮后厨裁判失败，未通过预注册阈值。候选 held-out Token 从 `59,200` 增至 `63,014`。
+
+黄金礼品诊断出现了更重要的正面结果：现役 Agent 通过相同的 `describe_skill -> read_file` 渐进披露，
+已经越过黄金和送礼购买场景，明确推荐“人与人之间的相处与人情世故”；候选只略优一分且多消耗
+`2,485` Token。候选在农用无人机植保中显著提升观察视角和事实边界，但在童装题过早追问，压掉现役
+“那些舍不得扔的东西”这一更强内容世界。ADR-043 因此否决全局 Prompt/Middleware 注入，保留七项业务
+维度为离线验收量表。详见 `audits/A133-a132-full-harness-business-review.md`、
+`decisions/ADR-043-reject-global-business-attention-injection.md` 与
+`evidence/a132-full-deerflow-business-attention-2026-08-22.json`。

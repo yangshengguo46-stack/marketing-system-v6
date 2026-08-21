@@ -1,0 +1,1499 @@
+{
+  "schema_version": "harness-business-e2e-receipt-v1",
+  "experiment_id": "A132-full-deerflow-business-attention-v1",
+  "status": "completed",
+  "dataset_id": "a132-full-deerflow-business-held-out-v1",
+  "dataset_status": "frozen_before_live_run",
+  "git_commit": "67575de082aa7da22249f4622013ccc73e3dd80d",
+  "config_hash": "b6ded982a22f9a790fb2daeb931d4c2d6652099b53625403c2d4e513f5ad8a5e",
+  "extensions_config_hash": "b316a809cadd24a7eaedd707880714a9d7a59febab12be6605caa00d06b04971",
+  "model_name": "glm-5-2-260617",
+  "thinking_enabled": true,
+  "subagent_enabled": false,
+  "full_deerflow_tools_enabled": true,
+  "preflight": {
+    "dataset_id": "a132-full-deerflow-business-held-out-v1",
+    "case_count": 7,
+    "held_out_count": 6,
+    "diagnostic_count": 1,
+    "baseline_attention_hash": null,
+    "candidate_attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+    "candidate_attention_bytes": 1382,
+    "same_model": true,
+    "same_tools_and_skills_required": true,
+    "enabled_skill_count": 24,
+    "enabled_skill_manifest_hash": "a9381955a9b4a64cb3b82490118b55dc47f78ef9869de63070024f78c48681c4",
+    "full_deerflow_client_required": true
+  },
+  "started_at": "2026-08-21T17:27:23.033491+00:00",
+  "cases": [
+    {
+      "case_id": "diagnostic-golden-gift-full-agent",
+      "split": "diagnostic",
+      "prompt": "我是做黄金礼品的，想做个账号让更多人知道我，该怎么起号？",
+      "execution_order": [
+        "focused_business",
+        "current_full"
+      ],
+      "arms": {
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "黄金礼品是一个很好的起点——它既有材质属性（黄金本身的稀缺、保值），又有关系属性（送的人、收的人、为什么送）。这决定了账号可以走几个不同的方向，我先帮你梳理一下。\n\n## 三条不同的内容路线\n\n**路线A：产品展示型**\n核心是黄金礼品本身——展示产品工艺、设计细节、成色质感。观众是被\"好看的东西\"吸引来的，内容好理解但同质化严重，很多同行都在做，粉丝停留的理由偏向\"有购买需求时来看看\"，粘性较弱。\n\n**路线B：送礼场景型**\n核心是\"为什么送黄金\"——什么时候人们选黄金而不是别的礼物，送长辈、送客户、还人情时黄金意味着什么。观众是对\"如何送礼得体\"感兴趣的人，内容比单纯展示产品更有停留理由，但需要你对送礼的文化和心理有持续输出能力。\n\n**路线C：人情关系型**\n核心是\"送与收的关系本身\"——为什么有人收了不会忘、有人送了等于没送，还礼的分寸感，面子和心意怎么平衡。黄金礼品作为承载这些关系的一种重要媒介出现，但内容不止于产品。观众是对\"如何维护关系\"感兴趣的人，粉丝回来是因为你讲的关系逻辑对他们有反复价值。\n\n## 我的建议\n\n**路线C最适合长期做账号。** 原因是：黄金礼品天然出现在中国最重要的人情场景里——感谢、托付、还债、结盟、压轴。这些关系心理是反复发生的，观众有持续回来的理由；而你的产品可以作为\"懂人情的人自然会选择的东西\"回到业务。路线B可以作为路线C的前期入口（先从送礼场景切入，再逐步展开到关系本身）。\n\n但有一个前提：路线C需要你对人情往来有真实观察和持续表达的能力。如果你本身就是在做这门生意，日常接触大量\"谁送谁、为什么送、收了之后怎样\"的真实案例，这个方向会非常自然。\n\n## 一个需要确认的问题\n\n你的客户主要是**个人消费者**（比如婚嫁、孝敬长辈、个人送礼）还是**企业/商务**客户（比如商务往来、客户维护、批量定制）？这会实质影响内容面向谁、讲什么样的关系故事。\n\n如果是个人送礼场景为主，关系内容会更偏向家庭、亲情、朋友之间的分寸与情感；如果是商务客户为主，会更偏向人情、面子、利益与信任的博弈。两者可以重叠，但主攻方向会影响账号从第一天起的表达方式。\n\n你先告诉我这一点，我再帮你把具体方向和起号路径理清楚。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "describe_skill",
+            "read_file"
+          ],
+          "tool_call_count": 2,
+          "tool_result_count": 2,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 17955,
+            "output_tokens": 2444,
+            "total_tokens": 20399
+          },
+          "duration_seconds": 79.93,
+          "model_request_count": 3,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 1,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "focused_business",
+              "call_index": 2,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            },
+            {
+              "arm": "focused_business",
+              "call_index": 3,
+              "base_system_hash": "a0635f75669b490b43435eef1a14a5d96b379e7072836d35c436527c3ccc8158",
+              "final_system_hash": "4abadc240153c7d1fa8e5389e3795d274e4dc2ad8ae66796b21c4dcf8daf7152",
+              "base_system_bytes": 13881,
+              "final_system_bytes": 15265,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 6
+            }
+          ]
+        },
+        "current_full": {
+          "status": "succeeded",
+          "answer": "黄金礼品是一个有明确材质属性的礼赠品类，起号之前最关键的一步是选**编辑视角**——也就是你的内容表面在讲什么。这直接决定了吸引什么样的人、能不能长期做下去。下面三条路线差别很大：\n\n---\n\n**路线一：产品视角**\n内容表面是黄金礼品本身——工艺、成色、款式、价格带。这是最直觉的做法，但也是最拥挤的赛道。适合已经有供应链优势、产品差异化明显的情况。如果同行也在拍\"金条、金饰、金摆件\"的展示视频，观众很难因为内容本身记住你。\n\n**路线二：送礼场景视角**\n内容表面是\"送黄金给谁、为什么送、送的时候发生了什么\"。把产品放到具体的赠与时刻里：长辈寿辰、朋友新婚、孩子满月等。比纯产品更有画面感，但本质上每条内容仍围绕\"一个送礼瞬间\"，天花板取决于场景类型有多少种。\n\n**路线三：人情世故视角**\n内容表面是人际关系本身——面子、人情债、回报、边界、身份变化、亲疏远近。黄金礼品只是人们用来处理这些关系时的一件工具，内容里出现的是人、事件、选择、误解、感恩、疏远，有些内容里甚至没有实物出现。这条路的内容池最大，因为人际关系是源源不断的，而且观众不一定是为了买金才看——他们是对\"怎么做人、怎么处理关系\"感兴趣，黄金礼品自然嵌入其中。\n\n---\n\n我的判断是：**路线三的天花板和差异化都最高**。纯产品视角你很难跟头部供应链账号竞争，送礼场景视角比产品好但仍受限于场景数量，而人情世故视角让黄金礼品回到它真正被使用的语境里——人为什么要送金、送金之后关系怎么变了、不送会怎样、送错了会怎样。这种内容可以持续输出，也不会把你的账号变成一个\"金店产品页\"。\n\n不过路线三对出镜者有一个条件：**如果你本身对人情世故有真实阅历和观察力**，这条路走得通；如果暂时没有，可以先从路线二的场景故事起步，逐步往关系世界延伸。\n\n你更倾向哪个方向？另外，你平时主要是做哪些类型的黄金礼品（比如金条、金摆件、定制金礼）？产品类型会影响场景和关系切入的具体角度，但不会改变路线选择本身。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "describe_skill",
+            "read_file"
+          ],
+          "tool_call_count": 2,
+          "tool_result_count": 2,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 16362,
+            "output_tokens": 1552,
+            "total_tokens": 17914
+          },
+          "duration_seconds": 44.189,
+          "model_request_count": 3,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 1,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "current_full",
+              "call_index": 2,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            },
+            {
+              "arm": "current_full",
+              "call_index": 3,
+              "base_system_hash": "a0635f75669b490b43435eef1a14a5d96b379e7072836d35c436527c3ccc8158",
+              "final_system_hash": "a0635f75669b490b43435eef1a14a5d96b379e7072836d35c436527c3ccc8158",
+              "base_system_bytes": 13881,
+              "final_system_bytes": 13881,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 6
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "succeeded",
+        "arm_by_label": {
+          "A": "current_full",
+          "B": "focused_business"
+        },
+        "record": {
+          "answer_a": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 1,
+            "durable_content_world": 2,
+            "distinctive_viewpoint": 2,
+            "concrete_direction": 1,
+            "business_return_path": 1,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "answer_b": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 1,
+            "durable_content_world": 2,
+            "distinctive_viewpoint": 2,
+            "concrete_direction": 1,
+            "business_return_path": 2,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "preferred": "B",
+          "reason": "两个回答的核心判断高度一致：都识别出黄金礼品的双重属性（材质+关系），都给出三条路线（产品→送礼场景→人情关系），都推荐人情关系视角作为长期天花板最高的方向，都指出该方向需要出镜者有真实人情阅历。在事实边界上两者都干净，没有编造案例或数据。\n\n差异在于两个维度：\n\n1. business_return_path：A在推荐路线三后只说\"黄金礼品自然嵌入其中\"，没有解释注意力和信任为什么能合理回到该用户的生意。B明确指出\"你的产品可以作为'懂人情的人自然会选择的东西'回到业务\"，并且点出用户日常接触大量真实送礼案例这一业务资源如何反哺内容生产——这条回流路径更清晰。\n\n2. concrete_direction：两者都给了方向性判断但都依赖追问才能落地，所以都不满分。B的追问（个人消费者 vs 企业/商务客户）比A的追问（产品类型）更接近内容方向的分叉点——客户类型直接决定讲什么关系故事，而产品类型对路线选择的影响A自己也承认\"不会改变路线选择本身\"。\n\n整体上B在回流路径解释和追问质量上略优，选B。"
+        },
+        "usage": {
+          "input_tokens": 2090,
+          "output_tokens": 408,
+          "total_tokens": 2498
+        },
+        "duration_seconds": 9.258
+      },
+      "comparison": {
+        "case_id": "diagnostic-golden-gift-full-agent",
+        "split": "diagnostic",
+        "baseline_score": 11,
+        "candidate_score": 12,
+        "preferred_arm": "focused_business",
+        "baseline_fact_boundary_pass": true,
+        "candidate_fact_boundary_pass": true,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": true
+      }
+    },
+    {
+      "case_id": "held-restaurant-exhaust-safety",
+      "split": "held_out",
+      "prompt": "我是给餐饮门店做后厨油烟系统清洗和消防隐患排查的，想做账号获客，该怎么起号？",
+      "execution_order": [
+        "focused_business",
+        "current_full"
+      ],
+      "arms": {
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "你这个生意天然适合做内容——后厨油烟管道里的积垢、油渍是肉眼可见的\"触目惊心\"，而消防隐患排查又带着\"专业权威\"属性，两者结合能同时打中\"注意力\"和\"信任\"。\n\n先说一个前提：我默认你做的是**抖音**，服务范围是**你所在城市及周边**，因为油烟清洗是本地交付服务。如果平台或地域有不同，告诉我，方向会调整。\n\n---\n\n## 三条可走的路线\n\n### 路线 A：现场冲击型（推荐）\n\n**内容核心：** 你每次上门清洗就是一个现成的拍摄素材。管道口刮出来的厚油垢、清洗前后的强烈反差、排查时发现的烤得发黑的排风管壁——这些都是天然的\"停下来看\"的内容。\n\n**观众为什么看：** 餐饮老板看到别人家厨房管道里的油垢，会下意识想\"我家是不是也这样\"。好奇心+恐惧感双驱动。\n\n**人设：** 跑现场的实操老手，\"我见过太多老板觉得没事，结果……\"\n\n**为什么能持续：** 每家店情况不同，每次清洗现场都不一样，天然有新素材。季节性也好用——夏天高温期、年底大扫除期、节假日备厨期都是内容触发点。\n\n**获客逻辑：** 本地餐饮老板刷到，被\"我家可能也有这问题\"驱动，主动私信咨询。配合同城定位投放，精准触达你服务范围内的餐饮门店。\n\n---\n\n### 路线 B：合规科普型\n\n**内容核心：** 讲餐饮消防检查里哪些地方最容易出事、油烟管道清洗的国标要求是什么、被查出消防隐患会面临什么后果（停业整顿、罚款）。\n\n**观众为什么看：** 餐饮老板怕被查、怕被罚、怕出事故担责。你讲的是他直接关心的\"生存问题\"。\n\n**人设：** 懂消防规范的专业顾问，不只是\"干活的\"，而是\"帮你避险的\"。\n\n**局限：** 科普内容拍起来容易干，且这类知识性内容在短视频平台完播率通常偏低。更适合作为辅助内容线，不能撑主轴。\n\n---\n\n### 路线 C：算账型\n\n**内容核心：** 不清洗的真实代价——油烟管道积垢导致的火灾事故案例（公开新闻很多）、一次火灾损失多少 vs 一次清洗多少钱、管道堵塞导致排烟不畅影响出餐效率。\n\n**观众为什么看：** 餐饮老板对成本敏感，\"花小钱避免大损失\"的逻辑他能算过来。\n\n**局限：** 依赖外部案例和数据，自己的现场素材利用率低，且\"讲道理\"不如\"看画面\"来得直接。\n\n---\n\n## 我的推荐\n\n**路线 A 为主干，B 和 C 作为穿插。** 原因很简单：\n\n1. 你的生意最大的内容资产是**现场实拍画面**，这是别人复制不了的。你每去一家店清洗，就有一个新视频的素材。\n2. 清洗前后的视觉冲击力在短视频平台上天然有优势。\n3. 消防隐患排查的专业性，可以在视频里自然体现出来——你在清洗过程中指着某个地方说\"这个已经碳化了，再不处理就要出事\"，比单独讲科普有说服力一百倍。\n\n**一句话定位建议：** \"给餐饮门店做油烟清洗和消防排查的人，专门带你看看后厨管道里到底藏了什么。\"\n\n---\n\n你先看看这个方向认不认可。如果方向对了，后续可以帮你拆具体的第一批选题、拍摄方式，或者看看同类账号在抖音上是怎么做的。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 5169,
+            "output_tokens": 2640,
+            "total_tokens": 7809
+          },
+          "duration_seconds": 75.615,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 4,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        },
+        "current_full": {
+          "status": "succeeded",
+          "answer": "你的业务方向很清晰——面向餐饮门店的B2B服务，核心解决两个痛点：油烟系统清洁和消防隐患。这个赛道在短视频平台上有天然的内容优势：画面冲击力强（油垢堆积、清洗前后对比）、有安全焦虑驱动（消防检查、火灾风险）、受众明确（餐饮老板/店长）。\n\n下面给你梳理几条可落地的起号方向：\n\n---\n\n**方向一：「消防隐患排查官」——用真实隐患制造紧迫感**\n\n定位是上门帮餐饮店做消防排查的专业人员，内容核心是\"你店里可能也藏着这些定时炸弹\"。拍到真实的油垢堆积、排烟管道堵塞、灭火器过期等场景，讲清楚隐患→后果→怎么解决。这个方向的好处是天然有警示传播力，刷到的餐饮老板会有代入感，觉得自己店里也可能有问题。\n\n人设：专业、直接、有责任感的排查人员，不是在卖服务，而是在\"救人\"。\n形式：现场实拍隐患点→解释风险→给出标准要求→展示整改后效果。\n适合人群：所有餐饮门店经营者。\n\n---\n\n**方向二：「后厨清洗前后对比」——用视觉冲击力获客**\n\n核心内容就是清洗前后的极致对比，油垢厚到能\"刮下来一层\" vs 清洗后光亮如新。这种内容在短视频平台上传播性很强，因为画面本身就有满足感和猎奇感。配合简单解说\"这是某餐饮店三个月没清洗的排烟管道\"，自然吸引同行关注。\n\n人设：实干型的清洗师傅/团队负责人，用结果说话。\n形式：清洗前特写→清洗过程（高压清洗、刮油等）→清洗后对比→报价/联系方式。\n适合人群：快餐、连锁、大中型餐饮门店。\n\n---\n\n**方向三：「餐饮安全合规科普」——用专业度建立信任**\n\n内容围绕餐饮消防相关的法规要求、检查标准、清洗周期规定等，做成\"餐饮老板必须知道的消防知识\"系列。比如\"排油烟设施多久必须清洗一次\"\"消防检查重点查什么\"\"油烟管道火灾是怎么引发的\"。偏知识型内容，转化率可能慢一些，但信任度更高，适合做长线品牌。\n\n人设：懂法规、懂实操的安全顾问。\n形式：口播+现场画面穿插、案例拆解。\n适合人群：注重合规经营的中大型餐饮、连锁品牌管理者。\n\n---\n\n**我的建议：选方向一作为主线，方向二的内容作为强辅助。**\n\n原因是：方向一有紧迫感和传播力（消防隐患是餐饮老板的真实焦虑），同时能自然展示你的专业能力和服务价值；方向二的清洗对比画面视觉冲击力最强，适合穿插发布保持内容活力。方向三的科普内容可以作为补充，但不适合做主账号定位，因为纯知识型内容在短视频平台上获客效率偏低。\n\n---\n\n几个起号实操要点：\n\n**关于地域定位：** 你的服务能覆盖的范围（同城还是全省？）直接影响账号策略。如果是同城服务，账号简介、口播、定位都要带地域标签（如\"杭州餐饮消防排查\"），内容也尽量拍本地门店案例，平台会帮你做本地分发。如果覆盖范围更广，内容上就不用绑死地域，但要明确服务区域。\n\n**关于内容信任度：** B2B获客最怕被当成\"皮毛公司\"。建议在内容中持续露出：专业设备、规范流程、真实客户场景、资质证书（如有）。让观众一眼判断\"这人是真干这个的，不是搬运号\"。\n\n**关于转化路径：** 抖音B2B获客的链路通常是：刷到内容→私信咨询→留联系方式→上门看现场→报价成交。前期不用急着挂团购或开店，先把内容信任度做起来，私信引导到微信沟通即可。\n\n---\n\n如果你确认了服务覆盖的城市范围，我可以帮你进一步做内容选题规划和7天起号计划。另外，如果想在抖音上找几个同行业的对标账号看看别人怎么做的，也可以告诉我，我帮你拆解。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 4880,
+            "output_tokens": 2062,
+            "total_tokens": 6942
+          },
+          "duration_seconds": 47.996,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 4,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "failed",
+        "error_type": "ValueError",
+        "duration_seconds": 7.662
+      },
+      "comparison": {
+        "case_id": "held-restaurant-exhaust-safety",
+        "split": "held_out",
+        "baseline_score": 0,
+        "candidate_score": 0,
+        "preferred_arm": "tie",
+        "baseline_fact_boundary_pass": false,
+        "candidate_fact_boundary_pass": false,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": false
+      }
+    },
+    {
+      "case_id": "held-baby-clothes-memory-toys",
+      "split": "held_out",
+      "prompt": "我把宝宝穿过的旧衣服做成纪念玩偶，想做账号让更多人知道，这个号应该怎么起？",
+      "execution_order": [
+        "current_full",
+        "focused_business"
+      ],
+      "arms": {
+        "current_full": {
+          "status": "succeeded",
+          "answer": "你的业务很清晰：把宝宝穿过的旧衣服改造成纪念玩偶。这个动作天然连接着\"保留\"和\"不舍\"——衣服旧了、小了，但不想扔，于是变成另一种形态留下来。这里面最有生命力的不是玩偶本身，而是每件旧衣服背后那段已经过去的时间。\n\n下面是三条不同的起号方向，区别在于账号活在哪个\"世界\"里：\n\n---\n\n**方向一：情感记忆世界（推荐）**\n\n账号的核心不是\"看我做玩偶\"，而是\"那些你舍不得扔的东西\"。内容世界围绕父母在养育过程中面对时间流逝的感受——孩子长得太快、柜子里攒了一堆穿不下的衣服、某件衣服上有一块洗不掉的渍却记得是哪顿饭弄的、搬家时翻出来的第一件连体衣。玩偶在这个世界里是\"给这种感情一个去处\"，但不是每条内容都需要出现玩偶或衣服。\n\n你做的每一个玩偶都来自一件真实的旧衣服，而每件旧衣服都连着一个家庭的具体记忆——这就是你天然的内容素材来源。受众是正在经历或已经经历过这个阶段的父母，他们停留的原因是\"这个人说出了我那种说不出来的感觉\"。商业上，当有人被打动，定制玩偶是自然的出口。\n\n这条路对你个人表达的要求最高——需要你愿意把自己的感受、观察放到内容里。但它的天花板也最高，因为情感世界的素材不会枯竭。\n\n**方向二：改造过程+故事**\n\n每条内容围绕一件衣服的\"前世今生\"：这件衣服长什么样、穿过多久、谁给的，然后展示它变成玩偶的过程。重点在\"变\"——从旧衣服到玩偶的转化本身就有视觉吸引力，而故事让转化有了温度。\n\n这条路更直接地挂靠产品，每条内容都在展示你的手艺和服务。受众明确——有旧衣服想处理的父母——转化路径短。但长期看，如果每条都是\"一件衣服→一个玩偶\"的结构，容易重复，需要靠故事质量而非形式变化来维持新鲜感。\n\n**方向三：手作教学/分享**\n\n把改造过程做成教程或经验分享，吸引想自己动手的人。这条路偏知识分享，受众是手工爱好者而非单纯的父母。商业逻辑从\"帮你做\"变成\"教你怎么做\"或\"卖材料包\"，方向差异较大。\n\n---\n\n**我推荐方向一。** 原因是：你的产品——用宝宝旧衣服做纪念玩偶——本身就在\"记得\"这件事上，而不是在\"手工\"或\"改造\"上。如果账号只停留在展示手艺或改造过程，它和很多手工账号没有本质区别。但如果账号活在\"父母如何面对孩子长大、如何安放那些舍不得扔的东西\"这个世界里，玩偶就成了这个感情最自然的去处，你的位置就不可替代。\n\n方向一和方向二不是互斥的——你可以用方向一的情感世界作为账号的主轴，把方向二的改造过程作为其中一种内容形态融入进去。但主轴决定了受众为什么关注你，也决定了你能走多远。\n\n一个会影响路线选择的点：你目前是自己有一批做过的玩偶和背后的故事可以分享，还是主要靠自己宝宝这一份经历？这会影响内容素材的丰富度和起步方式，但不改变上面的方向判断——有更多案例会更好，但\"一个妈妈对旧衣服的感情\"本身已经是足够大的起点。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "describe_skill",
+            "read_file"
+          ],
+          "tool_call_count": 2,
+          "tool_result_count": 2,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 16508,
+            "output_tokens": 2691,
+            "total_tokens": 19199
+          },
+          "duration_seconds": 101.414,
+          "model_request_count": 3,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 5,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "current_full",
+              "call_index": 6,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            },
+            {
+              "arm": "current_full",
+              "call_index": 7,
+              "base_system_hash": "a0635f75669b490b43435eef1a14a5d96b379e7072836d35c436527c3ccc8158",
+              "final_system_hash": "a0635f75669b490b43435eef1a14a5d96b379e7072836d35c436527c3ccc8158",
+              "base_system_bytes": 13881,
+              "final_system_bytes": 13881,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 6
+            }
+          ]
+        },
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "你做的事情很清晰——把宝宝穿旧的衣物重新做成纪念玩偶，旧衣承载成长记忆，玩偶让记忆变成可触摸的东西。这个转变本身有情感张力，适合做内容。\n\n在给方向之前，有一个关键分叉需要你确认：\n\n**你是想接单帮别的妈妈做（定制服务），还是主要分享自己的手作过程（内容/种草）？**\n\n这两条路差别很大：\n\n如果是**定制服务**，账号的核心任务是建立信任——让对方愿意把孩子的旧衣寄给你，这需要持续展示你的手艺、成品细节、客户反馈，内容围绕\"你的旧衣到我手里变成了什么\"。\n\n如果是**分享自己的手作**，账号的核心任务是共鸣和灵感——让同样舍不得扔旧衣的妈妈权衡后回来追更，内容围绕\"每一件旧衣背后的故事\"，商业模式可能是后期卖成品、卖材料包或教程。\n\n两条路的受众、内容重心、承诺和变现方式都不同，先确认这个，我再帮你把方向走实。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "describe_skill",
+            "read_file"
+          ],
+          "tool_call_count": 2,
+          "tool_result_count": 2,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 18197,
+            "output_tokens": 1713,
+            "total_tokens": 19910
+          },
+          "duration_seconds": 55.838,
+          "model_request_count": 3,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 5,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "focused_business",
+              "call_index": 6,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            },
+            {
+              "arm": "focused_business",
+              "call_index": 7,
+              "base_system_hash": "a0635f75669b490b43435eef1a14a5d96b379e7072836d35c436527c3ccc8158",
+              "final_system_hash": "4abadc240153c7d1fa8e5389e3795d274e4dc2ad8ae66796b21c4dcf8daf7152",
+              "base_system_bytes": 13881,
+              "final_system_bytes": 15265,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 6
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "succeeded",
+        "arm_by_label": {
+          "A": "focused_business",
+          "B": "current_full"
+        },
+        "record": {
+          "answer_a": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 1,
+            "durable_content_world": 0,
+            "distinctive_viewpoint": 0,
+            "concrete_direction": 0,
+            "business_return_path": 1,
+            "fact_boundary": 2,
+            "major_issues": [
+              "提出关键分叉问题后没有给出任何在当前事实下成立的判断，用户拿不到可执行方向",
+              "未触及内容世界的长期生长性，只停留在服务vs分享的粗分类"
+            ]
+          },
+          "answer_b": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 2,
+            "distinctive_viewpoint": 2,
+            "concrete_direction": 2,
+            "business_return_path": 2,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "preferred": "B",
+          "reason": "A正确识别了业务但过早停在分叉问题上，没有在现有事实下给出可执行判断，用户拿不到任何具体方向。B在同样理解业务的前提下，给出了三条有差异化的内容世界方向，每条都解释了受众为什么停留、注意力如何回到定制玩偶业务，并明确推荐了\"情感记忆世界\"作为主轴——这是一个能长期生长、与业务有正当关系、且区别于普通手工账号的视角。B还在最后提了一个影响起步方式的问题，但问题之后仍保留了完整的方向判断，没有让用户空手离开。"
+        },
+        "usage": {
+          "input_tokens": 1982,
+          "output_tokens": 322,
+          "total_tokens": 2304
+        },
+        "duration_seconds": 7.282
+      },
+      "comparison": {
+        "case_id": "held-baby-clothes-memory-toys",
+        "split": "held_out",
+        "baseline_score": 14,
+        "candidate_score": 6,
+        "preferred_arm": "current_full",
+        "baseline_fact_boundary_pass": true,
+        "candidate_fact_boundary_pass": true,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": true
+      }
+    },
+    {
+      "case_id": "held-agricultural-drone-service",
+      "split": "held_out",
+      "prompt": "我是做农用无人机植保服务的，主要服务县里的种植户，想做账号获客，该怎么起号？",
+      "execution_order": [
+        "current_full",
+        "focused_business"
+      ],
+      "arms": {
+        "current_full": {
+          "status": "succeeded",
+          "answer": "做农用无人机植保服务、面向县级种植户起号获客，这个方向很清晰——你是本地服务商，内容的核心目的就是让方圆几十公里内的种植户看到你的专业能力，然后找你下单。我从几个关键层面给你讲清楚起号思路。\n\n## 你是谁、给谁看\n\n你的内容受众就是县里及周边的种植户。他们关心的问题很实际：虫害能不能打死、药费不费、比人工打药快多少、会不会压坏庄稼、一亩地多少钱。所以你的账号人设不是\"无人机爱好者\"或\"科技博主\"，而是一个**懂农业、在本地实际飞防作业的植保服务商**。这个身份本身就有信任基础，不需要额外包装。\n\n## 种植户为什么要看你的内容\n\n内容能持续吸引本地种植户，靠的是三层价值：\n\n**第一层：眼见为实。** 无人机在田间作业的画面本身就很有冲击力——一架飞机几分钟打完一大片地，这种视觉对比是天然的好内容。拍摄\"人工打半天 vs 无人机十分钟\"的对比画面，比任何广告词都管用。\n\n**第二层：实用信息。** 按农时发布本地病虫害预警和防治建议，比如\"当前水稻处于分蘖期，注意防治二化螟\"\"近期多雨，稻瘟病高发，建议抓紧预防\"。这类内容有明确的信息增量，种植户会收藏、转发给同村人，传播效率很高。\n\n**第三层：信任沉淀。** 持续展示你服务过的地块、不同作物的作业效果、农户的真实反馈。让本地种植户反复看到\"这人一直在干、干了很多、口碑不错\"，信任感是靠积累出来的。\n\n## 内容怎么拍\n\n几个核心内容类型：\n\n- **作业实拍**：起飞、喷洒、返航全过程，配上亩数、用时、药剂信息\n- **效果对比**：打药前后作物状态对比、无人机 vs 人工效率对比\n- **农时提醒**：结合本地主要作物的生长周期，发布病虫害防治节点提醒\n- **农户反馈**：服务过的农户简短评价（征得同意后拍摄）\n- **常见疑问解答**：比如\"无人机打药会不会漏喷\"\"风大能不能飞\"\"果树能不能用无人机打\"\n\n拍摄不需要专业设备，手机就行。重点是把作业场景拍清楚，声音录好，口条自然。本地话口播反而更亲切、更有辨识度。\n\n## 获客转化怎么接\n\n账号的终极目标是接单，所以转化路径要短：\n\n- 主页简介写清楚服务区域、服务内容、联系方式\n- 视频评论区主动回复本地用户的咨询\n- 适当引导私信沟通具体地块面积和作业需求\n- 旺季前提前发内容造势，让种植户在需要打药之前就认识你\n\n## 一个关键问题\n\n你的服务对象主要种的是什么作物？这会直接影响内容选题方向——水稻飞防、小麦飞防、果园飞防的内容差异很大，病虫害节点和作业要点也不同。如果你服务多种作物，可以先聚焦面积最大的一两种作为内容主线，其他作为补充。\n\n如果你明确了作物类型和服务范围，我可以进一步帮你细化具体的内容方向和选题。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 4880,
+            "output_tokens": 2201,
+            "total_tokens": 7081
+          },
+          "duration_seconds": 49.842,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 8,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        },
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "你的业务很清晰：用农用无人机给县里的种植户做植保（打药、施肥等），核心是通过内容让本地种植户看到你的专业能力和作业效果，从而找你下单。这是一个典型的\"本地服务获客\"场景，内容受众和付费客户是同一群人——你县里及周边的种植户。\n\n**几个关键判断：**\n\n无人机植保天然适合做内容。作业画面本身就有视觉冲击力——一架飞机掠过田面、均匀喷洒、速度快、不压苗。种植户看到这些画面，不需要你解释太多就会理解这个服务有什么用。这是你最大的内容优势：**你的工作过程就是最好的展示素材。**\n\n但光展示\"飞得好看\"不够获客。种植户真正关心的是：打药效果行不行、亩均成本多少、什么时间该打、我这个作物/这个地形你能不能飞。所以你的内容需要从\"展示作业\"延伸到\"证明靠谱\"。\n\n**我推荐的方向是：本地植保实战视角的\"田间帮手\"账号。**\n\n核心逻辑是你站在种植户的田边，用无人机的视角帮他们解决真问题——而不是做一个炫技的航拍号或一个讲农业知识的科普号。内容围绕三条线走：\n\n一是**实地作业实录**。拍你在不同作物、不同地块飞防的真实场景，重点不是飞机多酷，而是\"这块田打了多少亩、用了多长时间、药液均匀度怎么样、比人工快多少\"。种植户看到本地熟悉的地形和作物，会自动代入\"我家那块地也能这么干\"。\n\n二是**时令性的植保判断**。什么季节、什么虫情、什么天气该打什么药、该不该飞。这类内容既展示你的专业判断力，又跟种植户的季节性需求同步——他们什么时候需要打药，你什么时候就有内容可发，天然形成节奏。\n\n三是**种植户关心的实际问题**。比如无人机打药和人工打药的成本对比、山区/丘陵地形能不能飞、果树飞防和水稻飞防的区别、药液漂移怎么办。这些是种植户犹豫要不要用无人机服务时的真实顾虑，也是你区分于\"只会飞飞机\"的同行的地方。\n\n**关于你的内容受众，有一点需要确认才会影响细化方向：**\n\n你主要服务的是什么作物？水稻、小麦、果树、蔬菜还是混着做？作物类型不同，飞防技术要点、作业季节、种植户的痛点都有明显差异，内容选题和呈现方式也会不同。但不管哪种作物，上面这三条线的大方向不变。\n\n**起号的几个实操要点：**\n\n账号定位和昵称要让本地种植户一眼认出来你是干什么的，带地域和业务关键词（比如\"XX县飞防小王\"比\"追梦农业人\"有效得多）。前期的内容不必追求精致，真实、清晰、有信息量比好看更重要。每条视频尽量带本地地标信息或作物画面，让算法帮你推给同区域的种植户。评论区主动回应本地的植保问题，把公域流量导入私域咨询和到田看地。\n\n你先确认下主要服务的作物类型，我可以帮你进一步细化内容方向和第一批具体可以拍的选题。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 5169,
+            "output_tokens": 2486,
+            "total_tokens": 7655
+          },
+          "duration_seconds": 53.086,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 8,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "succeeded",
+        "arm_by_label": {
+          "A": "focused_business",
+          "B": "current_full"
+        },
+        "record": {
+          "answer_a": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 2,
+            "distinctive_viewpoint": 2,
+            "concrete_direction": 2,
+            "business_return_path": 2,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "answer_b": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 1,
+            "durable_content_world": 1,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 1,
+            "business_return_path": 1,
+            "fact_boundary": 1,
+            "major_issues": [
+              "编造了具体病虫害场景如'当前水稻处于分蘖期，注意防治二化螟''近期多雨，稻瘟病高发'，用户尚未确认作物类型，这些示范性内容构成事实编造",
+              "建议拍摄农户真实反馈，但用户是否已有服务案例、农户是否愿意出镜均属未知，存在编造资源前提的问题",
+              "内容方向多为通用清单，缺乏能反复解释现实的观察视角"
+            ]
+          },
+          "preferred": "A",
+          "reason": "两个回答都正确理解了业务本质——本地服务商通过内容展示专业能力获客，受众与付费客户同一群人。但A在多个维度上明显更优：\n\n1. durable_content_world：A提出了\"本地植保实战视角的田间帮手\"这一内容世界，有明确的内容生长逻辑（实地作业实录+时令判断+实际问题），种植户会因季节性需求反复回来；B的内容类型更接近通用清单（作业实拍、效果对比、农时提醒、农户反馈、疑问解答），没有形成能长期生长的内容世界。\n\n2. distinctive_viewpoint：A形成了\"站在种植户田边用无人机视角解决真问题\"的观察视角，并明确区分了\"不是炫技航拍号、不是科普号\"；B的\"懂农业的本地植保服务商\"定位正确但缺乏独特视角，内容类型任何农业服务号都能套用。\n\n3. concrete_direction：A的三条内容线每条都给出了具体出发点和拍摄重点（如\"这块田打了多少亩、用了多长时间、药液均匀度怎么样\"），B的内容类型描述更泛化。\n\n4. fact_boundary：B在用户尚未确认作物类型的情况下，编造了\"当前水稻处于分蘖期，注意防治二化螟\"\"近期多雨，稻瘟病高发\"等具体病虫害场景作为示范内容，属于越界编造；还建议拍摄\"农户真实反馈\"但用户是否已有服务案例未知。A没有编造任何具体场景或数据。\n\n5. business_return_path：A解释了算法通过本地地标和作物画面推给同区域种植户、评论区回应导入私域的合理路径；B的转化路径更接近通用运营清单（简介写联系方式、评论区回复、私信沟通），且\"旺季前提前发内容造势\"略带计划代写色彩。\n\n6. audience_behavior_chain：A解释了种植户看到本地熟悉地形会自动代入\"我家那块地也能这么干\"的心理传递过程，以及时令内容与季节性需求同步形成节奏；B虽然提到收藏转发但行为链解释较浅。\n\n两者都问了作物类型的关键问题，但A在提问后仍提供了当前事实下成立的大方向判断，B的问题之后也给了方向但整体判断深度不如A。"
+        },
+        "usage": {
+          "input_tokens": 2415,
+          "output_tokens": 732,
+          "total_tokens": 3147
+        },
+        "duration_seconds": 21.807
+      },
+      "comparison": {
+        "case_id": "held-agricultural-drone-service",
+        "split": "held_out",
+        "baseline_score": 8,
+        "candidate_score": 14,
+        "preferred_arm": "focused_business",
+        "baseline_fact_boundary_pass": true,
+        "candidate_fact_boundary_pass": true,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": true
+      }
+    },
+    {
+      "case_id": "held-secondhand-piano-restoration",
+      "split": "held_out",
+      "prompt": "我是做二手钢琴整备和调律的，想通过短视频让更多人知道我，该怎么起号？",
+      "execution_order": [
+        "focused_business",
+        "current_full"
+      ],
+      "arms": {
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "你做的事情本身就有很强的内容基因——把一台被冷落、走音、甚至损坏的二手钢琴，通过整备和调律重新变成一台能弹奏的乐器，这个\"重生\"过程天然有戏剧性和画面感。这正是短视频的核心燃料。\n\n不过在给具体方向之前，有一个关键区别会影响你的内容主线：\n\n**你主要靠\"卖整备好的二手钢琴\"变现，还是靠\"接调律/整备服务\"变现，还是两者都做？** 这个区别会直接决定你的内容最终指向什么——是让人看完整备过程后想买那台琴，还是看完后想请你来服务自己家里的琴。\n\n先按两种情况分别说，你可以对号入座：\n\n---\n\n### 如果以\"卖二手钢琴\"为主\n\n内容主线就是**\"一台钢琴的重生记录\"**。每条视频讲一台琴的故事：它来的时候是什么状态（积灰、琴键塌陷、音不准、外观破旧），你做了哪些整备工作（清灰、击弦机调整、琴键修复、外观翻新、调律），最后它变成什么样。关键不是罗列工序，而是让观众看到\"反差\"和\"手感/音色的变化\"。\n\n这样的内容天然吸引的是**正在考虑买琴的家长和琴童家庭**。他们看了整备过程，会信任你卖出的琴是认真弄好的，而不是随便收来倒手。你的生意逻辑变成：内容展示专业度 → 建立信任 → 客户找你买琴。\n\n### 如果以\"调律/整备服务\"为主\n\n内容主线可以偏**\"调音师的手艺日常 + 琴的常见问题科普\"**。比如你去客户家调律，发现琴有什么典型问题（受潮、虫蛀、长期不调导致音准大幅偏移），怎么判断、怎么处理。这类内容吸引的是**已经有琴的家庭**，他们看完会想\"我的琴是不是也该调了 / 是不是也有这个问题\"，从而预约你的服务。\n\n### 如果两者都做\n\n建议以**整备过程**为内容主引擎，因为它的视觉冲击力和故事性最强，能同时服务两种转化：想买琴的人看到你的手艺想买，有琴的人看到你的专业想约服务。调律日常可以作为补充内容穿插发布。\n\n---\n\n### 我的建议路线：以\"钢琴重生\"为主轴\n\n不管你的变现侧重哪个，**整备过程都是最强内容引擎**，原因很简单：\n\n1. **天然的反差对比**——一台破旧走音的钢琴 vs 整备调律后焕然一新的琴，这种before/after在短视频里几乎屡试不爽。\n2. **过程本身有信息量和悬念**——拆开一台老琴能发现什么、击弦机哪里出了问题、怎么修，观众会想看下去。\n3. **手艺的可信度**——你不是在卖琴，你是\"把琴弄好的人\"，这个身份比销售更有信任感。\n4. **可持续**——每台琴都是不同的，不会很快重复。\n\n调律科普、选琴避坑等内容可以作为这条主线下的补充分支，不用一开始就想太多栏目。\n\n你可以先想一下你的变现重心在哪边，这会影响内容结尾怎么引导（是展示琴在售，还是引导预约服务），我也可以帮你进一步细化。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 5167,
+            "output_tokens": 1807,
+            "total_tokens": 6974
+          },
+          "duration_seconds": 42.913,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 9,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        },
+        "current_full": {
+          "status": "succeeded",
+          "answer": "二手钢琴整备和调律是非常适合短视频的领域——有视觉变化（翻新前后对比）、有听觉冲击（调律前后音色对比）、有专业壁垒，天然具备传播力。\n\n基于你的业务，我梳理三条方向不同的路线，供你选择：\n\n---\n\n**路线A：翻新过程号 — \"让一台老钢琴重获新生\"**\n\n人设是从幕后走出来的整备师。内容核心是翻新全过程：收来的琴原来什么状态、换了什么零件、内部清理了什么、最后调完律声音变成什么样。用 before/after 的画面和声音对比做钩子。受众是想买二手钢琴的家长和成人学琴者，他们看完过程觉得你靠谱，翻新好的琴就是你的产品。变现路径清晰，客单价也高。\n\n**路线B：上门调律日常号 — \"你家的钢琴可能一直没调准\"**\n\n人设是上门调律师。内容围绕调律现场：客户家的琴有多离谱、调完前后弹同一段曲子对比、常见的钢琴\"病症\"诊断。受众是已经拥有钢琴的家庭和琴行老师。变现靠调律服务订单和长期维护客户，复购强，但受地域限制。\n\n**路线C：钢琴避坑科普号 — \"买二手钢琴前你必须知道的\"**\n\n人设是懂行的整备师。内容教人怎么看琴的状态、哪些品牌值得入手、二手市场常见坑。受众是准备买琴的人，内容为他们的购买决策服务，信任建立后导流到你自己的二手钢琴销售。\n\n---\n\n**我推荐路线A**，原因是它最能发挥你的专业优势，同时视频的传播力最强——翻新过程的视觉冲击力加上调律前后的声音对比，是短视频平台上很难被复制的差异化内容。而且在翻新过程中自然穿插避坑科普（路线C的元素），就能兼顾信任建设和销售转化。\n\n一个关键问题：你的核心收入来源是**卖翻新好的二手钢琴**，还是**调律和维修服务为主**？如果主要是卖琴，路线A最合适；如果调律服务是主要收入，路线B会更直接。这个区别会影响内容重心和变现节奏。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 4878,
+            "output_tokens": 1918,
+            "total_tokens": 6796
+          },
+          "duration_seconds": 45.243,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 9,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "succeeded",
+        "arm_by_label": {
+          "A": "focused_business",
+          "B": "current_full"
+        },
+        "record": {
+          "answer_a": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 2,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 2,
+            "business_return_path": 2,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "answer_b": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 2,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 2,
+            "business_return_path": 2,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "preferred": "tie",
+          "reason": "两个回答在业务理解上高度一致：都准确识别了二手钢琴整备+调律的核心价值（过程有戏剧性、反差、专业壁垒），都区分了\"卖琴\"和\"服务\"两条变现路径，都推荐以整备过程为主轴，都在最后提出了同一个关键问题（核心收入来源是卖琴还是服务）。\n\n各维度对比：\n\n1. business_comprehension：两者都满分。都理解了业务的交易本质——整备过程既是内容素材也是信任建设手段，最终指向卖琴或服务订单。没有机械拆词或认错主体。\n\n2. audience_behavior_chain：两者都清晰区分了\"正在考虑买琴的家长/琴童家庭\"和\"已有琴的家庭\"两类受众，并解释了各自的行为传递链（看整备过程→信任专业→买琴/约服务）。A在\"两者都做\"的情况下更细致地解释了为什么整备过程能同时服务两种转化，B则更简洁地说明了各路线的受众和变现关系。都给满分。\n\n3. durable_content_world：两者都找到了\"钢琴重生记录\"这个能长期生长的内容世界——每台琴不同、过程有悬念、反差有视觉冲击。不是产品展示或行业百科。都满分。\n\n4. distinctive_viewpoint：两者都形成了\"整备过程是最强内容引擎\"的判断，但这个视角虽然正确，并不算特别独特——它更多是基于内容形式优势的常识判断，而非一个能反复解释行业现实的深层观察视角。两者都没有提出超越\"before/after有冲击力\"层面的独到洞察。都给1分。\n\n5. concrete_direction：A给出了具体的内容元素（积灰、琴键塌陷、击弦机调整、外观翻新、调律），B也给出了具体的内容场景（收来的琴什么状态、换了什么零件、调完弹同一段曲子对比）。两者都让用户知道第一条视频可以从什么具体的事出发。都满分。\n\n6. business_return_path：两者都解释了注意力和信任如何回到业务（展示专业度→信任→买琴/约服务），且都没有越界代写投流计划或销售周期。A在\"两者都做\"的情况下更细致地说明了内容结尾如何引导（展示琴在售 vs 引导预约服务），B则更简洁。都满分。\n\n7. fact_boundary：两者都没有编造用户经历、案例、数据或资源。都满分。\n\n总结：两个回答在核心业务判断上几乎完全一致——同样的业务理解、同样的内容主轴推荐、同样的变现路径区分、同样的关键问题。A的表述更详尽，在\"两者都做\"的情况下给出了更细致的引导策略；B的表述更结构化，三条路线的框架更清晰。但在业务判断质量上没有实质差异，都准确且完整。选tie。"
+        },
+        "usage": {
+          "input_tokens": 2224,
+          "output_tokens": 789,
+          "total_tokens": 3013
+        },
+        "duration_seconds": 20.804
+      },
+      "comparison": {
+        "case_id": "held-secondhand-piano-restoration",
+        "split": "held_out",
+        "baseline_score": 13,
+        "candidate_score": 13,
+        "preferred_arm": "tie",
+        "baseline_fact_boundary_pass": true,
+        "candidate_fact_boundary_pass": true,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": true
+      }
+    },
+    {
+      "case_id": "held-reusable-industrial-packaging",
+      "split": "held_out",
+      "prompt": "我是给制造企业提供可循环工业包装箱租赁和周转管理的，想做账号获客，该怎么起号？",
+      "execution_order": [
+        "current_full",
+        "focused_business"
+      ],
+      "arms": {
+        "current_full": {
+          "status": "succeeded",
+          "answer": "你的业务很清晰：面向制造企业，提供可循环工业包装箱的租赁+周转管理服务，目标是做账号获客。这是一个典型的 B2B 工业服务业务，起号策略和消费品完全不同——你的受众是工厂采购、运营、供应链负责人，他们刷短视频不是为了娱乐，是为了解决业务问题。\n\n下面是几条可行的路线，它们在切入角度、内容受众和变现路径上有本质区别：\n\n---\n\n**路线 A：成本杀手——从包装浪费切入**\n\n定位：包装成本优化专家，专门帮制造企业算账——一次性包装每年烧掉多少钱，可循环方案能省多少。\n\n内容方向：实地拆解工厂包装成本结构（纸箱、木箱、耗材费用），用真实数据做对比，展示\"换一种包装方式，一年省下XX万\"。视频本身就是一次成本诊断，看完的人自然想算自己的账。\n\n受众：工厂采购经理、成本控制负责人、老板本人。这类人看到数字对比最有感觉。\n\n推荐理由：成本是制造企业最普遍、最硬的痛点，ROI 可量化，转化路径最短——看完内容后主动咨询的概率最高。\n\n---\n\n**路线 B：供应链效率——从周转管理切入**\n\n定位：供应链效率顾问，聚焦包装在\"供应商→工厂→客户\"之间的流转效率问题。\n\n内容方向：讲包装周转中的典型问题（包装不统一导致装卸慢、破损率高、库存管理混乱、回收追踪难），展示你的周转管理系统怎么解决。偏向\"管理方案\"而非\"产品展示\"。\n\n受众：供应链经理、物流主管、运营总监。\n\n适合条件：如果你的周转管理系统本身是核心差异化能力（比如有系统追踪、数据看板），这条路线能建立更深的壁垒。但如果你的周转管理目前还比较轻量，这条路会显得空。\n\n---\n\n**路线 C：绿色合规——从ESG/降碳切入**\n\n定位：绿色制造践行者，帮企业用可循环包装替代一次性包装，实现减废降碳和合规目标。\n\n内容方向：政策导向（碳达峰碳中和、限塑令、企业ESG报告要求）+ 实操方案（怎么落地循环包装体系）。偏行业趋势解读+解决方案展示。\n\n受众：ESG负责人、法务合规、以及面临客户/监管要求更换绿色包装的工厂管理者。\n\n适合条件：如果你的目标客户群体中，有相当比例是出口企业或大客户供应链中的供应商（被要求绿色合规），这条路线的紧迫感最强。但如果你的客户主要还在算成本账，这条路会显得\"虚\"。\n\n---\n\n**路线 D：行业实景——从一手画面切入**\n\n定位：循环包装行业从业者，用真实工厂、真实包装、真实周转场景说话。\n\n内容方向：仓库实拍、包装堆码对比、装卸效率对比、破损对比、回收流程演示。少讲道理，多给画面——让目标客户在视频里看到\"这就是我工厂的问题\"。\n\n受众：覆盖面更广的制造业人群，包括可能自己没意识到问题但看到画面后被触动的老板和一线管理者。\n\n适合条件：如果你有大量实景素材积累（工厂实拍、产品实物、操作场景），这条路线最容易持续产出内容，且真实感强、信任度高。\n\n---\n\n**我的建议：以 A 为主轴，D 为表达方式。**\n\n原因是：成本是制造企业决策者最普适的痛点，用\"算账\"做钩子获客效率最高；而 B2B 内容最大的障碍是\"抽象\"，用实景画面（D 的方式）来呈现成本对比，既解决了信任问题，又解决了内容可持续性问题。B 和 C 的元素可以作为内容分支偶尔穿插，不必做主线。\n\n在你确认方向之前，有一个问题会影响内容策略的落地方式：\n\n**你的目标客户主要集中在哪些制造业细分领域？** 比如汽车零部件、电子3C、日化食品、建材五金——不同行业的包装痛点、决策链条、平台活跃习惯差异很大，这会直接影响内容选题和获客精准度。\n\n你可以告诉我你的实际客户分布，我来帮你把方向进一步收窄。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 4878,
+            "output_tokens": 2468,
+            "total_tokens": 7346
+          },
+          "duration_seconds": 69.507,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 10,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        },
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "这个业务很清晰：你提供的是可循环工业包装箱的租赁 + 周转管理服务，卖给制造企业，核心交易逻辑是帮客户用\"可循环替代一次性\"来降本+提效+合规。下面直接讲起号方向。\n\n---\n\n## 先厘清一个关键问题：谁会刷到你的内容，谁会来问\n\n制造业B2B和消费品完全不同。你的内容受众、询价人、决策人、付款人大概率不是同一个人：\n\n- **看内容的人**：采购经理、供应链/物流主管、包装工程师、EHS负责人——他们日常就在处理\"包材成本高、纸箱纸耗大、木箱一次性浪费、供应商送货没箱装\"这类麻烦\n- **来询价的人**：往往是上述角色，带着具体包装场景来问\"我这个料架/零件能不能用你们箱子\"\n- **拍板的人**：采购总监、供应链负责人，小企业可能是厂长/老板直接看\n- **付钱的人**：公司财务，走采购流程\n\n所以你的账号目标不是涨粉，而是**让制造业供应链相关的人刷到时觉得\"这人懂行，我下次有包装问题可以找他\"**。\n\n---\n\n## 三条可走的路线\n\n### 路线A：包装降本专家（推荐）\n\n定位一句话：**\"帮制造企业算清楚包装这笔账\"**\n\n内容重心放在成本对比上——一次性纸箱/木箱 vs 可循环箱，按实际周转次数算总账。用真实场景说话：某类零件原来怎么包、花多少，换成可循环方案后单次成本降到多少、几轮回本。这类内容直接命中采购和供应链管理者的核心KPI（降本），来询盘的人也是带着预算意识来的，转化质量高。\n\n人设气质：务实、会算账、懂工厂现场。\n\n### 路线B：工厂包装问题解决者\n\n定位一句话：**\"制造业包装里的坑，我帮你填\"**\n\n内容重心放在具体问题场景：零件磕碰报废怎么包、多品种小批量怎么周转、供应商来料包装不规范怎么管、库房堆码怎么省空间。每期一个真实痛点，展示你的可循环方案怎么解决。这类内容适合工厂运营和包装工程师，他们遇到问题会主动搜索，长尾流量质量高。\n\n人设气质：现场经验丰富、解决问题利落。\n\n### 路线C：循环供应链布道者\n\n定位一句话：**\"一次性包装正在被淘汰，制造业该怎么转\"**\n\n内容更偏趋势和政策驱动：碳达峰/ESG对制造业包装的要求、头部企业（汽车、电子）怎么在推循环包装、供应链协同包装的趋势。目标是触达更高职级的供应链总监或关注合规的负责人。内容门槛相对高，需要你有行业视野和案例积累。\n\n人设气质：有行业判断、看得远。\n\n---\n\n## 我的建议\n\n**以路线A为主干，路线B的内容作为日常补充。** 原因是：降本是制造业最硬的采购理由，可循环包装箱的商业模式本身就是用\"多次使用摊薄单次成本\"——你的产品逻辑和内容逻辑天然统一。路线B的问题场景型内容则可以吸引搜索流量，把\"遇到包装问题来你这儿找答案\"变成习惯。\n\n路线C可以作为偶尔的拔高内容（比如政策解读、行业趋势），但不作为主力，因为趋势型内容的受众离采购决策更远。\n\n---\n\n## 起号要注意的几件事\n\n**内容形式上**，工厂实景 + 真实包装对比最有说服力。哪怕就是两箱零件，一箱用纸箱一箱用可循环箱，拍个拆包对比、算笔账，比任何口播都有用。不要做纯PPT式的行业科普，制造业的人不看。\n\n**平台选择上**，抖音可以做主阵地（制造业相关搜索和推荐流量在增长），但抖音更适合触达和建立信任，后续询盘转化建议引导到私域（企业微信/微信），因为B2B决策周期长，需要持续跟进。\n\n**一个关键前提**：路线A和路线B的内容都需要你有真实的案例、真实的场景、真实的数据。如果你目前服务的客户集中在某个制造行业（比如汽配、3C电子、注塑件等），内容围绕那个行业深做，比泛泛讲\"制造业\"更容易被目标客户刷到并产生信任。\n\n你目前服务的制造行业有偏重吗？比如主要做汽配、电子、还是其他品类？这会直接影响内容切入的细分场景和选题方向。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 5167,
+            "output_tokens": 2436,
+            "total_tokens": 7603
+          },
+          "duration_seconds": 55.512,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 10,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "succeeded",
+        "arm_by_label": {
+          "A": "focused_business",
+          "B": "current_full"
+        },
+        "record": {
+          "answer_a": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 1,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 2,
+            "business_return_path": 1,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "answer_b": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 1,
+            "durable_content_world": 1,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 2,
+            "business_return_path": 1,
+            "fact_boundary": 2,
+            "major_issues": []
+          },
+          "preferred": "A",
+          "reason": "两者业务理解都到位，都没有编造事实。A 在受众行为链上明显更完整——它把\"看内容的人、来询价的人、拍板的人、付钱的人\"四层拆开，并解释了为什么账号目标不是涨粉而是建立\"懂行\"信任，这对 B2B 起号是关键判断。B 只笼统说\"受众是采购、运营、供应链负责人\"，没有区分行为传递。在 durable_content_world 上两者都偏弱：A 的路线B（工厂包装问题解决者）有长期内容世界的潜力，但主线推荐的是\"算账\"方向，本质仍是购买决策场景而非可反复回来的内容世界；B 同样以成本对比为主轴，更偏购买前说服。concrete_direction 两者都给了具体的内容出发点和人设气质，都能让用户知道第一条内容从哪开始。business_return_path 两者都解释了信任如何回到业务，但都略偏\"看完会来咨询\"的假设，没有充分说明为什么注意力会合理流向租赁服务而非止步于内容。整体 A 因行为链拆解的深度略胜。"
+        },
+        "usage": {
+          "input_tokens": 2870,
+          "output_tokens": 427,
+          "total_tokens": 3297
+        },
+        "duration_seconds": 15.512
+      },
+      "comparison": {
+        "case_id": "held-reusable-industrial-packaging",
+        "split": "held_out",
+        "baseline_score": 10,
+        "candidate_score": 11,
+        "preferred_arm": "focused_business",
+        "baseline_fact_boundary_pass": true,
+        "candidate_fact_boundary_pass": true,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": true
+      }
+    },
+    {
+      "case_id": "held-community-senior-meals",
+      "split": "held_out",
+      "prompt": "我在社区做老年助餐和送餐服务，想让更多家属和老人知道我们，该怎么起号？",
+      "execution_order": [
+        "current_full",
+        "focused_business"
+      ],
+      "arms": {
+        "current_full": {
+          "status": "succeeded",
+          "answer": "你的业务核心有一个很关键的特点：**真正刷短视频、做消费决策的人，往往是老人的子女，而不是老人本人。** 这个判断直接决定了你的起号思路。\n\n先梳理一下你的情况：\n\n**已知的：** 你在社区做老年助餐+送餐服务，目标是让更多家属和老人知道你们。\n\n**最可能有效的方向：** 面向30-50岁的子女群体，在抖音或微信视频号起号。他们关心的是\"父母吃得好不好、有没有人管、安不放心\"，这是你内容的核心情绪抓手。\n\n有几条路线可以考虑：\n\n**路线A：温情信任型（推荐）**\n内容围绕\"你替子女照顾父母吃饭\"这件事。拍送餐上门的真实场景——老人开门接餐、饭菜热气、老人吃得开心的画面，配上朴实的旁白。核心打动的是子女：我没法每天回家给爸妈做饭，但有人替我做到了。不需要精致，真实就是最大的信任感。\n\n**路线B：透明厨房型**\n展示你们的备餐过程——食材新鲜、荤素搭配、少油少盐、营养合理。让子女看到\"这不是随便糊弄的盒饭，是认真做的适老餐\"。适合对食品安全敏感的家庭。\n\n**路线C：社区邻里型**\n更接地气，以社区为半径，拍老人们来堂食的日常、街坊闲聊、送餐路上的见闻。更像一个\"社区熟人\"账号，靠地域认同和口碑传播。\n\n这三条路线不互斥，但你起号阶段最好有一条主线，让观众三秒内知道\"这个账号是干嘛的\"。\n\n一个会实质影响策略的问题：**你的助餐服务是政府补贴的社区食堂，还是自己做的私营养老餐？** 如果有政府背书或补贴，信任门槛会低很多，内容可以更聚焦\"怎么用、怎么订\"；如果是纯民营，前期内容需要更多篇幅建立食品安全和服务可靠性的信任。\n\n另外，你主要想在哪个平台起号？抖音还是微信视频号？这会影响内容形式和传播方式。你告诉我这两点，我可以给你更具体的定位建议。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "describe_skill"
+          ],
+          "tool_call_count": 1,
+          "tool_result_count": 1,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 10218,
+            "output_tokens": 1618,
+            "total_tokens": 11836
+          },
+          "duration_seconds": 51.375,
+          "model_request_count": 2,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 11,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "current_full",
+              "call_index": 12,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 13556,
+              "attention_hash": null,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            }
+          ]
+        },
+        "focused_business": {
+          "status": "succeeded",
+          "answer": "这是一个很有价值的社区服务方向。在给方向之前，我先理清你业务的几个关键关系：\n\n**谁看内容、谁决定、谁用、谁受益**——这里面有一个重要的分层：刷到内容并做出\"给我爸妈订\"这个决定的，大概率是**成年子女（家属）**；真正每天吃餐的是老人。所以账号的核心说服对象其实是家属，让他们产生\"这个人比我更上心地照顾我爸妈\"的信任感。老人本身在社交平台上活跃度有限，但子女看到后转述给老人、或截图给父母看，是一条很自然的传递路径。\n\n基于这个理解，给你三条可走的方向，它们在内容形态和信任构建方式上有实质差异：\n\n---\n\n**方向A：后厨日记型——\"你爸妈今天吃了什么\"**\n\n内容主体是每天真实的备餐、送餐过程和老人用餐的瞬间。核心钩子不是\"我们的服务多好\"，而是让家属看到具体的画面：今天炖了什么汤、少盐少油怎么做的、张奶奶今天胃口好笑了、送餐小哥冒雨送到三楼。这个方向的信任来自透明——家属能亲眼看到餐是怎么来的、谁在做、老人吃得怎么样。\n\n适合你：如果送餐过程中本身就有很多真实的、有温度的互动场景可以拍。\n\n**方向B：老年饮食知识型——\"家里有老人该怎么吃\"**\n\n内容主体是老年营养常识、饮食禁忌、季节性食谱建议，比如\"高血压老人能不能喝骨头汤\"\"独居老人一周怎么吃才不凑合\"。把你的专业经验变成对家属有用的信息，服务自然作为解决方案出现。这个方向的信任来自专业感。\n\n适合你：如果你在老年餐方面有比较扎实的饮食营养经验，能持续输出有用知识。\n\n**方向C：社区服务纪实型——\"我们社区在做什么\"**\n\n内容主体是社区助餐服务的整体面貌：政策补贴怎么用、助餐点怎么运转、社区里有哪些适老服务。更偏服务介绍和社区信息传递。\n\n适合你：如果你想同时面向社区工作者、街道、居民，或者服务本身和社区/街道合作紧密，需要体现公共服务属性。\n\n---\n\n**我的建议是方向A为主干，B作为补充。** 理由是：家属刷到一个\"今天给王大爷送了蒸蛋，他说老伴走后没人给他做过这些\"的视频，被触动的概率远高于看到一条营养知识帖。真实场景本身就是最好的广告，而且你每天都在做这件事，素材是自然涌出的，不用额外造。\n\n方向B可以作为定期穿插——每周一条\"老年饮食小知识\"，既能体现专业，又不喧宾夺主。\n\n在你确认方向之前，有一个问题会实质影响内容打法，我需要先问清楚：\n\n**你的助餐服务目前的经营性质是什么？** 是社区/街道补贴的公共服务点、自己经营的商业助餐、还是混合模式？这会影响账号是往\"公益信任\"方向靠还是往\"品质服务\"方向靠，两者的人设和表达方式有本质区别。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "describe_skill"
+          ],
+          "tool_call_count": 1,
+          "tool_result_count": 1,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 11025,
+            "output_tokens": 2038,
+            "total_tokens": 13063
+          },
+          "duration_seconds": 77.718,
+          "model_request_count": 2,
+          "request_observations": [
+            {
+              "arm": "focused_business",
+              "call_index": 11,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "focused_business",
+              "call_index": 12,
+              "base_system_hash": "cb647bc6ee86e9ac0a1171900931fc38d910572f9b22484bf64c7becd40156a3",
+              "final_system_hash": "c79f05552bbcb5fdf118d3d5c2821a162c49558157a214aa97ac7ca912646af7",
+              "base_system_bytes": 13556,
+              "final_system_bytes": 14940,
+              "attention_hash": "edb8dd02809b421375e0bc527427c67e2fac6b6a327a26f00a84aec7433181b2",
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "confirm_account_launch_plan",
+                "confirm_account_strategy",
+                "plan_account_launch",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "3fa49071b668c9ac297803dc2e65d02dd3fd14ca79938848c2f9c31d25d464f8",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            }
+          ]
+        }
+      },
+      "judge": {
+        "status": "succeeded",
+        "arm_by_label": {
+          "A": "current_full",
+          "B": "focused_business"
+        },
+        "record": {
+          "answer_a": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 1,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 2,
+            "business_return_path": 1,
+            "fact_boundary": 2,
+            "major_issues": [
+              "三条路线并列但未给出主次判断，用户仍需自行选择，决策价值有限",
+              "未解释注意力和信任如何回到助餐服务本身，business_return_path 缺失"
+            ]
+          },
+          "answer_b": {
+            "business_comprehension": 2,
+            "audience_behavior_chain": 2,
+            "durable_content_world": 1,
+            "distinctive_viewpoint": 1,
+            "concrete_direction": 2,
+            "business_return_path": 1,
+            "fact_boundary": 2,
+            "major_issues": [
+              "方向B的'老年饮食知识型'有滑向通用健康科普的风险，与具体业务的回链不够紧",
+              "同样未充分解释信任如何转化为订餐行为，business_return_path 偏弱"
+            ]
+          },
+          "preferred": "B",
+          "reason": "两个回答在业务理解、受众行为链、事实边界和具体方向上表现接近，都准确识别了\"子女是决策者、老人是使用者\"这一核心分层，都给出了可拍摄的具体内容起点，都没有编造事实。B 在两个关键点上略胜：第一，它给出了明确的主次判断（A为主干、B为补充），并解释了理由——真实场景的素材是自然涌出的、不需要额外造，这对小本经营的社区助餐者来说是实质性的执行判断；A 虽然也推荐了路线A，但措辞更软（\"推荐\"），且三条路线的并列感更强，用户仍面临选择负担。第二，B 在受众行为链上更完整地描述了\"子女看到→转述给老人/截图给父母\"的传递路径，而 A 只说了子女是决策者但没展开传递机制。两者在 durable_content_world 上都有不足：A 的路线C（社区邻里型）和 B 的方向B（饮食知识型）都有滑向与核心业务关联不紧的风险；两者都未充分解释信任如何合理回到订餐行为本身，business_return_path 均偏弱。但综合来看 B 的判断更落地、更有主次，整体业务判断略优于 A。"
+        },
+        "usage": {
+          "input_tokens": 2131,
+          "output_tokens": 512,
+          "total_tokens": 2643
+        },
+        "duration_seconds": 11.402
+      },
+      "comparison": {
+        "case_id": "held-community-senior-meals",
+        "split": "held_out",
+        "baseline_score": 11,
+        "candidate_score": 11,
+        "preferred_arm": "focused_business",
+        "baseline_fact_boundary_pass": true,
+        "candidate_fact_boundary_pass": true,
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true,
+        "baseline_valid": true,
+        "candidate_valid": true,
+        "judge_valid": true
+      }
+    }
+  ],
+  "manual_review_status": "pending",
+  "runtime_promotion_status": "not_eligible",
+  "completed_at": "2026-08-21T17:43:07.072973+00:00",
+  "comparisons": [
+    {
+      "case_id": "diagnostic-golden-gift-full-agent",
+      "split": "diagnostic",
+      "baseline_score": 11,
+      "candidate_score": 12,
+      "preferred_arm": "focused_business",
+      "baseline_fact_boundary_pass": true,
+      "candidate_fact_boundary_pass": true,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": true
+    },
+    {
+      "case_id": "held-restaurant-exhaust-safety",
+      "split": "held_out",
+      "baseline_score": 0,
+      "candidate_score": 0,
+      "preferred_arm": "tie",
+      "baseline_fact_boundary_pass": false,
+      "candidate_fact_boundary_pass": false,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": false
+    },
+    {
+      "case_id": "held-baby-clothes-memory-toys",
+      "split": "held_out",
+      "baseline_score": 14,
+      "candidate_score": 6,
+      "preferred_arm": "current_full",
+      "baseline_fact_boundary_pass": true,
+      "candidate_fact_boundary_pass": true,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": true
+    },
+    {
+      "case_id": "held-agricultural-drone-service",
+      "split": "held_out",
+      "baseline_score": 8,
+      "candidate_score": 14,
+      "preferred_arm": "focused_business",
+      "baseline_fact_boundary_pass": true,
+      "candidate_fact_boundary_pass": true,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": true
+    },
+    {
+      "case_id": "held-secondhand-piano-restoration",
+      "split": "held_out",
+      "baseline_score": 13,
+      "candidate_score": 13,
+      "preferred_arm": "tie",
+      "baseline_fact_boundary_pass": true,
+      "candidate_fact_boundary_pass": true,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": true
+    },
+    {
+      "case_id": "held-reusable-industrial-packaging",
+      "split": "held_out",
+      "baseline_score": 10,
+      "candidate_score": 11,
+      "preferred_arm": "focused_business",
+      "baseline_fact_boundary_pass": true,
+      "candidate_fact_boundary_pass": true,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": true
+    },
+    {
+      "case_id": "held-community-senior-meals",
+      "split": "held_out",
+      "baseline_score": 11,
+      "candidate_score": 11,
+      "preferred_arm": "focused_business",
+      "baseline_fact_boundary_pass": true,
+      "candidate_fact_boundary_pass": true,
+      "initial_tools_match": true,
+      "initial_tool_schema_match": true,
+      "base_system_match": true,
+      "model_contract_match": true,
+      "baseline_valid": true,
+      "candidate_valid": true,
+      "judge_valid": true
+    }
+  ],
+  "promotion": {
+    "promote": false,
+    "held_out_case_count": 6,
+    "candidate_wins": 3,
+    "mean_score_gain": -0.167,
+    "reasons": [
+      "judge_failed",
+      "insufficient_candidate_wins",
+      "insufficient_mean_gain",
+      "material_case_regression"
+    ]
+  }
+}
