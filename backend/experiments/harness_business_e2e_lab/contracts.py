@@ -58,7 +58,13 @@ class CollectedAgentStream(BaseModel):
     usage: TokenUsage
     repetitive: bool
     valid: bool
-    termination_reason: Literal["completed", "clarification", "repetitive", "empty"]
+    termination_reason: Literal[
+        "completed",
+        "clarification",
+        "repetitive",
+        "empty",
+        "framework_error",
+    ]
 
 
 class FullAgentBusinessScore(BaseModel):

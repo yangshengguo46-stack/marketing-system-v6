@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable
 from typing import Any, override
 
 from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import ModelCallResult, ModelRequest, ModelResponse
 from langchain_core.messages import SystemMessage
+from langchain_core.utils.function_calling import convert_to_openai_tool
 
 from experiments.harness_business_e2e_lab.contracts import ModelRequestObservation
 
@@ -48,24 +49,18 @@ def _tool_schema_hash(request: ModelRequest) -> str:
     for tool in list(getattr(request, "tools", ()) or ()):
         name = getattr(tool, "name", None)
         description = getattr(tool, "description", None)
-        schema: Mapping[str, Any] | dict[str, Any] = {}
-        args_schema = getattr(tool, "args_schema", None)
-        schema_builder = getattr(args_schema, "model_json_schema", None)
-        if isinstance(args_schema, type) and callable(schema_builder):
-            candidate = schema_builder()
-            if isinstance(candidate, Mapping):
-                schema = candidate
-        if not schema:
-            args = getattr(tool, "args", None)
-            if isinstance(args, Mapping):
-                schema = args
-        payload.append(
-            {
+        try:
+            schema = convert_to_openai_tool(tool)
+        except Exception as exc:
+            # Observability must never break a valid Agent call. The fallback
+            # remains deterministic and makes an unconvertible schema visible
+            # in the contract hash without serializing the exception message.
+            schema = {
                 "name": name if isinstance(name, str) else "",
                 "description": description if isinstance(description, str) else "",
-                "schema": schema,
+                "schema_unavailable": type(exc).__name__,
             }
-        )
+        payload.append(schema)
     rendered = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
     return _sha256(rendered)
 

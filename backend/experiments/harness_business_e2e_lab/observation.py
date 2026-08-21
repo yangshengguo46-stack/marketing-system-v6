@@ -11,6 +11,11 @@ from experiments.harness_business_e2e_lab.contracts import (
 )
 
 _UNIT_SPLIT = re.compile(r"[\n。！？!?]+")
+_FRAMEWORK_ERROR_PREFIXES = (
+    "LLM request failed:",
+    "Agent failed:",
+    "Model request failed:",
+)
 
 
 def detect_repetitive_answer(answer: str) -> bool:
@@ -83,7 +88,10 @@ def collect_agent_stream(events: Iterable[Any]) -> CollectedAgentStream:
         answer = ""
         answer_source = "none"
     repetitive = detect_repetitive_answer(answer)
-    if repetitive:
+    framework_error = answer.lstrip().startswith(_FRAMEWORK_ERROR_PREFIXES)
+    if framework_error:
+        termination_reason = "framework_error"
+    elif repetitive:
         termination_reason = "repetitive"
     elif answer_source == "clarification":
         termination_reason = "clarification"
@@ -99,6 +107,6 @@ def collect_agent_stream(events: Iterable[Any]) -> CollectedAgentStream:
         tool_failure_count=tool_failure_count,
         usage=usage,
         repetitive=repetitive,
-        valid=bool(answer) and not repetitive,
+        valid=bool(answer) and not repetitive and not framework_error,
         termination_reason=termination_reason,
     )

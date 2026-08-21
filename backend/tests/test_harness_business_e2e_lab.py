@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 from langchain_core.messages import SystemMessage
+from pydantic import BaseModel
 
 from deerflow.client import StreamEvent
 from experiments.harness_business_e2e_lab.context import build_business_attention_context
@@ -84,6 +86,20 @@ def test_probe_middleware_never_duplicates_existing_attention_marker() -> None:
     )
 
     assert captured[0].system_message.content.count("<business_attention>") == 1
+
+
+def test_probe_observability_never_breaks_on_unserializable_tool_schema() -> None:
+    class CallableArgs(BaseModel):
+        callback: Callable[[], None]
+
+    request = _request("base prompt", ("callable_tool",))
+    request.tools[0].args_schema = CallableArgs
+    middleware = BusinessAttentionProbeMiddleware(arm="current_full")
+
+    result = middleware.wrap_model_call(request, lambda req: "model-result")
+
+    assert result == "model-result"
+    assert middleware.observations[0].tool_schema_hash
 
 
 def test_dataset_uses_new_held_out_cases_and_keeps_known_gold_diagnostic_only() -> None:
@@ -177,6 +193,22 @@ def test_stream_collector_keeps_final_answer_tools_usage_and_clarification_fallb
     assert clarification.answer_source == "clarification"
     assert clarification.termination_reason == "clarification"
     assert clarification.valid is True
+
+    framework_failure = collect_agent_stream(
+        [
+            StreamEvent(
+                type="messages-tuple",
+                data={
+                    "type": "ai",
+                    "id": "failure",
+                    "content": "LLM request failed: provider schema error",
+                },
+            ),
+            StreamEvent(type="end", data={"usage": {}}),
+        ]
+    )
+    assert framework_failure.valid is False
+    assert framework_failure.termination_reason == "framework_error"
 
 
 def test_full_agent_promotion_requires_real_gain_and_identical_initial_tools() -> None:
