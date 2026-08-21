@@ -103,6 +103,50 @@ def test_lexical_evidence_provider_is_created_from_the_untracked_local_index(
 
 
 @pytest.mark.asyncio
+async def test_term_evidence_search_uses_only_configured_web_search_and_preserves_exact_query(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, int]] = []
+
+    @tool("web_search")
+    async def configured_search(query: str, max_results: int = 5) -> str:
+        """Search a term through the configured provider."""
+        calls.append((query, max_results))
+        return json.dumps(
+            {
+                "results": [
+                    {
+                        "title": "公开词项说明",
+                        "url": "https://example.com/term",
+                        "content": "只解释该词项。",
+                    }
+                ]
+            }
+        )
+
+    search_config = SimpleNamespace(use="tests.fake:configured_search")
+    monkeypatch.setattr(
+        "deerflow.config.get_app_config",
+        lambda: SimpleNamespace(
+            get_tool_config=lambda name: search_config if name == "web_search" else None,
+        ),
+    )
+    monkeypatch.setattr(
+        "deerflow.reflection.resolve_variable",
+        lambda use, expected: configured_search,
+    )
+
+    results = await incubation_tool_support_module.search_term_evidence(
+        "MENA和CCA的TikTok直播公会",
+        3,
+    )
+
+    assert calls == [("MENA和CCA的TikTok直播公会", 3)]
+    assert len(results) == 1
+    assert results[0].title == "公开词项说明"
+
+
+@pytest.mark.asyncio
 async def test_content_world_tool_stops_after_the_candidate_map_for_content_opportunities(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

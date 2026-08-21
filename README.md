@@ -816,6 +816,12 @@ explicit reference to the current Agent reads a server-owned, versioned `HostPro
 product facts, capabilities, accepted evidence, and constraints. A second-person self-reference is
 therefore not sent to semantic analysis as an unknown customer business, and the model cannot grant
 the product capabilities that are absent from that profile.
+For an ordinary user business, the subject must also be one contiguous verbatim span from the
+current request. An exact local term hit bypasses the network; an unrecognized recent term,
+proper name, acronym, or trade expression gets one bounded public-web lookup. At most three
+snippets enter a distinct `term_evidence` role that audience and semantic reading can reuse.
+They never become competitor or topic evidence and cannot select the content root. Lookup failure
+remains an explicit unknown, while `agent_self` continues to trust only the local product profile.
 Before choosing a content root, an `AccountAudienceDecision` separates payer or contracting party,
 decision maker, user or beneficiary, the people the business must influence, and the people who may
 keep watching the content. An already explicit commercial relationship resolves to one route. A

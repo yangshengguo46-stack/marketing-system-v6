@@ -20,6 +20,9 @@ from deerflow.content_intelligence import (
     SharedWorldReviewDraft,
     SharedWorldSynthesisDraft,
     SourceMaterial,
+    TermEvidenceSearchResult,
+    TermResolution,
+    TermResolutionStatus,
     analyze_content_intelligence,
     render_content_world_narration,
     synthesize_content_world_narration,
@@ -698,6 +701,16 @@ class StubLexicalEvidenceProvider:
         return self.evidence
 
 
+class StubTermResolver:
+    def __init__(self, resolution: TermResolution) -> None:
+        self.resolution = resolution
+        self.calls: list[dict[str, object]] = []
+
+    async def resolve(self, **kwargs) -> TermResolution:
+        self.calls.append(kwargs)
+        return self.resolution
+
+
 def _gift_lexical_evidence() -> LexicalEvidence:
     return LexicalEvidence(
         lexical_head="礼品",
@@ -1368,6 +1381,78 @@ async def test_lexical_worker_receives_optional_bounded_evidence_without_busines
     assert "/Users/" not in family_input
     assert len(family_input.encode("utf-8")) <= 8_500
     assert bundle.content_world.content_root == "人们如何用礼组织人与人的相处"
+
+
+@pytest.mark.asyncio
+async def test_unknown_term_evidence_is_reviewed_before_root_selection_and_keeps_its_own_role() -> None:
+    provider = StubLexicalEvidenceProvider(_gift_lexical_evidence())
+    model = _gold_evidence_model()
+    resolver = StubTermResolver(
+        TermResolution.from_search_results(
+            query="黄金礼品",
+            checked_terms=("礼品", "黄金"),
+            unknown_terms=("黄金",),
+            results=(
+                TermEvidenceSearchResult(
+                    title="公开词义说明",
+                    url="https://example.com/term/golden-gift",
+                    content="该摘要只用于核实商业表达的含义，不是选题或对标证据。",
+                ),
+            ),
+        )
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+        lexical_evidence_provider=provider,
+        term_resolver=resolver,
+    )
+
+    assert len(resolver.calls) == 1
+    assert resolver.calls[0]["source_object"] == "黄金礼品"
+    assert resolver.calls[0]["lexical_head"] == "礼品"
+    assert resolver.calls[0]["modifier_terms"] == ("黄金",)
+    assert [source.evidence_role for source in bundle.record.sources] == [None, "term_evidence"]
+    assert "term_evidence" not in model.message_batches[0][1].content
+    assert '"evidence_role": "term_evidence"' in model.message_batches[1][1].content
+    assert model.schemas[:3] == [
+        SemanticReadingDraft,
+        SemanticReadingDraft,
+        SemanticFamilyExpansionDraft,
+    ]
+    assert bundle.content_world.content_root == "人们如何用礼组织人与人的相处"
+
+
+@pytest.mark.asyncio
+async def test_unresolved_term_adds_an_unknown_without_forcing_a_second_semantic_read() -> None:
+    model = _gold_evidence_model()
+    resolver = StubTermResolver(
+        TermResolution(
+            status=TermResolutionStatus.UNRESOLVED,
+            query="近期新名词",
+            checked_terms=("近期新名词",),
+            unknown_terms=("近期新名词",),
+            limitations=("词项核实没有取得可用公开证据，当前具体含义保持未知。",),
+        )
+    )
+
+    bundle = await analyze_content_intelligence(
+        ContentIntelligenceRequest(
+            user_request="我是做黄金礼品的，我要怎么起号？",
+            subject_expression="我是做黄金礼品的",
+            focus=AnalysisFocus.CONTENT_WORLD,
+        ),
+        model=model,
+        term_resolver=resolver,
+    )
+
+    assert model.schemas.count(SemanticReadingDraft) == 1
+    assert any("具体含义保持未知" in item.question for item in bundle.record.unknowns)
 
 
 def test_rejected_dense_recall_is_not_part_of_the_runtime_contract() -> None:

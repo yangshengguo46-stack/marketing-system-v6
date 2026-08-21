@@ -14,6 +14,7 @@ from deerflow.content_intelligence import (
     ContentAudienceContext,
     ContentIntelligenceRequest,
     IncubationSkillProfileError,
+    SourceMaterial,
     analyze_content_intelligence,
     load_incubation_skill_profile,
 )
@@ -30,6 +31,7 @@ from deerflow.incubation import (
 )
 from deerflow.incubation.account_audience import (
     MarketingSubjectSnapshot,
+    SubjectTermEvidence,
     prepare_account_audience,
     render_account_audience_decision,
 )
@@ -45,6 +47,7 @@ from deerflow.tools.builtins.douyin_public_benchmark_evidence import (
 from deerflow.tools.builtins.incubation_tool_support import (
     create_content_intelligence_model,
     create_lexical_evidence_provider,
+    create_term_resolver,
     get_incubation_repository,
     runtime_context_text,
     structured_model_runner,
@@ -97,6 +100,7 @@ async def develop_account_strategy_tool(
     runtime: Runtime,
     user_request: str,
     subject_ref: Literal["user_business", "agent_self"],
+    subject_expression: str | None = None,
     audience_option_id: str | None = None,
     incubation_skill: str | None = None,
 ) -> Command:
@@ -111,6 +115,7 @@ async def develop_account_strategy_tool(
     Args:
         user_request: The user's current account-starting or positioning request, copied verbatim.
         subject_ref: Whether the account belongs to the user's business or to the current Agent product itself.
+        subject_expression: For user_business, the exact business, product, brand, expert, or industry expression copied as one contiguous span from user_request. Omit only when the whole request is itself the subject expression.
         audience_option_id: Exact pending audience route selected by the user, when the prior response requested a choice.
         incubation_skill: Exact name of one already discovered and loaded vertical incubation Skill, when applicable.
     """
@@ -184,11 +189,21 @@ async def develop_account_strategy_tool(
             tool_call_id=runtime.tool_call_id,
         )
 
+    selected_subject_expression = user_request.strip()
+    if subject_ref == "user_business" and audience_option_id is None and subject_expression is not None:
+        selected_subject_expression = subject_expression.strip()
+        if not selected_subject_expression or selected_subject_expression not in user_request:
+            return _terminal_account_strategy_command(
+                "营销主体必须来自当前原话，因此这次没有用一个陌生业务覆盖用户实际表达。",
+                tool_call_id=runtime.tool_call_id,
+            )
+
     try:
         model = create_content_intelligence_model(runtime.config)
         created_at = datetime.now(UTC)
         subject: MarketingSubjectSnapshot | None = None
         subject_parent_artifacts = ()
+        lexical_evidence_provider = None
         if audience_option_id is None:
             if subject_ref == "agent_self":
                 profile_artifact = seal_host_product_profile(
@@ -206,11 +221,29 @@ async def develop_account_strategy_tool(
                     profile_artifact=profile_artifact,
                 )
             else:
+                lexical_evidence_provider = create_lexical_evidence_provider()
+                term_resolution = await create_term_resolver(
+                    lexical_evidence_provider,
+                ).resolve(
+                    source_object=selected_subject_expression,
+                    lexical_head=selected_subject_expression,
+                    modifier_terms=(),
+                )
                 subject = MarketingSubjectSnapshot(
                     subject_kind="user_business",
-                    subject_expression=user_request,
+                    subject_expression=selected_subject_expression,
                     source_user_request=user_request,
                     business_facts=(user_request,),
+                    term_evidence=tuple(
+                        SubjectTermEvidence(
+                            title=source.title or "公开词项核实",
+                            uri=source.uri,
+                            content=source.content,
+                        )
+                        for source in term_resolution.sources
+                        if source.uri is not None
+                    ),
+                    term_resolution_limitations=term_resolution.limitations,
                 )
 
         audience = await prepare_account_audience(
@@ -287,17 +320,30 @@ async def develop_account_strategy_tool(
             content_audience=selected_audience.content_audience,
             recurring_interest=selected_audience.recurring_interest,
         )
+        if lexical_evidence_provider is None:
+            lexical_evidence_provider = create_lexical_evidence_provider()
         bundle = await analyze_content_intelligence(
             ContentIntelligenceRequest(
                 user_request=subject.subject_expression,
                 subject_expression=subject.subject_expression,
                 focus=AnalysisFocus.CONTENT_WORLD,
-                source_materials=(),
+                source_materials=tuple(
+                    SourceMaterial(
+                        kind="term_evidence",
+                        content=evidence.content,
+                        evidence_role="term_evidence",
+                        title=evidence.title,
+                        uri=evidence.uri,
+                    )
+                    for evidence in subject.term_evidence
+                ),
+                term_resolution_limitations=subject.term_resolution_limitations,
                 audience_context=audience_context,
             ),
             model=model,
             runnable_config=runtime.config,
-            lexical_evidence_provider=create_lexical_evidence_provider(),
+            lexical_evidence_provider=lexical_evidence_provider,
+            term_resolver=None,
             incubation_profile=incubation_profile,
         )
         content_world = getattr(bundle, "content_world", None)

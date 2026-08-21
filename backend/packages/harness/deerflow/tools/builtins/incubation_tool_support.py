@@ -5,10 +5,17 @@ import os
 from typing import Any
 
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import BaseTool
 
 from deerflow.config.runtime_paths import runtime_home
 from deerflow.content_intelligence.analyzer import _invoke_structured
 from deerflow.content_intelligence.lexical_evidence import CedictLexicalEvidenceProvider
+from deerflow.content_intelligence.term_resolution import (
+    LexicalKnownTermStore,
+    TermEvidenceSearchResult,
+    TermResolver,
+    parse_term_search_payload,
+)
 from deerflow.incubation import ArtifactEnvelope
 from deerflow.models import create_chat_model
 from deerflow.tools.types import Runtime
@@ -52,6 +59,36 @@ def create_lexical_evidence_provider() -> CedictLexicalEvidenceProvider | None:
             type(exc).__name__,
         )
         return None
+
+
+async def search_term_evidence(
+    query: str,
+    max_results: int,
+) -> tuple[TermEvidenceSearchResult, ...]:
+    """Use only the configured public web search for bounded term verification."""
+
+    from deerflow.config import get_app_config
+    from deerflow.reflection import resolve_variable
+
+    search_config = get_app_config().get_tool_config("web_search")
+    if search_config is None:
+        return ()
+    search_tool = resolve_variable(search_config.use, BaseTool)
+    tool_input: dict[str, Any] = {"query": query}
+    if "max_results" in search_tool.args:
+        tool_input["max_results"] = max_results
+    raw = await search_tool.ainvoke(tool_input)
+    return parse_term_search_payload(raw, max_results=max_results)
+
+
+def create_term_resolver(
+    lexical_evidence_provider: CedictLexicalEvidenceProvider | None,
+) -> TermResolver:
+    known_term_store = LexicalKnownTermStore(lexical_evidence_provider) if lexical_evidence_provider is not None else None
+    return TermResolver(
+        known_term_store=known_term_store,
+        search=search_term_evidence,
+    )
 
 
 def get_incubation_repository():
@@ -111,8 +148,10 @@ __all__ = [
     "artifact_receipt",
     "create_content_intelligence_model",
     "create_lexical_evidence_provider",
+    "create_term_resolver",
     "get_incubation_repository",
     "runtime_context_bool",
     "runtime_context_text",
+    "search_term_evidence",
     "structured_model_runner",
 ]

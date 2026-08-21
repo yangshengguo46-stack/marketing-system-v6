@@ -63,6 +63,9 @@ from deerflow.tools.builtins.incubation_tool_support import (
     create_lexical_evidence_provider as _create_lexical_evidence_provider,
 )
 from deerflow.tools.builtins.incubation_tool_support import (
+    create_term_resolver as _create_term_resolver,
+)
+from deerflow.tools.builtins.incubation_tool_support import (
     get_incubation_repository as _get_incubation_repository,
 )
 from deerflow.tools.builtins.incubation_tool_support import (
@@ -444,6 +447,8 @@ async def _analyze_content_intelligence(
     config: Annotated[RunnableConfig, InjectedToolArg] = None,
 ) -> str:
     model = _create_content_intelligence_model(config)
+    lexical_evidence_provider = _create_lexical_evidence_provider()
+    term_resolver = _create_term_resolver(lexical_evidence_provider)
     materials = tuple(material if isinstance(material, SourceMaterial) else SourceMaterial.model_validate(material) for material in (source_materials or []))
     request = ContentIntelligenceRequest(
         user_request=user_request,
@@ -456,6 +461,8 @@ async def _analyze_content_intelligence(
             request,
             model=model,
             runnable_config=config,
+            lexical_evidence_provider=lexical_evidence_provider,
+            term_resolver=term_resolver,
         )
     except (ValidationError, ValueError) as exc:
         if isinstance(exc, ValidationError):
@@ -504,6 +511,7 @@ async def explore_content_world_tool(
     tool_call_id = runtime.tool_call_id
     model = _create_content_intelligence_model(config)
     lexical_evidence_provider = _create_lexical_evidence_provider()
+    term_resolver = _create_term_resolver(lexical_evidence_provider)
 
     try:
         confirmed_context = None
@@ -536,6 +544,7 @@ async def explore_content_world_tool(
                 model=model,
                 runnable_config=config,
                 lexical_evidence_provider=lexical_evidence_provider,
+                term_resolver=term_resolver,
             )
             current_strategy = None
         else:

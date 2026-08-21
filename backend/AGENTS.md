@@ -174,10 +174,11 @@ and arbitrary context cannot override it. New account artifacts carry the exact 
 content, format, adaptation, production, and planning. Legacy project-scoped artifacts remain readable with their
 original canonical IDs and cannot be silently promoted into an account.
 `RootFeedbackRecord` is append-only, exact-map episodic evidence; it cannot become a rule before ADR-031 approval.
-`develop_account_strategy` first requires a `subject_ref`. `user_business` reads user/project facts only;
-`agent_self` seals and reads the versioned server-owned `HostProductProfile`. Never send “你自己” to business
-semantics as an unknown customer, let tool arguments overwrite product facts, or leak Agent capabilities into a
-user business. Before map or benchmark work, `AccountAudienceDecision` separates payer/contracting party,
+`develop_account_strategy` requires `subject_ref`: `user_business` reads only user/project facts; `agent_self`
+seals the server-owned `HostProductProfile`. Do not let deictic text or tool arguments rewrite either subject.
+User-business `subject_expression` is verbatim. Unknown terms may get one bounded pre-audience lookup;
+`term_evidence` cannot become topic/benchmark evidence or choose a root, and `agent_self` skips it. Before map work,
+`AccountAudienceDecision` separates payer/contracting party,
 decision maker, user/beneficiary, business target, and content audience. A material route ambiguity returns only
 two to three options and stops; exact user selection appends a confirmed successor. Unsupported demographics stay
 unknown. The selected audience is deterministically projected downstream, so models cannot switch B2B/B2C later.

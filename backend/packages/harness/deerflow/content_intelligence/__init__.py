@@ -82,6 +82,16 @@ from deerflow.content_intelligence.research import (
     TopicEditorialDecisionDraft,
     enrich_content_world_with_research,
 )
+from deerflow.content_intelligence.term_resolution import (
+    KnownTermStore,
+    LexicalKnownTermStore,
+    TermEvidenceSearch,
+    TermEvidenceSearchResult,
+    TermResolution,
+    TermResolutionStatus,
+    TermResolver,
+    parse_term_search_payload,
+)
 
 __all__ = [
     "AnalysisFocus",
@@ -119,6 +129,7 @@ __all__ = [
     "LexicalEvidenceSource",
     "LexicalIndexReceipt",
     "LexicalRelatedExpression",
+    "KnownTermStore",
     "MeaningBearingComponent",
     "MeaningBearingComponentDraft",
     "MessagePlan",
@@ -147,10 +158,17 @@ __all__ = [
     "StateChange",
     "TopicBrief",
     "TopicEditorialDecisionDraft",
+    "LexicalKnownTermStore",
+    "TermEvidenceSearch",
+    "TermEvidenceSearchResult",
+    "TermResolution",
+    "TermResolutionStatus",
+    "TermResolver",
     "Unknown",
     "analyze_content_intelligence",
     "build_cc_cedict_index",
     "load_incubation_skill_profile",
+    "parse_term_search_payload",
     "enrich_content_world_with_research",
     "render_content_world_narration",
     "render_shooting_delivery",

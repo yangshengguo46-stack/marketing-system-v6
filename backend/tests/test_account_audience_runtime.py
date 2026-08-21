@@ -19,6 +19,7 @@ from deerflow.incubation.account_audience import (
     AccountAudienceProposalDraft,
     AccountAudienceRouteDraft,
     MarketingSubjectSnapshot,
+    SubjectTermEvidence,
     compile_account_audience_decision,
     confirm_account_audience_decision,
     prepare_account_audience,
@@ -334,6 +335,53 @@ async def test_audience_decision_runs_before_content_map_and_sees_product_truth(
     assert "candidate_content_map" not in messages[1].content
     assert "能生成账号策略和具体可拍选题" in messages[1].content
     assert captured["schema"] is AccountAudienceProposalDraft
+
+
+@pytest.mark.asyncio
+async def test_audience_reads_term_evidence_as_external_context_not_user_fact() -> None:
+    captured: dict[str, object] = {}
+
+    async def structured_model(schema, messages):
+        captured["messages"] = messages
+        return AccountAudienceProposalDraft(
+            route_options=(
+                _route(
+                    "guild_clients",
+                    name="直播公会客户",
+                    target_people="目标地区的主播与直播团队",
+                    content_audience="关心直播公会合作与运营的人",
+                ),
+            ),
+            recommended_option_id="guild_clients",
+            material_choice_required=False,
+            choice_reason="词项证据只解释业务表达，目标人群仍是可修正假设。",
+        )
+
+    subject = MarketingSubjectSnapshot(
+        subject_kind="user_business",
+        subject_expression="MENA TikTok直播公会",
+        source_user_request="我是做MENA TikTok直播公会的",
+        business_facts=("我是做MENA TikTok直播公会的",),
+        term_evidence=(
+            SubjectTermEvidence(
+                title="MENA 词项说明",
+                uri="https://example.com/mena",
+                content="MENA 是中东和北非地区的常用缩写。",
+            ),
+        ),
+    )
+
+    await generate_account_audience_decision(
+        subject=subject,
+        structured_model=structured_model,
+    )
+
+    system_prompt = captured["messages"][0].content
+    user_input = captured["messages"][1].content
+    assert "term_evidence" in system_prompt
+    assert "不是用户事实、对标账号、市场表现或选题证据" in system_prompt
+    assert '"evidence_role":"term_evidence"' in user_input
+    assert "MENA 是中东和北非地区" in user_input
 
 
 @pytest.mark.asyncio

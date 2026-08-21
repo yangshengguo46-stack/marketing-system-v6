@@ -1,0 +1,35 @@
+{
+  "audit_id": "A127",
+  "date": "2026-08-21",
+  "provider": "configured web_search (DuckDuckGo)",
+  "stable_term_probe": {
+    "query": "水果",
+    "status": "known",
+    "external_source_count": 0
+  },
+  "recent_term_probe": {
+    "query": "走个面",
+    "status": "verified",
+    "evidence_role": "term_evidence",
+    "external_sources": [
+      {
+        "title": "知名歌手的一句“走个面儿”，为何让全网炸锅？",
+        "uri": "https://huacheng.gz-cmc.com/pages/2026/07/01/8171cd5a873a484095e701ad9bf27383.html"
+      },
+      {
+        "title": "“走个面儿”这词火了，到底是什么意思？_哔哩哔哩_bilibili",
+        "uri": "https://www.bilibili.com/video/BV1HZjX6wEum/"
+      },
+      {
+        "title": "“走个面”我网上查了一下，学了不少知识，对这句话有了较 ...",
+        "uri": "https://x.com/wokanhaoni/status/2069680916260069727"
+      }
+    ]
+  },
+  "verification": {
+    "focused_tests": "159 passed",
+    "domain_wide_tests": "613 passed, 1 warning",
+    "ruff": "passed",
+    "guidance_budget": "passed"
+  }
+}

@@ -10,6 +10,7 @@ from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 from pydantic import BaseModel, Field, ValidationError
 
+from deerflow.content_intelligence import TermEvidenceSearchResult, TermResolution
 from deerflow.incubation import (
     implicit_thread_logical_account_ref,
     implicit_thread_project_ref,
@@ -96,6 +97,19 @@ def _resolve_audience_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
         AsyncMock(side_effect=resolve),
         raising=False,
     )
+    resolver = SimpleNamespace(
+        resolve=AsyncMock(
+            side_effect=lambda **kwargs: TermResolution.known(
+                checked_terms=(kwargs["lexical_head"],),
+            )
+        )
+    )
+    monkeypatch.setattr(
+        tool_module,
+        "create_term_resolver",
+        Mock(return_value=resolver),
+        raising=False,
+    )
 
 
 def test_account_strategy_validation_diagnostics_expose_only_schema_locations() -> None:
@@ -138,17 +152,150 @@ def test_account_strategy_tool_is_a_separate_lead_capability() -> None:
     assert set(schema["properties"]) == {
         "user_request",
         "subject_ref",
+        "subject_expression",
         "audience_option_id",
         "incubation_skill",
     }
     assert "subject_ref" in schema["required"]
     assert schema["properties"]["audience_option_id"]["default"] is None
+    assert schema["properties"]["subject_expression"]["default"] is None
     assert schema["properties"]["incubation_skill"]["default"] is None
     assert confirm_account_strategy_tool in BUILTIN_TOOLS
     assert confirm_account_strategy_tool.name == "confirm_account_strategy"
     assert confirm_account_strategy_tool.return_direct is True
     confirm_schema = confirm_account_strategy_tool.tool_call_schema.model_json_schema()
     assert set(confirm_schema["properties"]) == {"option_id"}
+
+
+@pytest.mark.asyncio
+async def test_user_business_term_is_verified_once_before_audience_and_reused_by_semantics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    order: list[str] = []
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
+    resolution = TermResolution.from_search_results(
+        query="MENA和CCA的TikTok直播公会",
+        checked_terms=("MENA和CCA的TikTok直播公会",),
+        unknown_terms=("MENA和CCA的TikTok直播公会",),
+        results=(
+            TermEvidenceSearchResult(
+                title="区域与行业词项说明",
+                url="https://example.com/tiktok-live-guild",
+                content="MENA、CCA 与 TikTok 直播公会的公开词项摘要。",
+            ),
+        ),
+    )
+
+    async def resolve_term(**kwargs):
+        order.append("term")
+        return resolution
+
+    resolver = SimpleNamespace(resolve=AsyncMock(side_effect=resolve_term))
+    monkeypatch.setattr(tool_module, "create_term_resolver", Mock(return_value=resolver))
+    captured_subjects: list[MarketingSubjectSnapshot] = []
+
+    async def prepare_audience(**kwargs):
+        order.append("audience")
+        captured_subjects.append(kwargs["subject"])
+        return _prepared_resolved_audience(kwargs["subject"])
+
+    monkeypatch.setattr(tool_module, "prepare_account_audience", AsyncMock(side_effect=prepare_audience))
+    bundle = SimpleNamespace(content_world=SimpleNamespace(content_root=None))
+
+    async def analyze(*args, **kwargs):
+        order.append("semantic")
+        return bundle
+
+    analysis = AsyncMock(side_effect=analyze)
+    artifact = SimpleNamespace(
+        artifact_type="incubation_judgment",
+        artifact_id="artifact-new-term-strategy",
+        content_sha256="d" * 64,
+    )
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(tool_module, "create_content_intelligence_model", Mock(return_value=object()))
+    monkeypatch.setattr(tool_module, "create_lexical_evidence_provider", Mock(return_value=None))
+    monkeypatch.setattr(tool_module, "analyze_content_intelligence", analysis)
+    monkeypatch.setattr(
+        tool_module,
+        "prepare_account_strategy",
+        AsyncMock(
+            return_value=SimpleNamespace(
+                judgment=object(),
+                judgment_artifact=artifact,
+                reused=False,
+            )
+        ),
+    )
+    monkeypatch.setattr(tool_module, "render_account_strategy", Mock(return_value="# 账号路线候选"))
+
+    await develop_account_strategy_tool.ainvoke(
+        {
+            "name": "develop_account_strategy",
+            "args": {
+                "user_request": "我是做MENA和CCA的TikTok直播公会的，我该怎么起号？",
+                "subject_ref": "user_business",
+                "subject_expression": "MENA和CCA的TikTok直播公会",
+                "runtime": _runtime(project_id="new-term-business"),
+            },
+            "id": "account-strategy-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert order[:3] == ["term", "audience", "semantic"]
+    resolver.resolve.assert_awaited_once_with(
+        source_object="MENA和CCA的TikTok直播公会",
+        lexical_head="MENA和CCA的TikTok直播公会",
+        modifier_terms=(),
+    )
+    subject = captured_subjects[0]
+    assert subject.subject_expression == "MENA和CCA的TikTok直播公会"
+    assert subject.business_facts == ("我是做MENA和CCA的TikTok直播公会的，我该怎么起号？",)
+    assert len(subject.term_evidence) == 1
+    assert subject.term_evidence[0].evidence_role == "term_evidence"
+    request = analysis.await_args.args[0]
+    assert request.term_resolution_limitations == resolution.limitations
+    assert len(request.source_materials) == 1
+    assert request.source_materials[0].evidence_role == "term_evidence"
+    assert analysis.await_args.kwargs["term_resolver"] is None
+
+
+@pytest.mark.asyncio
+async def test_user_business_subject_expression_must_be_a_verbatim_request_span(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
+    resolver_factory = Mock()
+    audience = AsyncMock()
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(tool_module, "create_content_intelligence_model", Mock(return_value=object()))
+    monkeypatch.setattr(tool_module, "create_term_resolver", resolver_factory)
+    monkeypatch.setattr(tool_module, "prepare_account_audience", audience)
+
+    result = await develop_account_strategy_tool.ainvoke(
+        {
+            "name": "develop_account_strategy",
+            "args": {
+                "user_request": "我是开水果店的，我该怎么起号？",
+                "subject_ref": "user_business",
+                "subject_expression": "不存在于原话的业务",
+                "runtime": _runtime(project_id="invalid-subject-span"),
+            },
+            "id": "account-strategy-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert "必须来自当前原话" in result.update["messages"][0].content
+    resolver_factory.assert_not_called()
+    audience.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -436,6 +583,7 @@ async def test_material_audience_choice_stops_before_content_root_map_and_benchm
 async def test_agent_self_binding_uses_host_product_truth_instead_of_user_business_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    term_resolver_factory = Mock()
     repository = SimpleNamespace(
         get_project=AsyncMock(return_value=object()),
         get_logical_account=AsyncMock(return_value=object()),
@@ -477,6 +625,7 @@ async def test_agent_self_binding_uses_host_product_truth_instead_of_user_busine
     monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
     monkeypatch.setattr(tool_module, "create_content_intelligence_model", Mock(return_value=object()))
     monkeypatch.setattr(tool_module, "create_lexical_evidence_provider", Mock(return_value=None))
+    monkeypatch.setattr(tool_module, "create_term_resolver", term_resolver_factory)
     monkeypatch.setattr(tool_module, "prepare_account_audience", AsyncMock(side_effect=prepare_audience), raising=False)
     monkeypatch.setattr(tool_module, "analyze_content_intelligence", analysis)
     monkeypatch.setattr(tool_module, "collect_public_douyin_benchmark", AsyncMock(return_value=None))
@@ -508,6 +657,7 @@ async def test_agent_self_binding_uses_host_product_truth_instead_of_user_busine
     assert request.audience_context.target_people.startswith("不知道账号应该影响谁")
     assert prepare_strategy.await_args.kwargs["marketing_subject"] == subject
     assert prepare_strategy.await_args.kwargs["subject_parent_artifacts"] == (profile_artifact,)
+    term_resolver_factory.assert_not_called()
 
 
 @pytest.mark.asyncio

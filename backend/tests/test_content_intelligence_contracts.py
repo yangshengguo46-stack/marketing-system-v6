@@ -54,7 +54,7 @@ def test_content_intelligence_source_rejects_benchmark_evidence_roles(
         )
 
 
-@pytest.mark.parametrize("evidence_role", ("user_material", "topic_evidence"))
+@pytest.mark.parametrize("evidence_role", ("user_material", "term_evidence", "topic_evidence"))
 def test_content_intelligence_source_accepts_only_its_owned_evidence_roles(
     evidence_role: str,
 ) -> None:

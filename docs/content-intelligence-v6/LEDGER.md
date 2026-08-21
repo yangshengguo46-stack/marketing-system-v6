@@ -2409,3 +2409,17 @@ Lead 只接收去重后的授权事实陈述；同一失败工件回放为 `15,4
 `audits/A126-audience-first-subject-and-product-truth.md` 与
 `decisions/ADR-038-audience-first-subject-contract.md`。内容/净化/孵化宽回归 `353 passed`，完整非 live
 后端回归 `12404 passed, 75 skipped, 17 warnings`，退出码 `0`。
+
+## A127 陌生词前置核实与证据隔离
+
+2026-08-21 在账号受众判断前新增小型 `TermResolver`。用户业务主体必须是原话连续片段；
+CC-CEDICT 精确命中时零联网，未收录表达只用原词调用一次现有免费 `web_search`。最多三条摘要以
+`term_evidence` 进入 `MarketingSubjectSnapshot`，受众与语义复用同一证据；它不能混入对标或选题证据，
+不能选内容根。搜索失败保持未知，`agent_self` 继续只读本地产品档案。
+
+本轮没有增长 Lead 常驻提示词：首次接线暴露 9 KB 预算失败后已完整恢复，详细行为由工具 schema 与代码
+拥有。聚焦回归 `159 passed`，业务宽回归 `613 passed, 1 warning`，Ruff 和指导文件预算通过。真实冒烟确认
+“水果”不搜索，“走个面”以原词取得 3 条独立证据。完整非 live 回归被旧 checkpointer 并发测试的
+3 秒冷启动超时阻断，本轮未修改无关宿主代码。详见 `audits/A127-pre-audience-term-verification.md`、
+`decisions/ADR-039-bounded-term-verification-before-audience.md` 与
+`evidence/a127-term-verification-live-2026-08-21.json`。

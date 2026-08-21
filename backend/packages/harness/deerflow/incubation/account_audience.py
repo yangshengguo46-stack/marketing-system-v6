@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, Protocol
+from urllib.parse import urlparse
 
 from pydantic import Field, field_validator, model_validator
 
@@ -17,6 +18,23 @@ from deerflow.incubation.contracts import (
 MarketingSubjectKind = Literal["user_business", "agent_self"]
 AudienceDecisionStatus = Literal["proposed", "resolved", "confirmed"]
 Confidence = Literal["low", "medium", "high"]
+
+
+class SubjectTermEvidence(IncubationContract):
+    """Bounded public evidence used only to understand the subject expression."""
+
+    evidence_role: Literal["term_evidence"] = "term_evidence"
+    title: NonEmptyStr = Field(max_length=240)
+    uri: NonEmptyStr = Field(max_length=2_048)
+    content: NonEmptyStr = Field(max_length=800)
+
+    @field_validator("uri")
+    @classmethod
+    def require_public_http_uri(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("subject term evidence URI must use http or https")
+        return value
 
 
 class AccountAudienceRepository(Protocol):
@@ -55,6 +73,8 @@ class MarketingSubjectSnapshot(IncubationContract):
     resources: tuple[NonEmptyStr, ...] = Field(default=(), max_length=16)
     constraints: tuple[NonEmptyStr, ...] = Field(default=(), max_length=16)
     goals: tuple[NonEmptyStr, ...] = Field(default=(), max_length=8)
+    term_evidence: tuple[SubjectTermEvidence, ...] = Field(default=(), max_length=3)
+    term_resolution_limitations: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
     basis_artifact_ids: tuple[NonEmptyStr, ...] = Field(default=(), max_length=4)
 
     @field_validator("basis_artifact_ids")
@@ -436,6 +456,7 @@ __all__ = [
     "MarketingSubjectKind",
     "MarketingSubjectSnapshot",
     "PreparedAccountAudience",
+    "SubjectTermEvidence",
     "compile_account_audience_decision",
     "confirm_account_audience_decision",
     "prepare_account_audience",
