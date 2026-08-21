@@ -23,6 +23,7 @@ from deerflow.incubation import (
     EvidenceCoverageReceipt,
     EvidenceItem,
     EvidenceSnapshot,
+    LogicalAccountRef,
     ProjectRef,
     seal_content_run_artifacts,
     select_used_topic_evidence_snapshots,
@@ -244,6 +245,45 @@ def test_message_plan_records_the_exact_incubation_judgment_it_used() -> None:
         judgment.to_parent_ref(),
     }
     assert sealed.draft_version.parents == (sealed.message_plan.to_parent_ref(),)
+
+
+def test_message_plan_can_reference_a_confirmed_direction_without_a_map_bound_strategy() -> None:
+    bundle, delivery = _content_run()
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    logical_account = LogicalAccountRef(
+        owner_user_id="user-1",
+        project_id="golden-gift",
+        logical_account_id="account-1",
+    )
+    direction = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload={
+            "revision_number": 1,
+            "long_term_content_subject": "人与人之间的相处与人情世故",
+        },
+        created_at=NOW,
+        source_thread_id="thread-direction",
+        source_run_id="run-direction",
+    )
+
+    sealed = seal_content_run_artifacts(
+        project=project,
+        logical_account=logical_account,
+        bundle=bundle,
+        delivery=delivery,
+        account_direction_artifact=direction,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    assert set(sealed.message_plan.parents) == {
+        sealed.topic_brief.to_parent_ref(),
+        direction.to_parent_ref(),
+    }
 
 
 def test_rejects_judgment_lineage_without_a_delivery() -> None:

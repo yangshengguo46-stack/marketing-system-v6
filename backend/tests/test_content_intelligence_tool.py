@@ -443,6 +443,152 @@ async def test_selected_project_loads_existing_incubation_judgment_before_topic_
 
 
 @pytest.mark.asyncio
+async def test_confirmed_account_direction_guides_topic_without_requiring_a_bound_map(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bundle = object()
+    enriched_bundle = SimpleNamespace(topic_brief=object())
+    option = SimpleNamespace(
+        option_id="direction_1",
+        name="人情世故观察者",
+        long_term_content_subject="人与人之间的相处与人情世故",
+        content_audience_hypothesis="关心关系分寸与人情判断的人",
+        audience_promise="用具体人物与事件讲清关系、分寸与人性",
+        account_role="从礼品生意观察人情世界的经营者",
+    )
+    direction = SimpleNamespace(
+        revision_number=1,
+        selected_option=option,
+        unknowns=("持续表现形式仍待确认",),
+    )
+    direction_artifact = object()
+    prepared_direction = SimpleNamespace(
+        direction=direction,
+        direction_artifact=direction_artifact,
+    )
+    shooting_delivery = object()
+
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_load_confirmed_topic_context",
+        AsyncMock(return_value=None),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", AsyncMock(return_value=bundle))
+    monkeypatch.setattr(content_intelligence_tool_module, "_load_current_account_strategy", AsyncMock(return_value=None))
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_load_current_account_direction",
+        AsyncMock(return_value=prepared_direction),
+    )
+    research = AsyncMock(return_value=enriched_bundle)
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "DouyinMcpTopicEvidenceSearch",
+        Mock(return_value=SimpleNamespace(snapshots=())),
+    )
+    delivery = AsyncMock(return_value=shooting_delivery)
+    monkeypatch.setattr(content_intelligence_tool_module, "synthesize_shooting_delivery", delivery)
+    persistence = AsyncMock(return_value={"status": "stored", "artifacts": []})
+    monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persistence)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 今日建议拍摄\n\n## 小王送得贵，为什么升职的却是小张？"),
+    )
+    render_direction = Mock(return_value="## 已确认账号方向\n\n**沿用：** 人情世故观察者")
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_confirmed_direction_reference",
+        render_direction,
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "给我一个今天能拍的人情世故选题。",
+                "runtime": _tool_runtime(
+                    "content-world-call-direction",
+                    context={"incubation_project_id": "project-1"},
+                ),
+            },
+            "id": "content-world-call-direction",
+            "type": "tool_call",
+        }
+    )
+
+    editorial_context = research.await_args.kwargs["editorial_context"]
+    assert editorial_context.route_id == "direction_1"
+    assert editorial_context.content_subject == "人与人之间的相处与人情世故"
+    assert editorial_context.audience_people == "关心关系分寸与人情判断的人"
+    assert delivery.await_args.kwargs["editorial_context"] == editorial_context
+    assert delivery.await_args.kwargs["incubation_judgment"] is None
+    assert persistence.await_args.kwargs["account_direction_artifact"] is direction_artifact
+    assert "已确认账号方向" in result.update["messages"][0].content
+    render_direction.assert_called_once_with(direction)
+
+
+@pytest.mark.asyncio
+async def test_current_direction_loader_reads_the_implicit_thread_scope_without_a_map(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime
+
+    from deerflow.incubation import (
+        AccountDirectionOption,
+        AccountDirectionVersion,
+        ArtifactEnvelope,
+        implicit_thread_logical_account_ref,
+        implicit_thread_project_ref,
+    )
+
+    project = implicit_thread_project_ref(owner_user_id="user-1", thread_id="thread-1")
+    logical_account = implicit_thread_logical_account_ref(project=project, thread_id="thread-1")
+    direction = AccountDirectionVersion(
+        revision_number=1,
+        proposal_artifact_id="artifact_proposal",
+        source_user_text="我是做黄金礼品的，我要怎么起号？",
+        confirmation_user_text="我确认这个方向",
+        marketing_subject="黄金礼品",
+        selected_option=AccountDirectionOption(
+            option_id="direction_1",
+            name="人情世故观察者",
+            long_term_content_subject="人与人之间的相处与人情世故",
+            rationale="从礼品用途进入长期关系世界。",
+        ),
+    )
+    artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=direction.model_dump(mode="json"),
+        created_at=datetime(2026, 8, 22, 12, 0, tzinfo=UTC),
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        list_artifacts=AsyncMock(return_value=[artifact]),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "_get_incubation_repository", lambda: repository)
+
+    loaded = await content_intelligence_tool_module._load_current_account_direction(runtime=_tool_runtime("load-direction"))
+
+    assert loaded is not None
+    assert loaded.direction_artifact == artifact
+    assert loaded.direction.selected_option.long_term_content_subject == "人与人之间的相处与人情世故"
+    repository.list_artifacts.assert_awaited_once_with(
+        project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+    )
+
+
+@pytest.mark.asyncio
 async def test_confirmed_route_topic_continuation_reuses_its_frozen_map_before_semantic_analysis(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

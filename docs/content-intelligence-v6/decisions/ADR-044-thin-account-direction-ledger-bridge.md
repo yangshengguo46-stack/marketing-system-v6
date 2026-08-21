@@ -5,6 +5,7 @@ date: 2026-08-22
 related:
   - A128-agent-owned-incubation-routing.md
   - A134-current-architecture-and-loop-reconciliation.md
+  - A135-thin-account-direction-ledger-implementation.md
   - ADR-040-agent-owned-incubation-routing.md
 ---
 
@@ -51,3 +52,9 @@ AccountDirectionProposal
 
 现役 Agent 已能在黄金礼品等案例中形成可用方向，继续调 Prompt 不能解决跨轮复用。真正缺失的是一个不
 夺取营销判断权的持久化接缝。单独新建薄工件比放松旧地图绑定合同更清楚，也避免第四版式的流程回流。
+
+## 实施状态
+
+已按 A135 落地：新提案与确认版本复用通用不可变工件表，分别绑定提案原话、确认原话和逻辑账号；内容研究、
+MessagePlan 与 BaseDraft 可以读取已确认方向并保存父级回执。新工具默认延迟发现，旧地图绑定判断保持只读
+兼容。旧起号计划迁移、旧数据迁移、对标统一和学习循环不属于本次实施。

@@ -8,6 +8,7 @@ from deerflow.reflection import resolve_variable
 from deerflow.sandbox.security import is_host_bash_allowed
 from deerflow.tools.builtins import (
     ask_clarification_tool,
+    confirm_account_direction_tool,
     confirm_account_launch_plan_tool,
     confirm_account_strategy_tool,
     content_intelligence_tool,
@@ -18,6 +19,7 @@ from deerflow.tools.builtins import (
     list_uploaded_files,
     plan_account_launch_tool,
     present_file_tool,
+    propose_account_direction_tool,
     review_skill_package,
     task_tool,
     verify_business_term_tool,
@@ -31,6 +33,8 @@ logger = logging.getLogger(__name__)
 BUILTIN_TOOLS = [
     present_file_tool,
     ask_clarification_tool,
+    propose_account_direction_tool,
+    confirm_account_direction_tool,
     verify_business_term_tool,
     confirm_account_launch_plan_tool,
     confirm_account_strategy_tool,

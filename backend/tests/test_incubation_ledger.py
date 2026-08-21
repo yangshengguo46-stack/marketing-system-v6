@@ -6,6 +6,8 @@ from pydantic import ValidationError
 
 from deerflow.config.database_config import DatabaseConfig
 from deerflow.incubation import (
+    AccountDirectionOptionDraft,
+    AccountDirectionProposalDraft,
     ArtifactEnvelope,
     IncubationLedgerRepository,
     LogicalAccountRef,
@@ -18,6 +20,8 @@ from deerflow.incubation import (
     PlatformAccountRef,
     ProjectRef,
     VideoMetadataObservation,
+    confirm_account_direction,
+    propose_account_direction,
     seal_media_observation_snapshot,
     seal_media_source_receipt,
 )
@@ -164,6 +168,58 @@ def test_logical_account_is_part_of_artifact_identity() -> None:
 def test_business_artifact_rejects_sensitive_payload_keys(payload: dict) -> None:
     with pytest.raises(ValidationError, match="sensitive field"):
         _artifact(payload=payload)
+
+
+@pytest.mark.asyncio
+async def test_account_direction_round_trips_through_the_real_ledger(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project(project_id="direction-project")
+    logical_account = _logical_account(
+        project_id=project.project_id,
+        logical_account_id="direction-account",
+    )
+    await repo.create_project(project, display_name="黄金礼品账号")
+    await repo.create_logical_account(logical_account, display_name="主账号")
+
+    proposal = await propose_account_direction(
+        project=project,
+        logical_account=logical_account,
+        repository=repo,
+        draft=AccountDirectionProposalDraft(
+            marketing_subject="黄金礼品",
+            direction_options=(
+                AccountDirectionOptionDraft(
+                    name="人情世故观察者",
+                    long_term_content_subject="人与人之间的相处与人情世故",
+                    rationale="礼品只是入口，长期内容观察人与人如何相处。",
+                ),
+            ),
+            recommended_option_number=1,
+        ),
+        source_user_text="我是做黄金礼品的，我要怎么起号？",
+        created_at=NOW,
+        source_thread_id="thread-direction",
+        source_run_id="run-proposal",
+    )
+    confirmed = await confirm_account_direction(
+        project=project,
+        logical_account=logical_account,
+        repository=repo,
+        proposal_artifact_id=proposal.proposal_artifact.artifact_id,
+        option_id="direction_1",
+        confirmation_user_text="我确认第一个方向",
+        created_at=datetime(2026, 8, 16, 12, 0, 1, tzinfo=UTC),
+        source_thread_id="thread-direction",
+        source_run_id="run-confirm",
+    )
+
+    stored = await repo.list_artifacts(project, logical_account=logical_account)
+    assert [artifact.artifact_type for artifact in stored] == [
+        "account_direction_proposal",
+        "account_direction_version",
+    ]
+    assert confirmed.direction_artifact.parents == (proposal.proposal_artifact.to_parent_ref(),)
+    assert confirmed.direction.selected_option.long_term_content_subject == "人与人之间的相处与人情世故"
 
 
 @pytest.mark.asyncio

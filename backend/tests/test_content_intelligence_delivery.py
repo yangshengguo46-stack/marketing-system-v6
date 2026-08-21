@@ -354,6 +354,37 @@ async def test_incubation_judgment_guides_position_and_audience_without_leaking_
 
 
 @pytest.mark.asyncio
+async def test_thin_editorial_context_guides_delivery_without_an_old_incubation_judgment() -> None:
+    from deerflow.content_intelligence import ResearchEditorialContext
+
+    bundle = _evidence_bound_bundle()
+    model = StructuredDeliveryFakeModel(_message_plan_payload())
+    editorial_context = ResearchEditorialContext(
+        route_id="direction_1",
+        content_subject="地方酒桌背后的人际关系与生活秩序",
+        audience_promise="从具体人物和事情看懂地方人情",
+        audience_people="对地方生活与人际往来好奇的人",
+        recurring_interest=None,
+        account_role="从白酒生意观察地方人情的经营者",
+    )
+
+    delivery = await synthesize_shooting_delivery(
+        bundle,
+        user_request="给我一个今天能拍的具体选题。",
+        model=model,
+        editorial_context=editorial_context,
+    )
+
+    assert delivery is not None
+    assert delivery.message_plan.account_position_basis == editorial_context.account_role
+    prompt_input = model.message_batches[0][1].content
+    assert editorial_context.content_subject in prompt_input
+    assert editorial_context.audience_promise in prompt_input
+    assert editorial_context.audience_people in prompt_input
+    assert "monetization" not in prompt_input.casefold()
+
+
+@pytest.mark.asyncio
 async def test_delivery_repairs_named_numeric_and_absolute_claims_absent_from_evidence() -> None:
     bundle = _evidence_bound_bundle()
     unsupported = _message_plan_payload()

@@ -60,6 +60,7 @@ def seal_content_run_artifacts(
     logical_account: LogicalAccountRef | None = None,
     reading_parents: tuple[ArtifactParentRef, ...] = (),
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
+    account_direction_artifact: ArtifactEnvelope | None = None,
 ) -> ContentRunArtifactSet:
     """Seal one content-intelligence run without changing its judgments."""
 
@@ -77,6 +78,15 @@ def seal_content_run_artifacts(
             raise ValueError("incubation judgment logical account must match content run")
         if incubation_judgment_artifact.payload.get("content_map_version_id") != world.content_map_version_id():
             raise ValueError("incubation judgment content world version must match the frozen content world")
+    if account_direction_artifact is not None:
+        if delivery is None:
+            raise ValueError("account direction lineage requires a shooting delivery")
+        if account_direction_artifact.project != project:
+            raise ValueError("account direction project must match content run project")
+        if account_direction_artifact.artifact_type != "account_direction_version":
+            raise ValueError("account direction parent has the wrong artifact type")
+        if account_direction_artifact.logical_account != logical_account:
+            raise ValueError("account direction logical account must match content run")
 
     record_payload = bundle.record.model_dump(mode="json")
     for source in record_payload["sources"]:
@@ -149,6 +159,7 @@ def seal_content_run_artifacts(
             parents=(
                 topic_artifact.to_parent_ref(),
                 *((incubation_judgment_artifact.to_parent_ref(),) if incubation_judgment_artifact is not None else ()),
+                *((account_direction_artifact.to_parent_ref(),) if account_direction_artifact is not None else ()),
             ),
             created_at=created_at,
             source_thread_id=source_thread_id,

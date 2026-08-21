@@ -168,10 +168,12 @@ classify free text, reject drafts by substring, or overwrite model judgment.
 `deerflow.incubation` owns parent-checked owner/project/logical-account truth. Thread metadata is the trusted account
 selector; caller config, model arguments, and arbitrary context cannot override it. A logical account does not require
 platform login. Legacy project-scoped artifacts remain readable but cannot be silently promoted. ADR-044 selects a
-thin append-only `AccountDirectionProposal -> AccountDirectionVersion` bridge for explicit reusable judgments. It is
-not implemented yet: dynamic Lead answers are not durable direction, old map-bound `IncubationJudgment` is read-only
-compatibility, and legacy confirmation/launch tools stay deferred. Never restore `develop_account_strategy` as a
-default tool or mandatory workflow.
+thin append-only `AccountDirectionProposal -> AccountDirectionVersion` bridge for explicit reusable judgments. The
+bridge is implemented: proposal code binds the latest authentic user text, only an exact user-confirmed proposal and
+option become effective, and later topic work reads a bounded editorial projection plus records the direction parent.
+Both new schemas stay deferred for ordinary turns. Old map-bound `IncubationJudgment` remains read-only compatibility,
+and legacy confirmation/launch tools stay deferred. Never restore `develop_account_strategy` as a default tool or
+mandatory workflow.
 
 `user_business` reads user/project facts; `agent_self` reads only server-owned `HostProductProfile`. Unknown terms may
 get one bounded lookup, but term evidence cannot choose a root or impersonate topic/benchmark evidence. Keep payer,

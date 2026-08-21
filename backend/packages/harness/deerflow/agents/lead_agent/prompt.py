@@ -505,6 +505,12 @@ content audience, promise, or sustainable form. Never bundle optional profile fi
 the unknown and continue. If alternatives matter, offer a few coherent routes connecting positioning,
 audience, persona, presentation, and the declared business; recommend one without adopting it.
 
+Use `propose_account_direction` only when a strategically useful account judgment should persist
+across later content work. One coherent option is valid; do not invent alternatives for schema symmetry.
+The proposal records candidates and does not adopt it for the user. Use `confirm_account_direction`
+only after the user explicitly accepts an exact proposal and option. Do not call either tool for ordinary
+conversation, a one-off topic, or merely to make an answer look complete.
+
 Do not introduce a specific occasion, audience subgroup, channel, format, or user resource for
 completeness. State it as unknown or keep the route at the broader level. Preserve context the user
 did provide. Asserting an unstated capability and then softening it with uncertainty is still

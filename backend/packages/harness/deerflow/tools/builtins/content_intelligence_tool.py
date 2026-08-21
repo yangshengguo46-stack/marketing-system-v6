@@ -38,6 +38,7 @@ from deerflow.incubation import (
     EvidenceSnapshot,
     FormatDecision,
     LogicalAccountRef,
+    PreparedAccountDirection,
     PreparedAccountStrategy,
     ProductionPlan,
     ProjectRef,
@@ -45,8 +46,10 @@ from deerflow.incubation import (
     generate_format_decision,
     generate_production_plan,
     implicit_thread_logical_account_ref,
+    implicit_thread_project_ref,
     seal_content_run_artifacts,
     seal_evidence_snapshot,
+    select_current_account_direction,
     select_current_account_strategy,
     select_used_topic_evidence_snapshots,
 )
@@ -142,6 +145,7 @@ async def _persist_content_run(
     runtime: Runtime,
     topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
+    account_direction_artifact: ArtifactEnvelope | None = None,
     model: Any | None = None,
     include_presentation_adaptation: bool = False,
     include_production_plan: bool = False,
@@ -209,6 +213,7 @@ async def _persist_content_run(
             logical_account=logical_account,
             reading_parents=tuple(evidence_parents),
             incubation_judgment_artifact=incubation_judgment_artifact,
+            account_direction_artifact=account_direction_artifact,
         )
         stored_content_artifacts: dict[str, ArtifactEnvelope] = {}
         for artifact in sealed.storage_order():
@@ -335,6 +340,42 @@ async def _load_current_account_strategy(
     )
 
 
+async def _load_current_account_direction(
+    *,
+    runtime: Runtime,
+) -> PreparedAccountDirection | None:
+    """Read the effective account direction without requiring a map parent."""
+
+    owner_user_id = _runtime_context_text(runtime, "user_id")
+    thread_id = _runtime_context_text(runtime, "thread_id")
+    if owner_user_id is None or thread_id is None:
+        return None
+    project_id = _runtime_context_text(runtime, "incubation_project_id")
+    project = (
+        ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+        if project_id is not None
+        else implicit_thread_project_ref(
+            owner_user_id=owner_user_id,
+            thread_id=thread_id,
+        )
+    )
+    repository = _get_incubation_repository()
+    if repository is None or await repository.get_project(project) is None:
+        return None
+    logical_account = _runtime_logical_account(runtime, project=project)
+    if logical_account is None:
+        return None
+    artifacts = await repository.list_artifacts(
+        project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+    )
+    return select_current_account_direction(
+        artifacts,
+        logical_account=logical_account,
+    )
+
+
 def _research_editorial_context(
     judgment: IncubationJudgment | None,
 ) -> ResearchEditorialContext | None:
@@ -349,6 +390,34 @@ def _research_editorial_context(
         audience_people=judgment.audience.people,
         recurring_interest=judgment.audience.recurring_interest,
         account_role=judgment.persona.account_role,
+    )
+
+
+def _direction_editorial_context(
+    prepared: PreparedAccountDirection | None,
+) -> ResearchEditorialContext | None:
+    if prepared is None:
+        return None
+    option = prepared.direction.selected_option
+    return ResearchEditorialContext(
+        route_id=option.option_id,
+        content_subject=option.long_term_content_subject,
+        audience_promise=option.audience_promise,
+        audience_people=option.content_audience_hypothesis,
+        recurring_interest=None,
+        account_role=option.account_role,
+    )
+
+
+def _render_confirmed_direction_reference(direction) -> str:
+    option = direction.selected_option
+    return "\n".join(
+        (
+            "## 已确认账号方向",
+            "",
+            f"**沿用：** {option.name}",
+            f"**长期内容主体：** {option.long_term_content_subject}",
+        )
     )
 
 
@@ -572,6 +641,10 @@ async def explore_content_world_tool(
                 bundle=bundle,
                 runtime=runtime,
             )
+        current_direction = await _load_current_account_direction(runtime=runtime)
+        editorial_context = _direction_editorial_context(current_direction)
+        if editorial_context is None:
+            editorial_context = _research_editorial_context(current_strategy.judgment if current_strategy is not None else None)
         douyin_topic_search: DouyinMcpTopicEvidenceSearch | None = None
         try:
             douyin_topic_search = DouyinMcpTopicEvidenceSearch(runtime)
@@ -592,7 +665,7 @@ async def explore_content_world_tool(
                 search=search_content_evidence,
                 topic_seed=validated_topic_seed,
                 fetch=_fetch_content_world_evidence,
-                editorial_context=_research_editorial_context(current_strategy.judgment if current_strategy is not None else None),
+                editorial_context=editorial_context,
                 runnable_config=config,
             )
         except Exception as exc:
@@ -633,11 +706,14 @@ async def explore_content_world_tool(
                 model=model,
                 runnable_config=config,
                 incubation_judgment=(current_strategy.judgment if current_strategy is not None else None),
+                editorial_context=editorial_context,
             )
             if shooting_delivery is None:
                 raise ValueError("shootable-topic delivery returned no MessagePlan or BaseDraft")
             rendered_delivery = _prioritize_shooting_delivery(render_shooting_delivery(bundle, shooting_delivery))
-            if current_strategy is not None:
+            if current_direction is not None:
+                rendered_delivery += "\n\n" + _render_confirmed_direction_reference(current_direction.direction)
+            elif current_strategy is not None:
                 rendered_delivery += "\n\n" + _render_confirmed_route_reference(current_strategy.judgment)
         except Exception as exc:
             logger.warning(
@@ -651,6 +727,7 @@ async def explore_content_world_tool(
             runtime=runtime,
             topic_evidence_snapshots=topic_evidence_snapshots,
             incubation_judgment_artifact=(current_strategy.judgment_artifact if current_strategy is not None and shooting_delivery is not None else None),
+            account_direction_artifact=(current_direction.direction_artifact if current_direction is not None and shooting_delivery is not None else None),
             model=model,
             include_presentation_adaptation=_runtime_context_bool(
                 runtime,

@@ -15,6 +15,7 @@ from deerflow.content_intelligence.contracts import (
     ContractModel,
     NonEmptyStr,
 )
+from deerflow.content_intelligence.research import ResearchEditorialContext
 from deerflow.incubation.judgment import IncubationJudgment
 
 MessageBeats = Annotated[tuple[NonEmptyStr, ...], Field(min_length=1)]
@@ -215,6 +216,7 @@ async def synthesize_shooting_delivery(
     model: Any,
     runnable_config: dict[str, Any] | None = None,
     incubation_judgment: IncubationJudgment | None = None,
+    editorial_context: ResearchEditorialContext | None = None,
 ) -> ShootingDelivery | None:
     """Translate one evidence-bound topic into a concrete, format-neutral delivery."""
 
@@ -232,6 +234,7 @@ async def synthesize_shooting_delivery(
                 bundle,
                 user_request=user_request,
                 incubation_judgment=incubation_judgment,
+                editorial_context=editorial_context,
             )
         ),
     )
@@ -275,7 +278,9 @@ async def synthesize_shooting_delivery(
         if remaining_details:
             raise DeliveryFactBoundaryError("delivery still contains unsupported factual specifics after one bounded repair: " + ", ".join(remaining_details))
     account_position_basis = bundle.record.subject_expression
-    if incubation_judgment is not None and incubation_judgment.decision_status == "confirmed" and incubation_judgment.persona is not None:
+    if editorial_context is not None and editorial_context.account_role is not None:
+        account_position_basis = editorial_context.account_role
+    elif incubation_judgment is not None and incubation_judgment.decision_status == "confirmed" and incubation_judgment.persona is not None:
         account_position_basis = incubation_judgment.persona.account_role
     return draft.bind(
         bundle=bundle,
@@ -364,6 +369,7 @@ def _render_delivery_input(
     *,
     user_request: str,
     incubation_judgment: IncubationJudgment | None = None,
+    editorial_context: ResearchEditorialContext | None = None,
 ) -> str:
     topic = bundle.topic_brief
     world = bundle.content_world
@@ -438,6 +444,7 @@ def _render_delivery_input(
             if (source := sources_by_id.get(source_id)) is not None
         ],
         "孵化判断": (_delivery_judgment_projection(incubation_judgment) if incubation_judgment is not None else None),
+        "已确认账号方向": (editorial_context.model_dump(mode="json", exclude_none=True) if editorial_context is not None else None),
     }
     return "--- BEGIN SHOOTING DELIVERY INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END SHOOTING DELIVERY INPUT ---"
 

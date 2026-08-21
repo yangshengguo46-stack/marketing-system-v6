@@ -1,3 +1,4 @@
+from .account_direction_tool import confirm_account_direction_tool, propose_account_direction_tool
 from .account_incubation_tool import confirm_account_strategy_tool, develop_account_strategy_tool
 from .account_launch_plan_tool import confirm_account_launch_plan_tool, plan_account_launch_tool
 from .business_term_tool import verify_business_term_tool
@@ -24,8 +25,10 @@ __all__ = [
     "ask_clarification_tool",
     "verify_business_term_tool",
     "confirm_account_strategy_tool",
+    "confirm_account_direction_tool",
     "confirm_account_launch_plan_tool",
     "develop_account_strategy_tool",
+    "propose_account_direction_tool",
     "plan_account_launch_tool",
     "content_intelligence_tool",
     "explore_content_world_tool",

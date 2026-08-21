@@ -1058,6 +1058,7 @@ tool_search:
     - ask_clarification
     - bash
     - confirm_account_launch_plan
+    - confirm_account_direction
     - confirm_account_strategy
     - glob
     - grep
@@ -1067,6 +1068,7 @@ tool_search:
     - list_uploaded_files
     - ls
     - plan_account_launch
+    - propose_account_direction
     - present_files
     - review_skill_package
     - str_replace

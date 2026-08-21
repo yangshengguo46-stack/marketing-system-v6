@@ -53,10 +53,10 @@ class ResearchEditorialContext(ContractModel):
 
     route_id: NonEmptyStr = Field(max_length=80)
     content_subject: NonEmptyStr = Field(max_length=1000)
-    audience_promise: NonEmptyStr = Field(max_length=1000)
-    audience_people: NonEmptyStr = Field(max_length=1000)
-    recurring_interest: NonEmptyStr = Field(max_length=1000)
-    account_role: NonEmptyStr = Field(max_length=1000)
+    audience_promise: NonEmptyStr | None = Field(default=None, max_length=1000)
+    audience_people: NonEmptyStr | None = Field(default=None, max_length=1000)
+    recurring_interest: NonEmptyStr | None = Field(default=None, max_length=1000)
+    account_role: NonEmptyStr | None = Field(default=None, max_length=1000)
 
 
 class ResearchSearchResult(ContractModel):
