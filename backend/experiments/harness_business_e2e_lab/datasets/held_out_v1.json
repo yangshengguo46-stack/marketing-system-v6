@@ -1,0 +1,42 @@
+{
+  "schema_version": "harness-business-e2e-dataset-v1",
+  "dataset_id": "a132-full-deerflow-business-held-out-v1",
+  "status": "frozen_before_live_run",
+  "cases": [
+    {
+      "case_id": "diagnostic-golden-gift-full-agent",
+      "split": "diagnostic",
+      "prompt": "我是做黄金礼品的，想做个账号让更多人知道我，该怎么起号？"
+    },
+    {
+      "case_id": "held-restaurant-exhaust-safety",
+      "split": "held_out",
+      "prompt": "我是给餐饮门店做后厨油烟系统清洗和消防隐患排查的，想做账号获客，该怎么起号？"
+    },
+    {
+      "case_id": "held-baby-clothes-memory-toys",
+      "split": "held_out",
+      "prompt": "我把宝宝穿过的旧衣服做成纪念玩偶，想做账号让更多人知道，这个号应该怎么起？"
+    },
+    {
+      "case_id": "held-agricultural-drone-service",
+      "split": "held_out",
+      "prompt": "我是做农用无人机植保服务的，主要服务县里的种植户，想做账号获客，该怎么起号？"
+    },
+    {
+      "case_id": "held-secondhand-piano-restoration",
+      "split": "held_out",
+      "prompt": "我是做二手钢琴整备和调律的，想通过短视频让更多人知道我，该怎么起号？"
+    },
+    {
+      "case_id": "held-reusable-industrial-packaging",
+      "split": "held_out",
+      "prompt": "我是给制造企业提供可循环工业包装箱租赁和周转管理的，想做账号获客，该怎么起号？"
+    },
+    {
+      "case_id": "held-community-senior-meals",
+      "split": "held_out",
+      "prompt": "我在社区做老年助餐和送餐服务，想让更多家属和老人知道我们，该怎么起号？"
+    }
+  ]
+}

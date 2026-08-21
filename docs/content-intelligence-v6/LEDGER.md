@@ -2473,3 +2473,13 @@ Codex App Server、不开放运行时自改 Prompt/Skill。详见
 后继必须用同一个完整 DeerFlow 构造路径、同模型、同工具和全新 held-out 做公平 A/B。详见
 `audits/A131-a130-manual-business-review.md`、`decisions/ADR-042-reject-a130-tool-inconsistent-promotion.md`
 与 `evidence/a130-harness-business-attention-2026-08-22.json`。
+
+## A132 完整 DeerFlow 业务注意力对比预注册
+
+2026-08-22 将后继试验改为真正的 Harness A/B：现役与候选都由同一 `DeerFlowClient` 路径构造，使用
+相同 GLM、thinking、完整工具、Skill、MCP 路由、中间件和递归预算；候选唯一差异是一张 1382 字节的
+行业中立业务注意力上下文。黄金礼品只作诊断，晋级由六个全新行业题决定。回执逐次记录 Prompt 哈希、
+模型可见工具、真实工具调用、Token、耗时、循环和终止状态，不保存工具参数或结果正文。自动通过仍须
+人工业务复核，不能直接堆入生产 Prompt。详见
+`audits/A132-full-deerflow-business-attention-preregistration.md` 与
+`backend/experiments/harness_business_e2e_lab/`。
