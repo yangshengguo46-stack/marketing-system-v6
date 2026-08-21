@@ -144,8 +144,8 @@ def _runtime(*, project_id: str | None) -> ToolRuntime:
     )
 
 
-def test_account_strategy_tool_is_a_separate_lead_capability() -> None:
-    assert develop_account_strategy_tool in BUILTIN_TOOLS
+def test_legacy_account_strategy_workflow_is_not_exposed_to_the_lead() -> None:
+    assert develop_account_strategy_tool not in BUILTIN_TOOLS
     assert develop_account_strategy_tool.name == "develop_account_strategy"
     assert develop_account_strategy_tool.return_direct is True
     schema = develop_account_strategy_tool.tool_call_schema.model_json_schema()

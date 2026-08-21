@@ -78,11 +78,15 @@ class TestConfigExampleToolSearchSection:
         assert tool_search.get("enabled") is True
         assert tool_search.get("auto_promote_top_k") == 3
         assert {
+            "analyze_content_intelligence",
             "ask_clarification",
-            "read_file",
+            "explore_content_world",
+            "inspect_agent_product_profile",
+            "verify_business_term",
             "write_file",
             "list_uploaded_files",
         } <= set(tool_search.get("defer_tools") or [])
+        assert "read_file" not in set(tool_search.get("defer_tools") or [])
 
     def test_config_example_defers_skill_metadata(self):
         data = self._load_example()

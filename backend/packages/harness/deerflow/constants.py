@@ -2,6 +2,12 @@
 
 DEFAULT_SKILLS_CONTAINER_PATH = "/mnt/skills"
 
+# The full Lead graph wraps every model/tool turn with a substantial middleware
+# stack. A 100-step graph can terminate a legitimate bounded chain after only a
+# few distinct tools, so leave enough room for dynamic routing while loop
+# detection and the server-side maximum remain the runaway guards.
+DEFAULT_LEAD_RECURSION_LIMIT = 180
+
 # Hidden subdirectory (under a thread's outputs dir) that holds the browser
 # tools' per-step screenshots. These are transient live-progress frames, not
 # deliverables, so the workspace-changes scanner excludes this directory. Both

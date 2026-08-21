@@ -1050,22 +1050,26 @@ tool_search:
   # matching deferred MCP tool schemas before a model call. This is the maximum
   # number of matched schemas promoted per model call. Valid range: 1..5.
   auto_promote_top_k: 3
-  # Keep the incubation brain and evidence search immediately available. Load
-  # generic file, attachment, and review schemas only when the task needs them.
+  # Keep optional cognition methods and generic utility schemas out of the
+  # first model call. The Lead discovers them only when the current uncertainty
+  # justifies their cost; neither method is a mandatory incubation stage.
   defer_tools:
+    - analyze_content_intelligence
     - ask_clarification
     - bash
     - glob
     - grep
     - image_search
+    - inspect_agent_product_profile
+    - explore_content_world
     - list_uploaded_files
     - ls
     - present_files
-    - read_file
     - review_skill_package
     - str_replace
     - view_image
     - write_file
+    - verify_business_term
 
 # ============================================================================
 # Tool Output Budget Protection

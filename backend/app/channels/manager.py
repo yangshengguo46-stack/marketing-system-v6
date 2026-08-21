@@ -42,6 +42,7 @@ from app.gateway.github import run_policy as _github_run_policy  # noqa: F401
 from app.gateway.internal_auth import create_internal_auth_headers
 from deerflow.config.agents_config import load_agent_config
 from deerflow.config.paths import make_safe_user_id
+from deerflow.constants import DEFAULT_LEAD_RECURSION_LIMIT
 from deerflow.runtime import END_SENTINEL, StreamBridge
 from deerflow.runtime.goal import parse_goal_command
 from deerflow.runtime.user_context import get_effective_user_id
@@ -63,8 +64,8 @@ CUSTOM_AGENT_NAME_PATTERN = re.compile(r"^[A-Za-z0-9-]+$")
 # This is independent of subagent depth: a `task()` dispatch runs the whole
 # subagent inside ONE lead tools-node step, and subagents enforce their own
 # limit via `subagents.max_turns` (see SubagentExecutor). Do not conflate this
-# 100 with the general-purpose subagent's max_turns.
-DEFAULT_RUN_CONFIG: dict[str, Any] = {"recursion_limit": 100}
+# this budget with the general-purpose subagent's max_turns.
+DEFAULT_RUN_CONFIG: dict[str, Any] = {"recursion_limit": DEFAULT_LEAD_RECURSION_LIMIT}
 DEFAULT_RUN_CONTEXT: dict[str, Any] = {
     "thinking_enabled": True,
     "is_plan_mode": False,
@@ -1487,7 +1488,10 @@ class ChannelManager:
             if isinstance(override, int) and override > 0:
                 run_config["recursion_limit"] = override
             else:
-                run_config["recursion_limit"] = max(run_config.get("recursion_limit", 100), policy.default_recursion_limit)
+                run_config["recursion_limit"] = max(
+                    run_config.get("recursion_limit", DEFAULT_LEAD_RECURSION_LIMIT),
+                    policy.default_recursion_limit,
+                )
 
         return assistant_id, run_config, run_context
 

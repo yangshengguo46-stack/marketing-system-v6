@@ -2423,3 +2423,19 @@ CC-CEDICT 精确命中时零联网，未收录表达只用原词调用一次现�
 3 秒冷启动超时阻断，本轮未修改无关宿主代码。详见 `audits/A127-pre-audience-term-verification.md`、
 `decisions/ADR-039-bounded-term-verification-before-audience.md` 与
 `evidence/a127-term-verification-live-2026-08-21.json`。
+
+## A128 Agent 自主孵化路由
+
+2026-08-21 审计确认默认起号入口仍由 `develop_account_strategy` 固定工具拥有，Lead 只是工作流外壳。
+本轮将该历史工具移出默认 Lead，改由 Lead 按当前不确定性选择直接回答、一个澄清、行业 Skill、词项核实、
+语义、内容地图或对标；这些方法都不再是强制第一步。内容地图同轮最多一次，Agent 自营销只读服务端产品档案，
+陌生词只做一次有界核实。
+
+礼赠 Skill 不再读取旧 Profile 或调用旧路线工具，改为比较产品、送礼行为和人情关系三个编辑距离；未提供
+的场景、资源与权威只能条件表达。`read_file` 常驻后，Skill 加载少一轮工具，企业答谢礼同题 Token 从
+`26,967` 降到 `21,242`。黄金礼品真实运行推荐“人情关系观察者”，企业答谢礼先识别行政采购受众再推荐
+其职场关系世界。默认递归预算统一为 180，以容纳合法动态调用；循环检测和单轮地图上限不变。水果案例仍
+暴露基础模型模板化问题，不能据此宣称营销脑整体完成。详见
+`audits/A128-agent-owned-incubation-routing.md` 与
+`decisions/ADR-040-agent-owned-incubation-routing.md`。Lead 系统提示词由 `10,662` 字节压到 `7,907`
+字节；聚焦回归 `517 passed`，完整后端非 live 回归 `12,438 passed, 75 skipped, 17 warnings`，退出码 `0`。

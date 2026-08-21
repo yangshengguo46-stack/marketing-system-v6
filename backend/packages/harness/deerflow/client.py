@@ -47,6 +47,7 @@ from deerflow.config.extensions_config import (
     reload_extensions_config,
 )
 from deerflow.config.paths import get_paths
+from deerflow.constants import DEFAULT_LEAD_RECURSION_LIMIT
 from deerflow.models import create_chat_model
 from deerflow.runtime import CheckpointStateAccessor
 from deerflow.runtime.checkpoint_mode import (
@@ -247,7 +248,7 @@ class DeerFlowClient:
         }
         return RunnableConfig(
             configurable=configurable,
-            recursion_limit=overrides.get("recursion_limit", 100),
+            recursion_limit=overrides.get("recursion_limit", DEFAULT_LEAD_RECURSION_LIMIT),
         )
 
     def _ensure_agent(self, config: RunnableConfig, *, context: Mapping[str, Any] | None = None):

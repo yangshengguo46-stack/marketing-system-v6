@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.1.0",
-  "package_sha256": "fe256267c85bc451e423fd6b2a48c11abde802966a0f2bc7d4c56abe70519f78",
+  "profile_version": "1.2.0",
+  "package_sha256": "6983c92c4459268a8b0df43888c389283e78ff7c816e9efa62b2492d3b6fe13a",
   "decision": "active",
-  "evaluated_at": "2026-08-21T02:58:41+08:00",
+  "evaluated_at": "2026-08-21T16:30:00+08:00",
   "source_refs": [
     {
       "evidence_id": "acceptance-evidence",
       "path": "evidence/acceptance-evidence.json",
-      "sha256": "3b0bb6d2cb7783a31c660090b8d07e0fa946e8c9778941e0a77c8861ebb8f31e"
+      "sha256": "75e834f35f6f946bed3e8594cc0ed2e7a67b89218de0ab0f40a090523e01a16e"
     }
   ],
   "case_results": [
@@ -58,7 +58,7 @@
     {
       "case_id": "gold-gift-behavior",
       "outcome": "passed",
-      "observation": "The final-package live GLM run selected and froze the human-relations root without a Skill override, governance metadata, or free-text branch rejection.",
+      "observation": "A fresh GLM Lead run loaded only the model-visible Skill method, compared commodity, gifting behavior, and relationship worlds, recommended the human-relations route, and introduced no unstated marriage branch.",
       "evidence_ref": "acceptance-evidence"
     },
     {
@@ -70,15 +70,16 @@
     {
       "case_id": "corporate-thank-you-held-out",
       "outcome": "passed",
-      "observation": "The final-package held-out selected the human-relations root on one documented full-chain recovery run after the initial final-map payload remained empty through built-in repair.",
+      "observation": "A fresh held-out GLM Lead run first identified the enterprise administration-procurement audience, compared three account worlds, recommended the procurement relationship world, and kept unprovided resources conditional.",
       "evidence_ref": "acceptance-evidence"
     }
   ],
   "limitations": [
     "Acceptance is bounded to businesses where gifting is the stated commercial object.",
     "It does not establish correctness for every gift subcategory, every language variant, or repeated-run stability.",
-    "The explicit-local run preserved local paths but did not promote them to the root, so the soft preference may still be too strong.",
-    "One held-out required a manual full-chain recovery run after structured-output repair was exhausted.",
-    "The full incubation chain still carries documented latency and token-cost debt."
+    "The explicit-local historical run preserved local paths but did not promote them to the root, so the soft preference may still be too strong.",
+    "The current live runs validate Lead-owned routing for two gift cases, not every gift subcategory or repeated-run stability.",
+    "The golden-gift response reached the relationship world but its concrete examples still leaned toward gifting behavior.",
+    "Skill loading remains expensive even after removing one discovery call; the current held-out used 21242 total tokens."
   ]
 }

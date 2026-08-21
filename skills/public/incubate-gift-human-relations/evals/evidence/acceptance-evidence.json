@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.1.0",
+  "profile_version": "1.2.0",
   "routing_projection": {
     "fields": [
       "name",
@@ -20,8 +20,67 @@
     "skill_identity_version_and_profile_hash_are_absent_from_root_decision_projection": true,
     "vertical_profile_cannot_inject_fact_denials_into_project_brief": true,
     "model_selected_entry_and_map_root_are_not_overwritten": true,
-    "legacy_excluded_content_branches_are_discarded_on_read": true
+    "legacy_excluded_content_branches_are_discarded_on_read": true,
+    "lead_owns_final_incubation_judgment": true,
+    "ordinary_lead_runs_do_not_read_runtime_profile": true,
+    "content_world_map_is_optional": true,
+    "unstated_user_resources_remain_conditional": true
   },
+  "agent_owned_routing_records": [
+    {
+      "evidence_id": "gold-gift-agent-owned-routing",
+      "case_ids": [
+        "gold-gift-behavior"
+      ],
+      "result": "passed_with_limitation",
+      "thread_id": "live-agent-owned-gift-v4-6b08d9c81351496d80eee1bf2b4bf4fb",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "total_tokens": 26990
+      },
+      "tools": [
+        "describe_skill",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "result_summary": "The Lead explicitly compared the gift commodity, gifting behavior, and relationship world, then recommended a human-relations observer direction without introducing an unstated marriage branch.",
+      "limitation": "The recommendation detached from gold, but several concrete examples still leaned toward gifting behavior rather than fully product-independent relationships."
+    },
+    {
+      "evidence_id": "corporate-thank-you-source-boundary-failure",
+      "case_ids": [
+        "corporate-thank-you-held-out"
+      ],
+      "result": "failed",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "total_tokens": 26967
+      },
+      "failure_summary": "The direction was relevant, but the answer asserted that the user must already have seen many cases and only softened the claim afterward."
+    },
+    {
+      "evidence_id": "corporate-thank-you-agent-owned-routing-fixed",
+      "case_ids": [
+        "corporate-thank-you-held-out"
+      ],
+      "result": "passed",
+      "thread_id": "heldout-de6bdda307fa4631bb5b5b0ddd4996b5",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "total_tokens": 21242
+      },
+      "tools": [
+        "describe_skill",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "result_summary": "The Lead identified the enterprise administration-procurement audience, compared product, procurement-work, and business-relationship worlds, recommended the procurement relationship world, and expressed user resources only as conditions.",
+      "performance_change": "Making read_file immediately available removed one tool-discovery round and reduced same-prompt total tokens from 26967 to 21242, about 21 percent."
+    }
+  ],
   "records": [
     {
       "evidence_id": "gold-gift-soft-skill-final",
@@ -142,7 +201,10 @@
     "The final gold and explicit-local cases were run once; the corporate held-out required one documented full-chain recovery run after an empty structured map.",
     "The content-world chain took 79.3 to 108.776 seconds in successful final-package runs and consumed 13262 to 17047 total tokens per run.",
     "The explicit-local run preserved its business and local map paths but still selected the broader preferred root, so soft-prior strength is not yet calibrated across industries.",
-    "This evidence covers content-root and map behavior, not production, publication, or outcome learning."
+    "This evidence covers content-root and map behavior, not production, publication, or outcome learning.",
+    "The agent-owned golden-gift and corporate held-out runs each passed once in a fresh thread; they do not establish repeated-run stability.",
+    "The golden-gift result still leaned toward gifting examples after choosing the broader relationship world.",
+    "A complete fruit-shop prompt still produced a generic operational playbook without tools, so routing autonomy alone does not solve base-model marketing quality."
   ],
   "secrets_included": false
 }

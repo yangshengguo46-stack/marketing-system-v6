@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 import httpx
 import pytest
 from langchain.tools import ToolRuntime
-from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.types import Command
 
@@ -70,7 +70,9 @@ def test_content_intelligence_tool_is_available_to_the_lead_by_default() -> None
     assert explore_content_world_tool in BUILTIN_TOOLS
     assert content_intelligence_tool.name == "analyze_content_intelligence"
     assert explore_content_world_tool.name == "explore_content_world"
-    assert explore_content_world_tool.return_direct is True
+    assert explore_content_world_tool.return_direct is False
+    assert "not an account-strategy tool" in explore_content_world_tool.description
+    assert "broad account-starting" not in content_intelligence_tool.description
 
 
 def test_lexical_evidence_provider_is_disabled_without_a_local_index_env(
@@ -189,7 +191,7 @@ async def test_content_world_tool_stops_after_the_candidate_map_for_content_oppo
     assert isinstance(tool_message, ToolMessage)
     assert tool_message.tool_call_id == "content-world-call-1"
     assert tool_message.additional_kwargs["hide_from_ui"] is True
-    assert tool_message.additional_kwargs["deerflow_direct_response"] is True
+    assert "deerflow_direct_response" not in tool_message.additional_kwargs
     assert tool_message.content == "# 候选内容机会地图\n\n**地图从哪里展开：** 火锅"
     assert not any(isinstance(message, AIMessage) for message in messages)
     research.assert_not_awaited()
@@ -203,6 +205,81 @@ async def test_content_world_tool_stops_after_the_candidate_map_for_content_oppo
     assert persist.await_args.kwargs["delivery"] is None
     assert persist.await_args.kwargs["topic_evidence_snapshots"] == ()
     opportunities.assert_called_once_with(bundle)
+
+
+@pytest.mark.asyncio
+async def test_content_world_tool_falls_back_to_the_user_request_when_subject_is_paraphrased(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user_request = "我在普通地级市有一家实体水果店，主要卖应季水果，想通过抖音让附近家庭知道我。"
+    bundle = object()
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    analysis = AsyncMock(return_value=bundle)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", analysis)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_content_opportunity_map",
+        Mock(return_value="# 候选内容机会地图\n\n**地图从哪里展开：** 家庭水果消费"),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_persist_content_run",
+        AsyncMock(return_value={"status": "not_selected"}),
+    )
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": user_request,
+                "subject_expression": "地级市水果店老板做本地抖音",
+                "answer_goal": "content_opportunities",
+                "runtime": _tool_runtime("content-world-paraphrase"),
+            },
+            "id": "content-world-paraphrase",
+            "type": "tool_call",
+        }
+    )
+
+    assert "家庭水果消费" in result.update["messages"][0].content
+    assert analysis.await_args.args[0].subject_expression == user_request
+
+
+@pytest.mark.asyncio
+async def test_content_world_tool_does_not_recompute_a_map_twice_in_one_user_turn(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = _tool_runtime("content-world-repeat")
+    runtime.state["messages"] = [
+        HumanMessage(content="我是做水果零售的，该怎么起号？"),
+        ToolMessage(
+            content="# 候选内容机会地图\n\n**地图从哪里展开：** 家庭水果消费",
+            tool_call_id="content-world-first",
+            name="explore_content_world",
+        ),
+    ]
+    analysis = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", analysis)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "我是做水果零售的，该怎么起号？",
+                "subject_expression": "水果零售",
+                "answer_goal": "content_opportunities",
+                "runtime": runtime,
+            },
+            "id": "content-world-repeat",
+            "type": "tool_call",
+        }
+    )
+
+    message = result.update["messages"][0]
+    assert "本轮已有内容地图材料" in message.content
+    assert "不要再次调用" in message.content
+    analysis.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -1760,10 +1837,11 @@ def test_tool_schema_exposes_one_optional_shared_analysis_request() -> None:
 
 def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "content incubation and new-media operations agent" in SYSTEM_PROMPT_TEMPLATE
+    assert "<account_incubation>" in SYSTEM_PROMPT_TEMPLATE
     assert "<content_intelligence>" in SYSTEM_PROMPT_TEMPLATE
     assert "analyze_content_intelligence" in SYSTEM_PROMPT_TEMPLATE
     assert "explore_content_world" in SYSTEM_PROMPT_TEMPLATE
-    assert "develop_account_strategy" in SYSTEM_PROMPT_TEMPLATE
+    assert "develop_account_strategy" not in SYSTEM_PROMPT_TEMPLATE
     assert "optional" in SYSTEM_PROMPT_TEMPLATE.lower()
 
     content_section = SYSTEM_PROMPT_TEMPLATE.split("<content_intelligence>", 1)[1].split("</content_intelligence>", 1)[0]
@@ -1773,22 +1851,11 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "10 days" not in content_section
     assert "3 candidates" not in content_section
     normalized_section = " ".join(content_section.split())
-    assert "Use `analyze_content_intelligence` for business semantics only" in normalized_section
+    assert "Use `analyze_content_intelligence` only when" in normalized_section
     assert "answer_goal=`content_opportunities`" in normalized_section
     assert "answer_goal=`one_shootable_topic`" in normalized_section
-    assert "cold-start business and content audience before content-root or map work" in normalized_section
-    assert "Use `develop_account_strategy` for account-starting or positioning requests" in normalized_section
-    assert "call `develop_account_strategy` as the first domain action" in normalized_section
-    assert "subject_ref=`agent_self`" in normalized_section
-    assert "subject_ref=`user_business`" in normalized_section
-    assert "server-owned product profile" in normalized_section
-    assert "audience_option_id" in normalized_section
-    assert "must stop before content-root, map, benchmark, or strategy work" in normalized_section
-    assert "Do not run generic web research or competitor discovery before that first proposal" in normalized_section
     assert "A candidate content map is input evidence, not an adopted account position" in normalized_section
     assert "never creates, confirms, or revises account strategy" in normalized_section
-    assert "call `confirm_account_strategy` with that exact option id" in normalized_section
-    assert "does not block a first proposal" in normalized_section
     assert "BenchmarkSnapshot" in normalized_section
     assert "cannot decide positioning" in normalized_section
     assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section
@@ -1803,8 +1870,7 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "audience territory define the account-level map" not in normalized_section
     assert "content root is the entry into the map" not in normalized_section
     assert "do not add an arbitrary number of posts, days, or branches" in normalized_section
-    assert "do not pair it with `web_search`" in normalized_section
-    assert "internal post-map research" in normalized_section
+    assert "Avoid duplicate research" in normalized_section
     for attention_leak in (
         "return path",
         "product-return",
@@ -1815,16 +1881,22 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
         assert attention_leak not in content_section.lower()
 
 
-def test_lead_routes_account_starting_before_manual_clarification() -> None:
-    router = SYSTEM_PROMPT_TEMPLATE.split("<account_start_router>", 1)[1].split("</account_start_router>", 1)[0]
-    normalized_router = " ".join(router.split())
+def test_lead_owns_account_incubation_routing() -> None:
+    account_section = SYSTEM_PROMPT_TEMPLATE.split("<account_incubation>", 1)[1].split("</account_incubation>", 1)[0]
+    normalized_section = " ".join(account_section.split())
 
-    assert SYSTEM_PROMPT_TEMPLATE.index("<account_start_router>") < SYSTEM_PROMPT_TEMPLATE.index("<clarification_system>")
-    assert "call `develop_account_strategy` as the first domain action" in normalized_router
-    assert "Do not manually interview the user first" in normalized_router
-    assert "subject_ref=`agent_self`" in normalized_router
-    assert "subject_ref=`user_business`" in normalized_router
-    assert "The tool itself returns a bounded audience choice" in normalized_router
+    assert "understand what the subject does" in normalized_section
+    assert "whose behavior should change" in normalized_section
+    assert "No tool or method is a mandatory first step" in normalized_section
+    assert "Do not force lexical decomposition" in normalized_section
+    assert "unfamiliar, recent, or materially ambiguous" in normalized_section
+    assert "ask one bounded clarification" in normalized_section
+    assert "business target" in normalized_section
+    assert "content audience" in normalized_section
+    assert "fixed pipeline" in normalized_section
+    assert "call `develop_account_strategy`" not in normalized_section
+    assert "first domain action" not in normalized_section
+    assert "must stop before" not in normalized_section
 
 
 def test_confirmed_route_reference_keeps_only_the_selected_name_and_id() -> None:

@@ -1,14 +1,16 @@
 {
   "schema_version": 3,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.1.0",
+  "profile_version": "1.2.0",
   "lifecycle_status": "active",
   "source_refs": [
     "docs/content-intelligence-v6/audits/A115-golden-gift-real-incubation-e2e.md",
     "docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md",
     "docs/content-intelligence-v6/decisions/ADR-033-vertical-incubation-skills.md",
     "docs/content-intelligence-v6/audits/A120-vertical-skill-hard-gate-audit.md",
-    "docs/content-intelligence-v6/decisions/ADR-035-soft-domain-skill-advice.md"
+    "docs/content-intelligence-v6/decisions/ADR-035-soft-domain-skill-advice.md",
+    "docs/content-intelligence-v6/audits/A128-agent-owned-incubation-routing.md",
+    "docs/content-intelligence-v6/decisions/ADR-040-agent-owned-incubation-routing.md"
   ],
   "applies_to": [
     "礼品、礼物、伴手礼、纪念礼或馈赠是用户实际经营对象",
@@ -25,7 +27,9 @@
     "先区分材质、礼品用途和用户实际经营对象；材质不能自动成为内容根。",
     "比较礼品对象与反复发生的送、收、回、拒绝、感谢和记住等关系行为。",
     "比较局部人生场景与更长期的人际关系世界；局部场景通常适合作为支持分支，但本轮语义和用户目标可以推翻这项偏好。",
-    "若候选高度重叠，优先普通观众能直接理解并能容纳更多具体人物、事件、关系选择与人情变化的生活世界；不能仅因某个礼制或礼仪解释框架理论层次更多就判它更优。"
+    "若候选高度重叠，优先普通观众能直接理解并能容纳更多具体人物、事件、关系选择与人情变化的生活世界；不能仅因某个礼制或礼仪解释框架理论层次更多就判它更优。",
+    "关系世界只有在能够容纳不以礼物或送礼动作作为表面中心的人物、事件、选择、边界与关系变化时，才算真正脱离商品。",
+    "用户未提供的场景、案例、素材、客户、渠道和专业权威保持未知；需要这些条件时必须使用条件表达。"
   ],
   "candidate_paths": [
     {
@@ -46,12 +50,6 @@
       "label": "日常人情往来",
       "suggested_scope": "supporting_branch",
       "reason": "请客、随礼、回礼、求人、致谢与拒绝等行为可以具体呈现长期关系世界。"
-    },
-    {
-      "branch_id": "life-ritual-gifting",
-      "label": "人生仪式中的馈赠",
-      "suggested_scope": "supporting_branch",
-      "reason": "出生、成年、成家、退休与告别等仪式通常是关系世界中的具体观察窗口。"
     },
     {
       "branch_id": "workplace-business-gifting",

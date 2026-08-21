@@ -84,7 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--recursion-limit",
         type=_positive_int,
         metavar="N",
-        help="headless agent-loop super-step limit (default: 100)",
+        help="headless agent-loop super-step limit (default: 180)",
     )
     return parser
 

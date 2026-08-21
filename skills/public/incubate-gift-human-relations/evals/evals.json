@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.1.0",
+  "profile_version": "1.2.0",
   "acceptance": {
     "status": "passed",
-    "profile_sha256": "fe13788015094bda58b08e4a27cbdf1e75437f87672d6d9b22271506c027b149",
-    "package_sha256": "fe256267c85bc451e423fd6b2a48c11abde802966a0f2bc7d4c56abe70519f78",
+    "profile_sha256": "c07259bc8005a099b193cb824faf733bf52882d18de6fc2529109afb82dced3f",
+    "package_sha256": "6983c92c4459268a8b0df43888c389283e78ff7c816e9efa62b2492d3b6fe13a",
     "evidence_ref": "acceptance.json"
   },
   "evals": [
@@ -80,11 +80,12 @@
       "case_id": "gold-gift-behavior",
       "case_kind": "behavior",
       "prompt": "我是做黄金礼品的，我要怎么起号？",
-      "expected_output": "模型应比较礼品对象与人与人相处的长期世界，通常收敛到人情世故；局部人生场景可以作为支持分支，但不能因关键词规则被删除或自动晋升为长期根。",
+      "expected_output": "Lead 应比较礼品商品、送礼行为与人与人相处的长期世界；若选择人情世故，至少一部分内容必须能脱离礼物和送礼动作本身。",
       "expectations": [
         "内容根是人与人之间的相处与人情世故",
         "地图可包含送、收、回、拒绝、面子、义务、边界与利益",
-        "局部人生场景不因词表被删除，也不自动成为账号主线",
+        "未由用户提供的具体人生场景不进入最终方向",
+        "至少一个内容方向不以礼物或送礼动作作为表面中心",
         "不编造用户已有客户、案例、素材或经营经验"
       ]
     },
@@ -103,12 +104,13 @@
       "case_id": "corporate-thank-you-held-out",
       "case_kind": "held_out",
       "prompt": "我是做企业客户答谢礼定制的，账号长期讲什么？",
-      "expected_output": "应识别答谢礼背后的信任、互惠、分寸和关系维护，并将具体定制流程保持为支线。",
+      "expected_output": "应先识别企业行政采购等实际业务对象，再比较答谢礼、采购工作与商务关系世界；不得为完整感编造客户案例或用户权威。",
       "expectations": [
         "加载 incubate-gift-human-relations",
         "保留企业客户答谢礼定制的原始业务事实",
         "长期世界不收缩为选品、制作或交付流程",
-        "商务场景保持为人际关系世界中的具体分支"
+        "商务场景保持为人际关系世界中的具体分支",
+        "用户资源和专业权威只作条件表达"
       ]
     }
   ]

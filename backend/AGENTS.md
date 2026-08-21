@@ -174,18 +174,20 @@ and arbitrary context cannot override it. New account artifacts carry the exact 
 content, format, adaptation, production, and planning. Legacy project-scoped artifacts remain readable with their
 original canonical IDs and cannot be silently promoted into an account.
 `RootFeedbackRecord` is append-only, exact-map episodic evidence; it cannot become a rule before ADR-031 approval.
-`develop_account_strategy` requires `subject_ref`: `user_business` reads only user/project facts; `agent_self`
-seals the server-owned `HostProductProfile`. Do not let deictic text or tool arguments rewrite either subject.
-User-business `subject_expression` is verbatim. Unknown terms may get one bounded pre-audience lookup;
-`term_evidence` cannot become topic/benchmark evidence or choose a root, and `agent_self` skips it. Before map work,
-`AccountAudienceDecision` separates payer/contracting party,
-decision maker, user/beneficiary, business target, and content audience. A material route ambiguity returns only
-two to three options and stops; exact user selection appends a confirmed successor. Unsupported demographics stay
-unknown. The selected audience is deterministically projected downstream, so models cannot switch B2B/B2C later.
-Only then may `develop_account_strategy` propose routes from Brief, map, and evidence. Routes separate business
-target from content audience and form from strategy; no format-only variants or invented offers. It may recommend
-but only `confirm_account_strategy` adopts. A trusted owner/thread may lazily create and later rehydrate an
-internal project/account; stale explicit selections fail closed. Topic delivery cannot create or revise strategy.
+The Lead owns incubation judgment and selects the least work needed. It may answer, ask one decision question,
+inspect one matching `incubate-*` Skill, verify a term, analyze semantics, build one map, or collect evidence;
+none is a mandatory first stage. The historical
+`develop_account_strategy` implementation remains for stored artifacts and offline compatibility but is not a
+default Lead tool and must not be reintroduced through prompts, middleware, or Skills.
+
+`user_business` reads only user/project facts; `agent_self` reads the server-owned `HostProductProfile`. Do not let
+deictic text or tool arguments rewrite either subject. Unknown terms may get one bounded lookup; `term_evidence`
+cannot become topic/benchmark evidence or choose a root. Payer, decision maker, beneficiary, business target, and
+content audience remain distinct concepts, but the Lead asks about them only when different answers materially
+change the route. Unsupported demographics, resources, cases, channels, and authority stay unknown; asserting one
+and then softening it with uncertainty is still fabrication. Broad account-direction requests do not implicitly
+request calendars, cadence, ratios, ad spend, or 7/30-day plans. A trusted owner/thread may still scope and
+rehydrate formal account artifacts; dynamic chat judgment does not silently adopt or overwrite them.
 
 `plan_account_launch` is an optional continuation after confirmation. Its account-scoped 7/30-day windows are
 review horizons, not platform gates or success promises. It cannot revise strategy, invent a `TopicBrief`, or block

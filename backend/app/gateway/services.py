@@ -35,6 +35,7 @@ from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONT
 from deerflow.agents.middlewares.view_image_middleware import _IMAGE_CONTEXT_MESSAGE_MARKER_KEY
 from deerflow.config.app_config import get_app_config
 from deerflow.config.database_config import resolve_checkpoint_graph_cache_max
+from deerflow.constants import DEFAULT_LEAD_RECURSION_LIMIT
 from deerflow.incubation import INCUBATION_PROJECT_ID_KEY, ProjectRef, implicit_thread_project_ref
 from deerflow.incubation.contracts import (
     INCUBATION_LOGICAL_ACCOUNT_ID_KEY,
@@ -650,7 +651,7 @@ def resolve_agent_factory(assistant_id: str | None):
 # call), enabling runaway API cost / DoS. ``_DEFAULT_RECURSION_LIMIT`` is the
 # server default when the client sends nothing; the hard ceiling any client
 # value is clamped to is configurable via ``AppConfig.max_recursion_limit``.
-_DEFAULT_RECURSION_LIMIT = 100
+_DEFAULT_RECURSION_LIMIT = DEFAULT_LEAD_RECURSION_LIMIT
 _DEFAULT_MAX_RECURSION_LIMIT = 1000
 
 
@@ -706,7 +707,7 @@ def build_run_config(
     # Lead-agent recursion budget (LangGraph super-steps for the lead graph
     # only). Independent of subagent depth: a `task()` dispatch runs the whole
     # subagent inside ONE lead tools-node step, and subagents enforce their own
-    # limit via `subagents.max_turns`. Do not conflate this 100 with the
+    # limit via `subagents.max_turns`. Do not conflate this graph budget with the
     # general-purpose subagent's max_turns.
     config: dict[str, Any] = {"recursion_limit": _DEFAULT_RECURSION_LIMIT}
     if request_config:

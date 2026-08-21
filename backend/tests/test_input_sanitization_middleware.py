@@ -189,6 +189,7 @@ _FRAMEWORK_STRUCTURED_TAGS = [
     "content_intelligence",
     "content_intelligence_method",
     "content_intelligence_research",
+    "account_incubation",
     "account_start_router",
     "account_audience",
     # Dedicated content/incubation calls use these wrappers as internal policy

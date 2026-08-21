@@ -107,7 +107,7 @@ class GitHubAgentConfig(BaseModel):
     # a review-only agent might be happy at 50, a multi-file refactor agent
     # might need 500+. Setting None means "use the channel default (250)".
     # Any positive integer is honored verbatim — including values below the
-    # channel default and below the global 100-step floor — so an explicit
+    # channel default and below the global 180-step floor — so an explicit
     # safety setting like ``recursion_limit: 50`` halts the agent at 50
     # super-steps as configured. Values <=0 are ignored (treated as None)
     # — a negative/zero limit would halt the agent before the first step.

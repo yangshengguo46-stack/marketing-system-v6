@@ -10,6 +10,7 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.constants import TAG_NOSTREAM
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from deerflow.content_intelligence.contracts import (
@@ -1112,12 +1113,14 @@ async def _invoke_structured(
     container_fields: set[str],
 ) -> Any:
     structured_model = model.with_structured_output(schema, include_raw=include_raw)
+    internal_config = dict(runnable_config or {})
+    tags = list(internal_config.get("tags") or [])
+    if TAG_NOSTREAM not in tags:
+        tags.append(TAG_NOSTREAM)
+    internal_config["tags"] = tags
 
     async def invoke(message_batch: tuple[SystemMessage | HumanMessage, ...]) -> Any:
-        if runnable_config is None:
-            result = await structured_model.ainvoke(message_batch)
-        else:
-            result = await structured_model.ainvoke(message_batch, config=runnable_config)
+        result = await structured_model.ainvoke(message_batch, config=internal_config)
         return _parse_structured_result(result, schema, container_fields=container_fields)
 
     try:

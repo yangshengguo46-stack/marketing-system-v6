@@ -810,38 +810,22 @@ They cannot overwrite the user's words, classify free-text branches, replace the
 content root, inject denied facts into the project Brief, or decide positioning, audience, format,
 or monetization.
 
-Long-lived account judgment belongs to the separate `develop_account_strategy` tool. It first
-creates a `MarketingSubjectSnapshot`: an ordinary business reads only user/project facts, while an
-explicit reference to the current Agent reads a server-owned, versioned `HostProductProfile` of
-product facts, capabilities, accepted evidence, and constraints. A second-person self-reference is
-therefore not sent to semantic analysis as an unknown customer business, and the model cannot grant
-the product capabilities that are absent from that profile.
-For an ordinary user business, the subject must also be one contiguous verbatim span from the
-current request. An exact local term hit bypasses the network; an unrecognized recent term,
-proper name, acronym, or trade expression gets one bounded public-web lookup. At most three
-snippets enter a distinct `term_evidence` role that audience and semantic reading can reuse.
-They never become competitor or topic evidence and cannot select the content root. Lookup failure
-remains an explicit unknown, while `agent_self` continues to trust only the local product profile.
-Before choosing a content root, an `AccountAudienceDecision` separates payer or contracting party,
-decision maker, user or beneficiary, the people the business must influence, and the people who may
-keep watching the content. An already explicit commercial relationship resolves to one route. A
-material wholesale/retail, B2B/B2C, channel/end-user, or payer/user ambiguity returns two or three
-audience routes and stops until the user chooses an exact option. Unsupported demographics remain
-unknown. Only the resolved audience is projected into content mapping, benchmark discovery, and
-strategy.
-The tool uses an owner-validated selected project when present. When the ordinary chat entry has no
-project selection yet, the first strategy request lazily creates a deterministic internal project
-for that owner and thread; later runs rehydrate it from the ledger. This needs neither a project UI
-nor a bound or logged-in platform account. It combines the resolved audience and candidate map with
-project facts and any formally accepted benchmark or observed-audience evidence, then proposes two
-to five coherent account routes. Each route joins the long-term content
-subject, audience promise, persona, primary and supporting presentation forms, business
-connection, monetization hypothesis, resources, and tradeoffs. The Agent recommends one route,
-but recommendation remains `proposed`; it is not user consent. Only
-`confirm_account_strategy`, called after the user chooses an offered option, creates a
-`confirmed` successor and projects that exact route into positioning, audience, persona,
-account-level presentation, and monetization. The user may choose a non-recommended route.
-A route also carries a separate business-intent facet: the user's role in the declared business,
+The default Lead now owns incubation judgment directly. An account-starting request may be answered
+without tools, or the Lead may choose one decision-changing clarification, one matching vertical
+Skill, one bounded term verification, semantic analysis, one content map, or benchmark evidence.
+None is a mandatory first stage. The historical `develop_account_strategy` implementation remains
+for stored-artifact compatibility and offline evaluation, but it is no longer a default Lead tool.
+
+Ordinary businesses still trust only user and project facts. An explicit request to market the
+current Agent reads its server-owned `HostProductProfile`. A recent or ambiguous trade term may get
+one bounded lookup whose snippets remain `term_evidence`; they cannot choose an audience, content
+root, or benchmark. Payer, decision maker, beneficiary, business target, and content audience stay
+distinct, but the Lead asks about them only when their difference would materially change the route.
+Unsupported demographics, cases, resources, channels, and authority remain unknown. A broad account
+direction request does not silently expand into a calendar, cadence, ratios, ad spend, or a 7/30-day
+plan.
+
+When the user explicitly enters the formal versioned route flow, a route may still carry a separate business-intent facet: the user's role in the declared business,
 the outcome the account should produce after reach, the people whose behavior should change,
 their need, the desired next action, and the stated market scope. This is distinct from the
 content audience and from presentation form. Routes cannot be repackaged as format choices alone,

@@ -3608,7 +3608,7 @@ class TestResolveRunParamsUserId:
     def test_github_channel_gets_raised_recursion_limit(self):
         """Autonomous GitHub coding runs (clone → edit → test → push → PR) need
         more super-steps than an interactive chat turn. The default
-        ``recursion_limit`` of 100 is raised for the github channel only."""
+        ``recursion_limit`` of 180 is raised for the github channel only."""
         manager = self._manager()
 
         gh_msg = InboundMessage(channel_name="github", chat_id="zhfeng/llm-gateway", user_id="zhfeng", text="hi")
@@ -3618,7 +3618,7 @@ class TestResolveRunParamsUserId:
         # Interactive channels keep the default ceiling.
         slack_msg = InboundMessage(channel_name="slack", chat_id="C1", user_id="u", text="hi")
         _, slack_config, _ = manager._resolve_run_params(slack_msg, "thread-1")
-        assert slack_config["recursion_limit"] == 100
+        assert slack_config["recursion_limit"] == 180
 
     def test_github_channel_recursion_limit_respects_higher_override(self):
         """An explicit higher recursion_limit in channel/user config must not be
@@ -3638,7 +3638,7 @@ class TestResolveRunParamsUserId:
         The per-agent value flows via ``msg.metadata["github"]["recursion_limit"]``
         — the dispatcher reads it from ``GitHubAgentConfig`` at fanout time.
         The per-agent value is honored verbatim, including values below the
-        channel default and below 100.
+        channel default and below the global 180-step default.
         """
         manager = self._manager()
 
@@ -3668,14 +3668,14 @@ class TestResolveRunParamsUserId:
         """Regression pin for willem-bd's finding #4 on PR #3754.
 
         Previously the channel-policy step did ``max(existing, limit)``
-        which clamped any per-agent recursion_limit below 100 up to 100,
+        which clamped any per-agent recursion_limit below the old 100-step default,
         silently breaking a safety-conscious ``github.recursion_limit: 50``
         on a review-only agent. The per-agent value is now honored
         verbatim for any positive integer, including values below 100.
         """
         manager = self._manager()
 
-        # 50: well below the 100 floor that the old max() would have applied,
+        # 50: well below the old 100 floor that max() used to apply,
         # AND below the 250 channel default. Both clamps would silently lose
         # this setting; the per-agent value must win.
         gh_msg = InboundMessage(

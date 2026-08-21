@@ -595,17 +595,29 @@ def test_bundled_gift_skill_is_discoverable_and_owns_its_profile() -> None:
     assert parts is not None
     assert skill.category == SkillCategory.PUBLIC
     assert parts.metadata["license"] == "MIT"
-    assert parts.metadata["metadata"]["version"] == "1.1.0"
+    assert parts.metadata["metadata"]["version"] == "1.2.0"
     assert parts.metadata["metadata"]["lifecycle"] == "active"
     assert profile.skill_name == skill.name
     assert profile.schema_version == 3
-    assert profile.profile_version == "1.1.0"
+    assert profile.profile_version == "1.2.0"
     assert profile.lifecycle_status == "active"
     assert profile.candidate_paths[0].root == "人与人之间的相处与人情世故"
     assert profile.preferred_root_candidate == "人与人之间的相处与人情世故"
     assert profile.supporting_branch_hints[0].suggested_scope == "supporting_branch"
+    assert "docs/content-intelligence-v6/audits/A128-agent-owned-incubation-routing.md" in profile.source_refs
+    assert "docs/content-intelligence-v6/decisions/ADR-040-agent-owned-incubation-routing.md" in profile.source_refs
+    assert {hint.branch_id for hint in profile.supporting_branch_hints}.isdisjoint({"life-ritual-gifting"})
     assert (skill.skill_dir / "references" / "incubation-profile.json").is_file()
-    assert 'incubation_skill="incubate-gift-human-relations"' in skill_body
+    assert "develop_account_strategy" not in skill_body
+    assert "The Lead decides whether any content-intelligence tool is useful" in " ".join(skill_body.split())
+    assert "Do not introduce a specific occasion the user did not state" in " ".join(skill_body.split())
+    assert "Do not read the runtime resources during an ordinary Lead conversation" in " ".join(skill_body.split())
+    assert "A relationship-world route has not passed if every content example still centers the gift commodity or the act of gifting" in " ".join(skill_body.split())
+    assert "relationships where no object is exchanged" in " ".join(skill_body.split())
+    assert "use at most one optional `explore_content_world` call" in " ".join(skill_body.split())
+    assert "only after the commercial object and materially different audiences are understood" in " ".join(skill_body.split())
+    assert "Treat any proposed expert persona as conditional on user evidence" in " ".join(skill_body.split())
+    assert "An assertion followed by uncertainty is still an unsupported assertion" in " ".join(skill_body.split())
     assert "does not choose the root or final account route" in skill_body
     assert eval_manifest["skill_name"] == skill.name
     case_kinds = {case["case_kind"] for case in eval_manifest["evals"]}

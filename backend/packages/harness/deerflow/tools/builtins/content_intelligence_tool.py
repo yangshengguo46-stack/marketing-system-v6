@@ -479,7 +479,7 @@ async def _analyze_content_intelligence(
     return json.dumps(_lead_projection(bundle, focus=request.focus), ensure_ascii=False, separators=(",", ":"))
 
 
-@tool("explore_content_world", parse_docstring=True, return_direct=True)
+@tool("explore_content_world", parse_docstring=True)
 async def explore_content_world_tool(
     runtime: Runtime,
     user_request: str,
@@ -487,7 +487,7 @@ async def explore_content_world_tool(
     subject_expression: str | None = None,
     topic_seed: str | None = None,
 ) -> Command:
-    """Build a candidate content-opportunity map or one evidence-bound shootable topic.
+    """Build working material for a content map or one evidence-bound shootable topic.
 
     Both goals freeze business semantics, one map root, and its candidate map.
     Content opportunities stop there. A shootable-topic goal continues through
@@ -495,13 +495,23 @@ async def explore_content_world_tool(
     may also persist a per-topic FormatDecision, AdaptedDraft, and ProductionPlan.
     It still stops before MediaKit execution, platform, cadence, sales,
     experiments, or questionnaires.
+    This is not an account-strategy tool. Its result returns to the Lead for
+    final judgment instead of answering the user directly.
 
     Args:
         user_request: The current content-opportunity or concrete-topic request, copied without adding requirements.
         answer_goal: Whether to return candidate content opportunities or one concrete shootable topic.
-        subject_expression: Optional exact business or content subject copied as one contiguous span from user_request. Omit it when continuing a selected project's confirmed route so the tool reuses that route's frozen map.
+        subject_expression: Optional exact business or content subject copied as one contiguous span from user_request.
+            Omit it when uncertain or when continuing a selected project's confirmed route; an accidental paraphrase
+            is ignored instead of becoming a new subject.
         topic_seed: Optional hotspot, person, work, event, or question copied as one contiguous verbatim span from user_request.
     """
+    if _content_world_already_returned_this_turn(runtime):
+        return _terminal_content_world_command(
+            "本轮已有内容地图材料。请使用前一次结果完成当前判断，不要再次调用或为追求完整而重算内容地图。",
+            tool_call_id=runtime.tool_call_id,
+        )
+
     try:
         validated_topic_seed = _validate_topic_seed(user_request, topic_seed)
     except ValueError:
@@ -526,13 +536,7 @@ async def explore_content_world_tool(
             )
         )
         if not reuse_confirmed_context:
-            try:
-                validated_subject_expression = _validate_subject_expression(user_request, subject_expression)
-            except ValueError:
-                return _terminal_content_world_command(
-                    "内容主体必须来自当前原话或已确认项目，因此这次没有用一个陌生主体覆盖现有路线。",
-                    tool_call_id=runtime.tool_call_id,
-                )
+            validated_subject_expression = _validate_subject_expression(user_request, subject_expression)
             request = ContentIntelligenceRequest(
                 user_request=user_request,
                 subject_expression=validated_subject_expression or user_request,
@@ -696,8 +700,26 @@ def _validate_subject_expression(user_request: str, subject_expression: str | No
     if subject_expression is None:
         return None
     if not subject_expression.strip() or subject_expression not in user_request:
-        raise ValueError("subject_expression must be a non-empty contiguous verbatim span of user_request")
+        return None
     return subject_expression
+
+
+def _content_world_already_returned_this_turn(runtime: Runtime) -> bool:
+    """Avoid recomputing an expensive map after this user message.
+
+    The Lead remains free to choose whether the method is useful. Once it has
+    actual working material, another differently-worded call is retry churn,
+    not a new marketing judgment.
+    """
+
+    state = getattr(runtime, "state", None)
+    messages = state.get("messages", ()) if isinstance(state, dict) else ()
+    for message in reversed(messages):
+        if getattr(message, "type", None) == "human":
+            break
+        if getattr(message, "type", None) == "tool" and getattr(message, "name", None) == "explore_content_world":
+            return True
+    return False
 
 
 def _subject_expression_matches_confirmed_context(
@@ -1149,7 +1171,6 @@ def _terminal_content_world_command(
 ) -> Command:
     additional_kwargs: dict[str, Any] = {
         "hide_from_ui": True,
-        "deerflow_direct_response": True,
     }
     if persistence is not None:
         additional_kwargs["incubation_persistence"] = {key: value for key, value in persistence.items() if not key.startswith("_")}
@@ -1364,7 +1385,7 @@ content_intelligence_tool: BaseTool = StructuredTool.from_function(
     description=(
         "Optional structured reading workspace for understanding a business expression or a concrete topic. "
         "It separates source observations, interpretations, hypotheses, counterevidence, and unknowns, then returns a compact projection over one shared record. "
-        "Use explore_content_world instead for broad account-starting or long-term-content requests. The Lead retains final judgment for this non-direct tool."
+        "Use explore_content_world only when a content territory or concrete topic itself needs expansion. The Lead retains final judgment for this non-direct tool."
     ),
     coroutine=_analyze_content_intelligence,
     args_schema=_ContentIntelligenceToolInput,
