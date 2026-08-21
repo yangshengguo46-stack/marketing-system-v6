@@ -13,9 +13,14 @@
 flowchart LR
     USER["用户或定时任务"] --> LEAD["DeerFlow Lead"]
     LEAD --> ACCOUNT["平台无关 LogicalAccountRef"]
-    ACCOUNT --> OPPORTUNITY["语义 / 候选内容机会地图"]
+    ACCOUNT --> SUBJECT["MarketingSubjectSnapshot"]
+    HOST["版本化 HostProductProfile"] -->|"仅 Agent 自营销"| SUBJECT
+    FACTS["项目 / 可选账号 / 受众 / 复盘事实"] --> SUBJECT
+    SUBJECT --> AUDIENCE["业务目标人群 / 内容受众假设"]
+    AUDIENCE -->|"已解析或用户已选择"| OPPORTUNITY["语义 / 候选内容机会地图"]
     BENCH["可选对标账号只读证据"] --> PROPOSAL["2 至 5 条账号路线提案"]
-    FACTS["项目 / 可选账号 / 受众 / 复盘事实"] --> PROPOSAL
+    FACTS --> PROPOSAL
+    AUDIENCE --> PROPOSAL
     OPPORTUNITY --> PROPOSAL
     PROPOSAL --> RECOMMEND["Agent 推荐并说明依据"]
     RECOMMEND --> CHOICE["用户选择"]
@@ -41,6 +46,13 @@ flowchart LR
 才形成可供后续选题读取的 `confirmed` 版本。项目级提案和确认都不要求先绑定或登录平台账号。
 逻辑账号在首次孵化时即可创建，一个逻辑账号随后可以连接多个平台账号；平台授权不会重建此前战略、
 地图或计划。7/30 天计划只在用户明确要求时生成，不是 TopicBrief 的前置门。
+
+首次起号还必须在内容根之前完成两项解析。`MarketingSubjectSnapshot` 先区分用户业务与当前 Agent
+产品；“你自己”指向 Agent 时只读取服务端版本化 `HostProductProfile`，不把代词当作客户业务文本。
+随后 `AccountAudienceDecision` 分开付款或签约者、决策者、使用或受益者、业务真正需要影响的人和
+愿意长期观看内容的人。交易关系已经明确时直接解析；批发/零售、B 端/C 端等分歧会实质改变账号方向
+时，只给二至三条受众路线并停下，直到用户选择。人口统计特征没有正式证据就保持未知。该决定是冷启动
+假设，后续观察可以产生新版本，但不能倒改旧工件。详见 [`ADR-038`](decisions/ADR-038-audience-first-subject-contract.md)。
 完整决策、产物合同、硬门边界和迁移原则见
 [`ADR-018`](decisions/ADR-018-artifact-graph-orchestration.md)；工作包与验收顺序见
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)。
@@ -132,7 +144,14 @@ flowchart LR
     USR["用户原话"] --> LEAD["DeerFlow Lead"]
     LEAD -->|"内容机会或具体选题请求"| TOOL["explore_content_world"]
     LEAD -->|"起号、定位或长期账号策略"| ACCOUNT["develop_account_strategy"]
-    ACCOUNT --> ROUTES["多条 AccountRouteOption + 推荐"]
+    ACCOUNT --> SUBJECT["营销主体：user_business / agent_self"]
+    SUBJECT --> AUDIENCE["付款者 / 决策者 / 使用者 / 目标人群 / 内容受众"]
+    AUDIENCE -->|"存在实质分歧"| AUDWAIT["等待 audience_option_id"]
+    AUDIENCE -->|"交易关系已明确"| AUDREADY["冻结受众路线"]
+    AUDWAIT -->|"用户选择"| AUDREADY
+    AUDREADY --> TOOL
+    VERSION --> ROUTES["多条 AccountRouteOption + 推荐"]
+    AUDREADY --> ROUTES
     ROUTES --> WAIT["等待用户选择"]
     WAIT -->|"精确 option_id"| CONFIRM["confirm_account_strategy"]
     CONFIRM --> STRATEGY["confirmed IncubationJudgment vN"]

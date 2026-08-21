@@ -68,10 +68,18 @@
 OpenHowNet 证据、成对偏好与 DSPy 离线优化。不得把普通向量 RAG、固定关系枚举、优化器或训练轨迹
 直接注册进 Lead。现役 `601b76d0` 保持不变，先写新留出集和预注册对比，再决定是否替换根选择器。
 
+2026-08-21 A126 将营销主体与冷启动受众放到账号孵化链最前面。`user_business` 只读用户和项目事实；
+`agent_self` 只读服务端版本化产品档案。系统先区分付款或签约者、决策者、使用或受益者、业务目标人群
+和长期内容受众，再把选中路线投影给内容根、地图、对标和策略。存在实质路线分歧时先让用户选择，不能
+一边猜 B2B/B2C 一边生成完整定位。观察到的真实受众仍是后续独立证据，不冒充冷启动假设。
+
 发布回执之前仍必须完成的主链为：
 
 ```text
-项目事实
+项目与逻辑账号
+-> 营销主体：用户业务或可信 Agent 产品档案
+-> 冷启动受众：付款者 / 决策者 / 使用者 / 目标人群 / 内容受众
+-> 实质分歧时用户先选择
 -> 语义理解 / 内容入口 / 候选内容机会地图
 对标与受众证据（独立只读）
 -> 账号路线提案：2 至 5 条完整路线 + Agent 推荐
@@ -106,8 +114,10 @@ OpenHowNet 证据、成对偏好与 DSPy 离线优化。不得把普通向量 RA
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
 | 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; server runtime, implicit thread bootstrap and content lineage verified` | 保留最小产物图合同、SQL 持久化、owner-scoped API、隐式线程项目与重水化 | 正式项目管理 UI、产物查询与真实多账号验收 |
+| 营销主体与产品自认知 | 第六版 `MarketingSubjectSnapshot` / `HostProductProfile` | `implemented; agent-self live verified` | 用户业务只读用户事实；当前 Agent 只读服务端版本化产品事实、能力、证据与限制 | 产品档案运营更新流程、显示品牌定名与更多主体指代留出 |
+| 冷启动受众假设 | 第六版 `AccountAudienceDecision` | `implemented; fruit and agent-self live verified` | 在内容根前区分付款者、决策者、使用者、业务目标人群和内容受众；实质分歧由用户选择 | 未知市场范围事实边界、真实观察回流和成本优化 |
 | 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; golden-gift and fruit container live root recovery` | 使用 ADR-020 顺序链与单根裁决；先解析供应商结构，再由确定性代码约束语义路径和构成语境；泛化容器交易回声只作分支；地图不拥有账号定位权 | 全新留出集真实质量、稳定率、延迟与候选地图审阅 |
-| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented routes and confirmation; first-run intent orchestration failed` | `develop_account_strategy` 给出 2 至 5 条完整路线并推荐；`confirm_account_strategy` 只按用户选择写入确认版本；具体选题只读精确地图的已确认版本 | 区分首次起号、明确续写与重新评估并固定停止边界；再降延迟、接可视化路线和正式对标；平台账号绑定延期 |
+| 账号孵化策略版本 | 第六版 `deerflow.incubation` | `implemented; audience-first and agent-self live verified` | `develop_account_strategy` 先解析主体和受众，再给出 2 至 5 条完整路线并推荐；`confirm_account_strategy` 只按用户选择写入确认版本；具体选题只读精确地图的已确认版本 | 再降延迟、接可视化路线和正式对标；平台账号绑定延期 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `implemented` | 保留 Manifest 渐进披露 | 逐项真实权限与回执验收 |
 | 抖音公开视频/体验搜索 | 第六版 | `v2/MCP content route and project evidence lineage implemented; live credentials pending` | 选题经 MCP 为 `topic_evidence`，对标发现可跨页聚合为候选证据 | 绑定三项本地应用凭据后做 v2 真实回执与项目入库复核 |
@@ -260,12 +270,14 @@ Gateway 环境中的 Key、Secret 和 Device ID
 状态：`core through AdaptedDraft implemented and partially live-verified; ProductionPlan and material execution paused by user`
 
 目标：将候选 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`
-绑定到项目、地图版本和精确父产物；账号策略由独立 `IncubationJudgment vN` 管理，制作与素材不属于
-W03 当前验收。
+绑定到项目、地图版本和精确父产物；账号策略由独立 `IncubationJudgment vN` 管理。首次起号先形成
+`MarketingSubjectSnapshot -> AccountAudienceDecision`，再进入语义和地图。制作与素材不属于 W03 当前验收。
 
 退出条件：
 
 - 候选内容地图不因热点、表现形式、发布或复盘被静默改写，也不能冒充账号定位。
+- “你自己”指向当前 Agent 时必须绑定版本化产品档案，不能当成用户业务；普通用户业务不能继承 Agent 能力。
+- 冷启动受众必须先区分业务目标人群和内容受众；实质 B2B/B2C 等分歧未选择时不得继续地图和策略。
 - 对标或受众观察只作为账号策略证据，不能直接改写语义、地图或选题。
 - 每次具体选题不得临时创建或修订账号策略；只可读取与当前地图精确匹配的现有版本。
 - 同一 `TopicBrief` 可以产生不同表现形式，但事情、观点和证据边界保持一致。

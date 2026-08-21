@@ -7,6 +7,12 @@ from typing import Any
 import pytest
 
 from deerflow.incubation import generate_incubation_judgment as exported_generate_incubation_judgment
+from deerflow.incubation.account_audience import (
+    AccountAudienceProposalDraft,
+    AccountAudienceRouteDraft,
+    compile_account_audience_decision,
+    seal_account_audience_decision,
+)
 from deerflow.incubation.benchmark import (
     BenchmarkCoverageReceipt,
     BenchmarkPostObservation,
@@ -15,12 +21,18 @@ from deerflow.incubation.benchmark import (
     BenchmarkSnapshot,
     seal_benchmark_snapshot,
 )
-from deerflow.incubation.contracts import ArtifactEnvelope, ProjectRef
+from deerflow.incubation.brief_runtime import build_subject_incubation_brief
+from deerflow.incubation.contracts import ArtifactEnvelope, LogicalAccountRef, ProjectRef
 from deerflow.incubation.evidence import (
     EvidenceCoverageReceipt,
     EvidenceItem,
     EvidenceSnapshot,
     seal_evidence_snapshot,
+)
+from deerflow.incubation.host_product_profile import (
+    build_agent_self_subject,
+    current_host_product_profile,
+    seal_host_product_profile,
 )
 from deerflow.incubation.judgment import (
     IncubationBrief,
@@ -330,6 +342,132 @@ async def test_runtime_uses_bounded_evidence_projection_instead_of_full_snapshot
     assert projection["projection"]["total_items"] == 20
     assert projection["projection"]["omitted_items"] > 0
     assert "payload" not in model_input["audience_evidence"][0]
+
+
+@pytest.mark.asyncio
+async def test_agent_self_product_truth_and_benchmark_fit_the_strategy_input_budget() -> None:
+    """The real host profile must leave room for bounded benchmark evidence."""
+
+    logical_account = LogicalAccountRef(
+        owner_user_id=PROJECT.owner_user_id,
+        project_id=PROJECT.project_id,
+        logical_account_id="agent-self-account",
+    )
+    profile = seal_host_product_profile(
+        project=PROJECT,
+        logical_account=logical_account,
+        profile=current_host_product_profile(),
+        created_at=NOW,
+        source_thread_id="thread-agent-self",
+        source_run_id="run-agent-self",
+    )
+    subject = build_agent_self_subject(
+        user_request="现在，我要你自己卖你自己，你要怎么起号？",
+        profile_artifact=profile,
+    )
+    brief = build_subject_incubation_brief(
+        project=PROJECT,
+        logical_account=logical_account,
+        subject=subject,
+        source_object=subject.subject_expression,
+        parent_artifacts=(profile,),
+        created_at=NOW,
+        source_thread_id="thread-agent-self",
+        source_run_id="run-agent-self",
+    )
+    audience_decision = compile_account_audience_decision(
+        subject=subject,
+        draft=AccountAudienceProposalDraft(
+            route_options=(
+                AccountAudienceRouteDraft(
+                    option_id="agent_operators",
+                    name="公开操盘",
+                    business_role="内容孵化与新媒体运营 Agent 产品",
+                    market_relationship="为需要经营内容账号的个人与团队提供判断支持",
+                    account_objective="让目标用户通过真实操盘理解产品能力和边界",
+                    payer_or_contracting_party="尚未确认",
+                    decision_makers="需要账号孵化支持的经营者或运营负责人",
+                    users_or_beneficiaries="实际使用该 Agent 的个人与团队",
+                    target_people="需要把业务转成可持续内容账号的人",
+                    target_need="看清账号应该影响谁、长期讲什么和第一条拍什么",
+                    desired_action="持续观察真实操盘，并在有需要时采用产品",
+                    market_scope="尚未限定地区和平台",
+                    content_audience="关心账号孵化方法和真实操盘过程的人",
+                    recurring_interest="Agent 能做什么、做到什么程度以及边界在哪里",
+                    rationale="来自版本化产品事实档案",
+                    confidence="medium",
+                ),
+            ),
+            recommended_option_id="agent_operators",
+            material_choice_required=False,
+            choice_reason="当前请求明确要求 Agent 营销自身。",
+        ),
+    )
+    audience = seal_account_audience_decision(
+        project=PROJECT,
+        logical_account=logical_account,
+        decision=audience_decision,
+        parent_artifacts=(profile,),
+        created_at=NOW,
+        source_thread_id="thread-agent-self",
+        source_run_id="run-agent-self",
+    )
+    world = ArtifactEnvelope.seal(
+        project=PROJECT,
+        artifact_type="content_map_candidate",
+        version=1,
+        payload={
+            "content_map_version_id": "map-agent-work-v1",
+            "content_root": "软件代理替人完成营销工作",
+            "editorial_promise": "用真实任务展示 Agent 能做什么以及不能做什么。",
+            "recurring_lens": "从一次真实业务请求进入。",
+            "drift_boundaries": ["不把未验收能力说成已经可用。"],
+        },
+        logical_account=logical_account,
+        created_at=NOW,
+        source_thread_id="thread-agent-self",
+        source_run_id="run-agent-self",
+    )
+    benchmark = _evidence_artifact(
+        artifact_type="benchmark_snapshot",
+        evidence_role="benchmark_evidence",
+        item_count=6,
+        excerpt="用真实案例解释 AI 产品如何解决具体工作问题。" * 12,
+    )
+    seen_input = ""
+
+    async def structured_model(schema, messages):
+        nonlocal seen_input
+        seen_input = messages[1].content
+        payload = _judgment_payload(
+            basis_ids=(
+                brief.artifact_id,
+                world.artifact_id,
+                audience.artifact_id,
+                benchmark.artifact_id,
+            )
+        )
+        payload["content_map_version_id"] = "map-agent-work-v1"
+        return payload
+
+    await generate_incubation_judgment(
+        project=PROJECT,
+        logical_account=logical_account,
+        brief_artifact=brief,
+        content_world_artifact=world,
+        audience_decision_artifact=audience,
+        benchmark_evidence_artifacts=(benchmark,),
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-agent-self",
+        source_run_id="run-agent-self",
+    )
+
+    model_input = json.loads(seen_input)
+    assert len(seen_input.encode("utf-8")) <= MAX_JUDGMENT_MODEL_INPUT_BYTES
+    assert model_input["incubation_brief"]["payload"]["subject_expression"] == subject.subject_expression
+    assert model_input["incubation_brief"]["payload"]["capabilities"] == list(subject.capabilities)
+    assert model_input["benchmark_evidence"][0]["projection"]["projection"]["included_posts"] >= 1
 
 
 @pytest.mark.asyncio

@@ -289,6 +289,7 @@ def seal_incubation_judgment(
     source_run_id: str,
     logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
+    audience_decision_artifact: ArtifactEnvelope | None = None,
     evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
     previous_judgment_artifact: ArtifactEnvelope | None = None,
 ) -> ArtifactEnvelope:
@@ -303,6 +304,14 @@ def seal_incubation_judgment(
         project=project,
         artifact_type="content_map_candidate",
     )
+    if audience_decision_artifact is not None:
+        _require_project(
+            audience_decision_artifact,
+            project=project,
+            artifact_type="account_audience_decision",
+        )
+        if audience_decision_artifact.logical_account != logical_account:
+            raise ValueError("account audience logical account must match judgment")
     for artifact in evidence_artifacts:
         if artifact.project != project:
             raise ValueError("evidence parent project must match judgment project")
@@ -335,6 +344,7 @@ def seal_incubation_judgment(
     parent_artifacts = (
         brief_artifact,
         content_world_artifact,
+        *((audience_decision_artifact,) if audience_decision_artifact is not None else ()),
         *evidence_artifacts,
         *((previous_judgment_artifact,) if previous_judgment_artifact is not None else ()),
     )

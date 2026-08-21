@@ -2391,3 +2391,21 @@ Account Skill 只做可重建的程序性投影，本轮任务只加载有界上
 Gateway 回归 `226 passed, 1 warning`，迁移回归 `29 passed`。Account Skill 投影及真实模型双账号全链
 仍待后续验收。正式认证环境的全量非 live 回归为 `12379 passed, 75 skipped, 17 warnings`，退出码 `0`。
 详见 `audits/A125-logical-account-orchestration-implementation.md`。
+
+## A126 受众前置、营销主体与产品事实接线
+
+2026-08-21 将首次起号链改为“逻辑账号 -> 营销主体 -> 冷启动受众 -> 内容根/地图 -> 对标 -> 账号路线”。
+`MarketingSubjectSnapshot` 区分用户业务与当前 Agent；“你自己”只绑定服务端版本化
+`HostProductProfile`，档案分别保存产品事实、能力、已接受证据和限制。普通用户业务不能继承这些能力。
+
+`AccountAudienceDecision` 在地图之前分开付款或签约者、决策者、使用或受益者、业务目标人群和长期内容
+受众。交易关系明确时直接解析；批发/零售、B 端/C 端等实质分歧先给二至三条路线并停止，用户传回精确
+option 后才继续；重复提交同一 option 幂等复用，不能把已确认路线悄悄换成另一项。水果真实运行成功在地图前分成零售、批发和线上直销；Agent 自营销真实运行正确绑定
+DeerFlow 产品档案，在用户选择经营决策者后继续完成内容根、真实抖音对标和两条账号路线。
+
+首次 Agent 自营销续跑暴露完整产品 Brief 超过 16 KB 策略输入预算。完整档案和来源谱系继续留在台账，
+Lead 只接收去重后的授权事实陈述；同一失败工件回放为 `15,466 / 16,000` 字节。完整冷启动仍约
+`9.8K + 35.1K Token`，英文词素噪声和无证据“中国市场”推断仍待修正，不记为已解决。详见
+`audits/A126-audience-first-subject-and-product-truth.md` 与
+`decisions/ADR-038-audience-first-subject-contract.md`。内容/净化/孵化宽回归 `353 passed`，完整非 live
+后端回归 `12404 passed, 75 skipped, 17 warnings`，退出码 `0`。

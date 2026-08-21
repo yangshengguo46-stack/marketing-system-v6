@@ -174,10 +174,17 @@ and arbitrary context cannot override it. New account artifacts carry the exact 
 content, format, adaptation, production, and planning. Legacy project-scoped artifacts remain readable with their
 original canonical IDs and cannot be silently promoted into an account.
 `RootFeedbackRecord` is append-only, exact-map episodic evidence; it cannot become a rule before ADR-031 approval.
-`develop_account_strategy` alone proposes routes from Brief, map, and evidence. Routes separate business target
-from content audience and form from strategy; no format-only variants or invented offers. It may recommend but
-only `confirm_account_strategy` adopts. A trusted owner/thread may lazily create and later rehydrate an internal
-project/account; stale explicit selections fail closed. Topic delivery cannot create or revise strategy.
+`develop_account_strategy` first requires a `subject_ref`. `user_business` reads user/project facts only;
+`agent_self` seals and reads the versioned server-owned `HostProductProfile`. Never send “你自己” to business
+semantics as an unknown customer, let tool arguments overwrite product facts, or leak Agent capabilities into a
+user business. Before map or benchmark work, `AccountAudienceDecision` separates payer/contracting party,
+decision maker, user/beneficiary, business target, and content audience. A material route ambiguity returns only
+two to three options and stops; exact user selection appends a confirmed successor. Unsupported demographics stay
+unknown. The selected audience is deterministically projected downstream, so models cannot switch B2B/B2C later.
+Only then may `develop_account_strategy` propose routes from Brief, map, and evidence. Routes separate business
+target from content audience and form from strategy; no format-only variants or invented offers. It may recommend
+but only `confirm_account_strategy` adopts. A trusted owner/thread may lazily create and later rehydrate an
+internal project/account; stale explicit selections fail closed. Topic delivery cannot create or revise strategy.
 
 `plan_account_launch` is an optional continuation after confirmation. Its account-scoped 7/30-day windows are
 review horizons, not platform gates or success promises. It cannot revise strategy, invent a `TopicBrief`, or block

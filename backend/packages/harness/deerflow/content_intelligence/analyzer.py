@@ -74,11 +74,27 @@ class SourceMaterial(ContractModel):
     uri: NonEmptyStr | None = None
 
 
+class ContentAudienceContext(ContractModel):
+    """A selected cold-start audience hypothesis, not observed platform data."""
+
+    business_role: NonEmptyStr
+    payer_or_contracting_party: NonEmptyStr
+    decision_makers: NonEmptyStr
+    users_or_beneficiaries: NonEmptyStr
+    target_people: NonEmptyStr
+    target_need: NonEmptyStr
+    desired_action: NonEmptyStr
+    market_scope: NonEmptyStr
+    content_audience: NonEmptyStr
+    recurring_interest: NonEmptyStr
+
+
 class ContentIntelligenceRequest(ContractModel):
     user_request: NonEmptyStr
     subject_expression: NonEmptyStr
     focus: AnalysisFocus = AnalysisFocus.CONTENT_WORLD
     source_materials: tuple[SourceMaterial, ...] = ()
+    audience_context: ContentAudienceContext | None = None
 
 
 class BusinessSemanticDraft(ContractModel):
@@ -498,7 +514,8 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 - example_branch 无论多具体、多热闹、搜索资料多丰富，都不能成为进入点。
 - map_root_candidate_index 只选择本次候选内容地图的展开根，也只能指向 scope_role=root_candidate；它回答这张候选地图围绕什么人、事、活动、关系或共同经验展开。
 - 两个索引承担不同职责：进入点负责解释“怎么走过去”，地图根负责限定“这张候选地图从哪里展开”。不能因为进入点更靠近商品，就把已经成立的较大世界收缩成该入口的一种用途、场景或仪式。
-- 候选内容地图不是账号定位，也不决定受众、人设、表现形式或变现；账号孵化层可以采用、缩窄、组合或拒绝它。
+- 候选内容地图不是账号定位，也不决定人设、表现形式或变现。selected_audience_context 若存在，是账号孵化层已经先行明确的目标人群与内容受众假设。
+- 受众上下文只能用于比较哪些有效候选更值得该人群长期关注，不能重新改写受众，也不能以成交方便为由选择一个语义不成立的根。
 - 只能在输入索引中选择，不能把较窄对象与较宽关系世界拼成折中混合根。
 - relation_to_business 是上游已经形成并经审查的语义连续路径，不是候选宣传语。与原表达的语义相关性已由上游解决；当前不得重新判定“能不能从商品走到这里”。
 - social_or_cultural_world 候选已通过独立语义路径审查；你不得再次裁决这条连续性是否成立。距离商品较远不等于内容漂移，也不得以“离商品较远”为由推翻它。
@@ -535,9 +552,11 @@ CONTENT_ROOT_DECISION_SYSTEM_PROMPT = """<content_intelligence_method>
 
 
 FROZEN_CONTENT_MAP_SYSTEM_PROMPT = """<content_intelligence_method>
-你是独立的候选内容机会地图子智能体。输入只包含已冻结的地图根和输出结构。你的产物是一张供账号孵化层选择的候选内容机会地图，不是账号定位，也不是一次性的选题单。将该根视为本任务的完整主题边界，只围绕它展开内容机会，不得重新选根。
+你是独立的候选内容机会地图子智能体。输入只包含已冻结的地图根、可选的已选受众上下文和输出结构。你的产物是一张供账号孵化层选择的候选内容机会地图，不是账号定位，也不是一次性的选题单。将该根视为本任务的完整主题边界，只围绕它展开内容机会，不得重新选根。
 
-- 这张地图不决定受众、人设、表现形式或变现，也不因生成完成就自动成为账号采用的长期方向。
+- 这张地图不决定受众、人设、表现形式或变现，不因生成完成就自动成为账号采用的长期方向。
+- selected_audience_context 若存在，它是上游已经选择的假设，只用于优先展开目标人群真实关心且仍属于冻结根的方向；不得把地图改写成成交话术、客户标签或交易步骤。
+- 受众上下文不是人口统计事实。不得据此添加输入没有的年龄、性别、收入、地域、性格、疾病、案例或购买能力，也不得用人群刻板印象删掉冻结根本来成立的历史、人物、事件和文化分支。
 - 输入若有 supporting_branch_hints，它们是按需行业 Skill 提供的可拒绝的分支候选，不是必选清单或数量配额。逐项检查其与冻结根的意义连续性和内容价值；成立时可展开或重组，不成立时可拒绝，不得由此补造用户资源或外部事实。
 - 一条分支若能沿冻结根显出不同时间、地域、群体、公共事件中的真实人物行动与关系变化，不得仅因它跨地域、跨文化或不属于日常熟人场景就排除。
 
@@ -589,10 +608,15 @@ async def analyze_content_intelligence(
     incubation_profile: IncubationSkillProfile | None = None,
 ) -> ContentIntelligenceBundle:
     sources = _build_sources(request)
+    context_parts: list[str] = []
+    if incubation_profile is not None:
+        context_parts.append(incubation_profile.content_sha256())
+    if request.audience_context is not None:
+        context_parts.append(hashlib.sha256(request.audience_context.model_dump_json().encode("utf-8")).hexdigest())
     record_id = _build_record_id(
         request.subject_expression,
         sources,
-        context_fingerprint=(incubation_profile.content_sha256() if incubation_profile is not None else None),
+        context_fingerprint=("|".join(context_parts) if context_parts else None),
     )
     if request.focus == AnalysisFocus.CONTENT_WORLD:
         return await _analyze_focused_content_world(
@@ -912,6 +936,7 @@ async def _analyze_focused_content_world(
                 candidate_set,
                 offering_role=semantic.offering_role,
                 incubation_profile=incubation_profile,
+                audience_context=request.audience_context,
             )
         ),
     )
@@ -930,6 +955,7 @@ async def _analyze_focused_content_world(
             content=_render_frozen_map_input(
                 root,
                 incubation_profile=incubation_profile,
+                audience_context=request.audience_context,
             )
         ),
     )
@@ -1505,6 +1531,7 @@ def _render_root_decision_input(
     *,
     offering_role: OfferingRole,
     incubation_profile: IncubationSkillProfile | None = None,
+    audience_context: ContentAudienceContext | None = None,
 ) -> str:
     root_candidates = [
         {
@@ -1521,6 +1548,8 @@ def _render_root_decision_input(
     }
     if incubation_profile is not None:
         payload["incubation_skill_context"] = incubation_profile.decision_projection()
+    if audience_context is not None:
+        payload["selected_audience_context"] = audience_context.model_dump(mode="json")
     return "--- BEGIN CONTENT ROOT DECISION INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END CONTENT ROOT DECISION INPUT ---"
 
 
@@ -1792,12 +1821,21 @@ def _render_frozen_map_input(
     root: ContentRootSelectionDraft,
     *,
     incubation_profile: IncubationSkillProfile | None = None,
+    audience_context: ContentAudienceContext | None = None,
 ) -> str:
     payload = {
         "primary_content_center": root.map_root,
     }
     if incubation_profile is not None and incubation_profile.supporting_branch_hints:
         payload["supporting_branch_hints"] = [item.model_dump(mode="json") for item in incubation_profile.supporting_branch_hints]
+    if audience_context is not None:
+        payload["selected_audience_context"] = {
+            "target_people": audience_context.target_people,
+            "target_need": audience_context.target_need,
+            "market_scope": audience_context.market_scope,
+            "content_audience": audience_context.content_audience,
+            "recurring_interest": audience_context.recurring_interest,
+        }
     return "--- BEGIN FROZEN CONTENT MAP INPUT ---\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n--- END FROZEN CONTENT MAP INPUT ---"
 
 

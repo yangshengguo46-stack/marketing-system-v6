@@ -8,6 +8,10 @@ from typing import Any, Literal
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError, model_validator
 
+from deerflow.incubation.account_audience import (
+    AccountAudienceDecision,
+    AccountAudienceRouteDraft,
+)
 from deerflow.incubation.benchmark import BenchmarkSnapshot
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
@@ -128,7 +132,9 @@ _AUDIENCE_EVIDENCE_ROLES = frozenset(
 )
 
 INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
-你只负责根据已封存的项目事实、候选内容机会地图、上一版账号判断和可选证据，生成一份紧凑的 AccountStrategyProposalDraft。你是账号定位、受众、人设、账号级表现形式和变现假设的唯一判断层；版本、证据绑定和确认状态由代码负责。
+你只负责根据已封存的项目事实、已选冷启动受众、候选内容机会地图、上一版账号判断和可选证据，生成一份紧凑的 AccountStrategyProposalDraft。
+你负责账号定位、内容受众细化、人设、账号级表现形式和变现假设。业务对象、业务目标、付款者、决策者与使用者来自 selected_account_audience，不得重新选择。
+版本、证据绑定和确认状态由代码负责。
 
 只判断以下内容：
 - 用户做的是什么业务、在交易或服务关系中扮演什么角色。
@@ -142,7 +148,7 @@ INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
 
 这一步只能提案，不能替用户选择：
 - 不输出版本号、确认状态或已选路线，合同中也没有这些字段。
-- 首轮只输出两条真正不同的账号路线，让用户可以直接比较；不要为了显得完整增加第三条。共同的业务角色、业务任务、目标人群、需求、行动和市场只在 business_intent 写一次，不得在每条路线里重复。
+- 首轮只输出两条真正不同的账号路线，让用户可以直接比较；不要为了显得完整增加第三条。business_intent 只能如实复述 selected_account_audience 的已选路线，代码会用上游封存值覆盖该字段；不得改成“所有人”、“追求曝光”或另一种 B/C 端路线。
 - route_options 只写两条路线各自不同的定位、内容受众、人设、账号级表现形式、变现假设、资源要求和代价。
 - option_id 使用简短稳定的小写英文标识，例如 route_a、route_b；不得重复。
 - recommended_option_id 可以推荐其中一条，但要说明它如何匹配用户业务、已知资源、内容地图和可选对标证据。缺少对标或资源信息时降低置信度并保留未知，不阻断提案。
@@ -150,6 +156,7 @@ INCUBATION_JUDGMENT_SYSTEM_PROMPT = """<incubation_judgment>
 - 先阅读 incubation_brief.subject_expression 的完整原话，识别业务角色、业务服务或招募的对象、对方需求、期望转化动作和地区限定。候选内容根不能替代这次业务阅读。
 - 曝光只是中间手段，不是账号最终业务目标。account_objective 必须回答曝光之后要改变谁的什么行为；desired_action 写这个人下一步应采取的行动。
 - target_people 是业务要影响的人；audience_people 是愿意持续看内容的人。内容受众不一定等于业务要影响的人，不得把两者含混成同一个“用户画像”。
+- selected_account_audience 是起号前业务与内容受众假设，不是已观测平台数据。可以在其内容受众范围内细化两条账号路线，但不得切换业务目标人群，也不得凭空添加年龄、性别、收入、疾病或购买能力。
 - market_scope 必须保留用户明示的国家、地区或区域标签，并说明它会影响哪些判断；缩写含义拿不准时保留原词并写入 unknowns，不能悄悄忽略。
 - 每条路线用扁平字段表达；不要自行嵌套 positioning、audience、persona、presentation 或其他结构。
 - content_subject 是账号长期真正讲什么，必须服从 candidate_content_map.content_root、editorial_promise 和 recurring_lens。除非 content_root 本身就是商业对象，否则不得把产品、材质、店铺或服务流程重新升格为内容主体。
@@ -218,6 +225,7 @@ def _compile_route_option(
     brief: IncubationBrief,
     business_intent: AccountBusinessIntentDraft,
     basis_artifact_ids: tuple[NonEmptyStr, ...],
+    business_basis_artifact_ids: tuple[NonEmptyStr, ...] | None = None,
 ) -> AccountRouteOption:
     common = {
         "rationale": draft.rationale,
@@ -227,7 +235,7 @@ def _compile_route_option(
     }
     business_common = {
         "rationale": business_intent.rationale,
-        "basis_artifact_ids": basis_artifact_ids,
+        "basis_artifact_ids": business_basis_artifact_ids or basis_artifact_ids,
         "confidence": business_intent.confidence,
         "unknowns": business_intent.unknowns,
     }
@@ -290,12 +298,43 @@ def _compile_route_option(
     )
 
 
+def _selected_audience_route(
+    artifact: ArtifactEnvelope,
+) -> tuple[AccountAudienceDecision, AccountAudienceRouteDraft]:
+    if artifact.artifact_type != "account_audience_decision":
+        raise ValueError("expected an account audience decision")
+    decision = AccountAudienceDecision.model_validate(artifact.payload)
+    if decision.decision_status not in {"resolved", "confirmed"}:
+        raise ValueError("account strategy requires a resolved audience decision")
+    route = decision.selected_route()
+    if route is None:
+        raise ValueError("resolved account audience has no selected route")
+    return decision, route
+
+
+def _business_intent_from_audience(
+    route: AccountAudienceRouteDraft,
+) -> AccountBusinessIntentDraft:
+    return AccountBusinessIntentDraft(
+        business_role=route.business_role,
+        account_objective=route.account_objective,
+        target_people=route.target_people,
+        target_need=route.target_need,
+        desired_action=route.desired_action,
+        market_scope=route.market_scope,
+        rationale=route.rationale,
+        confidence=route.confidence,
+        unknowns=route.unknowns,
+    )
+
+
 def _compile_proposal(
     draft: AccountStrategyProposalDraft,
     *,
     brief_artifact: ArtifactEnvelope,
     content_world_artifact: ArtifactEnvelope,
     evidence_artifacts: tuple[ArtifactEnvelope, ...],
+    audience_decision_artifact: ArtifactEnvelope | None,
     previous_judgment_artifact: ArtifactEnvelope | None,
 ) -> IncubationJudgment:
     required_world_version = _required_world_version(content_world_artifact)
@@ -304,6 +343,7 @@ def _compile_proposal(
     allowed_basis_ids = {
         brief_artifact.artifact_id,
         content_world_artifact.artifact_id,
+        *((audience_decision_artifact.artifact_id,) if audience_decision_artifact is not None else ()),
         *(artifact.artifact_id for artifact in evidence_artifacts),
         *((previous_judgment_artifact.artifact_id,) if previous_judgment_artifact is not None else ()),
     }
@@ -311,12 +351,28 @@ def _compile_proposal(
         raise ValueError("proposal basis artifact ids must come from allowed proposal inputs")
 
     brief = IncubationBrief.model_validate(brief_artifact.payload)
+    business_intent = draft.business_intent
+    business_basis_ids: tuple[NonEmptyStr, ...] | None = None
+    compiled_basis_ids = draft.basis_artifact_ids
+    if audience_decision_artifact is not None:
+        _, selected_audience = _selected_audience_route(audience_decision_artifact)
+        business_intent = _business_intent_from_audience(selected_audience)
+        business_basis_ids = (audience_decision_artifact.artifact_id,)
+        compiled_basis_ids = tuple(
+            dict.fromkeys(
+                (
+                    *draft.basis_artifact_ids,
+                    audience_decision_artifact.artifact_id,
+                )
+            )
+        )
     routes = tuple(
         _compile_route_option(
             route,
             brief=brief,
-            business_intent=draft.business_intent,
-            basis_artifact_ids=draft.basis_artifact_ids,
+            business_intent=business_intent,
+            basis_artifact_ids=compiled_basis_ids,
+            business_basis_artifact_ids=business_basis_ids,
         )
         for route in draft.route_options
     )
@@ -411,12 +467,45 @@ def _content_world_projection(artifact: ArtifactEnvelope) -> dict[str, object]:
     return {field: artifact.payload.get(field) for field in fields}
 
 
+def _brief_projection(brief: IncubationBrief) -> dict[str, object]:
+    """Project facts without repeating per-fact envelope provenance.
+
+    Exact provenance and parent bindings remain in the immutable brief and its
+    artifact envelope. The strategy model needs the authorized statements and
+    their fact roles, not a copy of the same artifact id on every statement.
+    """
+
+    return {
+        "subject_expression": brief.subject_expression,
+        "business_facts": [fact.statement for fact in brief.business_facts],
+        "capabilities": [fact.statement for fact in brief.capabilities],
+        "resources": [fact.statement for fact in brief.resources],
+        "constraints": [fact.statement for fact in brief.constraints],
+        "goals": [fact.statement for fact in brief.goals],
+        "preferences": [fact.statement for fact in brief.preferences],
+        "prohibited_assumptions": list(brief.prohibited_assumptions),
+        "unknowns": list(brief.unknowns),
+    }
+
+
 def _user_fact_boundary_projection(brief: IncubationBrief) -> dict[str, object]:
     return {
         "allowed_user_fact_statements": [fact.statement for fact in brief.all_facts()],
         "confirmed_capabilities": [fact.statement for fact in brief.capabilities],
         "confirmed_resources": [fact.statement for fact in brief.resources],
         "prohibited_assumptions": list(brief.prohibited_assumptions),
+    }
+
+
+def _account_audience_projection(artifact: ArtifactEnvelope) -> dict[str, object]:
+    decision, route = _selected_audience_route(artifact)
+    return {
+        "schema_version": decision.schema_version,
+        "decision_status": decision.decision_status,
+        "subject_kind": decision.subject.subject_kind,
+        "subject_expression": decision.subject.subject_expression,
+        "selected_option_id": decision.selected_option_id,
+        "selected_route": route.model_dump(mode="json"),
     }
 
 
@@ -451,6 +540,7 @@ def _render_model_input(
     content_world_artifact: ArtifactEnvelope,
     benchmark_evidence_artifacts: tuple[ArtifactEnvelope, ...],
     audience_evidence_artifacts: tuple[ArtifactEnvelope, ...],
+    audience_decision_artifact: ArtifactEnvelope | None,
     previous_judgment_artifact: ArtifactEnvelope | None,
 ) -> str:
     brief = IncubationBrief.model_validate(brief_artifact.payload)
@@ -470,18 +560,27 @@ def _render_model_input(
         "allowed_basis_artifact_ids": [
             brief_artifact.artifact_id,
             content_world_artifact.artifact_id,
+            *((audience_decision_artifact.artifact_id,) if audience_decision_artifact is not None else ()),
             *(artifact.artifact_id for artifact in benchmark_evidence_artifacts),
             *(artifact.artifact_id for artifact in audience_evidence_artifacts),
             *((previous_judgment_artifact.artifact_id,) if previous_judgment_artifact is not None else ()),
         ],
         "incubation_brief": _artifact_input(
             brief_artifact,
-            payload=brief_artifact.payload,
+            payload=_brief_projection(brief),
         ),
         "user_fact_boundary": _user_fact_boundary_projection(brief),
         "candidate_content_map": _artifact_input(
             content_world_artifact,
             payload=_content_world_projection(content_world_artifact),
+        ),
+        "selected_account_audience": (
+            _artifact_input(
+                audience_decision_artifact,
+                payload=_account_audience_projection(audience_decision_artifact),
+            )
+            if audience_decision_artifact is not None
+            else None
         ),
         "benchmark_evidence": benchmark_shells,
         "audience_evidence": audience_shells,
@@ -545,6 +644,7 @@ async def generate_incubation_judgment(
     source_run_id: str,
     logical_account: LogicalAccountRef | None = None,
     account: PlatformAccountRef | None = None,
+    audience_decision_artifact: ArtifactEnvelope | None = None,
     benchmark_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
     audience_evidence_artifacts: tuple[ArtifactEnvelope, ...] = (),
     previous_judgment_artifact: ArtifactEnvelope | None = None,
@@ -565,6 +665,16 @@ async def generate_incubation_judgment(
     )
     IncubationBrief.model_validate(brief_artifact.payload)
     _required_world_version(content_world_artifact)
+    if audience_decision_artifact is not None:
+        _require_parent(
+            audience_decision_artifact,
+            project=project,
+            artifact_type="account_audience_decision",
+            label="account audience",
+        )
+        if audience_decision_artifact.logical_account != logical_account:
+            raise ValueError("account audience logical account must match the requested logical account")
+        _selected_audience_route(audience_decision_artifact)
 
     if previous_judgment_artifact is not None:
         _require_parent(
@@ -599,6 +709,7 @@ async def generate_incubation_judgment(
     parent_artifacts = (
         brief_artifact,
         content_world_artifact,
+        *((audience_decision_artifact,) if audience_decision_artifact is not None else ()),
         *benchmark_evidence_artifacts,
         *audience_evidence_artifacts,
         *((previous_judgment_artifact,) if previous_judgment_artifact is not None else ()),
@@ -614,6 +725,7 @@ async def generate_incubation_judgment(
                 content_world_artifact=content_world_artifact,
                 benchmark_evidence_artifacts=benchmark_evidence_artifacts,
                 audience_evidence_artifacts=audience_evidence_artifacts,
+                audience_decision_artifact=audience_decision_artifact,
                 previous_judgment_artifact=previous_judgment_artifact,
             )
         ),
@@ -646,6 +758,7 @@ async def generate_incubation_judgment(
                 *benchmark_evidence_artifacts,
                 *audience_evidence_artifacts,
             ),
+            audience_decision_artifact=audience_decision_artifact,
             previous_judgment_artifact=previous_judgment_artifact,
         )
     except (ValidationError, TypeError, ValueError) as error:
@@ -660,6 +773,7 @@ async def generate_incubation_judgment(
         judgment=judgment,
         brief_artifact=brief_artifact,
         content_world_artifact=content_world_artifact,
+        audience_decision_artifact=audience_decision_artifact,
         evidence_artifacts=(
             *benchmark_evidence_artifacts,
             *audience_evidence_artifacts,

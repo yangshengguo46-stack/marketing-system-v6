@@ -4,7 +4,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol
 
-from deerflow.incubation.brief_runtime import build_minimal_incubation_brief
+from deerflow.incubation.account_audience import (
+    AccountAudienceDecision,
+    MarketingSubjectSnapshot,
+)
+from deerflow.incubation.brief_runtime import (
+    build_minimal_incubation_brief,
+    build_subject_incubation_brief,
+)
 from deerflow.incubation.content_run import seal_content_run_artifacts
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
@@ -81,7 +88,12 @@ def _proposal_parent_artifacts(
     *,
     proposal_artifact: ArtifactEnvelope,
     artifacts: list[ArtifactEnvelope],
-) -> tuple[ArtifactEnvelope, ArtifactEnvelope, tuple[ArtifactEnvelope, ...]]:
+) -> tuple[
+    ArtifactEnvelope,
+    ArtifactEnvelope,
+    ArtifactEnvelope | None,
+    tuple[ArtifactEnvelope, ...],
+]:
     by_id = {artifact.artifact_id: artifact for artifact in artifacts}
     parents: list[ArtifactEnvelope] = []
     for parent in proposal_artifact.parents:
@@ -95,10 +107,27 @@ def _proposal_parent_artifacts(
         parents.append(artifact)
     briefs = tuple(artifact for artifact in parents if artifact.artifact_type == "incubation_brief")
     maps = tuple(artifact for artifact in parents if artifact.artifact_type == "content_map_candidate")
+    audience_decisions = tuple(artifact for artifact in parents if artifact.artifact_type == "account_audience_decision")
     if len(briefs) != 1 or len(maps) != 1:
         raise ValueError("account strategy proposal requires exactly one brief and candidate map")
-    evidence = tuple(artifact for artifact in parents if artifact.artifact_type not in {"incubation_brief", "content_map_candidate"})
-    return briefs[0], maps[0], evidence
+    if len(audience_decisions) > 1:
+        raise ValueError("account strategy proposal has multiple audience decisions")
+    evidence = tuple(
+        artifact
+        for artifact in parents
+        if artifact.artifact_type
+        not in {
+            "incubation_brief",
+            "content_map_candidate",
+            "account_audience_decision",
+        }
+    )
+    return (
+        briefs[0],
+        maps[0],
+        audience_decisions[0] if audience_decisions else None,
+        evidence,
+    )
 
 
 async def confirm_account_strategy(
@@ -137,7 +166,12 @@ async def confirm_account_strategy(
     if selected is None:
         raise ValueError("unknown account route option")
 
-    brief_artifact, content_map_artifact, evidence_artifacts = _proposal_parent_artifacts(
+    (
+        brief_artifact,
+        content_map_artifact,
+        audience_decision_artifact,
+        evidence_artifacts,
+    ) = _proposal_parent_artifacts(
         proposal_artifact=current.judgment_artifact,
         artifacts=artifacts,
     )
@@ -161,6 +195,7 @@ async def confirm_account_strategy(
         judgment=confirmed,
         brief_artifact=brief_artifact,
         content_world_artifact=content_map_artifact,
+        audience_decision_artifact=audience_decision_artifact,
         evidence_artifacts=evidence_artifacts,
         previous_judgment_artifact=current.judgment_artifact,
         logical_account=logical_account,
@@ -198,6 +233,9 @@ async def prepare_account_strategy(
     source_run_id: str,
     account: PlatformAccountRef | None = None,
     prohibited_assumptions: tuple[str, ...] = (),
+    marketing_subject: MarketingSubjectSnapshot | None = None,
+    subject_parent_artifacts: tuple[ArtifactEnvelope, ...] = (),
+    audience_decision_artifact: ArtifactEnvelope | None = None,
 ) -> PreparedAccountStrategy:
     """Create or reuse the project's versioned account-incubation judgment.
 
@@ -224,16 +262,45 @@ async def prepare_account_strategy(
     world = bundle.content_world
     if world is None or world.content_root is None:
         raise ValueError("account strategy requires a candidate content map")
-    brief_artifact = build_minimal_incubation_brief(
-        project=project,
-        verbatim_user_request=verbatim_user_request,
-        source_object=world.source_object,
-        created_at=created_at,
-        source_thread_id=source_thread_id,
-        source_run_id=source_run_id,
-        logical_account=logical_account,
-        prohibited_assumptions=prohibited_assumptions,
-    )
+    if marketing_subject is None:
+        if audience_decision_artifact is not None or subject_parent_artifacts:
+            raise ValueError("audience and subject parents require a marketing subject")
+        brief_artifact = build_minimal_incubation_brief(
+            project=project,
+            verbatim_user_request=verbatim_user_request,
+            source_object=world.source_object,
+            created_at=created_at,
+            source_thread_id=source_thread_id,
+            source_run_id=source_run_id,
+            logical_account=logical_account,
+            prohibited_assumptions=prohibited_assumptions,
+        )
+    else:
+        marketing_subject = MarketingSubjectSnapshot.model_validate(marketing_subject.model_dump(mode="python"))
+        if audience_decision_artifact is None:
+            raise ValueError("a marketing subject requires its selected audience decision")
+        if audience_decision_artifact.artifact_type != "account_audience_decision":
+            raise ValueError("expected an account audience decision")
+        if audience_decision_artifact.project != project:
+            raise ValueError("account audience project must match strategy project")
+        if audience_decision_artifact.logical_account != logical_account:
+            raise ValueError("account audience logical account must match strategy account")
+        audience_decision = AccountAudienceDecision.model_validate(audience_decision_artifact.payload)
+        if audience_decision.decision_status not in {"resolved", "confirmed"}:
+            raise ValueError("account strategy requires a resolved audience")
+        if audience_decision.subject != marketing_subject:
+            raise ValueError("account audience subject must match the strategy subject")
+        brief_artifact = build_subject_incubation_brief(
+            project=project,
+            logical_account=logical_account,
+            subject=marketing_subject,
+            source_object=world.source_object,
+            parent_artifacts=subject_parent_artifacts,
+            created_at=created_at,
+            source_thread_id=source_thread_id,
+            source_run_id=source_run_id,
+            prohibited_assumptions=prohibited_assumptions,
+        )
     brief_artifact = await repository.put_artifact(brief_artifact)
 
     artifacts = await repository.list_artifacts(
@@ -252,6 +319,7 @@ async def prepare_account_strategy(
     current_inputs = (
         brief_artifact,
         content_map_artifact,
+        *((audience_decision_artifact,) if audience_decision_artifact is not None else ()),
         *selected_evidence.benchmark_evidence_artifacts,
         *selected_evidence.audience_evidence_artifacts,
     )
@@ -262,6 +330,7 @@ async def prepare_account_strategy(
         project=project,
         brief_artifact=brief_artifact,
         content_world_artifact=content_map_artifact,
+        audience_decision_artifact=audience_decision_artifact,
         structured_model=structured_model,
         benchmark_evidence_artifacts=selected_evidence.benchmark_evidence_artifacts,
         audience_evidence_artifacts=selected_evidence.audience_evidence_artifacts,

@@ -810,13 +810,25 @@ They cannot overwrite the user's words, classify free-text branches, replace the
 content root, inject denied facts into the project Brief, or decide positioning, audience, format,
 or monetization.
 
-Long-lived account judgment belongs to the separate `develop_account_strategy` tool. It uses
-an owner-validated selected project when present. When the ordinary chat entry has no project
-selection yet, the first strategy request lazily creates a deterministic internal project for
-that owner and thread; later runs rehydrate it from the ledger. This needs neither a project UI
-nor a bound or logged-in platform account. It combines the candidate map with project facts and
-any formally accepted benchmark or audience evidence, then proposes two to five coherent account
-routes. Each route joins the long-term content
+Long-lived account judgment belongs to the separate `develop_account_strategy` tool. It first
+creates a `MarketingSubjectSnapshot`: an ordinary business reads only user/project facts, while an
+explicit reference to the current Agent reads a server-owned, versioned `HostProductProfile` of
+product facts, capabilities, accepted evidence, and constraints. A second-person self-reference is
+therefore not sent to semantic analysis as an unknown customer business, and the model cannot grant
+the product capabilities that are absent from that profile.
+Before choosing a content root, an `AccountAudienceDecision` separates payer or contracting party,
+decision maker, user or beneficiary, the people the business must influence, and the people who may
+keep watching the content. An already explicit commercial relationship resolves to one route. A
+material wholesale/retail, B2B/B2C, channel/end-user, or payer/user ambiguity returns two or three
+audience routes and stops until the user chooses an exact option. Unsupported demographics remain
+unknown. Only the resolved audience is projected into content mapping, benchmark discovery, and
+strategy.
+The tool uses an owner-validated selected project when present. When the ordinary chat entry has no
+project selection yet, the first strategy request lazily creates a deterministic internal project
+for that owner and thread; later runs rehydrate it from the ledger. This needs neither a project UI
+nor a bound or logged-in platform account. It combines the resolved audience and candidate map with
+project facts and any formally accepted benchmark or observed-audience evidence, then proposes two
+to five coherent account routes. Each route joins the long-term content
 subject, audience promise, persona, primary and supporting presentation forms, business
 connection, monetization hypothesis, resources, and tradeoffs. The Agent recommends one route,
 but recommendation remains `proposed`; it is not user consent. Only

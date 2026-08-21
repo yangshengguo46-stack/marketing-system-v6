@@ -189,6 +189,8 @@ _FRAMEWORK_STRUCTURED_TAGS = [
     "content_intelligence",
     "content_intelligence_method",
     "content_intelligence_research",
+    "account_start_router",
+    "account_audience",
     # Dedicated content/incubation calls use these wrappers as internal policy
     # or structured-task boundaries. User or fetched text must not impersonate
     # them when it later crosses the shared sanitization primitive.

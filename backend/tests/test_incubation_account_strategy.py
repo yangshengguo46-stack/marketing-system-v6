@@ -19,6 +19,13 @@ from deerflow.incubation import (
     prepare_account_strategy,
     select_current_account_strategy,
 )
+from deerflow.incubation.account_audience import (
+    AccountAudienceProposalDraft,
+    AccountAudienceRouteDraft,
+    MarketingSubjectSnapshot,
+    compile_account_audience_decision,
+    seal_account_audience_decision,
+)
 
 NOW = datetime(2026, 8, 18, 8, 0, tzinfo=UTC)
 PROJECT = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
@@ -136,6 +143,101 @@ def _proposal_payload(
         "basis_artifact_ids": list(basis_ids),
         "unknowns": ["尚未取得真实受众反馈。"],
     }
+
+
+def _resolved_audience_artifact(repository: _MemoryRepository) -> tuple[MarketingSubjectSnapshot, ArtifactEnvelope]:
+    subject = MarketingSubjectSnapshot(
+        subject_kind="user_business",
+        subject_expression="我是做黄金礼品的，我要怎么起号？",
+        source_user_request="我是做黄金礼品的，我要怎么起号？",
+        business_facts=("我是做黄金礼品的，我要怎么起号？",),
+    )
+    route = AccountAudienceRouteDraft(
+        option_id="gift_decision_makers",
+        name="送礼决策者",
+        business_role="提供黄金礼品解决方案的从业者",
+        market_relationship="为需要维系关系和表达心意的人提供礼品选择",
+        account_objective="建立懂送礼与人情分寸的信任，并承接真实礼品需求",
+        payer_or_contracting_party="为具体关系和场合购买礼品的人",
+        decision_makers="决定送给谁、送什么和如何表达的人",
+        users_or_beneficiaries="送礼者、收礼者及其所在的关系",
+        target_people="正在为具体关系和场合选择礼物的人",
+        target_need="判断送什么、怎么送才合适且不失分寸",
+        desired_action="在出现礼品需求时主动咨询用户已有的黄金礼品业务",
+        market_scope="用户未说明经营地区，首版保留为未知",
+        content_audience="关心人情、礼节、关系分寸和送礼判断的人",
+        recurring_interest="具体人物与事件中的关系、分寸、礼仪和秩序",
+        rationale="这条路线把礼品业务的决策者与长期内容受众分开。",
+        confidence="low",
+        unknowns=("具体地区和客单结构未知",),
+    )
+    decision = compile_account_audience_decision(
+        subject=subject,
+        draft=AccountAudienceProposalDraft(
+            route_options=(route,),
+            recommended_option_id=route.option_id,
+            material_choice_required=False,
+            choice_reason="当前业务表达已经形成一条可继续的冷启动假设。",
+        ),
+    )
+    artifact = seal_account_audience_decision(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        decision=decision,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="audience-1",
+    )
+    repository.artifacts[artifact.artifact_id] = artifact
+    return subject, artifact
+
+
+@pytest.mark.asyncio
+async def test_selected_audience_is_a_parent_and_overrides_model_business_drift() -> None:
+    repository = _MemoryRepository()
+    subject, audience_artifact = _resolved_audience_artifact(repository)
+    bundle = _bundle()
+    map_version = bundle.content_world.content_map_version_id()
+    seen_input: dict[str, object] = {}
+
+    async def structured_model(schema, messages):
+        nonlocal seen_input
+        seen_input = json.loads(messages[1].content)
+        basis_ids = tuple(seen_input["allowed_basis_artifact_ids"][:2])
+        payload = _proposal_payload(map_version=map_version, basis_ids=basis_ids)
+        payload["business_intent"] = {
+            "business_role": "不相关的零售商",
+            "account_objective": "单纯追求曝光",
+            "target_people": "所有人",
+            "target_need": "未知",
+            "desired_action": "点赞",
+            "market_scope": "全球",
+            "rationale": "模型自行改写的错误路线。",
+            "confidence": "high",
+            "unknowns": [],
+        }
+        return payload
+
+    prepared = await prepare_account_strategy(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        repository=repository,
+        bundle=bundle,
+        verbatim_user_request=subject.source_user_request,
+        marketing_subject=subject,
+        audience_decision_artifact=audience_artifact,
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-1",
+    )
+
+    assert seen_input["selected_account_audience"]["artifact_id"] == audience_artifact.artifact_id
+    assert audience_artifact.artifact_id in seen_input["allowed_basis_artifact_ids"]
+    assert prepared.judgment.business_intent is not None
+    assert prepared.judgment.business_intent.target_people == "正在为具体关系和场合选择礼物的人"
+    assert prepared.judgment.business_intent.account_objective.startswith("建立懂送礼")
+    assert audience_artifact.to_parent_ref() in prepared.judgment_artifact.parents
 
 
 @pytest.mark.asyncio

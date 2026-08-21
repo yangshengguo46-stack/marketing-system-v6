@@ -1732,9 +1732,14 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
     assert "Use `analyze_content_intelligence` for business semantics only" in normalized_section
     assert "answer_goal=`content_opportunities`" in normalized_section
     assert "answer_goal=`one_shootable_topic`" in normalized_section
-    assert "sole owner of positioning, audience, persona, account-level presentation, and monetization hypotheses" in normalized_section
+    assert "cold-start business and content audience before content-root or map work" in normalized_section
     assert "Use `develop_account_strategy` for account-starting or positioning requests" in normalized_section
     assert "call `develop_account_strategy` as the first domain action" in normalized_section
+    assert "subject_ref=`agent_self`" in normalized_section
+    assert "subject_ref=`user_business`" in normalized_section
+    assert "server-owned product profile" in normalized_section
+    assert "audience_option_id" in normalized_section
+    assert "must stop before content-root, map, benchmark, or strategy work" in normalized_section
     assert "Do not run generic web research or competitor discovery before that first proposal" in normalized_section
     assert "A candidate content map is input evidence, not an adopted account position" in normalized_section
     assert "never creates, confirms, or revises account strategy" in normalized_section
@@ -1764,6 +1769,18 @@ def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
         "bridge path",
     ):
         assert attention_leak not in content_section.lower()
+
+
+def test_lead_routes_account_starting_before_manual_clarification() -> None:
+    router = SYSTEM_PROMPT_TEMPLATE.split("<account_start_router>", 1)[1].split("</account_start_router>", 1)[0]
+    normalized_router = " ".join(router.split())
+
+    assert SYSTEM_PROMPT_TEMPLATE.index("<account_start_router>") < SYSTEM_PROMPT_TEMPLATE.index("<clarification_system>")
+    assert "call `develop_account_strategy` as the first domain action" in normalized_router
+    assert "Do not manually interview the user first" in normalized_router
+    assert "subject_ref=`agent_self`" in normalized_router
+    assert "subject_ref=`user_business`" in normalized_router
+    assert "The tool itself returns a bounded audience choice" in normalized_router
 
 
 def test_confirmed_route_reference_keeps_only_the_selected_name_and_id() -> None:

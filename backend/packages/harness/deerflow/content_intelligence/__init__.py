@@ -1,5 +1,6 @@
 from deerflow.content_intelligence.analyzer import (
     AnalysisFocus,
+    ContentAudienceContext,
     ContentIntelligenceDraft,
     ContentIntelligenceRequest,
     ContentRootCandidateSetDraft,
@@ -89,6 +90,7 @@ __all__ = [
     "BusinessSemanticView",
     "ComprehensionRecord",
     "ContentDimension",
+    "ContentAudienceContext",
     "ContentIntelligenceDraft",
     "ContentIntelligenceRequest",
     "ContentIntelligenceBundle",

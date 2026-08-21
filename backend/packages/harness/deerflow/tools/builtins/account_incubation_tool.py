@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from deerflow.content_intelligence import (
     AnalysisFocus,
+    ContentAudienceContext,
     ContentIntelligenceRequest,
     IncubationSkillProfileError,
     analyze_content_intelligence,
@@ -27,7 +28,17 @@ from deerflow.incubation import (
     prepare_account_strategy,
     seal_benchmark_snapshot,
 )
+from deerflow.incubation.account_audience import (
+    MarketingSubjectSnapshot,
+    prepare_account_audience,
+    render_account_audience_decision,
+)
 from deerflow.incubation.account_strategy_presentation import render_account_strategy
+from deerflow.incubation.host_product_profile import (
+    build_agent_self_subject,
+    current_host_product_profile,
+    seal_host_product_profile,
+)
 from deerflow.tools.builtins.douyin_public_benchmark_evidence import (
     collect_public_douyin_benchmark,
 )
@@ -85,18 +96,22 @@ def _terminal_account_strategy_command(
 async def develop_account_strategy_tool(
     runtime: Runtime,
     user_request: str,
+    subject_ref: Literal["user_business", "agent_self"],
+    audience_option_id: str | None = None,
     incubation_skill: str | None = None,
 ) -> Command:
     """Create or revise the current thread project's long-lived account incubation strategy.
 
-    This is the only high-level tool that decides positioning, audience,
-    persona, account-level presentation, and monetization hypotheses. It uses a
-    candidate content map plus separately stored benchmark and audience
-    evidence. It does not create a daily topic, script, production plan, or
-    publication.
+    This high-level tool first resolves the cold-start business/content
+    audience, then proposes positioning, persona, account-level presentation,
+    and monetization hypotheses. It uses a candidate content map plus separately
+    stored benchmark and observed-audience evidence. It does not create a daily
+    topic, script, production plan, or publication.
 
     Args:
         user_request: The user's current account-starting or positioning request, copied verbatim.
+        subject_ref: Whether the account belongs to the user's business or to the current Agent product itself.
+        audience_option_id: Exact pending audience route selected by the user, when the prior response requested a choice.
         incubation_skill: Exact name of one already discovered and loaded vertical incubation Skill, when applicable.
     """
 
@@ -169,31 +184,116 @@ async def develop_account_strategy_tool(
             tool_call_id=runtime.tool_call_id,
         )
 
-    incubation_profile = None
-    if incubation_skill is not None:
-        try:
-            incubation_profile = load_incubation_skill_profile(
-                incubation_skill,
-                user_id=owner_user_id,
-            )
-        except IncubationSkillProfileError as exc:
-            logger.warning(
-                "Selected incubation skill profile was unavailable: %s",
-                type(exc).__name__,
-            )
-            return _terminal_account_strategy_command(
-                "当前选中的行业孵化 Skill 不可用，因此没有用一份未校验的行业经验生成定位。",
-                tool_call_id=runtime.tool_call_id,
-            )
-
     try:
         model = create_content_intelligence_model(runtime.config)
+        created_at = datetime.now(UTC)
+        subject: MarketingSubjectSnapshot | None = None
+        subject_parent_artifacts = ()
+        if audience_option_id is None:
+            if subject_ref == "agent_self":
+                profile_artifact = seal_host_product_profile(
+                    project=project,
+                    logical_account=logical_account,
+                    profile=current_host_product_profile(),
+                    created_at=created_at,
+                    source_thread_id=thread_id,
+                    source_run_id=run_id,
+                )
+                profile_artifact = await repository.put_artifact(profile_artifact)
+                subject_parent_artifacts = (profile_artifact,)
+                subject = build_agent_self_subject(
+                    user_request=user_request,
+                    profile_artifact=profile_artifact,
+                )
+            else:
+                subject = MarketingSubjectSnapshot(
+                    subject_kind="user_business",
+                    subject_expression=user_request,
+                    source_user_request=user_request,
+                    business_facts=(user_request,),
+                )
+
+        audience = await prepare_account_audience(
+            project=project,
+            logical_account=logical_account,
+            repository=repository,
+            subject=subject,
+            structured_model=structured_model_runner(model, runtime.config),
+            option_id=audience_option_id,
+            expected_subject_kind=subject_ref,
+            subject_parent_artifacts=subject_parent_artifacts,
+            created_at=created_at,
+            source_thread_id=thread_id,
+            source_run_id=run_id,
+        )
+        if audience.decision.subject.subject_kind != subject_ref:
+            raise ValueError("the selected audience route belongs to a different marketing subject")
+        if audience.decision.decision_status == "proposed":
+            artifact = audience.decision_artifact
+            return _terminal_account_strategy_command(
+                render_account_audience_decision(audience.decision),
+                tool_call_id=runtime.tool_call_id,
+                persistence={
+                    "status": "reused" if audience.reused else "stored",
+                    "project_id": project.project_id,
+                    "logical_account_id": logical_account.logical_account_id,
+                    "artifact_type": artifact.artifact_type,
+                    "artifact_id": artifact.artifact_id,
+                    "content_sha256": artifact.content_sha256,
+                },
+            )
+
+        subject = audience.decision.subject
+        selected_audience = audience.decision.selected_route()
+        if selected_audience is None:
+            raise ValueError("resolved account audience has no selected route")
+        if subject.subject_kind == "agent_self" and not subject_parent_artifacts:
+            artifacts = await repository.list_artifacts(
+                project,
+                logical_account=logical_account,
+            )
+            by_id = {artifact.artifact_id: artifact for artifact in artifacts}
+            try:
+                subject_parent_artifacts = tuple(by_id[artifact_id] for artifact_id in subject.basis_artifact_ids)
+            except KeyError as exc:
+                raise ValueError("host product profile is unavailable") from exc
+
+        incubation_profile = None
+        if incubation_skill is not None:
+            try:
+                incubation_profile = load_incubation_skill_profile(
+                    incubation_skill,
+                    user_id=owner_user_id,
+                )
+            except IncubationSkillProfileError as exc:
+                logger.warning(
+                    "Selected incubation skill profile was unavailable: %s",
+                    type(exc).__name__,
+                )
+                return _terminal_account_strategy_command(
+                    "当前选中的行业孵化 Skill 不可用，因此没有用一份未校验的行业经验生成定位。",
+                    tool_call_id=runtime.tool_call_id,
+                )
+
+        audience_context = ContentAudienceContext(
+            business_role=selected_audience.business_role,
+            payer_or_contracting_party=selected_audience.payer_or_contracting_party,
+            decision_makers=selected_audience.decision_makers,
+            users_or_beneficiaries=selected_audience.users_or_beneficiaries,
+            target_people=selected_audience.target_people,
+            target_need=selected_audience.target_need,
+            desired_action=selected_audience.desired_action,
+            market_scope=selected_audience.market_scope,
+            content_audience=selected_audience.content_audience,
+            recurring_interest=selected_audience.recurring_interest,
+        )
         bundle = await analyze_content_intelligence(
             ContentIntelligenceRequest(
-                user_request=user_request,
-                subject_expression=user_request,
+                user_request=subject.subject_expression,
+                subject_expression=subject.subject_expression,
                 focus=AnalysisFocus.CONTENT_WORLD,
                 source_materials=(),
+                audience_context=audience_context,
             ),
             model=model,
             runnable_config=runtime.config,
@@ -206,7 +306,7 @@ async def develop_account_strategy_tool(
             try:
                 benchmark = await collect_public_douyin_benchmark(
                     runtime,
-                    query=content_root.strip(),
+                    query=f"{content_root.strip()} {selected_audience.content_audience}"[:240],
                     max_posts=6,
                 )
                 if benchmark is not None:
@@ -229,9 +329,12 @@ async def develop_account_strategy_tool(
             logical_account=logical_account,
             repository=repository,
             bundle=bundle,
-            verbatim_user_request=user_request,
+            verbatim_user_request=subject.source_user_request,
+            marketing_subject=subject,
+            subject_parent_artifacts=subject_parent_artifacts,
+            audience_decision_artifact=audience.decision_artifact,
             structured_model=structured_model_runner(model, runtime.config),
-            created_at=datetime.now(UTC),
+            created_at=created_at,
             source_thread_id=thread_id,
             source_run_id=run_id,
         )
