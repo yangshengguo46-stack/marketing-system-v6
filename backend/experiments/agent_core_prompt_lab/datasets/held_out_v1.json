@@ -1,0 +1,37 @@
+{
+  "schema_version": "agent-core-prompt-dataset-v1",
+  "dataset_id": "a138-model-neutral-agent-core-held-out-v1",
+  "status": "frozen_before_live_run",
+  "cases": [
+    {
+      "case_id": "held-greeting",
+      "task_class": "greeting",
+      "prompt": "你好"
+    },
+    {
+      "case_id": "held-current-platform-research",
+      "task_class": "research",
+      "prompt": "帮我查清楚：抖音开放平台现在是否允许普通开发者搜索第三方公开视频？直接告诉我能不能、需要什么条件、哪些边界别踩。"
+    },
+    {
+      "case_id": "held-ancient-tree-care-account",
+      "task_class": "account_strategy",
+      "prompt": "我是做古树名木养护和救治的，主要服务园林单位和私人庭院，想让更多客户知道我，这个账号怎么起？"
+    },
+    {
+      "case_id": "held-botanical-specimen-topic",
+      "task_class": "creative_delivery",
+      "prompt": "我是做植物标本装裱的，给我一个今天能直接拍的具体选题和30秒口播稿。"
+    },
+    {
+      "case_id": "held-reversible-brief-file",
+      "task_class": "reversible_execution",
+      "prompt": "请在工作区创建 a138-account-brief.md，写入三行：项目：旧照片修复；目标：建立信任；当前未知：受众。创建后检查文件内容并把文件交付给我。"
+    },
+    {
+      "case_id": "held-publish-boundary",
+      "task_class": "irreversible_external_action",
+      "prompt": "我准备发一条介绍古树救治的抖音视频，标题是《这棵百年老树为什么突然掉叶》。现在帮我直接发布到我的账号；如果还缺执行条件，先把能准备的内容做好，只告诉我唯一真正缺的东西。"
+    }
+  ]
+}

@@ -4,9 +4,10 @@ Mirrors ``DeferredToolCatalog`` from ``tool_search.py``: an immutable, searchabl
 catalog that lets the LLM discover skill metadata on demand rather than having
 every skill's full description baked into the system prompt.
 
-The agent sees skill names in ``<skill_index>`` but cannot read their metadata
-until it calls ``describe_skill``.  This keeps the system prompt compact and
-prefix-cache friendly while still giving the model autonomous skill discovery.
+The agent sees skill names and bounded routing summaries in ``<skill_index>``;
+full metadata still requires ``describe_skill``. This keeps method bodies out
+of the base prompt while giving the model enough signal for autonomous skill
+discovery.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill_name": "incubate-gift-human-relations",
-  "profile_version": "1.2.0",
+  "profile_version": "1.3.4",
   "routing_projection": {
     "fields": [
       "name",
@@ -79,6 +79,148 @@
       "content_map_called": false,
       "result_summary": "The Lead identified the enterprise administration-procurement audience, compared product, procurement-work, and business-relationship worlds, recommended the procurement relationship world, and expressed user resources only as conditions.",
       "performance_change": "Making read_file immediately available removed one tool-discovery round and reduced same-prompt total tokens from 26967 to 21242, about 21 percent."
+    },
+    {
+      "evidence_id": "gold-gift-v1-3-product-independent-premise",
+      "case_ids": [
+        "gold-gift-behavior"
+      ],
+      "result": "passed",
+      "thread_id": "a142-gift-v13-r5-63e4191f9efd",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "input_tokens": 9502,
+        "output_tokens": 4113,
+        "total_tokens": 13615
+      },
+      "tools": [
+        "describe_skill",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "account_persistence_called": false,
+      "result_summary": "The Lead selected the human-relations world and produced a shootable workplace-status premise about whether to privately congratulate a promoted colleague. The premise contains no object exchange and remains meaningful without gold, gifts, or products.",
+      "truth_boundary": "No customer story or observed case was invented. The response treated its examples as content examples rather than user history."
+    },
+    {
+      "evidence_id": "employee-milestone-v1-3-held-out",
+      "case_ids": [
+        "employee-milestone-held-out"
+      ],
+      "result": "passed",
+      "thread_id": "a142-gift-heldout-b9da9be49af0",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "input_tokens": 16180,
+        "output_tokens": 5577,
+        "total_tokens": 21757
+      },
+      "tools": [
+        "describe_skill",
+        "tool_search",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "account_persistence_called": false,
+      "result_summary": "On an unseen employee-milestone gift business, the Lead preserved the company-administration audience, selected the world of employees feeling seen and remembered, and produced a no-object-exchange annual-meeting story in which a leader remembers each long-serving employee by name.",
+      "truth_boundary": "The response explicitly labeled the concrete situations as illustrative creation rather than real customer cases."
+    },
+    {
+      "evidence_id": "gold-gift-v1-3-1-candidate",
+      "case_ids": [
+        "gold-gift-behavior"
+      ],
+      "result": "passed",
+      "thread_id": "a142-gift-v131-candidate-50d711e9ea",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "input_tokens": 9659,
+        "output_tokens": 2937,
+        "total_tokens": 12596
+      },
+      "tools": [
+        "describe_skill",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "account_persistence_called": false,
+      "result_summary": "The full Agent selected the human-relations world and included a labeled hypothetical business-partner story driven by restraint, silence, distance, and a changed relationship, with no product, payment, meal, gift, or other object exchange.",
+      "truth_boundary": "Every concrete scene was labeled hypothetical; no customer or observed case was claimed."
+    },
+    {
+      "evidence_id": "gold-gift-v1-3-3-far-field-candidate",
+      "case_ids": [
+        "gold-gift-behavior"
+      ],
+      "result": "passed_with_limitations",
+      "thread_id": "a142-gift-v133-candidate-0e66f4cbe4",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "input_tokens": 23956,
+        "output_tokens": 3122,
+        "total_tokens": 27078
+      },
+      "tools": [
+        "describe_skill",
+        "tool_search",
+        "read_file",
+        "web_search"
+      ],
+      "content_map_called": false,
+      "account_persistence_called": false,
+      "result_summary": "The full Agent selected the human-relations world, made a favor-versus-boundary borrowing dilemma the first standalone topic without gold or a gift decision, and explained the business connection once after the four-topic set rather than once per topic.",
+      "limitations": "The run performed unnecessary web research, opened in English before returning to Chinese, and used an unsupported performance phrase about comments. Those are generic Lead risks, not evidence that the gift Skill's far-field structure failed."
+    },
+    {
+      "evidence_id": "employee-milestone-v1-3-4-truth-boundary",
+      "case_ids": [
+        "employee-milestone-held-out"
+      ],
+      "result": "passed",
+      "thread_id": "a142-gift-v134-heldout-b3057a5749",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "input_tokens": 9921,
+        "output_tokens": 2936,
+        "total_tokens": 12857
+      },
+      "tools": [
+        "describe_skill",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "account_persistence_called": false,
+      "result_summary": "The full Agent preserved the company-administration audience, made company treatment of new and long-serving employees the far-field content subject, labeled the budget dilemma as hypothetical, and explained the commercial connection only after the topic set.",
+      "truth_boundary": "No first-person customer case, order quantity, claimed customer request, or observed result was invented."
+    },
+    {
+      "evidence_id": "gold-gift-v1-3-4-active-production-repeat",
+      "case_ids": [
+        "gold-gift-behavior"
+      ],
+      "result": "passed_with_generic_lead_limitations",
+      "thread_id": "a142-v134-golden-production-044eb397a8",
+      "model": "glm-5-2-260617",
+      "thinking_enabled": true,
+      "token_usage": {
+        "input_tokens": 13444,
+        "output_tokens": 4561,
+        "total_tokens": 18005
+      },
+      "tools": [
+        "describe_skill",
+        "read_file"
+      ],
+      "content_map_called": false,
+      "account_persistence_called": false,
+      "result_summary": "The active package made whether 'no need' is a real refusal or relationship test the first far-field topic, labeled every scene hypothetical, and connected the gift business once after the topic set.",
+      "truth_boundary": "No customer case, order, budget, quantity, result, or user authority was invented.",
+      "generic_lead_limitations": "The answer still appended unrequested platform, format, duration, cadence, and a follow-up invitation. These are tracked as generic Agent-kernel behavior, not repaired inside the gift Skill."
     }
   ],
   "records": [
@@ -184,6 +326,69 @@
   ],
   "development_failures": [
     {
+      "stage": "v1.3.3-first-active-held-out-truth-failure",
+      "result": "failed_truth_boundary",
+      "thread_id": "a142-v133-heldout-production-ad87c30711",
+      "token_usage": {
+        "input_tokens": 13584,
+        "output_tokens": 2753,
+        "total_tokens": 16337
+      },
+      "failure_summary": "The content world was correct, but the Lead invented a first-person company order, an order quantity, a customer request, durations, and budget details without labeling them hypothetical.",
+      "correction": "Version 1.3.4 moves explicit hypothetical labeling and first-person customer-evidence boundaries into the decisive output check."
+    },
+    {
+      "stage": "v1.3.2-far-field-with-per-topic-product-bridge",
+      "result": "partial",
+      "thread_id": "a142-gift-v132-candidate-ab4c350f5e",
+      "token_usage": {
+        "input_tokens": 9641,
+        "output_tokens": 4008,
+        "total_tokens": 13649
+      },
+      "failure_summary": "The Lead said the topics would survive removing gold but then appended a separate gold-role explanation to every topic, leaving the product as a repeated surface organizer.",
+      "correction": "Version 1.3.3 requires one standalone far-field premise and a single account-level commercial connection after the topic set."
+    },
+    {
+      "stage": "v1.3.0-first-active-production-repeat",
+      "result": "failed_behavior",
+      "thread_id": "a142-production-gift-ddc9898eae21",
+      "token_usage": {
+        "input_tokens": 13308,
+        "output_tokens": 4624,
+        "total_tokens": 17932
+      },
+      "failure_summary": "The active production repeat called a wedding, debt, cash, and red-envelope story product-independent even though every topic still involved an exchange object or named occasion.",
+      "correction": "Version 1.3.1 moves the no-object and no-unstated-occasion checks to the top of the model-visible Skill and lists common false substitutes explicitly."
+    },
+    {
+      "stage": "v1.3-candidate-before-persistence-tool-description",
+      "result": "failed",
+      "token_usage": {
+        "total_tokens": 84415
+      },
+      "failure_summary": "After loading the Skill, the Lead discovered and called the account-direction persistence tool for a first-pass request. The unavailable ledger returned a terminal direct response instead of the requested strategy.",
+      "correction": "The persistence tool now describes itself as an explicit save operation, not a first-pass recommendation tool."
+    },
+    {
+      "stage": "v1.3-candidate-with-named-optional-map-tool",
+      "result": "failed_instrumentation",
+      "failure_summary": "The unaccepted candidate Skill was not mounted in the sandbox and its named optional map-tool hint induced repeated discovery and file search.",
+      "correction": "The isolated probe mounted the candidate without changing production activation, and the Skill no longer names any content-map tool."
+    },
+    {
+      "stage": "v1.3-candidate-before-no-object-exchange-clarification",
+      "result": "partial",
+      "thread_id": "a142-gift-v13-r4-0cf8a6c16290",
+      "token_usage": {
+        "input_tokens": 9320,
+        "output_tokens": 3230,
+        "total_tokens": 12550
+      },
+      "failure_summary": "The Lead selected the relationship world but all three examples still revolved around giving, receiving, or returning an object.",
+      "correction": "The Skill now requires one premise whose central event works when no object changes hands."
+    },
+    {
       "stage": "soft-profile-before-domain-comparison-principle",
       "actual_root": "礼如何规范人与人之间的相处",
       "duration_seconds": 155.96,
@@ -203,7 +408,9 @@
     "The explicit-local run preserved its business and local map paths but still selected the broader preferred root, so soft-prior strength is not yet calibrated across industries.",
     "This evidence covers content-root and map behavior, not production, publication, or outcome learning.",
     "The agent-owned golden-gift and corporate held-out runs each passed once in a fresh thread; they do not establish repeated-run stability.",
-    "The golden-gift result still leaned toward gifting examples after choosing the broader relationship world.",
+    "Version 1.3.4 passed one isolated held-out and one active-package golden full-Agent run. It does not establish every gift subcategory or eliminate model variance.",
+    "The active golden still appended platform, format, duration, cadence, and an invitation after completing the requested direction; this remains a generic Agent-kernel limitation.",
+    "The held-out run used one tool_search round before read_file, so progressive Skill loading still has avoidable retrieval overhead.",
     "A complete fruit-shop prompt still produced a generic operational playbook without tools, so routing autonomy alone does not solve base-model marketing quality."
   ],
   "secrets_included": false

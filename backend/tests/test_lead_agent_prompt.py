@@ -634,11 +634,13 @@ def test_system_prompt_template_has_a_fixed_overhead_budget():
     assert len(prompt_module.SYSTEM_PROMPT_TEMPLATE.encode("utf-8")) <= 9_000
 
 
-def test_system_prompt_routes_vertical_incubation_without_domain_answers() -> None:
+def test_system_prompt_exposes_skill_capability_without_vertical_routing_rules() -> None:
     template = prompt_module.SYSTEM_PROMPT_TEMPLATE
+    normalized = " ".join(template.split())
 
-    assert "matching `incubate-*` vertical Skill" in template
-    assert "Never paste Skill prose into" in template
+    assert "{skills_section}" in template
+    assert "use tools or Skills" in normalized
+    assert "matching `incubate-*`" not in normalized
     for domain_answer in ("黄金", "三金", "彩礼", "婚礼", "人情世故"):
         assert domain_answer not in template
 
@@ -664,8 +666,9 @@ def test_apply_prompt_template_legacy_path_does_not_mention_describe_skill(monke
 
     prompt = prompt_module.apply_prompt_template(app_config=config)
 
-    # Legacy wording — tool-agnostic
-    assert "Always load the relevant skill" in prompt
+    # Legacy wording remains tool-agnostic and leaves selection to the model.
+    assert "Use a relevant Skill when it can materially improve the task" in prompt
+    assert "Always load the relevant skill" not in prompt
     # Must NOT reference the deferred tool
     assert "describe_skill(name)" not in prompt
 
@@ -675,7 +678,21 @@ def test_apply_prompt_template_deferred_path_mentions_describe_skill(monkeypatch
     reference describe_skill so the LLM knows how to discover skills."""
     config = _make_minimal_app_config()
     monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr(prompt_module, "get_or_new_skill_storage", lambda app_config=None: SimpleNamespace(load_skills=lambda enabled_only=True: []))
+    skill = Skill(
+        name="data-analysis",
+        description="Analyze uploaded tables and explain the result.",
+        license="MIT",
+        skill_dir=Path("/tmp/data-analysis"),
+        skill_file=Path("/tmp/data-analysis/SKILL.md"),
+        relative_path=Path("data-analysis"),
+        category=SkillCategory.PUBLIC,
+        enabled=True,
+    )
+    monkeypatch.setattr(
+        prompt_module,
+        "get_enabled_skills_for_config",
+        lambda app_config=None, user_id=None: [skill],
+    )
     monkeypatch.setattr(prompt_module, "get_agent_soul", lambda agent_name=None, **kwargs: "")
 
     prompt = prompt_module.apply_prompt_template(
@@ -683,7 +700,9 @@ def test_apply_prompt_template_deferred_path_mentions_describe_skill(monkeypatch
         skill_names=frozenset({"data-analysis"}),
     )
 
-    # Deferred wording — references describe_skill
+    # Deferred wording exposes only bounded routing metadata; methods load on demand.
     assert "describe_skill(name)" in prompt
-    # Must NOT contain the legacy wording
+    assert "When a listed Skill can materially improve the task" in prompt
+    assert "data-analysis: Analyze uploaded tables and explain the result." in prompt
+    # Must NOT contain the mandatory legacy wording
     assert "Always load the relevant skill" not in prompt

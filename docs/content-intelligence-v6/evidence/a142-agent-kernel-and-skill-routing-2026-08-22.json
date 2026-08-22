@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "audit_id": "A142",
+  "captured_at": "2026-08-22T16:48:00+08:00",
+  "git_head_before_commit": "d14ca51ffcc1f797c9ad01b7366a6d8d8c464736",
+  "production_kernel": {
+    "utf8_bytes": 1108,
+    "sha256": "71ac509eb9e99cab03b574ebbab83a33d54b116c6d60a951b0fd48b2c244c6ab",
+    "source_file_sha256": "5f1b279fb9969103f388bb303c8590afeb324fa25d074650901148e2b6d5648a"
+  },
+  "system_prompt_template": {
+    "utf8_bytes": 3560,
+    "sha256": "de138eaf2d7f53b01b33c211baeae69bcaf0cf68d85d5c807bdc4ffe3dbdde55"
+  },
+  "skill_index_comparison": [
+    {
+      "arm": "name_only",
+      "decision": "rejected",
+      "greeting": {
+        "thread_id": "a142-name-only-greeting-20260822",
+        "tool_calls": [],
+        "input_tokens": 3115,
+        "output_tokens": 67,
+        "total_tokens": 3182
+      },
+      "golden_gift": {
+        "thread_id": "a142-name-only-gift-20260822",
+        "total_tokens": 65208,
+        "tool_result_count": 14,
+        "tool_failure_count": 2,
+        "loaded_gift_skill": false,
+        "content_world_called": true,
+        "business_result": "failed: returned to marriage and product-selection topics"
+      }
+    },
+    {
+      "arm": "bounded_120_character_routing_summary",
+      "decision": "accepted",
+      "greeting": {
+        "thread_id": "a142-bounded-greeting-20260822",
+        "tool_calls": [],
+        "input_tokens": 3685,
+        "output_tokens": 83,
+        "total_tokens": 3768
+      },
+      "golden_gift": {
+        "thread_id": "a142-bounded-gift-20260822",
+        "tool_calls": [
+          "describe_skill",
+          "describe_skill",
+          "read_file"
+        ],
+        "tool_result_count": 3,
+        "tool_failure_count": 0,
+        "input_tokens": 13666,
+        "output_tokens": 4606,
+        "total_tokens": 18272,
+        "loaded_gift_skill": true,
+        "content_world_called": false,
+        "business_result": "passed: selected human relations and produced three product-independent shootable topics"
+      }
+    }
+  ],
+  "regression": {
+    "command_scope": [
+      "agent core prompt",
+      "lead prompt",
+      "skill catalog and discovery",
+      "deferred tools",
+      "account direction",
+      "incubation domain skill",
+      "MCP session cancellation",
+      "input sanitization"
+    ],
+    "passed": 365,
+    "failed": 0
+  },
+  "limitations": [
+    "The greeting still contains a short capability menu.",
+    "The accepted golden-gift answer still appended a consultant-style follow-up question.",
+    "The accepted answer included an unsupported absolute judgment that gold is the least-error-prone gift choice.",
+    "One golden-gift run does not establish cross-industry or repeated-run stability."
+  ],
+  "secret_values_recorded": false,
+  "raw_tool_payloads_recorded": false
+}

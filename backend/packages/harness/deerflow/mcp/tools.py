@@ -514,29 +514,46 @@ def _make_session_pool_tool(
             session_env.setdefault("TMP", str(tmp_dir))
             session_env.setdefault("TEMP", str(tmp_dir))
             session_connection["env"] = session_env
-        if session_init_timeout is not None:
-            # Cancellation here is safe: MCPSessionPool.get_session owns the
-            # teardown of a session stuck mid-creation (it signals close and
-            # waits for the owner task's __aexit__ to run in its own task),
-            # so a hung server cannot leak a session or block the turn.
-            try:
+        try:
+            if session_init_timeout is not None:
+                # Cancellation here is safe: MCPSessionPool.get_session owns the
+                # teardown of a session stuck mid-creation (it signals close and
+                # waits for the owner task's __aexit__ to run in its own task),
+                # so a hung server cannot leak a session or block the turn.
                 session = await asyncio.wait_for(
                     pool.get_session(server_name, scope_key, session_connection),
                     timeout=session_init_timeout,
                 )
-            except TimeoutError:
-                # Surface the timeout at the same log level as discovery
-                # timeouts: the tool call still fails with a TimeoutError the
-                # model can react to, but operators need the WARNING to
-                # diagnose tool-call failures caused by hung MCP sessions.
+            else:
+                session = await pool.get_session(server_name, scope_key, session_connection)
+        except TimeoutError:
+            # Surface the timeout at the same log level as discovery timeouts:
+            # the tool call still fails with a TimeoutError the model can react
+            # to, but operators need the WARNING to diagnose a hung server.
+            if session_init_timeout is not None:
                 logger.warning(
                     "MCP session initialization for server '%s' timed out after %.1fs",
                     server_name,
                     session_init_timeout,
                 )
+            raise
+        except asyncio.CancelledError as exc:
+            # A transport/session owner can finish with CancelledError even
+            # though the caller task itself was never cancelled (for example,
+            # an anyio stdio task group tears down during process startup). A
+            # BaseException escaping here becomes LangGraph NodeCancelledError
+            # and aborts the entire Agent turn. Convert only that child-owned
+            # cancellation into an ordinary tool failure. A genuine caller/run
+            # cancellation increments the current task's cancellation count and
+            # must remain a cancellation signal.
+            current_task = asyncio.current_task()
+            if current_task is not None and current_task.cancelling():
                 raise
-        else:
-            session = await pool.get_session(server_name, scope_key, session_connection)
+            logger.warning(
+                "MCP session for server '%s' became unavailable during initialization",
+                server_name,
+            )
+            raise RuntimeError(f"MCP server '{server_name}' session became unavailable during initialization") from exc
 
         # Build common call_tool kwargs once — only add keys when needed so
         # existing call-sites that assert on exact arguments are not affected.

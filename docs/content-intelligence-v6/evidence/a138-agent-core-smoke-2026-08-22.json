@@ -1,0 +1,461 @@
+{
+  "schema_version": "agent-core-prompt-receipt-v1",
+  "experiment_id": "A138-model-neutral-agent-core-v1",
+  "status": "completed",
+  "git_commit": "d14ca51ffcc1f797c9ad01b7366a6d8d8c464736",
+  "config_hash": "ef7523fdf30cac79cbda1fadc17984ebff2f59691c7fbd12c66a06261453452f",
+  "extensions_config_hash": "b316a809cadd24a7eaedd707880714a9d7a59febab12be6605caa00d06b04971",
+  "models": [
+    "glm-5-2-260617"
+  ],
+  "thinking_enabled": true,
+  "subagent_enabled": false,
+  "preflight": {
+    "dataset_id": "a138-model-neutral-agent-core-held-out-v1",
+    "dataset_hash": "9efe7c35bf59ae91f50ebadc546a0a4a885b7c5c89fc2187a4d34395c0f404cf",
+    "case_count": 6,
+    "model_names": [
+      "glm-5-2-260617",
+      "deepseek-v4-pro",
+      "deepseek-v4-flash"
+    ],
+    "baseline_system_hash": "2456e9f8027101311b8dcd3ed8ba82f11000408f981ae08ebfa054bb5a7cc539",
+    "candidate_system_hash": "919abf1faafff203037b0583d0b4d6dd26d04e16ad187d5a45175534f82c716b",
+    "baseline_system_bytes": 8873,
+    "candidate_system_bytes": 8872,
+    "same_candidate_for_every_model": true,
+    "same_tools_and_skills_required": true,
+    "enabled_skill_count": 24,
+    "enabled_skill_manifest_hash": "a9381955a9b4a64cb3b82490118b55dc47f78ef9869de63070024f78c48681c4"
+  },
+  "started_at": "2026-08-22T00:10:29.843190+00:00",
+  "runs": [
+    {
+      "model_name": "glm-5-2-260617",
+      "case_id": "held-greeting",
+      "task_class": "greeting",
+      "prompt": "你好",
+      "execution_order": [
+        "agent_core_candidate",
+        "current_full"
+      ],
+      "arms": {
+        "agent_core_candidate": {
+          "status": "succeeded",
+          "answer": "你好！我是你的内容孵化与新媒体运营助手。我可以帮你做这些事：\n\n- **账号定位与孵化**：抖音/新媒体账号的受众、人设、内容方向策划\n- **对标账号拆解**：分析创作者的内容策略与数据表现\n- **内容选题与脚本**：基于你的方向，生成可拍摄的选题和文案\n- **数据分析与可视化**：处理数据、生成图表\n- **深度研究与报告**：市场调研、竞品分析、行业报告\n- **图文/PPT/视频/音乐/播客等创作**：多格式内容生成\n\n有什么我可以帮你做的，直接说就行。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 4819,
+            "output_tokens": 166,
+            "total_tokens": 4985
+          },
+          "duration_seconds": 19.003,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "agent_core_candidate",
+              "call_index": 1,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "9901606266c1fb3a6ec1bbc36dff4f129c5ca3ce413de599e94dce6ffdec21d5",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14646,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "44de1d9cbe93a9c2d0ec267567eb97143c2c06463da8d474be3a0fb6f0f5750f",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        },
+        "current_full": {
+          "status": "succeeded",
+          "answer": "你好！👋 我是 DeerFlow 2.0，一个专注于内容孵化和新媒体运营的智能助手。\n\n我可以帮你做这些事情：\n\n- **账号定位与孵化**：帮你找到适合的内容方向、受众定位和可持续的创作模式\n- **内容选题与脚本**：基于你的定位，找到可落地的选题和创作思路\n- **抖音对标分析**：拆解标杆账号，了解其内容表现和受众特征\n- **内容智能分析**：从证据出发，区分事实与推断，优化内容策略\n\n如果你有任何关于做账号、内容创作或新媒体运营的问题，随时告诉我！",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [],
+          "tool_call_count": 0,
+          "tool_result_count": 0,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 4800,
+            "output_tokens": 150,
+            "total_tokens": 4950
+          },
+          "duration_seconds": 7.139,
+          "model_request_count": 1,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 1,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "44de1d9cbe93a9c2d0ec267567eb97143c2c06463da8d474be3a0fb6f0f5750f",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            }
+          ]
+        }
+      },
+      "contract": {
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true
+      }
+    },
+    {
+      "model_name": "glm-5-2-260617",
+      "case_id": "held-reversible-brief-file",
+      "task_class": "reversible_execution",
+      "prompt": "请在工作区创建 a138-account-brief.md，写入三行：项目：旧照片修复；目标：建立信任；当前未知：受众。创建后检查文件内容并把文件交付给我。",
+      "execution_order": [
+        "current_full",
+        "agent_core_candidate"
+      ],
+      "arms": {
+        "current_full": {
+          "status": "succeeded",
+          "answer": "工作区已创建 `a138-account-brief.md`，内容确认如下三行：\n\n- 项目：旧照片修复\n- 目标：建立信任\n- 当前未知：受众\n\n文件已交付到 outputs 目录，您可以在界面中查看和下载。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "tool_search",
+            "write_file",
+            "read_file",
+            "write_file",
+            "present_files",
+            ""
+          ],
+          "tool_call_count": 6,
+          "tool_result_count": 5,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 41373,
+            "output_tokens": 1156,
+            "total_tokens": 42529
+          },
+          "duration_seconds": 36.698,
+          "model_request_count": 6,
+          "request_observations": [
+            {
+              "arm": "current_full",
+              "call_index": 2,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "44de1d9cbe93a9c2d0ec267567eb97143c2c06463da8d474be3a0fb6f0f5750f",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "current_full",
+              "call_index": 3,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            },
+            {
+              "arm": "current_full",
+              "call_index": 4,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 5
+            },
+            {
+              "arm": "current_full",
+              "call_index": 5,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 7
+            },
+            {
+              "arm": "current_full",
+              "call_index": 6,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 9
+            },
+            {
+              "arm": "current_full",
+              "call_index": 7,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14647,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 11
+            }
+          ]
+        },
+        "agent_core_candidate": {
+          "status": "succeeded",
+          "answer": "文件 `a138-account-brief.md` 已创建并验证完毕，内容如下：\n\n```\n项目：旧照片修复\n目标：建立信任\n当前未知：受众\n```\n\n文件已交付，可以直接查看和下载。",
+          "answer_source": "assistant",
+          "termination_reason": "completed",
+          "valid": true,
+          "repetitive": false,
+          "tool_calls": [
+            "tool_search",
+            "write_file",
+            "read_file",
+            "present_files",
+            ""
+          ],
+          "tool_call_count": 5,
+          "tool_result_count": 4,
+          "tool_failure_count": 0,
+          "usage": {
+            "input_tokens": 31527,
+            "output_tokens": 299,
+            "total_tokens": 31826
+          },
+          "duration_seconds": 15.33,
+          "model_request_count": 5,
+          "request_observations": [
+            {
+              "arm": "agent_core_candidate",
+              "call_index": 2,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "9901606266c1fb3a6ec1bbc36dff4f129c5ca3ce413de599e94dce6ffdec21d5",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14646,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "44de1d9cbe93a9c2d0ec267567eb97143c2c06463da8d474be3a0fb6f0f5750f",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 1
+            },
+            {
+              "arm": "agent_core_candidate",
+              "call_index": 3,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "9901606266c1fb3a6ec1bbc36dff4f129c5ca3ce413de599e94dce6ffdec21d5",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14646,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 3
+            },
+            {
+              "arm": "agent_core_candidate",
+              "call_index": 4,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "9901606266c1fb3a6ec1bbc36dff4f129c5ca3ce413de599e94dce6ffdec21d5",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14646,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 5
+            },
+            {
+              "arm": "agent_core_candidate",
+              "call_index": 5,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "9901606266c1fb3a6ec1bbc36dff4f129c5ca3ce413de599e94dce6ffdec21d5",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14646,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 7
+            },
+            {
+              "arm": "agent_core_candidate",
+              "call_index": 6,
+              "base_system_hash": "0efc82b5b578438490b9361206a8f67b3cf12e730cf8fc34403db455ec108717",
+              "final_system_hash": "9901606266c1fb3a6ec1bbc36dff4f129c5ca3ce413de599e94dce6ffdec21d5",
+              "base_system_bytes": 14647,
+              "final_system_bytes": 14646,
+              "tool_names": [
+                "web_search",
+                "web_fetch",
+                "read_file",
+                "write_file",
+                "present_files",
+                "collect_douyin_benchmark_account",
+                "collect_douyin_benchmark_candidate",
+                "tool_search",
+                "describe_skill"
+              ],
+              "tool_schema_hash": "9343c038098cfe3903a54cedcaea400a7ba97c1c30480d4268d0eb2206b55e45",
+              "model_class": "deerflow.models.patched_deepseek.PatchedChatDeepSeek",
+              "model_contract_hash": "8a06d1c7072a6a60821d8280d3d52676c16bfefb52a436a83b3d701bb20ccaca",
+              "message_count": 9
+            }
+          ]
+        }
+      },
+      "contract": {
+        "initial_tools_match": true,
+        "initial_tool_schema_match": true,
+        "base_system_match": true,
+        "model_contract_match": true
+      }
+    }
+  ],
+  "manual_review_status": "pending",
+  "runtime_promotion_status": "manual_review_required",
+  "completed_at": "2026-08-22T00:11:49.242366+00:00"
+}

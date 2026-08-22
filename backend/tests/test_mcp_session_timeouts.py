@@ -149,6 +149,77 @@ async def test_session_init_timeout_raises_when_session_creation_hangs(tmp_path,
 
 
 @pytest.mark.asyncio
+async def test_session_child_cancellation_becomes_recoverable_tool_failure(tmp_path, caplog) -> None:
+    """An MCP owner/session can be cancelled by its own transport teardown.
+
+    That child cancellation is not a request to cancel the Agent run. It must
+    become an ordinary exception so ToolErrorHandlingMiddleware can return an
+    error ToolMessage and let the model continue with another capability.
+    """
+    mock_pool = MagicMock()
+
+    async def cancelled_get_session(*_args, **_kwargs) -> None:
+        raise asyncio.CancelledError("stdio session startup cancelled")
+
+    mock_pool.get_session = cancelled_get_session
+
+    with (
+        patch("deerflow.mcp.tools.get_session_pool", return_value=mock_pool),
+        patch("deerflow.mcp.tools.get_paths", return_value=MagicMock()),
+        patch(
+            "deerflow.mcp.tools._prepare_stdio_workspace",
+            return_value=(tmp_path, tmp_path / "tmp", {}),
+        ),
+        caplog.at_level(logging.WARNING, logger="deerflow.mcp.tools"),
+    ):
+        wrapped = _make_session_pool_tool(
+            _tool("github_search"),
+            "github",
+            {"transport": "stdio", "command": "mcp-server", "args": []},
+            session_init_timeout=5.0,
+            tool_name_prefix=False,
+        )
+        with pytest.raises(RuntimeError, match="session became unavailable"):
+            await wrapped.coroutine(query="repositories")
+
+    assert any("became unavailable" in record.getMessage() for record in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_session_caller_cancellation_still_cancels_agent_run(tmp_path) -> None:
+    """A real caller cancellation must never be downgraded to a tool error."""
+    mock_pool = MagicMock()
+    entered = asyncio.Event()
+
+    async def hanging_get_session(*_args, **_kwargs) -> None:
+        entered.set()
+        await asyncio.sleep(60)
+
+    mock_pool.get_session = hanging_get_session
+
+    with (
+        patch("deerflow.mcp.tools.get_session_pool", return_value=mock_pool),
+        patch("deerflow.mcp.tools.get_paths", return_value=MagicMock()),
+        patch(
+            "deerflow.mcp.tools._prepare_stdio_workspace",
+            return_value=(tmp_path, tmp_path / "tmp", {}),
+        ),
+    ):
+        wrapped = _make_session_pool_tool(
+            _tool("github_search"),
+            "github",
+            {"transport": "stdio", "command": "mcp-server", "args": []},
+            session_init_timeout=60.0,
+            tool_name_prefix=False,
+        )
+        call = asyncio.create_task(wrapped.coroutine(query="repositories"))
+        await asyncio.wait_for(entered.wait(), timeout=1.0)
+        call.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await call
+
+
+@pytest.mark.asyncio
 async def test_discovery_timeout_from_sdk_with_opt_out_is_reported_without_logging_error(caplog) -> None:
     """With session_init_timeout opted out (None), a TimeoutError raised by
     discovery itself (e.g. an internal timeout inside the MCP SDK) must still

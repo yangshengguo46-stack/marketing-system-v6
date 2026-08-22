@@ -1,0 +1,109 @@
+{
+  "schema_version": "operator-core-review-v1",
+  "audit_id": "A139",
+  "status": "reviewed_with_residual",
+  "date": "2026-08-22",
+  "git_base_commit": "d14ca51ffcc1f797c9ad01b7366a6d8d8c464736",
+  "system_prompt": {
+    "sha256": "44c222c91825498e7374bd81802c5ccca71e7ed4a5d40b3bc27be83e59761b0c",
+    "utf8_bytes": 8981,
+    "budget_bytes": 9000,
+    "provider_specific_marketing_prompt": false,
+    "runtime_prompt_overlay": false
+  },
+  "static_verification": {
+    "command": "PYTHONPATH=. uv run pytest tests/test_agent_core_prompt_candidate.py tests/test_agent_core_prompt_lab.py tests/test_lead_agent_prompt.py tests/test_incubation_architecture_boundaries.py tests/test_content_intelligence_tool.py -q",
+    "passed": 108,
+    "failed": 0
+  },
+  "security_verification": {
+    "command": "PYTHONPATH=. uv run pytest tests/test_input_sanitization_middleware.py -q",
+    "passed": 197,
+    "failed": 0,
+    "review": "work_ownership and marketing_charter are framework authority tags and are escaped in untrusted user and tool content"
+  },
+  "repository_regression": {
+    "coverage": "all offline backend tests except one isolated pre-existing timing failure",
+    "pre_fix_segment": {
+      "passed": 5261,
+      "skipped": 30,
+      "fixed_failure": "test_denylist_covers_framework_authority_blocks"
+    },
+    "post_fix_security_file": {
+      "passed": 197,
+      "failed": 0
+    },
+    "post_fix_remaining_files": {
+      "files": 341,
+      "passed": 7347,
+      "skipped": 45,
+      "failed": 0
+    },
+    "known_unrelated_failure": {
+      "test": "test_concurrent_checkpointer_getter_creates_one_instance",
+      "cause": "eight threads concurrently parse local configuration before reaching a test event with a fixed three-second deadline",
+      "production_or_test_file_modified_by_a139": false
+    }
+  },
+  "live_runs": [
+    {
+      "case": "greeting",
+      "models": [
+        "glm-5-2-260617",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash"
+      ],
+      "tool_calls_each": 0,
+      "total_tokens": [
+        4878,
+        5132,
+        5150
+      ],
+      "review": "GLM and DeepSeek Pro returned one natural sentence; Flash added a short capability phrase."
+    },
+    {
+      "case": "industrial_endoscope_first_direction",
+      "model": "glm-5-2-260617",
+      "model_requests": 1,
+      "tool_calls": 0,
+      "total_tokens": 6828,
+      "review": "Direct working positioning was usable; consultant-style tail remained."
+    },
+    {
+      "case": "commercial_kitchen_duct_failure_before_first_pass_boundary",
+      "model": "glm-5-2-260617",
+      "tool_calls": 57,
+      "tool_failures": 2,
+      "total_tokens": 159506,
+      "duration_seconds": 265.359,
+      "review": "Rejected regression: benchmark and web research were used for generic completeness and introduced unsupported specificity."
+    },
+    {
+      "case": "cold_storage_repair_after_first_pass_boundary",
+      "model": "glm-5-2-260617",
+      "model_requests": 1,
+      "tool_calls": 0,
+      "total_token_range": [
+        6010,
+        6712
+      ],
+      "review": "Search runaway and fixed post-count leakage were removed; occasional invented quantitative language and follow-up offer remained during refinement."
+    },
+    {
+      "case": "final_held_out_nondestructive_testing",
+      "model": "glm-5-2-260617",
+      "model_requests": 1,
+      "tool_calls": 0,
+      "tool_failures": 0,
+      "total_tokens": 6718,
+      "duration_seconds": 52.839,
+      "review": "Business direction was usable, but the answer asked two questions and appended a follow-up offer. Operator posture remains partial."
+    }
+  ],
+  "decision": {
+    "full_a138_candidate": "rejected",
+    "thin_model_neutral_operator_core": "adopted",
+    "employee_posture_fully_accepted": false,
+    "manual_new_conversation_review_required": true
+  }
+}

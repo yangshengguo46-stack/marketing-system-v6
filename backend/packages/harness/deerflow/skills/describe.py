@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated
 
@@ -27,6 +28,8 @@ from deerflow.skills.catalog import SkillCatalog
 from deerflow.skills.types import SkillCategory
 
 logger = logging.getLogger(__name__)
+
+_SKILL_INDEX_DESCRIPTION_MAX_CHARS = 120
 
 
 # ── Setup ────────────────────────────────────────────────────────────────────
@@ -67,11 +70,10 @@ def build_describe_skill_tool(
     ) -> Command:
         """Fetch usage metadata for installed skills so you can decide whether to load them.
 
-        Skills appear by name in <skill_index> in the system prompt.  Until
-        fetched, only the name is known.  This tool matches a query against
-        installed skills and returns their full metadata — description, allowed
-        tools, and file location — so you can decide whether to load the
-        SKILL.md via read_file.
+        Skills appear with short routing summaries in <skill_index> in the
+        system prompt. This tool matches a query against installed skills and
+        returns their full metadata — description, allowed tools, and file
+        location — so you can decide whether to load the SKILL.md via read_file.
 
         Query forms:
           - "select:data-analysis,deep-research" -- fetch these exact skills (no cap)
@@ -150,37 +152,48 @@ def _render_skill_metadata(skills: list, container_base_path: str) -> str:
 def get_skill_index_prompt_section(
     *,
     skill_names: frozenset[str] = frozenset(),
+    skill_descriptions: Mapping[str, str] | None = None,
     container_base_path: str = DEFAULT_SKILLS_CONTAINER_PATH,
     skill_evolution_section: str = "",
 ) -> str:
-    """Generate ``<skill_system>`` with a name-only ``<skill_index>``.
+    """Generate ``<skill_system>`` with a compact ``<skill_index>``.
 
-    Mirrors ``get_deferred_tools_prompt_section`` from ``tool_search.py``.
-    The agent knows what exists and can use ``describe_skill`` to load metadata.
+    A name and bounded usage summary are level-one routing metadata. The agent
+    can use ``describe_skill`` to fetch full metadata and then load SKILL.md.
+    Skill method bodies remain out of the base prompt.
 
     Returns empty string when there are no skills.
     """
     if not skill_names:
         return ""
 
-    names = ", ".join(html.escape(name, quote=False) for name in sorted(skill_names))
+    descriptions = skill_descriptions or {}
+    index_lines: list[str] = []
+    for raw_name in sorted(skill_names):
+        name = html.escape(raw_name, quote=False)
+        description = " ".join(str(descriptions.get(raw_name, "")).split())
+        if len(description) > _SKILL_INDEX_DESCRIPTION_MAX_CHARS:
+            description = f"{description[: _SKILL_INDEX_DESCRIPTION_MAX_CHARS - 3]}..."
+        suffix = f": {html.escape(description, quote=False)}" if description else ""
+        index_lines.append(f"- {name}{suffix}")
+    index = "\n".join(index_lines)
     evolution = f"\n{skill_evolution_section}" if skill_evolution_section else ""
 
     return f"""<skill_system>
 You have access to skills that provide optimized workflows for specific tasks.
 
-**Skill Discovery:**
-1. Check <skill_index> for a skill name that matches your task
-2. Call describe_skill(name) to fetch its description and capabilities
-3. If the skill matches, call read_file on the returned location to load full instructions
-4. Follow the skill's instructions precisely
+**On-Demand Skill Discovery:**
+1. Treat listed Skills as optional capabilities, not mandatory stages
+2. When a listed Skill can materially improve the task, call describe_skill(name)
+3. If its capability fits, call read_file on the returned location
+4. Apply relevant guidance with judgment; user facts, goals, and higher-level boundaries still govern
 
 **Explicit Slash Skill Activation:**
 - If the user starts a request with `/<skill-name>`, that skill was explicitly requested.
 - The runtime injects the activated skill content; do not call `read_file` for that SKILL.md again unless the injected skill references supporting resources you need.
 {evolution}
 <skill_index>
-{names}
+{index}
 </skill_index>
 
 Skills are located at: {container_base_path}

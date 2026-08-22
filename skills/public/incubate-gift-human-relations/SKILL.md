@@ -8,7 +8,7 @@ license: MIT
 compatibility: DeerFlow v6 incubation profiles
 metadata:
   author: DeerFlow v6 content-intelligence project
-  version: "1.2.0"
+  version: "1.3.4"
   lifecycle: active
   source: docs/content-intelligence-v6/audits/A116-vertical-incubation-skills.md
 ---
@@ -16,6 +16,18 @@ metadata:
 # Gift And Human Relations Incubation
 
 Use this Skill only to supply versioned domain hypotheses and reviewable content-root candidates to the generic incubation brain. It does not choose the root or final account route, write account positioning, replace current evidence, or inject denied facts into the project Brief.
+
+## Decisive Output Check
+
+For a bare account-starting request, apply this check before returning the answer:
+
+- Do not introduce marriage, childbirth, festivals, business banquets, or any other named occasion as the user's fact or as the default example. A named occasion is available only when the user supplied it, current evidence supports it, or it is explicitly labeled as a hypothetical illustration.
+- If the Lead selects the human-relations world, include at least one concrete premise whose surface subject and audience-interest engine are a relationship event rather than the user's merchandise or a buying decision. Money, meals, favors, gifts, or other ordinary social objects may appear when they genuinely carry the relationship event; do not ban them by keyword.
+- The qualifying premise must be about a person's choice and a relationship change, such as a favor, refusal, silence, boundary, misunderstanding, reciprocity, or status shift. It must remain understandable and worth watching when the user's gold product is removed or replaced; a product-selection question with relationship vocabulary does not qualify.
+- Keep the commercial return at the account level. Do not force the product back into the qualifying premise merely to prove monetization.
+- Do not give every topic a "gold's role", "product return", or sales-explanation paragraph. At least one far-field premise must finish its title, setup, and point of view without mentioning gold, a gift choice, or how the merchandise returns. Explain the account-level business connection once after the topic set instead.
+- Label an invented scene as hypothetical at its first appearance. Do not add invented budgets, quantities, durations, customer requests, results, or authority to make it feel concrete.
+- Never write "we made this for a company", "a customer told me", or another first-person customer case unless the user or observed evidence supplied that case. Rewrite an unevidenced example as an explicitly hypothetical scene.
 
 ## Operating Contract
 
@@ -30,9 +42,9 @@ Use this Skill only to supply versioned domain hypotheses and reviewable content
 ## Long-Term Account Check
 
 - Compare three different editorial distances: the gift commodity, the act of giving, and how people maintain relationships. Do not blend them into one long label.
-- A relationship-world route has not passed if every content example still centers the gift commodity or the act of gifting. It should also hold product-independent people, events, choices, misunderstandings, reciprocity, boundaries, status changes, and relationships where no object is exchanged. The business remains a possible return point rather than the surface subject of every item.
-- For a long-term account-direction request, use at most one optional `explore_content_world` call with `answer_goal=content_opportunities` when the tool is available, but only after the commercial object and materially different audiences are understood. Use the map to test product-independent relationship branches, not to restart semantic intake or replace the Lead's judgment.
-- For a bare business statement, keep examples at the relationship-pattern level and omit named occasions from the final answer, including parenthetical examples. If the user supplies an occasion, preserve it and judge it normally.
+- A relationship-world route has not passed if every content example still centers the gift commodity, a buying decision, or the act of gifting. It should also hold product-independent people, events, choices, misunderstandings, reciprocity, boundaries, and status changes. Ordinary money, meals, favors, or objects may appear as story elements when the relationship event remains the surface subject. The business remains a possible return point rather than the surface subject of every item.
+- For a bare business statement, do not assume a named occasion is a user fact. A product-independent premise may use a user-provided event, a verified public event, or an explicitly labeled fictional or hypothetical scene. A named public event needs evidence before it is presented as fact. If the user supplies an occasion, preserve it and judge it normally.
+- Never disguise a fictional or hypothetical scene as a customer story, testimonial, observed case, or research finding.
 - Treat any proposed expert persona as conditional on user evidence. Never turn "见过很多案例", "懂人情", or similar authority into a fact or a requirement the user must pretend to satisfy. An assertion followed by uncertainty is still an unsupported assertion; write the condition as "if the user has..." from the start.
 
 For an account-starting or positioning request, apply these principles as
