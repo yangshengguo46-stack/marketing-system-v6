@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated, Any
@@ -33,15 +34,19 @@ from deerflow.content_intelligence import (
     synthesize_shooting_delivery,
 )
 from deerflow.incubation import (
+    AccountDirectionProposal,
+    AccountLaunchPlan,
     AdaptedDraft,
     ArtifactEnvelope,
     EvidenceSnapshot,
     FormatDecision,
     LogicalAccountRef,
+    PlannedTopicSeed,
     PreparedAccountDirection,
     PreparedAccountStrategy,
     ProductionPlan,
     ProjectRef,
+    account_direction_content_root,
     generate_adapted_draft,
     generate_format_decision,
     generate_production_plan,
@@ -50,6 +55,7 @@ from deerflow.incubation import (
     seal_content_run_artifacts,
     seal_evidence_snapshot,
     select_current_account_direction,
+    select_current_account_launch_plan,
     select_current_account_strategy,
     select_used_topic_evidence_snapshots,
 )
@@ -125,6 +131,16 @@ class ContentWorldAnswerGoal(StrEnum):
     ONE_SHOOTABLE_TOPIC = "one_shootable_topic"
 
 
+@dataclass(frozen=True, slots=True)
+class _ConfirmedLaunchTopicContext:
+    bundle: ContentIntelligenceBundle
+    plan: AccountLaunchPlan
+    plan_artifact: ArtifactEnvelope
+    topic_seed: PlannedTopicSeed
+    direction: PreparedAccountDirection | None
+    strategy: PreparedAccountStrategy | None
+
+
 class _ContentIntelligenceToolInput(BaseModel):
     user_request: str = Field(description="The current user request, copied without adding requirements.")
     subject_expression: str = Field(description="The user's exact business, brand, product, expert, or content-subject expression.")
@@ -146,30 +162,40 @@ async def _persist_content_run(
     topic_evidence_snapshots: tuple[EvidenceSnapshot, ...],
     incubation_judgment_artifact: ArtifactEnvelope | None = None,
     account_direction_artifact: ArtifactEnvelope | None = None,
+    launch_plan_artifact: ArtifactEnvelope | None = None,
+    launch_topic_seed_id: str | None = None,
     model: Any | None = None,
     include_presentation_adaptation: bool = False,
     include_production_plan: bool = False,
 ) -> dict[str, Any]:
     project_id = _runtime_context_text(runtime, "incubation_project_id")
-    if project_id is None:
+    if project_id is None and launch_plan_artifact is None:
         return {"status": "not_selected"}
 
     owner_user_id = _runtime_context_text(runtime, "user_id")
     thread_id = _runtime_context_text(runtime, "thread_id")
     run_id = _runtime_context_text(runtime, "run_id")
+    receipt_project_id = project_id if project_id is not None else (launch_plan_artifact.project.project_id if launch_plan_artifact is not None else None)
     failure = {
         "status": "failed",
-        "project_id": project_id,
+        "project_id": receipt_project_id,
         "message": "The generated content could not be stored in the selected project.",
     }
     if owner_user_id is None or thread_id is None or run_id is None:
         return failure
 
     try:
-        project = ProjectRef(
-            owner_user_id=owner_user_id,
-            project_id=project_id,
+        project = (
+            launch_plan_artifact.project
+            if project_id is None and launch_plan_artifact is not None
+            else ProjectRef(
+                owner_user_id=owner_user_id,
+                project_id=project_id,
+            )
         )
+        project_id = project.project_id
+        if project.owner_user_id != owner_user_id:
+            return failure
         logical_account = _runtime_logical_account(runtime, project=project)
         if logical_account is None:
             return failure
@@ -214,6 +240,8 @@ async def _persist_content_run(
             reading_parents=tuple(evidence_parents),
             incubation_judgment_artifact=incubation_judgment_artifact,
             account_direction_artifact=account_direction_artifact,
+            launch_plan_artifact=launch_plan_artifact,
+            launch_topic_seed_id=launch_topic_seed_id,
         )
         stored_content_artifacts: dict[str, ArtifactEnvelope] = {}
         for artifact in sealed.storage_order():
@@ -410,15 +438,7 @@ def _direction_editorial_context(
 
 
 def _direction_frozen_content_root(option: Any) -> str:
-    configured = getattr(option, "content_root", None)
-    if isinstance(configured, str) and configured.strip():
-        return " ".join(configured.split())
-
-    subject = " ".join(str(option.long_term_content_subject).split())
-    delimiter_positions = tuple(position for delimiter in ("：", ":", "。", "；", ";") if (position := subject.find(delimiter)) > 0)
-    if delimiter_positions:
-        subject = subject[: min(delimiter_positions)].strip()
-    return subject[:160].strip()
+    return account_direction_content_root(option)
 
 
 def _render_confirmed_direction_reference(direction) -> str:
@@ -431,6 +451,146 @@ def _render_confirmed_direction_reference(direction) -> str:
             f"**内容根：** {_direction_frozen_content_root(option)}",
         )
     )
+
+
+def _render_confirmed_launch_topic_reference(
+    context: _ConfirmedLaunchTopicContext,
+) -> str:
+    seed = context.topic_seed
+    return "\n".join(
+        (
+            "## 已确认起号计划题眼",
+            "",
+            f"**计划回执：** {context.plan_artifact.artifact_id}",
+            f"**题眼 ID：** {seed.seed_id}",
+            f"**进入证据研究的问题：** {seed.concrete_event_or_question}",
+        )
+    )
+
+
+def _validate_launch_topic_brief(
+    *,
+    bundle: ContentIntelligenceBundle,
+    context: _ConfirmedLaunchTopicContext,
+) -> None:
+    topic = bundle.topic_brief
+    if topic is None:
+        return
+    if topic.content_map_version_id != context.plan.content_map_version_id:
+        raise ValueError("launch topic brief does not use the plan's exact content map")
+    if topic.path.path_id != context.topic_seed.map_path_id:
+        raise ValueError("launch topic brief does not instantiate the selected seed path")
+
+
+def _exact_parent_artifact(
+    *,
+    owner: ArtifactEnvelope,
+    artifacts_by_id: dict[str, ArtifactEnvelope],
+    artifact_type: str,
+    artifact_id: str | None = None,
+) -> ArtifactEnvelope:
+    refs = tuple(parent for parent in owner.parents if parent.artifact_type == artifact_type and (artifact_id is None or parent.artifact_id == artifact_id))
+    if len(refs) != 1:
+        raise ValueError(f"artifact requires exactly one {artifact_type} parent")
+    ref = refs[0]
+    artifact = artifacts_by_id.get(ref.artifact_id)
+    if artifact is None or artifact.artifact_type != artifact_type or artifact.content_sha256 != ref.content_sha256 or artifact.to_parent_ref() != ref:
+        raise ValueError(f"stored {artifact_type} parent does not match its receipt")
+    return artifact
+
+
+def _rehydrate_content_bundle_from_map(
+    *,
+    map_artifact: ArtifactEnvelope,
+    artifacts: list[ArtifactEnvelope],
+) -> ContentIntelligenceBundle:
+    map_version = map_artifact.payload.get("content_map_version_id")
+    reading_candidates = tuple(
+        artifact
+        for artifact in artifacts
+        if artifact.artifact_type == "content_reading"
+        and artifact.source_thread_id == map_artifact.source_thread_id
+        and artifact.source_run_id == map_artifact.source_run_id
+        and isinstance(artifact.payload.get("root_selection"), dict)
+        and artifact.payload["root_selection"].get("content_map_version_id") == map_version
+    )
+    if len(reading_candidates) != 1:
+        raise ValueError("candidate map requires one exact source reading")
+    reading_artifact = reading_candidates[0]
+    root_selection = reading_artifact.payload["root_selection"]
+    record = ComprehensionRecord.model_validate(reading_artifact.payload.get("record"))
+    business_payload = reading_artifact.payload.get("business_semantics")
+    business_semantics = BusinessSemanticView.model_validate(business_payload) if business_payload is not None else None
+    content_world = ContentWorldView.model_validate(
+        {
+            "record_id": record.record_id,
+            "source_object": root_selection.get("source_object"),
+            "content_entry": root_selection.get("content_entry"),
+            "content_root": map_artifact.payload.get("content_root"),
+            "root_rationale": root_selection.get("root_rationale"),
+            "editorial_promise": map_artifact.payload.get("editorial_promise"),
+            "recurring_lens": map_artifact.payload.get("recurring_lens"),
+            "drift_boundaries": map_artifact.payload.get("drift_boundaries", []),
+            "root_candidates": root_selection.get("root_candidates", []),
+            "dimensions": map_artifact.payload.get("dimensions", []),
+            "named_candidates": root_selection.get("named_candidates", []),
+            "unknown_refs": root_selection.get("unknown_refs", []),
+        }
+    )
+    if content_world.content_map_version_id() != map_version:
+        raise ValueError("rehydrated candidate map does not match its stored version")
+    return ContentIntelligenceBundle(
+        record=record,
+        business_semantics=business_semantics,
+        content_world=content_world,
+    )
+
+
+def _map_path_ids(map_artifact: ArtifactEnvelope) -> frozenset[str]:
+    path_ids: set[str] = set()
+    dimensions = map_artifact.payload.get("dimensions")
+    if not isinstance(dimensions, list):
+        raise ValueError("candidate map dimensions must be a list")
+    for dimension in dimensions:
+        if not isinstance(dimension, dict):
+            continue
+        paths = dimension.get("paths")
+        if not isinstance(paths, list):
+            continue
+        path_ids.update(path["path_id"] for path in paths if isinstance(path, dict) and isinstance(path.get("path_id"), str))
+    return frozenset(path_ids)
+
+
+def _validate_direction_map_link(
+    *,
+    direction: PreparedAccountDirection,
+    map_artifact: ArtifactEnvelope,
+    artifacts_by_id: dict[str, ArtifactEnvelope],
+) -> None:
+    direction_artifact = direction.direction_artifact
+    proposal_id = direction.direction.proposal_artifact_id
+    proposal = artifacts_by_id.get(proposal_id)
+    if proposal is None or proposal.artifact_type != "account_direction_proposal" or proposal.project != direction_artifact.project or proposal.logical_account != direction_artifact.logical_account:
+        raise ValueError("account direction proposal receipt is unavailable in this account")
+    if proposal.to_parent_ref() not in direction_artifact.parents:
+        raise ValueError("current account direction does not retain its exact proposal parent")
+    proposal_payload = AccountDirectionProposal.model_validate(proposal.payload)
+    if proposal.version != proposal_payload.target_revision_number:
+        raise ValueError("account direction proposal version does not match its payload")
+    if proposal_payload.target_revision_number != direction.direction.revision_number:
+        raise ValueError("account direction revision does not match its proposal")
+    proposal_option = next(
+        (item for item in proposal_payload.direction_options if item.option_id == direction.direction.selected_option.option_id),
+        None,
+    )
+    if proposal_option != direction.direction.selected_option:
+        raise ValueError("account direction selection does not match an exact proposal option")
+    if proposal_payload.basis_artifact_ids != direction.direction.basis_artifact_ids:
+        raise ValueError("account direction basis does not match its proposal")
+    if direction_artifact.to_parent_ref() in map_artifact.parents:
+        return
+    if map_artifact.artifact_id not in direction.direction.basis_artifact_ids or map_artifact.to_parent_ref() not in proposal.parents:
+        raise ValueError("candidate map is not an exact account direction basis")
 
 
 async def _load_confirmed_topic_context(
@@ -466,57 +626,162 @@ async def _load_confirmed_topic_context(
         return None
 
     by_id = {artifact.artifact_id: artifact for artifact in artifacts}
-    map_parents = tuple(parent for parent in strategy.judgment_artifact.parents if parent.artifact_type == "content_map_candidate")
-    if len(map_parents) != 1:
-        raise ValueError("confirmed account strategy requires exactly one candidate-map parent")
-    map_parent = map_parents[0]
-    map_artifact = by_id.get(map_parent.artifact_id)
-    if map_artifact is None or map_artifact.artifact_type != map_parent.artifact_type or map_artifact.content_sha256 != map_parent.content_sha256:
-        raise ValueError("confirmed account strategy candidate-map receipt does not match storage")
+    map_artifact = _exact_parent_artifact(
+        owner=strategy.judgment_artifact,
+        artifacts_by_id=by_id,
+        artifact_type="content_map_candidate",
+    )
     if map_artifact.payload.get("content_map_version_id") != strategy.judgment.content_map_version_id:
         raise ValueError("confirmed account strategy does not match its candidate-map version")
-
-    reading_candidates = tuple(
-        artifact
-        for artifact in artifacts
-        if artifact.artifact_type == "content_reading"
-        and artifact.source_thread_id == map_artifact.source_thread_id
-        and artifact.source_run_id == map_artifact.source_run_id
-        and isinstance(artifact.payload.get("root_selection"), dict)
-        and artifact.payload["root_selection"].get("content_map_version_id") == strategy.judgment.content_map_version_id
-    )
-    if len(reading_candidates) != 1:
-        raise ValueError("confirmed candidate map requires one exact source reading")
-    reading_artifact = reading_candidates[0]
-    root_selection = reading_artifact.payload["root_selection"]
-    record = ComprehensionRecord.model_validate(reading_artifact.payload.get("record"))
-    business_payload = reading_artifact.payload.get("business_semantics")
-    business_semantics = BusinessSemanticView.model_validate(business_payload) if business_payload is not None else None
-    content_world = ContentWorldView.model_validate(
-        {
-            "record_id": record.record_id,
-            "source_object": root_selection.get("source_object"),
-            "content_entry": root_selection.get("content_entry"),
-            "content_root": map_artifact.payload.get("content_root"),
-            "root_rationale": root_selection.get("root_rationale"),
-            "editorial_promise": map_artifact.payload.get("editorial_promise"),
-            "recurring_lens": map_artifact.payload.get("recurring_lens"),
-            "drift_boundaries": map_artifact.payload.get("drift_boundaries", []),
-            "root_candidates": root_selection.get("root_candidates", []),
-            "dimensions": map_artifact.payload.get("dimensions", []),
-            "named_candidates": root_selection.get("named_candidates", []),
-            "unknown_refs": root_selection.get("unknown_refs", []),
-        }
-    )
-    if content_world.content_map_version_id() != strategy.judgment.content_map_version_id:
-        raise ValueError("rehydrated candidate map does not match the confirmed account strategy")
     return (
-        ContentIntelligenceBundle(
-            record=record,
-            business_semantics=business_semantics,
-            content_world=content_world,
+        _rehydrate_content_bundle_from_map(
+            map_artifact=map_artifact,
+            artifacts=artifacts,
         ),
         strategy,
+    )
+
+
+async def _load_confirmed_launch_topic_context(
+    *,
+    runtime: Runtime,
+    plan_artifact_id: str,
+    topic_seed_id: str,
+    current_direction: PreparedAccountDirection | None,
+) -> _ConfirmedLaunchTopicContext:
+    """Resolve one launch seed from the exact current confirmed plan receipt."""
+
+    if not plan_artifact_id.strip() or not topic_seed_id.strip():
+        raise ValueError("launch plan and topic seed receipts must be non-empty")
+    owner_user_id = _runtime_context_text(runtime, "user_id")
+    thread_id = _runtime_context_text(runtime, "thread_id")
+    if owner_user_id is None or thread_id is None:
+        raise ValueError("launch topic continuation requires a trusted runtime scope")
+    project_id = _runtime_context_text(runtime, "incubation_project_id")
+    project = (
+        ProjectRef(owner_user_id=owner_user_id, project_id=project_id)
+        if project_id is not None
+        else implicit_thread_project_ref(
+            owner_user_id=owner_user_id,
+            thread_id=thread_id,
+        )
+    )
+    logical_account = _runtime_logical_account(runtime, project=project)
+    if logical_account is None:
+        raise ValueError("launch topic continuation requires a logical account")
+    repository = _get_incubation_repository()
+    if repository is None or await repository.get_project(project) is None:
+        raise ValueError("launch topic continuation requires an available project ledger")
+    artifacts = await repository.list_artifacts(
+        project,
+        logical_account=logical_account,
+    )
+    current_plan = select_current_account_launch_plan(
+        artifacts,
+        logical_account=logical_account,
+        require_confirmed=True,
+    )
+    if current_plan is None or current_plan.plan_artifact.artifact_id != plan_artifact_id:
+        raise ValueError("the exact current confirmed account launch plan is required")
+    plan = current_plan.plan
+    plan_artifact = current_plan.plan_artifact
+    topic_seed = next(
+        (seed for seed in plan.topic_seeds if seed.seed_id == topic_seed_id),
+        None,
+    )
+    if topic_seed is None:
+        raise ValueError("the requested launch topic seed is absent from the confirmed plan")
+
+    artifacts_by_id = {artifact.artifact_id: artifact for artifact in artifacts}
+    previous_plan_artifact = _exact_parent_artifact(
+        owner=plan_artifact,
+        artifacts_by_id=artifacts_by_id,
+        artifact_type="account_launch_plan",
+    )
+    if plan.supersedes_plan_artifact_id != previous_plan_artifact.artifact_id:
+        raise ValueError("confirmed launch plan does not retain its exact proposal parent")
+    previous_plan = AccountLaunchPlan.model_validate(previous_plan_artifact.payload)
+    if previous_plan.revision_number != previous_plan_artifact.version:
+        raise ValueError("launch plan proposal version does not match its envelope")
+    if previous_plan.decision_status != "proposed":
+        raise ValueError("confirmed launch plan parent must be the exact proposal")
+    if plan.revision_number != previous_plan.revision_number + 1:
+        raise ValueError("confirmed launch plan revision does not follow its proposal")
+    confirmation_fields = {
+        "revision_number",
+        "supersedes_plan_artifact_id",
+        "revision_reason",
+        "decision_status",
+        "confirmation_user_text",
+    }
+    if plan.model_dump(exclude=confirmation_fields) != previous_plan.model_dump(exclude=confirmation_fields):
+        raise ValueError("confirmed launch plan changed content after its proposal")
+
+    map_artifact = _exact_parent_artifact(
+        owner=plan_artifact,
+        artifacts_by_id=artifacts_by_id,
+        artifact_type="content_map_candidate",
+    )
+    if map_artifact.payload.get("content_map_version_id") != plan.content_map_version_id:
+        raise ValueError("launch plan and candidate-map versions do not match")
+    if topic_seed.map_path_id not in _map_path_ids(map_artifact):
+        raise ValueError("launch topic seed is not rooted in the plan's exact candidate map")
+
+    direction: PreparedAccountDirection | None = None
+    strategy: PreparedAccountStrategy | None = None
+    if plan.direction_artifact_id is not None:
+        if current_direction is None or current_direction.direction_artifact.artifact_id != plan.direction_artifact_id:
+            raise ValueError("launch plan does not use the current confirmed account direction")
+        decision_artifact = _exact_parent_artifact(
+            owner=plan_artifact,
+            artifacts_by_id=artifacts_by_id,
+            artifact_type="account_direction_version",
+            artifact_id=plan.direction_artifact_id,
+        )
+        if decision_artifact != current_direction.direction_artifact:
+            raise ValueError("launch plan account direction receipt does not match storage")
+        expected_root = account_direction_content_root(current_direction.direction.selected_option)
+        if map_artifact.payload.get("content_root") != expected_root:
+            raise ValueError("launch plan map root does not match the account direction")
+        _validate_direction_map_link(
+            direction=current_direction,
+            map_artifact=map_artifact,
+            artifacts_by_id=artifacts_by_id,
+        )
+        direction = current_direction
+    else:
+        if current_direction is not None:
+            raise ValueError("a legacy launch plan cannot supersede the current account direction")
+        strategy = select_current_account_strategy(
+            artifacts,
+            logical_account=logical_account,
+            content_map_version_id=plan.content_map_version_id,
+            require_confirmed=True,
+        )
+        if strategy is None or plan.strategy_artifact_id is None or strategy.judgment_artifact.artifact_id != plan.strategy_artifact_id:
+            raise ValueError("launch plan does not use the current confirmed account strategy")
+        decision_artifact = _exact_parent_artifact(
+            owner=plan_artifact,
+            artifacts_by_id=artifacts_by_id,
+            artifact_type="incubation_judgment",
+            artifact_id=plan.strategy_artifact_id,
+        )
+        if decision_artifact != strategy.judgment_artifact:
+            raise ValueError("launch plan account strategy receipt does not match storage")
+        if map_artifact.to_parent_ref() not in strategy.judgment_artifact.parents:
+            raise ValueError("launch plan map is not the account strategy's exact parent")
+
+    bundle = _rehydrate_content_bundle_from_map(
+        map_artifact=map_artifact,
+        artifacts=artifacts,
+    )
+    return _ConfirmedLaunchTopicContext(
+        bundle=bundle,
+        plan=plan,
+        plan_artifact=plan_artifact,
+        topic_seed=topic_seed,
+        direction=direction,
+        strategy=strategy,
     )
 
 
@@ -567,6 +832,8 @@ async def explore_content_world_tool(
     answer_goal: ContentWorldAnswerGoal = ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC,
     subject_expression: str | None = None,
     topic_seed: str | None = None,
+    launch_plan_artifact_id: str | None = None,
+    launch_topic_seed_id: str | None = None,
 ) -> Command:
     """Build working material for a content map or one evidence-bound shootable topic.
 
@@ -578,6 +845,9 @@ async def explore_content_world_tool(
     experiments, or questionnaires.
     This is not an account-strategy tool. Its result returns to the Lead for
     final judgment instead of answering the user directly.
+    An exact confirmed AccountLaunchPlan seed may continue into the same
+    TopicBrief/content chain only when both receipt fields are supplied. In
+    that mode the stored plan seed replaces the free-form topic_seed.
 
     Args:
         user_request: The current content-opportunity or concrete-topic request, copied without adding requirements.
@@ -586,17 +856,33 @@ async def explore_content_world_tool(
             Omit it when uncertain or when continuing a selected project's confirmed route; an accidental paraphrase
             is ignored instead of becoming a new subject.
         topic_seed: Optional hotspot, person, work, event, or question copied as one contiguous verbatim span from user_request.
+        launch_plan_artifact_id: Exact current confirmed AccountLaunchPlan receipt. Supply together with launch_topic_seed_id.
+        launch_topic_seed_id: Exact seed_id stored inside that confirmed plan. Supply together with launch_plan_artifact_id.
     """
+    launch_pair_supplied = launch_plan_artifact_id is not None and launch_topic_seed_id is not None
+    if (launch_plan_artifact_id is None) != (launch_topic_seed_id is None):
+        return _terminal_content_world_command(
+            "起号计划回执和题眼 ID 必须成对提供；本轮没有使用模型自由补出的题眼。",
+            tool_call_id=runtime.tool_call_id,
+        )
+    if launch_pair_supplied and answer_goal != ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC:
+        return _terminal_content_world_command(
+            "已确认起号题眼只能继续到单条可拍选题，不能用来重算内容地图。",
+            tool_call_id=runtime.tool_call_id,
+        )
     if _content_world_already_returned_this_turn(runtime):
         return _terminal_content_world_command(
             "本轮已有内容地图材料。请使用前一次结果完成当前判断，不要再次调用或为追求完整而重算内容地图。",
             tool_call_id=runtime.tool_call_id,
         )
 
-    try:
-        validated_topic_seed = _validate_topic_seed(user_request, topic_seed)
-    except ValueError:
+    if launch_pair_supplied:
         validated_topic_seed = None
+    else:
+        try:
+            validated_topic_seed = _validate_topic_seed(user_request, topic_seed)
+        except ValueError:
+            validated_topic_seed = None
 
     config = runtime.config
     tool_call_id = runtime.tool_call_id
@@ -607,10 +893,31 @@ async def explore_content_world_tool(
     try:
         current_direction = None
         confirmed_context = None
+        launch_context: _ConfirmedLaunchTopicContext | None = None
         if answer_goal == ContentWorldAnswerGoal.ONE_SHOOTABLE_TOPIC:
-            if subject_expression is None:
-                current_direction = await _load_current_account_direction(runtime=runtime)
-            if current_direction is None:
+            current_direction = await _load_current_account_direction(runtime=runtime)
+            if launch_pair_supplied:
+                assert launch_plan_artifact_id is not None
+                assert launch_topic_seed_id is not None
+                try:
+                    launch_context = await _load_confirmed_launch_topic_context(
+                        runtime=runtime,
+                        plan_artifact_id=launch_plan_artifact_id,
+                        topic_seed_id=launch_topic_seed_id,
+                        current_direction=current_direction,
+                    )
+                except ValueError as exc:
+                    logger.warning(
+                        "Confirmed launch topic receipt was rejected: %s",
+                        type(exc).__name__,
+                    )
+                    return _terminal_content_world_command(
+                        "起号题眼回执与当前账号方向、内容地图或已确认计划不一致，因此没有进入 TopicBrief 和稿件链。",
+                        tool_call_id=tool_call_id,
+                    )
+                current_direction = launch_context.direction
+                validated_topic_seed = launch_context.topic_seed.concrete_event_or_question
+            elif current_direction is None:
                 confirmed_context = await _load_confirmed_topic_context(runtime=runtime)
         reuse_confirmed_context = confirmed_context is not None and (
             subject_expression is None
@@ -620,7 +927,10 @@ async def explore_content_world_tool(
                 strategy=confirmed_context[1],
             )
         )
-        if current_direction is not None:
+        if launch_context is not None:
+            bundle = launch_context.bundle
+            current_strategy = launch_context.strategy
+        elif current_direction is not None:
             confirmed_subject = _direction_frozen_content_root(current_direction.direction.selected_option)
             request = ContentIntelligenceRequest(
                 user_request=confirmed_subject,
@@ -669,7 +979,7 @@ async def explore_content_world_tool(
                 persistence=persistence,
             )
 
-        if current_strategy is None:
+        if current_strategy is None and launch_context is None:
             current_strategy = await _load_current_account_strategy(
                 bundle=bundle,
                 runtime=runtime,
@@ -691,7 +1001,7 @@ async def explore_content_world_tool(
                     douyin_search=douyin_topic_search,
                 )
 
-            bundle = await enrich_content_world_with_research(
+            researched_bundle = await enrich_content_world_with_research(
                 bundle,
                 model=model,
                 search=search_content_evidence,
@@ -701,6 +1011,12 @@ async def explore_content_world_tool(
                 editorial_context=editorial_context,
                 runnable_config=config,
             )
+            if launch_context is not None:
+                _validate_launch_topic_brief(
+                    bundle=researched_bundle,
+                    context=launch_context,
+                )
+            bundle = researched_bundle
         except Exception as exc:
             logger.warning(
                 "Post-map research was unavailable; no shootable topic was formed: %s",
@@ -711,6 +1027,10 @@ async def explore_content_world_tool(
                 delivery=None,
                 runtime=runtime,
                 topic_evidence_snapshots=(douyin_topic_search.snapshots if douyin_topic_search is not None else ()),
+                incubation_judgment_artifact=(launch_context.strategy.judgment_artifact if launch_context is not None and launch_context.strategy is not None else None),
+                account_direction_artifact=(launch_context.direction.direction_artifact if launch_context is not None and launch_context.direction is not None else None),
+                launch_plan_artifact=(launch_context.plan_artifact if launch_context is not None else None),
+                launch_topic_seed_id=(launch_context.topic_seed.seed_id if launch_context is not None else None),
             )
             return _terminal_content_world_command(
                 _render_shootable_topic_failure(bundle),
@@ -725,6 +1045,10 @@ async def explore_content_world_tool(
                 delivery=None,
                 runtime=runtime,
                 topic_evidence_snapshots=topic_evidence_snapshots,
+                incubation_judgment_artifact=(launch_context.strategy.judgment_artifact if launch_context is not None and launch_context.strategy is not None else None),
+                account_direction_artifact=(launch_context.direction.direction_artifact if launch_context is not None and launch_context.direction is not None else None),
+                launch_plan_artifact=(launch_context.plan_artifact if launch_context is not None else None),
+                launch_topic_seed_id=(launch_context.topic_seed.seed_id if launch_context is not None else None),
             )
             return _terminal_content_world_command(
                 _render_shootable_topic_failure(bundle),
@@ -744,6 +1068,8 @@ async def explore_content_world_tool(
             if shooting_delivery is None:
                 raise ValueError("shootable-topic delivery returned no MessagePlan or BaseDraft")
             rendered_delivery = _prioritize_shooting_delivery(render_shooting_delivery(bundle, shooting_delivery))
+            if launch_context is not None:
+                rendered_delivery += "\n\n" + _render_confirmed_launch_topic_reference(launch_context)
             if current_direction is not None:
                 rendered_delivery += "\n\n" + _render_confirmed_direction_reference(current_direction.direction)
             elif current_strategy is not None:
@@ -759,8 +1085,14 @@ async def explore_content_world_tool(
             delivery=shooting_delivery,
             runtime=runtime,
             topic_evidence_snapshots=topic_evidence_snapshots,
-            incubation_judgment_artifact=(current_strategy.judgment_artifact if current_strategy is not None and shooting_delivery is not None else None),
-            account_direction_artifact=(current_direction.direction_artifact if current_direction is not None and shooting_delivery is not None else None),
+            incubation_judgment_artifact=(
+                launch_context.strategy.judgment_artifact
+                if launch_context is not None and launch_context.strategy is not None
+                else (current_strategy.judgment_artifact if current_strategy is not None and shooting_delivery is not None else None)
+            ),
+            account_direction_artifact=(current_direction.direction_artifact if current_direction is not None else None),
+            launch_plan_artifact=(launch_context.plan_artifact if launch_context is not None else None),
+            launch_topic_seed_id=(launch_context.topic_seed.seed_id if launch_context is not None else None),
             model=model,
             include_presentation_adaptation=_runtime_context_bool(
                 runtime,

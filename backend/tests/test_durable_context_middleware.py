@@ -787,7 +787,7 @@ class TestSkillContextInjection:
 
         assert [e["path"] for e in result["skill_context"]] == ["/mnt/skills/public/data-analysis/SKILL.md"]
         assert "ALWAYS_USE_PANDAS_SENTINEL" not in repr(result["skill_context"])
-        injected = [m for m in model.received[-1] if isinstance(m, HumanMessage) and m.additional_kwargs.get("durable_context_data") and "Active skills" in m.content]
+        injected = [m for m in model.received[-1] if isinstance(m, HumanMessage) and m.additional_kwargs.get("durable_context_data") and "Inspected skills" in m.content]
         assert injected, "skill reference was not injected"
         assert "data-analysis" in injected[0].content
         assert "Analyze data with pandas" in injected[0].content
@@ -824,7 +824,7 @@ class TestSkillContextInjection:
         assert [e["path"] for e in second["skill_context"]] == ["/mnt/skills/public/data-analysis/SKILL.md"]
         compacted_ids = {m.tool_call_id for m in second["messages"] if isinstance(m, ToolMessage)}
         assert "r1" not in compacted_ids
-        injected = [m for m in model.received[-1] if isinstance(m, HumanMessage) and m.additional_kwargs.get("durable_context_data") and "Active skills" in m.content]
+        injected = [m for m in model.received[-1] if isinstance(m, HumanMessage) and m.additional_kwargs.get("durable_context_data") and "Inspected skills" in m.content]
         assert injected, "skill reference was not injected after summarization"
         assert "data-analysis" in injected[0].content
         assert "/mnt/skills/public/data-analysis/SKILL.md" in injected[0].content

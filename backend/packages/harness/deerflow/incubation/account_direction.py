@@ -147,6 +147,19 @@ class AccountDirectionVersion(IncubationContract):
     revision_reason: NonEmptyStr | None = Field(default=None, max_length=1_600)
 
 
+def account_direction_content_root(option: AccountDirectionOption) -> str:
+    """Return the one deterministic content root used by every downstream stage."""
+
+    if option.content_root is not None:
+        return " ".join(option.content_root.split())
+
+    subject = " ".join(option.long_term_content_subject.split())
+    delimiter_positions = tuple(position for delimiter in ("：", ":", "。", "；", ";") if (position := subject.find(delimiter)) > 0)
+    if delimiter_positions:
+        subject = subject[: min(delimiter_positions)].strip()
+    return subject[:160].strip()
+
+
 @dataclass(frozen=True, slots=True)
 class PreparedAccountDirectionProposal:
     proposal: AccountDirectionProposal
@@ -514,6 +527,7 @@ __all__ = [
     "AccountDirectionVersion",
     "PreparedAccountDirection",
     "PreparedAccountDirectionProposal",
+    "account_direction_content_root",
     "confirm_account_direction",
     "propose_account_direction",
     "render_account_direction",

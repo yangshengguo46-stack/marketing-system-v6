@@ -1,3 +1,4 @@
+import asyncio
 from datetime import UTC, datetime
 
 import pytest
@@ -8,6 +9,7 @@ from deerflow.config.database_config import DatabaseConfig
 from deerflow.incubation import (
     AccountDirectionOptionDraft,
     AccountDirectionProposalDraft,
+    ArtifactConflictError,
     ArtifactEnvelope,
     IncubationLedgerRepository,
     LogicalAccountRef,
@@ -84,11 +86,12 @@ def _artifact(
     logical_account: LogicalAccountRef | None = None,
     parents=(),
     evidence_role: str | None = None,
+    version: int = 1,
 ) -> ArtifactEnvelope:
     return ArtifactEnvelope.seal(
         project=project or _project(),
         artifact_type=artifact_type,
-        version=1,
+        version=version,
         payload=payload or {"content_root": "礼与人与人相处"},
         account=account,
         logical_account=logical_account,
@@ -348,6 +351,107 @@ async def test_artifact_lineage_is_owner_scoped_and_idempotent(tmp_path) -> None
     assert stored_child.parents == (parent.to_parent_ref(),)
     assert await repo.get_artifact(parent.artifact_id, owner_user_id="user-1") == parent
     assert await repo.get_artifact(parent.artifact_id, owner_user_id="user-2") is None
+
+
+@pytest.mark.asyncio
+async def test_account_launch_plan_version_is_unique_per_logical_account(tmp_path) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project(project_id="launch-project")
+    logical_account = _logical_account(
+        project_id=project.project_id,
+        logical_account_id="launch-account",
+    )
+    await repo.create_project(project, display_name="Launch project")
+    await repo.create_logical_account(logical_account, display_name="Launch account")
+    first = _artifact(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        payload={"plan": "first"},
+    )
+    conflicting = _artifact(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        payload={"plan": "conflicting"},
+    )
+
+    assert await repo.put_artifact(first) == first
+    with pytest.raises(ArtifactConflictError, match="account_launch_plan version 1"):
+        await repo.put_artifact(conflicting)
+
+    assert await repo.list_artifacts(
+        project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+    ) == [first]
+
+    sibling_account = _logical_account(
+        project_id=project.project_id,
+        logical_account_id="sibling-launch-account",
+    )
+    await repo.create_logical_account(sibling_account, display_name="Sibling launch account")
+    sibling_plan = _artifact(
+        project=project,
+        logical_account=sibling_account,
+        artifact_type="account_launch_plan",
+        payload={"plan": "independent account, same version"},
+    )
+    assert await repo.put_artifact(sibling_plan) == sibling_plan
+
+
+@pytest.mark.asyncio
+async def test_concurrent_account_launch_plan_writes_are_atomic_and_canonical_replay_is_idempotent(
+    tmp_path,
+) -> None:
+    repo = await _make_repo(tmp_path)
+    project = _project(project_id="concurrent-launch-project")
+    logical_account = _logical_account(
+        project_id=project.project_id,
+        logical_account_id="concurrent-launch-account",
+    )
+    await repo.create_project(project, display_name="Concurrent launch project")
+    await repo.create_logical_account(logical_account, display_name="Concurrent launch account")
+    first = _artifact(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        payload={"plan": "first concurrent candidate"},
+    )
+    conflicting = _artifact(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        payload={"plan": "second concurrent candidate"},
+    )
+
+    outcomes = await asyncio.gather(
+        repo.put_artifact(first),
+        repo.put_artifact(conflicting),
+        return_exceptions=True,
+    )
+    stored = [outcome for outcome in outcomes if isinstance(outcome, ArtifactEnvelope)]
+    conflicts = [outcome for outcome in outcomes if isinstance(outcome, ArtifactConflictError)]
+    assert len(stored) == 1
+    assert len(conflicts) == 1
+
+    canonical_replay = _artifact(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=2,
+        payload={"plan": "same canonical artifact replayed concurrently"},
+    )
+    replayed = await asyncio.gather(
+        repo.put_artifact(canonical_replay),
+        repo.put_artifact(canonical_replay),
+    )
+    assert replayed == [canonical_replay, canonical_replay]
+    assert await repo.list_artifacts(
+        project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+    ) == sorted((stored[0], canonical_replay), key=lambda artifact: artifact.artifact_id)
 
 
 @pytest.mark.asyncio

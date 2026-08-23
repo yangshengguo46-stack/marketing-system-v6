@@ -316,6 +316,41 @@ async def test_run_journal_observed_events_exactly_match_its_catalog():
     journal.on_chain_error(ValueError("run failed"), run_id=uuid4())
     journal.on_chain_end({"messages": []}, run_id=root_run_id, parent_run_id=None)
     journal.record_memory_context(content_sha256="a" * 64)
+    journal.record_context_manifest(
+        {
+            "version": 1,
+            "call_index": 1,
+            "outcome": "success",
+            "identity": {"present": True, "source": "package://identity", "version": "sha256:" + "a" * 64, "sha256": "a" * 64},
+            "model": {"name": "test-model", "class": "FakeModel", "settings_keys": []},
+            "request": {
+                "message_count": 1,
+                "content_utf8_bytes": 8,
+                "canonical_message_utf8_bytes": 32,
+                "by_role": {"human": {"count": 1, "content_utf8_bytes": 8, "canonical_utf8_bytes": 32}},
+                "hidden_message_count": 0,
+                "hidden_content_utf8_bytes": 0,
+                "tool_count": 0,
+                "tool_schema_utf8_bytes": 2,
+                "tool_catalog_sha256": "b" * 64,
+                "tools": [],
+                "response_format": {"present": False, "kind": None, "schema_utf8_bytes": 0, "schema_sha256": None},
+                "estimated_payload_utf8_bytes": 34,
+            },
+            "context_layers": {},
+            "state_projection": {"summary_present": False, "summary_utf8_bytes": 0, "delegation_count": 0, "inspected_skill_count": 0},
+            "skill_activation": {"mode": "none", "skill_name": None, "content_sha256": None},
+            "user_profile": {
+                "present": False,
+                "version": None,
+                "content_sha256": None,
+                "item_count": 0,
+                "projected_item_count": 0,
+                "omitted_item_count": 0,
+            },
+            "response_usage": None,
+        }
+    )
     await journal.flush()
 
     events = await store.list_events("thread-1", "run-1")

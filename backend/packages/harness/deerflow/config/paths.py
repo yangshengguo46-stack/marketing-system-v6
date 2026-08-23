@@ -106,12 +106,15 @@ class Paths:
     Directory layout (host side):
         {base_dir}/
         ├── memory.json
-        ├── USER.md          <-- global user profile (injected into all agents)
+        ├── USER.md          <-- legacy shared user profile; never injected by the product Lead
         ├── agents/
         │   └── {agent_name}/
         │       ├── config.yaml
         │       ├── SOUL.md  <-- agent personality/identity (injected alongside lead prompt)
         │       └── memory.json
+        ├── users/
+        │   └── {user_id}/
+        │       └── profile/revisions/*.json  <-- sourced user-profile revisions
         └── threads/
             └── {thread_id}/
                 └── user-data/         <-- mounted as /mnt/user-data/ inside sandbox
@@ -191,6 +194,14 @@ class Paths:
     def user_dir(self, user_id: str) -> Path:
         """Directory for a specific user: `{base_dir}/users/{user_id}/`."""
         return self.base_dir / "users" / _validate_user_id(user_id)
+
+    def user_profile_dir(self, user_id: str) -> Path:
+        """Directory for one user's structured profile revisions."""
+        return self.user_dir(user_id) / "profile"
+
+    def user_profile_revisions_dir(self, user_id: str) -> Path:
+        """Append-only revision directory for one user's structured profile."""
+        return self.user_profile_dir(user_id) / "revisions"
 
     def prepare_user_dir_for_raw_id(self, raw_user_id: str) -> str:
         """Return the safe user ID and migrate this ID's legacy unsafe-id bucket.

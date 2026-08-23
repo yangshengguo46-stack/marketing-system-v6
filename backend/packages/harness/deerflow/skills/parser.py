@@ -170,9 +170,9 @@ def parse_required_secrets(raw: object, skill_file: Path) -> tuple[SecretRequire
 def parse_secrets_autonomous(raw: object, skill_file: Path) -> bool:
     """Parse the optional ``secrets-autonomous`` frontmatter field (issue #3914).
 
-    ``True`` (the default) lets declared secrets bind while the skill is
-    in-context via an autonomous model load; ``False`` restricts binding to
-    explicit ``/slash`` activation. A malformed (non-boolean) value fails
+    ``True`` (the default) lets declared secrets bind after an autonomous
+    ``activate_skill`` choice; ``False`` restricts binding to explicit user
+    ``/slash`` activation. A malformed (non-boolean) value fails
     closed to ``False`` — the safer, less-injection direction.
     """
     if raw is None:

@@ -103,7 +103,7 @@ def test_lead_model_physical_uses_the_innermost_tail_anchor():
     assert offenders == []
 
 
-def test_lead_model_physical_reports_when_the_safety_anchor_is_disabled():
+def test_lead_model_physical_uses_manifest_anchor_when_safety_is_disabled():
     from deerflow.extensions import get_runtime_diagnostics, reset_runtime_diagnostics
 
     app_config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
@@ -126,7 +126,7 @@ def test_lead_model_physical_reports_when_the_safety_anchor_is_disabled():
     finally:
         reset_runtime_diagnostics()
 
-    assert any("MODEL_PHYSICAL fell back to a secondary anchor" in diagnostic.message for diagnostic in diagnostics)
+    assert not any("MODEL_PHYSICAL fell back to a secondary anchor" in diagnostic.message for diagnostic in diagnostics)
 
 
 def test_subagent_model_physical_sees_the_final_request():

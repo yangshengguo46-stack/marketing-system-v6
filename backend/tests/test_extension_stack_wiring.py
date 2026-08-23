@@ -188,7 +188,7 @@ def test_runtime_isolation_failure_is_recorded_after_stack_composition():
     assert "wrap_tool_call" in diagnostics[0].message
 
 
-def test_build_and_runtime_diagnostics_are_each_recorded_once():
+def test_manifest_anchor_avoids_build_warning_and_runtime_failure_is_recorded_once():
     from deerflow.extensions import get_runtime_diagnostics, reset_runtime_diagnostics
 
     class _FailingObserver(AgentMiddleware):
@@ -215,8 +215,8 @@ def test_build_and_runtime_diagnostics_are_each_recorded_once():
     finally:
         reset_runtime_diagnostics()
 
-    assert [diagnostic.level for diagnostic in diagnostics] == ["warning", "error"]
-    assert sum("fell back to a secondary anchor" in diagnostic.message for diagnostic in diagnostics) == 1
+    assert [diagnostic.level for diagnostic in diagnostics] == ["error"]
+    assert not any("fell back to a secondary anchor" in diagnostic.message for diagnostic in diagnostics)
     assert sum("wrap_model_call" in diagnostic.message for diagnostic in diagnostics) == 1
 
 

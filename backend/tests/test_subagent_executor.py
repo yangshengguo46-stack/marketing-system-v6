@@ -1581,7 +1581,14 @@ class TestSkillAllowedTools:
             await executor._aexecute("Task")
 
         create_agent_mock.assert_called_once()
-        assert [tool.name for tool in create_agent_mock.call_args.args[0]] == ["bash", "read_file", "write_file", "review_skill_package", "describe_skill"]
+        assert [tool.name for tool in create_agent_mock.call_args.args[0]] == [
+            "bash",
+            "read_file",
+            "write_file",
+            "review_skill_package",
+            "describe_skill",
+            "activate_skill",
+        ]
         assert [tool.name for tool in executor.tools] == ["bash", "read_file", "write_file", "review_skill_package"]
         assert executor._available_skill_names == {"skill-reviewer"}
 

@@ -42,6 +42,10 @@ Configuration priority:
 3. `extensions_config.json` in current directory (backend/)
 4. `extensions_config.json` in parent directory (project root - **recommended location**)
 
+UserProfile is runtime data rather than configuration. `Paths.user_profile_revisions_dir(user_id)` resolves it under
+`{base_dir}/users/{safe_user_id}/profile/revisions/`; callers must use the existing user-ID validation/sanitization
+boundary and must not introduce a repository-root or cross-user `USER.md` fallback.
+
 Extensions are optional only in the fallback *search* mode (priority 3-4 above): `ExtensionsConfig.resolve_config_path()` returns `None` when neither an explicit `config_path` nor `DEER_FLOW_EXTENSIONS_CONFIG_PATH` is given and the search locations find nothing. An explicit `config_path` argument or a set `DEER_FLOW_EXTENSIONS_CONFIG_PATH` (priority 1-2) is an operator assertion that one particular file must be used, so a missing file in either of those modes raises `FileNotFoundError` instead — including when the file existed earlier and has since been deleted. The MCP tools cache's staleness check (`deerflow.mcp.cache._resolve_config_path`) is a narrow, deliberate exception to that rule: it catches that `FileNotFoundError` locally and treats it as "unconfigured" so a previously-valid config disappearing mid-run degrades the cache to serving its last-known-good tools instead of raising out of a per-request hot path (see the MCP System section below).
 
 ### Config Schema
@@ -54,7 +58,7 @@ Extensions are optional only in the fallback *search* mode (priority 3-4 above):
 - `tool_groups[]` - Logical groupings for tools
 - `sandbox.use` - Sandbox provider class path
 - `skills.path` / `skills.container_path` - Host and container paths to skills directory
-- `skills.deferred_discovery` - When `true`, replaces the full-metadata `<available_skills>` prompt block with a compact `<skill_index>` (names only) and registers the `describe_skill` tool so the agent fetches metadata on demand. Defaults to `false` (legacy full-metadata injection)
+- `skills.deferred_discovery` - When `true`, replaces the full-metadata `<available_skills>` prompt block with a compact `<skill_index>` (names plus bounded routing summaries) and registers the `describe_skill` tool so the agent fetches full metadata on demand. Defaults to `false` (legacy full-metadata injection)
 - `tool_search.enabled` / `tool_search.defer_tools` - Progressive tool-schema discovery. MCP tools are deferred automatically when enabled; `defer_tools` adds exact local tool names to the same catalog. Discovery never grants authority, and configured semantic/content entry tools should remain eager when they are part of the product's default reasoning path. The library-model default remains disabled/empty for compatibility, while this distribution's `config.example.yaml` enables discovery and lists generic file/attachment/review tools.
 - `title` - Auto-title generation (enabled, max_words, max_chars, model_name; null model_name uses fast local fallback, explicit model_name uses the prompt_template LLM path)
 - `summarization` - Context summarization (enabled, trigger conditions, keep policy)

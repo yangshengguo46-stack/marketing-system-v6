@@ -74,12 +74,20 @@ export function GET() {
         enabled: true,
       },
       {
-        name: "video-generation",
+        name: "marketing-video-production",
         description:
-          "Use this skill when the user requests to generate, create, or imagine videos. Supports structured prompts and reference image for guided generation.",
+          "Plan and review V6 marketing-video production from sealed content and exact ProductionPlan lineage; Ark execution remains unregistered.",
         license: null,
         category: "public",
         enabled: true,
+      },
+      {
+        name: "video-generation",
+        description:
+          "Disabled legacy direct-provider compatibility package; use marketing-video-production instead.",
+        license: null,
+        category: "public",
+        enabled: false,
       },
       {
         name: "web-design-guidelines",

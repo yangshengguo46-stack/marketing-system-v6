@@ -12,6 +12,7 @@ from deerflow.mcp.tasks import (
     CLAIMABLE_TASK_STATUSES,
     TERMINAL_TASK_STATUSES,
     TaskStatus,
+    TaskSubmissionPolicy,
 )
 from deerflow.persistence.mcp_tasks.model import McpTaskRow
 from deerflow.utils.time import coerce_iso
@@ -21,6 +22,7 @@ _ATTENTION_STATUS_VALUES = frozenset(status.value for status in ATTENTION_TASK_S
 _TERMINAL_STATUS_VALUES = frozenset(status.value for status in TERMINAL_TASK_STATUSES)
 _TIMESTAMP_FIELDS = (
     "next_poll_at",
+    "submission_started_at",
     "last_polled_at",
     "lease_expires_at",
     "cancel_requested_at",
@@ -89,6 +91,8 @@ class McpTaskRepository:
             remote_task_id=remote_task_id,
             task_name=task_name,
             status=status,
+            submission_policy=TaskSubmissionPolicy.IDEMPOTENT_RETRY.value,
+            submission_started_at=None,
             submit_arguments=None,
             result=result,
             error=error,
@@ -126,8 +130,10 @@ class McpTaskRepository:
         submit_arguments: dict[str, Any],
         next_poll_at: datetime,
         driver_data: dict[str, Any] | None = None,
+        submission_policy: str = TaskSubmissionPolicy.IDEMPOTENT_RETRY.value,
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
+        normalized_policy = TaskSubmissionPolicy(submission_policy).value
         row = McpTaskRow(
             id=task_id,
             user_id=user_id,
@@ -139,6 +145,8 @@ class McpTaskRepository:
             remote_task_id=None,
             task_name=task_name,
             status=TaskStatus.SUBMISSION_PENDING.value,
+            submission_policy=normalized_policy,
+            submission_started_at=None,
             submit_arguments=dict(submit_arguments),
             result=None,
             error=None,
@@ -215,6 +223,73 @@ class McpTaskRepository:
                 row.updated_at = now
             await session.commit()
             return [self._row_to_dict(row) for row in rows]
+
+    async def mark_submission_started(
+        self,
+        task_id: str,
+        *,
+        lease_owner: str,
+        started_at: datetime,
+    ) -> bool:
+        """Seal the at-most-once boundary before entering provider code."""
+        stmt = (
+            update(McpTaskRow)
+            .where(
+                McpTaskRow.id == task_id,
+                McpTaskRow.status == TaskStatus.SUBMISSION_PENDING.value,
+                McpTaskRow.submission_policy == TaskSubmissionPolicy.AT_MOST_ONCE.value,
+                McpTaskRow.submission_started_at.is_(None),
+                McpTaskRow.lease_owner == lease_owner,
+                McpTaskRow.lease_expires_at >= started_at,
+            )
+            .values(
+                submission_started_at=started_at,
+                updated_at=started_at,
+            )
+        )
+        async with self._sf() as session:
+            result_proxy = await session.execute(stmt)
+            await session.commit()
+            return bool(result_proxy.rowcount)
+
+    async def mark_submission_unknown(
+        self,
+        task_id: str,
+        *,
+        lease_owner: str,
+        marked_at: datetime,
+        error: str,
+    ) -> bool:
+        """Terminalize an at-most-once task whose provider outcome is unknowable."""
+        stmt = (
+            update(McpTaskRow)
+            .where(
+                McpTaskRow.id == task_id,
+                McpTaskRow.status == TaskStatus.SUBMISSION_PENDING.value,
+                McpTaskRow.submission_policy == TaskSubmissionPolicy.AT_MOST_ONCE.value,
+                McpTaskRow.submission_started_at.is_not(None),
+                McpTaskRow.lease_owner == lease_owner,
+                McpTaskRow.lease_expires_at >= marked_at,
+            )
+            .values(
+                status=TaskStatus.SUBMISSION_UNKNOWN.value,
+                submit_arguments=None,
+                result=None,
+                error=error,
+                input_required=None,
+                notification_status="pending",
+                next_poll_at=None,
+                last_poll_error=error,
+                lease_owner=None,
+                lease_expires_at=None,
+                completed_at=marked_at,
+                updated_at=marked_at,
+            )
+        )
+        async with self._sf() as session:
+            result_proxy = await session.execute(stmt)
+            await session.commit()
+            return bool(result_proxy.rowcount)
 
     async def bind_submission(
         self,

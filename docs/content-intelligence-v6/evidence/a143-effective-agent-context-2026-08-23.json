@@ -1,0 +1,45 @@
+{
+  "audit_id": "A143",
+  "captured_at": "2026-08-23T11:18:16+08:00",
+  "repository": "sixth-version-marketing-system",
+  "branch": "codex/v6-comprehension-core",
+  "commit": "14c16195a35158a03b19d3fc0cd3b06f206cafdd",
+  "runtime": {
+    "user_id": "default",
+    "agent_name": null,
+    "custom_agent_rows": 0,
+    "default_soul_present": false,
+    "memory_enabled": false,
+    "memory_injection_enabled": false,
+    "mcp_server": "deerflow_capabilities",
+    "mcp_tool_count": 17
+  },
+  "first_call_static_contract": {
+    "raw_tool_count": 42,
+    "final_tool_count": 44,
+    "deferred_tool_count": 41,
+    "visible_tool_names": [
+      "read_file",
+      "tool_search",
+      "describe_skill"
+    ],
+    "enabled_skill_count": 24,
+    "effective_system_prompt_utf8_bytes": 12349,
+    "agent_kernel_content_utf8_bytes": 1079,
+    "skill_system_content_utf8_bytes": 4212,
+    "deferred_tool_names_content_utf8_bytes": 771,
+    "mcp_routing_hints_content_utf8_bytes": 3779,
+    "mcp_routing_hint_lines": 36
+  },
+  "security": {
+    "external_bootstrap_forwarded": true,
+    "bootstrap_can_write_default_soul": true,
+    "external_system_messages_preserved": true,
+    "auth_disabled": true,
+    "gateway_all_interfaces": true,
+    "nginx_all_interfaces": true,
+    "credential_values_recorded": false,
+    "tool_arguments_recorded": false,
+    "tool_results_recorded": false
+  }
+}

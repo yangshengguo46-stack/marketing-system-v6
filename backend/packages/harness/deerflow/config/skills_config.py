@@ -31,7 +31,11 @@ class SkillsConfig(BaseModel):
     )
     deferred_discovery: bool = Field(
         default=False,
-        description=("When enabled, skill metadata is not injected into the system prompt. Instead, only skill names appear in <skill_index> and the LLM discovers details on demand via the describe_skill tool."),
+        description=("When enabled, skill method bodies stay out of the system prompt. A compact <skill_index> contains names and bounded routing summaries, while the LLM discovers full details on demand via describe_skill."),
+    )
+    prompt_index_patterns: list[str] | None = Field(
+        default=None,
+        description=("Optional glob patterns limiting which enabled skills appear in the static <skill_index>. All enabled skills remain searchable through describe_skill; null preserves the full index."),
     )
 
     def get_skills_path(self) -> Path:

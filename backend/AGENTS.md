@@ -165,15 +165,15 @@ The Lead owns incubation judgment and selects the least work needed: answer, one
 At most one active incubation Skill may offer bounded, rejectable advice; it cannot rewrite user text, own denials,
 classify free text, reject drafts by substring, or overwrite model judgment.
 
+Lead prompt ownership, the 1,600-byte Agent-kernel budget, and the 5,000-byte static-template budget live in
+`agents/AGENTS.md`; providers add no marketing behavior.
+
 `deerflow.incubation` owns parent-checked owner/project/logical-account truth. Thread metadata is the trusted account
 selector; caller config, model arguments, and arbitrary context cannot override it. A logical account does not require
-platform login. Legacy project-scoped artifacts remain readable but cannot be silently promoted. ADR-044 selects a
-thin append-only `AccountDirectionProposal -> AccountDirectionVersion` bridge for explicit reusable judgments. The
-bridge is implemented: proposal code binds the latest authentic user text, only an exact user-confirmed proposal and
-option become effective, and later topic work reads a bounded editorial projection plus records the direction parent.
-Both new schemas stay deferred for ordinary turns. Old map-bound `IncubationJudgment` remains read-only compatibility,
-and legacy confirmation/launch tools stay deferred. Never restore `develop_account_strategy` as a default tool or
-mandatory workflow.
+platform login. Legacy project artifacts stay readable but cannot be promoted. ADR-044/046 define the deferred,
+append-only `DirectionProposal -> DirectionVersion -> exact map -> LaunchPlan` path. Confirmation uses the displayed
+exact receipt; downstream topics retain exact parents. Old `IncubationJudgment` is read-only compatibility. Never make
+`develop_account_strategy` default or mandatory.
 
 `user_business` reads user/project facts; `agent_self` reads only server-owned `HostProductProfile`. Unknown terms may
 get one bounded lookup, but term evidence cannot choose a root or impersonate topic/benchmark evidence. Keep payer,
@@ -183,9 +183,14 @@ unknown. Broad direction requests do not imply calendars, spend, cadence, or 7/3
 
 Topic work may read a bounded confirmed direction but cannot create or revise it. Normal delivery stops at one compact
 `BaseDraft`; format, adaptation, launch planning, production, MediaKit, publication, metrics, and learning are explicit
-continuations. Topic and competitor evidence never mix. Formal benchmark evidence needs stable identity and
+continuations. Topic and competitor evidence never mix. Formal account-level `BenchmarkSnapshot` evidence needs stable identity and
 author-consistent multi-post coverage and cannot write direction. Credentials, raw pages, local paths, and temporary
 URLs never enter artifacts. The Host exposes only `deerflow-capability-mcp`; every Child still needs a receipt.
+
+`marketing-video-production` reuses `ProductionPlan` and the ledger; single-video evidence separates observation,
+interpretation, transferable structure, identity/trade-dress exclusions, unknowns, and unverified rights references.
+Ark V1 is unregistered. Future paid wiring needs exact quote/approvals, mechanically enforced `at_most_once`, terminal
+`submission_unknown`, private materialization, QC, and a `MediaArtifact`. Contracts never authorize a live call.
 
 For one-topic work under a confirmed direction, freeze the direction's compact `content_root`; do not reinterpret its
 long rationale or business-return language as a new subject. Project the current user request into discovery, evidence

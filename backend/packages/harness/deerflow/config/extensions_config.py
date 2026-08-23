@@ -150,6 +150,15 @@ class SkillStateConfig(BaseModel):
     enabled: bool = Field(default=True, description="Whether this skill is enabled")
 
 
+_DEFAULT_DISABLED_SKILLS = frozenset(
+    {
+        # Retained only as an operator-controlled migration escape hatch. The
+        # project-native marketing-video-production skill owns new requests.
+        "video-generation",
+    }
+)
+
+
 class ExtensionsConfig(BaseModel):
     """Unified configuration for MCP servers and skills."""
 
@@ -330,13 +339,19 @@ class ExtensionsConfig(BaseModel):
 
         Note:
             All skill categories (public, custom, legacy) respect the
-            extensions_config enabled/disabled state.  When no explicit
-            entry exists, skills default to enabled.
+            extensions_config enabled/disabled state. When no explicit entry
+            exists, skills default to enabled except retired compatibility
+            packages in ``_DEFAULT_DISABLED_SKILLS``. Operators may still
+            explicitly opt those packages back in.
         """
         skill_config = self.skills.get(skill_name)
         if skill_config is None:
-            # Default to enabled for all skill categories
-            return skill_category in ("public", "custom", "legacy", "integrations")
+            return skill_name not in _DEFAULT_DISABLED_SKILLS and skill_category in (
+                "public",
+                "custom",
+                "legacy",
+                "integrations",
+            )
         return skill_config.enabled
 
 

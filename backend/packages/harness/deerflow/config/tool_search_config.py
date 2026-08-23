@@ -23,6 +23,10 @@ class ToolSearchConfig(BaseModel):
         default=False,
         description="Defer tools and enable tool_search",
     )
+    prompt_index: bool = Field(
+        default=True,
+        description=("List deferred tool names in the static system prompt. Disabling this keeps the full catalog searchable through tool_search without preloading every name into model context."),
+    )
     auto_promote_top_k: int = Field(
         default=3,
         description="Maximum number of deferred MCP tool schemas auto-promoted from routing metadata per model call",

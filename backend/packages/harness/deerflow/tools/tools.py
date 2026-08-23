@@ -17,6 +17,7 @@ from deerflow.tools.builtins import (
     explore_content_world_tool,
     inspect_agent_product_profile_tool,
     list_uploaded_files,
+    manage_user_profile_tool,
     plan_account_launch_tool,
     present_file_tool,
     propose_account_direction_tool,
@@ -45,6 +46,7 @@ BUILTIN_TOOLS = [
     douyin_benchmark_account_tool,
     douyin_benchmark_candidate_tool,
     review_skill_package,
+    manage_user_profile_tool,
 ]
 
 SUBAGENT_TOOLS = [
@@ -78,6 +80,7 @@ def get_available_tools(
     subagent_enabled: bool = False,
     *,
     include_upload_tool: bool = True,
+    include_user_profile_tool: bool = True,
     app_config: AppConfig | None = None,
 ) -> list[BaseTool]:
     """Get all available tools from config.
@@ -93,6 +96,8 @@ def get_available_tools(
         include_upload_tool: Whether to include ``list_uploaded_files`` (default: True).
             Set to False for subagent tool assembly — subagents have independent
             ThreadState and cannot exclude current-run files.
+        include_user_profile_tool: Whether to include the Lead-owned reversible
+            user-profile mutation tool. Subagents must set this to False.
 
     Returns:
         List of available tools.
@@ -123,6 +128,8 @@ def get_available_tools(
 
     # Conditionally add tools based on config
     builtin_tools = BUILTIN_TOOLS.copy()
+    if not include_user_profile_tool:
+        builtin_tools = [tool for tool in builtin_tools if tool.name != manage_user_profile_tool.name]
     if include_upload_tool:
         builtin_tools.append(list_uploaded_files)
     skill_evolution_config = getattr(config, "skill_evolution", None)

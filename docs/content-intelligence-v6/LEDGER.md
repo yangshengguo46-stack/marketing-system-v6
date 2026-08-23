@@ -2511,3 +2511,208 @@ ADR-044 决定新增薄的 `AccountDirectionProposal -> AccountDirectionVersion`
 模型注意力。内容循环目前可独立走到 `BaseDraft`，学习循环按用户决定继续暂停；抖音对标高层工具尚需统一
 收口到 `deerflow-capability-mcp`。详见 `audits/A134-current-architecture-and-loop-reconciliation.md` 与
 `decisions/ADR-044-thin-account-direction-ledger-bridge.md`。
+
+## A135 薄账号方向事实桥
+
+2026-08-22 实现 `AccountDirectionProposal -> AccountDirectionVersion` 薄桥。方向提案绑定当前用户原话，
+只有用户明确接受精确 proposal 与 option 后才成为持久方向；普通对话不强制创建工件，后续内容工作只读取
+有界方向投影。旧地图绑定的孵化判断保持只读兼容，不恢复历史固定起号流程。详见
+`audits/A135-thin-account-direction-ledger-implementation.md` 与
+`decisions/ADR-044-thin-account-direction-ledger-bridge.md`。
+
+## A136 已确认方向到具体选题真实端到端
+
+2026-08-22 以黄金礼品已确认的“人与人的关系本身”为冻结内容根，连续运行五次真实端到端。方向继承、地图
+边界、表面排除和事实不足时失败关闭已通过，但五次均未同时交付可靠的真实人物事件选题与可拍稿；技术状态
+`success` 不等于业务验收通过。五次共消耗 `658,269` Token、75 次模型调用。详见
+`audits/A136-confirmed-direction-topic-e2e.md`。
+
+## A137 跨模型 Agent 核心提示词审计
+
+2026-08-22 对照 OpenAI、Anthropic、LangGraph、Gemini CLI、DeepSeek Harness 与 GLM 官方资料，并回查
+现役 Prompt、14 次第六版母提示修改和相关测试。结论是现役 Prompt 已定义业务领域、工具路由和大量禁止
+事项，却缺少模型无关的工作关系、任务所有权、完成标准、自主权限和员工式结果汇报合同；
+`recommend one without adopting it` 还会把 Agent 推回外部顾问位置。
+
+本轮不改运行时代码。后继应以一份跨模型共用的短 `Agent Kernel` 为候选，把营销方法、行业知识、工具协议、
+项目事实和 Provider 差异分别归还 Skill、Tool、业务投影、Harness 与模型适配器；同一候选必须通过多模型、
+同 Harness、全新行业的真实行为 A/B 才能晋级。详见
+`audits/A137-model-neutral-agent-core-prompt-audit.md`。
+
+## A138 Agent 核心合同重构预注册
+
+2026-08-22 冻结现役 `current_full` 与模型无关 `agent_core_candidate` 的公平对照。候选只替换身份与工作关系、
+任务所有权与完成条件、行动审批边界、结果汇报和压缩后的账号孵化章程，不修改工具、Skill、中间件、业务
+台账或模型适配器。三种当前可用文本模型使用同一候选文本，覆盖问候、研究、起号、创作、可逆执行和不可逆
+动作六类新任务。晋级要求本体感与完成度净提升，同时事实、审批和营销能力不退步。详见
+`audits/A138-agent-core-contract-preregistration.md`。
+
+A138 正式运行前的两题 GLM 冒烟显示：可逆文件任务候选少一次模型调用并减少约 `10,703` Token，但无任务
+问候仍退化为功能导览。两题不计晋级成绩；候选补充简短社交边界后，以两道新题替换已消耗题并冻结 v2 数据集。
+
+v2 全量在平台研究题遇到外部搜索连续超时：候选消耗 11 次模型调用、54 次工具调用后返回，基线以递归上限
+失败。该对测的是搜索恢复而非核心合同，故立即中止并保留失败回执。v3 以固定平台材料阅读替换该题，并换新
+已消耗的社交题；四道未运行任务保持不变。
+
+v3 首跑发现实验调用上限错误地跨题累计，导致第五题被前四题用量误伤。候选和数据集未改；实验器改为每题
+创建两套全新同构客户端，并以单测固定每题、每臂独立 12 次模型调用预算后，才允许原样重跑。
+
+A138 v3 r2 由 GLM 完成六类任务、DeepSeek Pro 完成前三类后停止。候选在两模型问候上稳定消除功能导览，
+证据阅读相当，发布准备优于失败基线；但 GLM 起号题出现 4 次调用、19 次工具和未经可靠支持的竞品/计划，
+植物标本题没有交付脚本，可逆任务也未稳定降本。整份候选不晋级；后继只允许抽取内部工作关系、短社交、
+结果汇报、真实动作和审批边界，并补上最小充分工作与停止检索条件。
+
+## A139 薄运营执行者内核
+
+2026-08-22 从已拒绝的 A138 完整候选中只提取可验证部分，直接重写正式 Lead 的工作关系、首轮账号判断和
+交付合同。所有 Provider 共用同一份 Prompt，不加中间件、固定多 Agent 或模型专属营销提示。首轮账号方向现在先用用户事实
+形成临时判断；只有用户要当前证据/对标或名词需要有界核实时才搜索。结果合同放在母提示最后，静态 Prompt 为
+`8,981` 字节，108 项相关边界测试通过。
+
+真实回归曾抓到一次 `57` 工具、`159,506` Token 的过度调研；收窄后的冷库维修和无损探伤题稳定为
+`1` 次模型、`0` 工具。业务判断已可用，但 GLM 仍偶发多问一个问题和追加顾问式邀约，因此“员工本体感完全通过”
+仍为否。详见 `audits/A139-thin-operator-core-implementation.md`、
+`decisions/ADR-045-thin-model-neutral-operator-core.md` 与
+`evidence/a139-production-operator-core-2026-08-22.json`。
+
+整仓回归发现新 `<work_ownership>` / `<marketing_charter>` 权威标签尚未进入输入清洗 denylist；修复后
+该安全文件 `197` 项通过，后续 341 个测试文件 `7,347 passed, 45 skipped`。DeerFlow 原有 checkpointer
+并发用例因本机八线程同时解析配置超过写死的 3 秒而隔离失败，相关底座文件本轮未修改，不混入 A139 成功结论。
+
+## A140 新账号方向到可选起号计划桥接
+
+2026-08-22 将历史 `AccountLaunchPlan` 从只接受旧 confirmed `IncubationJudgment`，扩展为互斥接受当前
+`AccountDirectionVersion` 或旧战略。新方向路径使用同一确定性内容根函数，并完整验证 exact proposal、revision、
+selected option、basis 与候选地图连接；地图是方向直接子级也不能绕过 proposal 验证。只按同根或“最新地图”
+猜测无效，多张合法地图要求准确 `content_map_artifact_id`。
+
+待确认展示稳定的计划提案编号、每个 `seed_id / source_kind / evidence_need` 和唯一口令
+`确认起号计划 <proposal-id>`。工具只从最近一条真实用户消息取原话；领域函数再次验证。幂等重放只在
+版本连续、父集合精确且确认前后业务内容完全不变时复用；篡改子工件失败关闭。`0017_account_launch_plan_unique`
+在 owner/project/logical-account/revision 上增加 partial UNIQUE，并发的相同 canonical 工件幂等，不同内容显式冲突。
+
+已确认计划不再停在题眼文字：续写必须同时提交 exact confirmed plan receipt 和 exact `seed_id`，系统从该计划的
+精确父级重水化地图，用 seed 问题重新取证，验证 TopicBrief 的 map version/path，并将计划回执和 seed 写入
+`content_reading`/`TopicBrief` 谱系，然后才进入 `MessagePlan -> BaseDraft`。起号计划仍是用户明确要求后的可选运营层，
+不直接触发制作/发布，`develop_account_strategy` 没有恢复。本轮没做真实模型“方向 -> 计划 -> 确认 -> 题眼取证”业务验收。详见
+`audits/A140-account-direction-launch-plan-bridge.md` 与
+`decisions/ADR-046-account-direction-launch-plan-parentage.md`。
+
+## A141 视频生产安全底座与项目原生 Skill
+
+2026-08-22 沿用第六版 `ProductionPlan -> MediaArtifact` 主链，新增项目原生
+`marketing-video-production` Skill、单视频 `benchmark_video_evidence`、纯文生视频 Ark V1 封存合同、无默认
+subprocess 的 ArkCLI 模拟适配边界，以及持久任务 `idempotent_retry | at_most_once` 策略。山音只贡献冻结 MIT 来源下的镜头
+目的、动作/反应、镜头组和审阅表方法，不成为“电影化”总控或第二本台账；`video-shotcraft` 是另一 Apache-2.0 项目，本轮只审计而未迁移。历史 `video-generation` 已从
+项目示例配置和当前本机配置禁用，兼容脚本仍在磁盘但不得由第六版 Agent 代表用户执行。
+
+对标合同精确绑定 `media_source_receipt + media_observation` 的项目、输出账号作用域、权利声明/引用基础、来源与父哈希；
+其父工件当前可以只是项目级，`rights_ref` 的一致性也不等于完成权利核验。合同分开机器观察、
+编辑解释、可迁移结构、身份/品牌装潢禁迁项和未知。Ark V1 只接受 ready 计划中的单视频资产、单生成动作、
+单装配步骤，拒绝 URL、路径、凭据、参考文件和自由参数；runner 必须注入，未注册到 Lead。由于 ArkCLI
+`1.0.11` 没有本项目已审计的生成幂等键，`0016_mcp_task_submission_policy` 在外部调用前持久化
+`submission_started_at`，模糊结果进入不可领取的终态 `submission_unknown`，永不自动重提；旧 MediaKit
+默认仍为 `idempotent_retry`。
+
+同日 GitHub 官方快照中，OpenMontage 49,335★、HyperFrames 42,005★和 `video-shotcraft` 5,992★是新仓生命周期
+累计关注度最突出的样本，但 GitHub 不给历史 star 序列，因此不写成“最近 7/30 天加速”。OpenMontage 只借鉴素材 connector、
+sample/费用审批门和 QA，不引入 AGPL 全栈总控；HyperFrames 只作 renderer 候选；Shotcraft/山音只进镜头方法；
+MediaKit/watch 只进证据/QC。火山 MediaKit 确有 MIT 官方公开仓，但 cloud-first 默认要求后续注册强制显式 `--local | --cloud`。
+
+最终合并无 live 纵切为 `404 passed, 5 deselected, 2 warnings in 149.63s`；五个排除用例已单独确认为当前 A139 Prompt
+工作树不一致，不混入 A140/A141 验收。旧脚本 `12 passed`，前端 check 退出 0，Alembic 唯一 head 为 0017。新 Skill 包摘要
+`sha256:ff5bcb5c8134ffd00bf478fa71f6814a486c24b0a12b68d0ee181e7a09a13b1d`，审查为 `0 blocker, 0 error, 0 warning`。本轮没有
+运行 `arkcli +gen`、没有 MediaKit 云调用、没有产生费用，也没有注册 Gateway、报价批准、结果物化或多镜头
+装配；也未恢复第四版“全网找素材”，V4 历史只能证明本地检查方向与未完成的远端采集验收。这些缺口不能被本地代码存在掩盖。
+更早一次全量为 `46 failed, 12530 passed, 75 skipped`，时点早于最终收紧且失败集涉及同工作树 A137/A139 修改，因此不声称整仓全绿。
+回滚以保持新合同不可发现为先，`submission_unknown` 不得恢复为可重试。详见 `audits/A141-video-production-safety-foundation.md`、
+`evidence/a140-a141-video-production-2026-08-22.md` 与
+`decisions/ADR-047-at-most-once-ark-generation-boundary.md`。最终证据文件 SHA-256 为
+`620d18cfcdce44b9060ab10123dfc451b32a1dfd52af60a7ee53e73944d78489`。
+
+## A142 极薄员工型 Agent 内核与 Skill 路由
+
+2026-08-22 将正式 Lead 母提示替换为 `1,108` 字节的模型无关 Agent Kernel，只定义团队内员工身份、长期
+目标、自主行动、事实边界和不可逆审批；静态 `SYSTEM_PROMPT_TEMPLATE` 降至 `3,560` 字节。A139 的首轮
+判断、搜索顺序、问题数量和结果复核合同不再常驻，行业方法继续由 Skill 按需提供。
+
+真实 A/B 否决名称-only Skill 索引：虽然问候降至 `3,182` Token，黄金礼品却未加载礼赠 Skill，消耗
+`65,208` Token 后重新落入婚礼和商品题材。恢复单项最多 120 字符的用途摘要后，问候为 `3,768` Token；
+黄金礼品只走 `describe_skill -> describe_skill -> read_file`，在 `18,272` Token 内明确选择人情世故，并
+给出三个完全脱离黄金和礼品的可拍题。聚焦回归 `360 passed`。顾问式结尾、短能力菜单和个别绝对判断仍
+保留为未通过项，不再向核心提示词追加禁令。详见
+`audits/A142-employee-agent-kernel-and-gift-skill-v1-3.md`、
+`decisions/ADR-048-minimal-agent-kernel-and-bounded-skill-routing.md` 与
+`evidence/a142-agent-kernel-and-skill-routing-2026-08-22.json`。
+
+## A143 现役 Agent 完整上下文与 DeerFlow 残留审计
+
+2026-08-23 从真实 Gateway、SOUL、自定义 Agent、Memory、母提示、Skill、Tool/MCP、
+中间件、子 Agent 和前端模式重新对账。SOUL 不存在、Agent 表为空、Memory 关闭，它们不是新会话
+首轮顾问化的根因。真实 MCP `tools/list` 返回 17 个 Tool 后，现役完整系统提示为 `12,349`
+UTF-8 字节，其中薄 Agent Kernel 只占 `1,079`，24 个 Skill 摘要占 `4,212`，17 份重复
+抖音 MCP 强路由占 `3,779`。A142 的 `3,560` 字节只是 Python 模板字面量，漏算了真正进入
+模型的动态上下文。根因确定为产品级能力组装未完成：员工型内核仍被 DeerFlow 全量研究/咨询
+Skill、应用流程 Tool 名单和通用工作台协议包围。后继应保留薄内核，用产品原生 Skill 小索引 +
+全量按需搜索、取消 MCP 服务器级泛路由、隐藏内部流程工具名单，并分离 Skill 检查与激活。
+审计还发现一条独立 P0：外部 Run context 可开启 bootstrap，未绑定 `agent_name` 时能写全局
+`SOUL.md`；外部 `SystemMessage` 也会持久进入系统权限层。当前文件尚未被改写，但无认证调试服务
+实际监听所有网卡，需要与业务上下文瘦身分开修复。
+详见 `audits/A143-effective-agent-context-and-deerflow-residue-audit.md` 与
+`evidence/a143-effective-agent-context-2026-08-23.json`。
+
+## A144 Agent Foundations 资料库与第六版符合性审计
+
+2026-08-23 依据 Andrew Ng、Harrison Chase/Rotem Weiss、OpenAI Agent 指南与 Codex 固定提交、Anthropic
+Agent/上下文/评测文章、Claude Code 官方文档和 Hermes 官方架构/文件职责，建立开发 Agent 专用
+`docs/agent-foundations/`。资料库明确：第六版已有真实 LangGraph Agent Loop、动态 Tool/MCP、Skill、子 Agent、
+状态恢复和业务台账，所以是正经 Agent runtime；但默认产品身份仍是代码字符串，用户档案、Skill 检查/激活、
+完整 ContextManifest 和产品级上下文分层尚未完成，因此不能称为完成态“新媒体运营员工 Agent”。
+
+根 `AGENTS.md` 已把资料库设为开发入口，整库禁止注入产品 Lead。ADR-049 接受系统权限、产品身份、用户档案、
+项目事实、会话状态、方法知识、工具环境、评测学习八层模型，并保留 ADR-048 的极薄内核与模型自主判断。
+下一步独立处理 A143 收尾、版本化身份资产、Skill discover/inspect/activate、Shadow ContextManifest 和
+UserProfile，不再一次叠加多份业务合同。详见
+`audits/A144-agent-foundations-reference-library-and-v6-conformance.md`、
+`decisions/ADR-049-agent-foundation-and-context-layering-standard.md` 与 `../agent-foundations/README.md`。
+
+## A145 产品身份资产与显式 Skill 生命周期
+
+2026-08-23 将默认员工身份从 Python 正文迁入只读打包资源 `IDENTITY.md`，以正文 SHA-256 作为版本，并用
+结构、字节预算、源码和 wheel 测试防止双写与漏包。随后把 Skill 生命周期统一为
+`discover -> inspect -> activate -> use within this run`：`describe_skill` 只检查，`activate_skill(exact_name)`
+才建立受保护的 Run 级 Agent 激活；用户 `/skill` 优先，普通 `read_file(SKILL.md)`、历史 `skill_context` 和
+伪造 ToolMessage 均不能改变工具权限或 secret 绑定。旧字段只保留 checkpoint 兼容和“曾检查”投影。
+
+产品身份聚焦回归 `53 passed`；Skill、耐久上下文、权限、secret、Lead、嵌入式客户端和子 Agent 相关回归
+`602 passed`，Ruff 检查通过，wheel 含三份身份资源。本轮没有改变孵化业务方法。下一步是只读
+ContextManifest，精确记录每次模型请求的身份版本、消息/工具预算和激活来源。详见
+`audits/A145-product-identity-and-explicit-skill-lifecycle.md` 与
+`decisions/ADR-050-explicit-run-scoped-skill-activation.md`。
+
+## A146 Shadow-only ContextManifest
+
+2026-08-23 在 Lead 最终模型请求边界新增只读 `ContextManifestMiddleware`，每次真实供应商调用追加
+`context:manifest` RunEvent。清单对账打包身份版本，消息/隐藏上下文/工具 Schema/输出 Schema 大小，
+已检查与已激活 Skill，以及供应商返回的 Token 用量。它不改写请求，不保存消息正文、Tool 参数、
+Skill 路径、凭据或报错原文；字节数明确是估算，不伪装成精确 Token。
+
+Manifest 同时成为 Lead `MODEL_PHYSICAL` 扩展的稳定主锚点，关闭可选 Safety 中间件不再产生错误的次级锚点告警。
+真正缺失主锚点的底层告警保留。中间件、扩展位置、RunJournal 与 JSON 契约聚焦回归 `204 passed`。本轮未改动
+产品身份正文或孵化业务方法。详见 `audits/A146-shadow-context-manifest.md` 与
+`decisions/ADR-051-content-free-context-manifest.md`。
+
+## A147 有来源、可纠正的最小 UserProfile
+
+2026-08-23 新增独立于项目台账和通用 Memory 的用户级档案。只有当前最后一条可见用户消息中的精确原文，才能由
+Lead 专属 `manage_user_profile` Tool 写成背景事实、沟通偏好、协作偏好或稳定限制；支持纠正和删除。修订按用户
+隔离、追加保存，绑定前版与内容哈希、Thread/Run/消息来源，最多 16 条，并用乐观版本和原子提交处理并发。
+
+每次 Lead 物理模型调用只投影最多 2,400 UTF-8 字节；当前用户消息拥有更高优先级。项目、账号、品牌、产品、受众、
+临时要求、模型推断和授权均不进入画像。子 Agent 不获得修改 Tool。ContextManifest 只记录画像版本、哈希和条目数，
+不保存正文、路径或 owner token。A147、Manifest、输入权限和 Lead 装配聚焦回归 `285 passed`；共享邻接回归
+`1439 passed, 1 skipped`。
+真实 GLM 使用隔离用户和全新 Thread 验收通过，回答保持中文、短答和主动员工口吻，总用量 `1829` Token；前端
+查看/编辑和全部供应商一致性尚未验收。详见 `audits/A147-sourced-user-profile-projection.md`、
+`evidence/a147-user-profile-live-acceptance-2026-08-23.md` 与
+`decisions/ADR-052-sourced-user-profile-projection.md`。

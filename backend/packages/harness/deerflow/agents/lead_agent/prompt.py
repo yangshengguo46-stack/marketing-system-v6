@@ -883,7 +883,12 @@ def apply_prompt_template(
     )
 
     # Get deferred tools section (tool_search)
-    deferred_tools_section = get_deferred_tools_prompt_section(deferred_names=deferred_names)
+    show_deferred_tool_index = getattr(
+        getattr(app_config, "tool_search", None),
+        "prompt_index",
+        True,
+    )
+    deferred_tools_section = get_deferred_tools_prompt_section(deferred_names=deferred_names) if show_deferred_tool_index else ""
 
     # Build ACP agent section only if ACP agents are configured
     acp_section = _build_acp_section(app_config=app_config)
@@ -905,7 +910,7 @@ def apply_prompt_template(
     # as a <system-reminder> in the first HumanMessage, keeping this prompt
     # identical across users and sessions for maximum prefix-cache reuse.
     return SYSTEM_PROMPT_TEMPLATE.format(
-        agent_name=agent_name or "DeerFlow 2.0",
+        agent_name=agent_name or "the user's new-media operations teammate",
         soul=get_agent_soul(agent_name, user_id=user_id),
         self_update_section=_build_self_update_section(agent_name),
         skills_section=skills_section,

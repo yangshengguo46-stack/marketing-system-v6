@@ -7,7 +7,7 @@ import uuid
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
-from deerflow.mcp.tasks import McpTaskDriverRegistry, TaskReference, TaskSnapshot, TaskStatus, TaskSubmitRequest
+from deerflow.mcp.tasks import LOCAL_ONLY_TASK_STATUSES, McpTaskDriverRegistry, TaskReference, TaskSnapshot, TaskStatus, TaskSubmissionPolicy, TaskSubmitRequest
 from deerflow.persistence.mcp_tasks import DuplicateMcpRemoteTaskError
 
 logger = logging.getLogger(__name__)
@@ -107,12 +107,14 @@ class McpTaskService:
         driver_name: str,
         request: TaskSubmitRequest,
         now: datetime | None = None,
+        submission_policy: TaskSubmissionPolicy | str = TaskSubmissionPolicy.IDEMPOTENT_RETRY,
     ) -> dict:
         """Persist a recoverable submission intent without calling the remote driver."""
         if self._drivers.get(driver_name) is None:
             raise LookupError(f"No MCP task driver registered as {driver_name!r}")
         queued_at = now or datetime.now(UTC)
         local_task_id = request.local_task_id or f"mcp-task-{uuid.uuid4().hex}"
+        normalized_policy = TaskSubmissionPolicy(submission_policy)
         return await self._repository.create_submission_intent(
             task_id=local_task_id,
             user_id=request.user_id,
@@ -125,6 +127,7 @@ class McpTaskService:
             submit_arguments=dict(request.arguments),
             next_poll_at=queued_at,
             driver_data=dict(request.driver_data),
+            submission_policy=normalized_policy.value,
         )
 
     async def run_once(self, *, now: datetime) -> None:
@@ -155,6 +158,24 @@ class McpTaskService:
         await self._poll_one(record, now=now)
 
     async def _submit_one(self, record: dict, *, now: datetime) -> None:
+        try:
+            submission_policy = TaskSubmissionPolicy(record.get("submission_policy", TaskSubmissionPolicy.IDEMPOTENT_RETRY.value))
+        except ValueError:
+            await self._release_after_error(
+                record,
+                now=now,
+                error=f"Durable MCP task has invalid submission policy {record.get('submission_policy')!r}",
+            )
+            return
+
+        if submission_policy is TaskSubmissionPolicy.AT_MOST_ONCE and record.get("submission_started_at") is not None:
+            await self._mark_submission_unknown(
+                record,
+                now=now,
+                error="Provider submission outcome is unknown after recovery; automatic retry is disabled",
+            )
+            return
+
         driver_name = str(record.get("driver_name") or "")
         driver = self._drivers.get(driver_name)
         if driver is None:
@@ -173,6 +194,19 @@ class McpTaskService:
                 error="Durable MCP task is missing submission arguments",
             )
             return
+        if submission_policy is TaskSubmissionPolicy.AT_MOST_ONCE:
+            submission_started_at = datetime.now(UTC)
+            started = await self._repository.mark_submission_started(
+                record["id"],
+                lease_owner=self._lease_owner,
+                started_at=submission_started_at,
+            )
+            if not started:
+                logger.info(
+                    "Discarded MCP task submission before provider call after lease ownership changed or expired (task_id=%s)",
+                    record.get("id"),
+                )
+                return
         request = TaskSubmitRequest(
             user_id=record["user_id"],
             thread_id=record["thread_id"],
@@ -186,8 +220,21 @@ class McpTaskService:
         )
         try:
             submission = await driver.submit(request)
-        except Exception as exc:  # noqa: BLE001 - retry idempotent submission later
+        except Exception as exc:  # noqa: BLE001 - provider boundary policy decides retry
             submitted_at = datetime.now(UTC)
+            if submission_policy is TaskSubmissionPolicy.AT_MOST_ONCE:
+                logger.warning(
+                    "At-most-once MCP task submission failed with an unknown provider outcome (task_id=%s, driver=%s); automatic retry is disabled",
+                    record.get("id"),
+                    driver_name,
+                    exc_info=True,
+                )
+                await self._mark_submission_unknown(
+                    record,
+                    now=submitted_at,
+                    error=str(exc) or type(exc).__name__,
+                )
+                return
             logger.warning(
                 "MCP task submission failed (task_id=%s, driver=%s); retrying",
                 record.get("id"),
@@ -203,8 +250,8 @@ class McpTaskService:
 
         submitted_at = datetime.now(UTC)
         snapshot = submission.snapshot
-        if snapshot.status is TaskStatus.SUBMISSION_PENDING:
-            raise ValueError("task driver cannot return submission_pending")
+        if snapshot.status in LOCAL_ONLY_TASK_STATUSES:
+            raise ValueError("task driver cannot return a local-only submission status")
         driver_data = {
             **dict(record.get("driver_data") or {}),
             **submission.driver_data,
@@ -227,6 +274,19 @@ class McpTaskService:
                 record.get("id"),
             )
 
+    async def _mark_submission_unknown(self, record: dict, *, now: datetime, error: str) -> None:
+        applied = await self._repository.mark_submission_unknown(
+            record["id"],
+            lease_owner=self._lease_owner,
+            marked_at=now,
+            error=error[:_MAX_POLL_ERROR_CHARS],
+        )
+        if not applied:
+            logger.info(
+                "Discarded MCP task submission-unknown transition after lease ownership changed or expired (task_id=%s)",
+                record.get("id"),
+            )
+
     async def _poll_one(self, record: dict, *, now: datetime) -> None:
         driver_name = str(record.get("driver_name") or "")
         driver = self._drivers.get(driver_name)
@@ -240,6 +300,8 @@ class McpTaskService:
 
         try:
             snapshot = await driver.get_status(TaskReference.from_record(record))
+            if snapshot.status in LOCAL_ONLY_TASK_STATUSES:
+                raise ValueError("task driver cannot return a local-only submission status")
         except Exception as exc:  # noqa: BLE001 - driver boundary; retry on the next poll
             polled_at = datetime.now(UTC)
             logger.warning(

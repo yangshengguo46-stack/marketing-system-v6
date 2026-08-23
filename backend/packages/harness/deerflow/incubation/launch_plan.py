@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 
+from deerflow.incubation.account_direction import (
+    AccountDirectionProposal,
+    AccountDirectionVersion,
+    account_direction_content_root,
+)
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     IncubationContract,
@@ -25,6 +31,14 @@ TopicSourceKind = Literal[
     "prior_outcome",
     "creative_hypothesis",
 ]
+
+
+def account_launch_plan_confirmation_text(plan_artifact_id: str) -> str:
+    """Return the sole user command that confirms one exact proposal receipt."""
+
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", plan_artifact_id) is None:
+        raise ValueError("account launch plan receipt has an invalid identifier")
+    return f"确认起号计划 {plan_artifact_id}"
 
 
 def _require_unique(values: tuple[str, ...], *, label: str) -> tuple[str, ...]:
@@ -125,7 +139,9 @@ class AccountLaunchPlan(IncubationContract):
     supersedes_plan_artifact_id: NonEmptyStr | None = None
     revision_reason: NonEmptyStr | None = Field(default=None, max_length=1200)
     decision_status: LaunchPlanStatus = "proposed"
-    strategy_artifact_id: NonEmptyStr = Field(max_length=80)
+    confirmation_user_text: NonEmptyStr | None = Field(default=None, max_length=8000)
+    strategy_artifact_id: NonEmptyStr | None = Field(default=None, max_length=80)
+    direction_artifact_id: NonEmptyStr | None = Field(default=None, max_length=80)
     content_map_version_id: NonEmptyStr = Field(max_length=80)
     planning_request: NonEmptyStr = Field(max_length=4000)
     horizon_days: Literal[30] = 30
@@ -140,6 +156,17 @@ class AccountLaunchPlan(IncubationContract):
 
     @model_validator(mode="after")
     def validate_plan(self) -> AccountLaunchPlan:
+        if (self.strategy_artifact_id is None) == (self.direction_artifact_id is None):
+            raise ValueError("launch plan requires exactly one confirmed account-decision parent")
+        if self.decision_status == "proposed" and self.confirmation_user_text is not None:
+            raise ValueError("a proposed launch plan cannot carry confirmation text")
+        if self.decision_status == "confirmed":
+            if self.confirmation_user_text is None:
+                raise ValueError("a confirmed launch plan requires confirmation text")
+            if self.revision_number < 2:
+                raise ValueError("a confirmed launch plan must be stored as revision 2 or later")
+            if self.supersedes_plan_artifact_id is not None and self.confirmation_user_text.strip() != account_launch_plan_confirmation_text(self.supersedes_plan_artifact_id):
+                raise ValueError("a confirmed launch plan requires the exact confirmation command")
         if self.revision_number == 1:
             if self.supersedes_plan_artifact_id is not None or self.revision_reason is not None:
                 raise ValueError("first launch plan revision cannot supersede another plan")
@@ -209,33 +236,74 @@ def seal_account_launch_plan(
     project: ProjectRef,
     logical_account: LogicalAccountRef,
     plan: AccountLaunchPlan,
-    strategy_artifact: ArtifactEnvelope,
     content_world_artifact: ArtifactEnvelope,
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    strategy_artifact: ArtifactEnvelope | None = None,
+    direction_artifact: ArtifactEnvelope | None = None,
+    direction_proposal_artifact: ArtifactEnvelope | None = None,
     previous_plan_artifact: ArtifactEnvelope | None = None,
 ) -> ArtifactEnvelope:
     plan = AccountLaunchPlan.model_validate(plan.model_dump(mode="json"))
-    for artifact, artifact_type in (
-        (strategy_artifact, "incubation_judgment"),
-        (content_world_artifact, "content_map_candidate"),
-    ):
-        if artifact.project != project or artifact.artifact_type != artifact_type:
-            raise ValueError(f"launch plan requires a same-project {artifact_type} parent")
+    if (strategy_artifact is None) == (direction_artifact is None):
+        raise ValueError("launch plan requires exactly one confirmed account-decision artifact")
+    decision_artifact = direction_artifact or strategy_artifact
+    assert decision_artifact is not None
+    if content_world_artifact.project != project or content_world_artifact.artifact_type != "content_map_candidate":
+        raise ValueError("launch plan requires a same-project content_map_candidate parent")
+    for artifact in (decision_artifact, content_world_artifact):
+        if artifact.project != project:
+            raise ValueError("launch plan parent project must match plan project")
         if artifact.logical_account != logical_account:
             raise ValueError("launch plan parent logical account must match plan account")
 
-    strategy = IncubationJudgment.model_validate(strategy_artifact.payload)
-    if strategy.decision_status != "confirmed":
-        raise ValueError("launch plan requires a confirmed account strategy")
-    if plan.strategy_artifact_id != strategy_artifact.artifact_id:
-        raise ValueError("launch plan strategy id must match its exact parent")
     world_version = content_world_artifact.payload.get("content_map_version_id")
     if not isinstance(world_version, str) or world_version != plan.content_map_version_id:
         raise ValueError("launch plan content map version must match its candidate map")
-    if strategy.content_map_version_id != plan.content_map_version_id:
-        raise ValueError("launch plan strategy and candidate map versions must match")
+    if direction_artifact is not None:
+        if direction_artifact.artifact_type != "account_direction_version":
+            raise ValueError("launch plan requires a same-project account_direction_version parent")
+        direction = AccountDirectionVersion.model_validate(direction_artifact.payload)
+        direction_root = account_direction_content_root(direction.selected_option)
+        if direction_root != content_world_artifact.payload.get("content_root"):
+            raise ValueError("account direction content root must match the candidate content map")
+        if plan.direction_artifact_id != direction_artifact.artifact_id or plan.strategy_artifact_id is not None:
+            raise ValueError("launch plan direction id must match its exact parent")
+        if direction_proposal_artifact is None:
+            raise ValueError("launch plan requires the exact account direction proposal parent")
+        if direction_proposal_artifact.project != project or direction_proposal_artifact.logical_account != logical_account or direction_proposal_artifact.artifact_type != "account_direction_proposal":
+            raise ValueError("account direction proposal parent is invalid")
+        if direction.proposal_artifact_id != direction_proposal_artifact.artifact_id:
+            raise ValueError("account direction proposal id must match its exact receipt")
+        if direction_proposal_artifact.to_parent_ref() not in direction_artifact.parents:
+            raise ValueError("account direction must retain its exact proposal parent")
+        proposal = AccountDirectionProposal.model_validate(direction_proposal_artifact.payload)
+        if proposal.target_revision_number != direction.revision_number:
+            raise ValueError("account direction revision must match its proposal")
+        proposal_option = next(
+            (item for item in proposal.direction_options if item.option_id == direction.selected_option.option_id),
+            None,
+        )
+        if proposal_option != direction.selected_option:
+            raise ValueError("account direction selection must match an exact proposal option")
+        if proposal.basis_artifact_ids != direction.basis_artifact_ids:
+            raise ValueError("account direction basis must match its proposal")
+        direct_direction_child = direction_artifact.to_parent_ref() in content_world_artifact.parents
+        if not direct_direction_child:
+            if content_world_artifact.artifact_id not in direction.basis_artifact_ids or content_world_artifact.to_parent_ref() not in direction_proposal_artifact.parents:
+                raise ValueError("candidate content map must be an exact account direction proposal basis")
+    else:
+        assert strategy_artifact is not None
+        if strategy_artifact.artifact_type != "incubation_judgment":
+            raise ValueError("launch plan requires a same-project incubation_judgment parent")
+        strategy = IncubationJudgment.model_validate(strategy_artifact.payload)
+        if strategy.decision_status != "confirmed":
+            raise ValueError("launch plan requires a confirmed account strategy")
+        if plan.strategy_artifact_id != strategy_artifact.artifact_id or plan.direction_artifact_id is not None:
+            raise ValueError("launch plan strategy id must match its exact parent")
+        if strategy.content_map_version_id != plan.content_map_version_id:
+            raise ValueError("launch plan strategy and candidate map versions must match")
 
     used_path_ids = {path_id for series in plan.series for path_id in series.map_path_ids} | {seed.map_path_id for seed in plan.topic_seeds}
     if not used_path_ids.issubset(_map_path_ids(content_world_artifact)):
@@ -258,7 +326,7 @@ def seal_account_launch_plan(
             raise ValueError("launch plan supersedes id must match its previous parent")
 
     parents = (
-        strategy_artifact,
+        decision_artifact,
         content_world_artifact,
         *((previous_plan_artifact,) if previous_plan_artifact is not None else ()),
     )
@@ -287,5 +355,6 @@ __all__ = [
     "LaunchSeries",
     "PlannedTopicSeed",
     "TopicSourceKind",
+    "account_launch_plan_confirmation_text",
     "seal_account_launch_plan",
 ]

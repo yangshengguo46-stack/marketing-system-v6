@@ -15,6 +15,7 @@ from deerflow.incubation import (
     implicit_thread_project_ref,
 )
 from deerflow.incubation.account_launch_plan import (
+    account_launch_plan_confirmation_text,
     confirm_account_launch_plan,
     prepare_account_launch_plan,
 )
@@ -27,8 +28,24 @@ from deerflow.tools.builtins.incubation_tool_support import (
     structured_model_runner,
 )
 from deerflow.tools.types import Runtime
+from deerflow.utils.messages import get_original_user_content_text, is_real_user_message
 
 logger = logging.getLogger(__name__)
+
+
+def _latest_real_user_text(runtime: Runtime) -> str | None:
+    state = runtime.state if isinstance(runtime.state, dict) else {}
+    messages = state.get("messages", ())
+    for message in reversed(messages):
+        if not is_real_user_message(message):
+            continue
+        text = get_original_user_content_text(
+            message.content,
+            message.additional_kwargs,
+        ).strip()
+        if text:
+            return text
+    return None
 
 
 def _terminal_launch_plan_command(
@@ -126,15 +143,18 @@ def _persistence_receipt(
 async def plan_account_launch_tool(
     runtime: Runtime,
     planning_request: str,
+    content_map_artifact_id: str | None = None,
 ) -> Command:
     """Create or revise an optional 7-day and 30-day plan for the current logical account.
 
-    The tool requires an already confirmed account strategy. It arranges
+    The tool requires a confirmed account direction, or a legacy confirmed
+    account strategy. It arranges
     series, research leads, actions and review questions without changing
     positioning or claiming platform guarantees. It does not publish content.
 
     Args:
         planning_request: The user's current request for an account launch plan, copied verbatim.
+        content_map_artifact_id: Exact direction-linked candidate map receipt when more than one is available.
     """
 
     scope = _runtime_scope(runtime)
@@ -169,6 +189,7 @@ async def plan_account_launch_tool(
             logical_account=logical_account,
             repository=repository,
             planning_request=planning_request,
+            content_map_artifact_id=content_map_artifact_id,
             structured_model=structured_model_runner(model, runtime.config),
             created_at=datetime.now(UTC),
             source_thread_id=thread_id,
@@ -188,7 +209,7 @@ async def plan_account_launch_tool(
     except ValueError as exc:
         logger.warning("Account launch-plan request was rejected: %s", type(exc).__name__)
         return _terminal_launch_plan_command(
-            "当前账号还没有已确认的路线，先选择并确认账号定位，再编排 7 天与 30 天计划。",
+            "当前账号方向或与其精确关联的内容地图尚未就绪，先确认方向并保留地图回执，再编排 7 天与 30 天计划。",
             tool_call_id=runtime.tool_call_id,
             tool_name="plan_account_launch",
         )
@@ -201,7 +222,7 @@ async def plan_account_launch_tool(
         )
 
     return _terminal_launch_plan_command(
-        render_account_launch_plan(prepared.plan),
+        render_account_launch_plan(prepared.plan, artifact_id=prepared.plan_artifact.artifact_id),
         tool_call_id=runtime.tool_call_id,
         tool_name="plan_account_launch",
         persistence=_persistence_receipt(
@@ -213,8 +234,15 @@ async def plan_account_launch_tool(
 
 
 @tool("confirm_account_launch_plan", parse_docstring=True, return_direct=True)
-async def confirm_account_launch_plan_tool(runtime: Runtime) -> Command:
-    """Confirm the current logical account's latest proposed launch plan."""
+async def confirm_account_launch_plan_tool(
+    runtime: Runtime,
+    plan_artifact_id: str,
+) -> Command:
+    """Confirm one exact proposed launch plan after the user explicitly accepts it.
+
+    Args:
+        plan_artifact_id: Exact proposal receipt shown with the plan.
+    """
 
     scope = _runtime_scope(runtime)
     if scope is None:
@@ -224,6 +252,24 @@ async def confirm_account_launch_plan_tool(runtime: Runtime) -> Command:
             tool_name="confirm_account_launch_plan",
         )
     project, logical_account, thread_id, run_id = scope
+    confirmation_user_text = _latest_real_user_text(runtime)
+    if confirmation_user_text is None:
+        return _terminal_launch_plan_command(
+            "当前没有可验证的用户确认原话，因此没有确认起号计划。",
+            tool_call_id=runtime.tool_call_id,
+            tool_name="confirm_account_launch_plan",
+        )
+    try:
+        expected_confirmation = account_launch_plan_confirmation_text(plan_artifact_id)
+    except ValueError:
+        expected_confirmation = None
+    if expected_confirmation is None or confirmation_user_text.strip() != expected_confirmation:
+        shown_command = expected_confirmation or "确认起号计划 <页面显示的计划提案编号>"
+        return _terminal_launch_plan_command(
+            f"这条消息没有精确确认该计划。若要确认，请单独发送：`{shown_command}`",
+            tool_call_id=runtime.tool_call_id,
+            tool_name="confirm_account_launch_plan",
+        )
     repository = get_incubation_repository()
     try:
         available = repository is not None and await _scope_is_available(
@@ -246,13 +292,15 @@ async def confirm_account_launch_plan_tool(runtime: Runtime) -> Command:
             project=project,
             logical_account=logical_account,
             repository=repository,
+            plan_artifact_id=plan_artifact_id,
+            confirmation_user_text=confirmation_user_text,
             created_at=datetime.now(UTC),
             source_thread_id=thread_id,
             source_run_id=run_id,
         )
     except ValueError:
         return _terminal_launch_plan_command(
-            "当前账号没有可确认的起号计划，请先生成或修订计划。",
+            "当前账号没有与该提案编号精确匹配的可确认计划，请先生成或修订计划，并回传页面显示的计划提案编号。",
             tool_call_id=runtime.tool_call_id,
             tool_name="confirm_account_launch_plan",
         )
@@ -265,7 +313,7 @@ async def confirm_account_launch_plan_tool(runtime: Runtime) -> Command:
         )
 
     return _terminal_launch_plan_command(
-        render_account_launch_plan(prepared.plan),
+        render_account_launch_plan(prepared.plan, artifact_id=prepared.plan_artifact.artifact_id),
         tool_call_id=runtime.tool_call_id,
         tool_name="confirm_account_launch_plan",
         persistence=_persistence_receipt(

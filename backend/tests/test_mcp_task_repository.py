@@ -5,6 +5,7 @@ import pytest_asyncio
 from sqlalchemy.exc import IntegrityError
 
 from deerflow.config.database_config import DatabaseConfig
+from deerflow.mcp.tasks import TaskSubmissionPolicy
 from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
 from deerflow.persistence.mcp_tasks import DuplicateMcpRemoteTaskError, McpTaskRepository
 
@@ -97,6 +98,8 @@ async def test_submission_intent_is_claimed_then_atomically_bound_to_remote_hand
     )
 
     assert intent["status"] == "submission_pending"
+    assert intent["submission_policy"] == "idempotent_retry"
+    assert intent["submission_started_at"] is None
     assert intent["remote_task_id"] is None
     claimed = await repo.claim_due_tasks(
         now=now,
@@ -126,6 +129,107 @@ async def test_submission_intent_is_claimed_then_atomically_bound_to_remote_hand
     assert stored["status"] == "submitted"
     assert stored["submit_arguments"] is None
     assert stored["lease_owner"] is None
+
+
+@pytest.mark.asyncio
+async def test_at_most_once_submission_boundary_is_durable_and_unknown_is_terminal(tmp_path):
+    repo = await _make_repo(tmp_path)
+    now = datetime.now(UTC)
+    await repo.create_submission_intent(
+        task_id="task-at-most-once",
+        user_id="user-1",
+        thread_id="thread-1",
+        run_id="run-1",
+        tool_call_id="call-1",
+        server_name="generator",
+        driver_name="generator",
+        task_name="Generate once",
+        submit_arguments={"prompt_sha256": "a" * 64},
+        submission_policy=TaskSubmissionPolicy.AT_MOST_ONCE.value,
+        next_poll_at=now,
+    )
+    await repo.claim_due_tasks(
+        now=now,
+        lease_owner="worker-1",
+        lease_seconds=60,
+        limit=10,
+    )
+
+    started = await repo.mark_submission_started(
+        "task-at-most-once",
+        lease_owner="worker-1",
+        started_at=now,
+    )
+    assert started is True
+    marked = await repo.mark_submission_unknown(
+        "task-at-most-once",
+        lease_owner="worker-1",
+        marked_at=now,
+        error="provider submission outcome is unknown",
+    )
+    assert marked is True
+
+    stored = await repo.get("task-at-most-once", user_id="user-1")
+    assert stored is not None
+    assert stored["submission_policy"] == "at_most_once"
+    assert datetime.fromisoformat(stored["submission_started_at"]) == now
+    assert stored["status"] == "submission_unknown"
+    assert stored["notification_status"] == "pending"
+    assert stored["submit_arguments"] is None
+    assert stored["next_poll_at"] is None
+    assert stored["completed_at"] is not None
+    assert (
+        await repo.claim_due_tasks(
+            now=now + timedelta(hours=1),
+            lease_owner="worker-2",
+            lease_seconds=60,
+            limit=10,
+        )
+        == []
+    )
+
+
+@pytest.mark.asyncio
+async def test_at_most_once_submission_can_bind_after_durable_boundary(tmp_path):
+    repo = await _make_repo(tmp_path)
+    now = datetime.now(UTC)
+    await repo.create_submission_intent(
+        task_id="task-at-most-once-success",
+        user_id="user-1",
+        thread_id="thread-1",
+        run_id=None,
+        tool_call_id=None,
+        server_name="generator",
+        driver_name="generator",
+        task_name="Generate once",
+        submit_arguments={"prompt_sha256": "b" * 64},
+        submission_policy="at_most_once",
+        next_poll_at=now,
+    )
+    await repo.claim_due_tasks(now=now, lease_owner="worker-1", lease_seconds=60, limit=10)
+    assert await repo.mark_submission_started(
+        "task-at-most-once-success",
+        lease_owner="worker-1",
+        started_at=now,
+    )
+
+    assert await repo.bind_submission(
+        "task-at-most-once-success",
+        lease_owner="worker-1",
+        remote_task_id="remote-once-1",
+        status="submitted",
+        result=None,
+        error=None,
+        input_required=None,
+        next_poll_at=now + timedelta(seconds=5),
+        submitted_at=now,
+        driver_data={},
+    )
+    stored = await repo.get("task-at-most-once-success", user_id="user-1")
+    assert stored is not None
+    assert stored["remote_task_id"] == "remote-once-1"
+    assert stored["status"] == "submitted"
+    assert stored["submit_arguments"] is None
 
 
 @pytest.mark.asyncio

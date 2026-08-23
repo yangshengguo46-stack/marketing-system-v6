@@ -18,16 +18,25 @@ from deerflow.content_intelligence import (
     TopicBrief,
 )
 from deerflow.incubation import (
+    AccountLaunchPlan,
     ArtifactEnvelope,
     ArtifactParentRef,
     EvidenceCoverageReceipt,
     EvidenceItem,
     EvidenceSnapshot,
+    FirstWeekDay,
+    LaunchCapacity,
+    LaunchCheckpoint,
+    LaunchPhase,
+    LaunchSeries,
     LogicalAccountRef,
+    PlannedTopicSeed,
     ProjectRef,
+    account_launch_plan_confirmation_text,
     seal_content_run_artifacts,
     select_used_topic_evidence_snapshots,
 )
+from deerflow.incubation.account_direction import AccountDirectionOption, AccountDirectionVersion
 
 NOW = datetime(2026, 8, 17, 14, 0, tzinfo=UTC)
 
@@ -164,6 +173,117 @@ def _topic_snapshot(*, uri: str, role: str = "topic_evidence") -> EvidenceSnapsh
     )
 
 
+def _confirmed_launch_plan(
+    *,
+    project: ProjectRef,
+    logical_account: LogicalAccountRef,
+    direction: ArtifactEnvelope,
+    content_world: ArtifactEnvelope,
+) -> ArtifactEnvelope:
+    plan_proposal = AccountLaunchPlan(
+        direction_artifact_id=direction.artifact_id,
+        content_map_version_id=content_world.payload["content_map_version_id"],
+        planning_request="按已确认方向编排首轮起号计划",
+        capacity=LaunchCapacity(
+            status="provisional",
+            cadence_summary="先用一条可核验题眼进入内容链。",
+            basis="发布能力尚未由用户确认。",
+            adjustment_trigger="依据实际制作能力调整。",
+        ),
+        series=(
+            LaunchSeries(
+                series_id="relations",
+                name="礼与关系",
+                purpose="用具体事件观察关系。",
+                map_path_ids=("path-rites",),
+                repeatable_question="一套礼怎样改变人与人的关系？",
+                topic_sources=("public_evidence",),
+            ),
+        ),
+        topic_seeds=(
+            PlannedTopicSeed(
+                seed_id="seed-rites",
+                series_id="relations",
+                map_path_id="path-rites",
+                content_role="understanding",
+                focal_subject="古代礼制中的普通人",
+                concrete_event_or_question="古代的礼为什么不只是礼貌？",
+                account_viewpoint="从礼品经营者的视角观察礼与关系。",
+                source_kind="public_evidence",
+                evidence_need="找到可核验的礼制资料。",
+            ),
+        ),
+        first_week=tuple(
+            FirstWeekDay(
+                day=day,
+                focus=f"第 {day} 天观察",
+                actions=("核对证据后再决定是否制作。",),
+                topic_seed_ids=(("seed-rites",) if day == 1 else ()),
+            )
+            for day in range(1, 8)
+        ),
+        later_phases=(
+            LaunchPhase(
+                start_day=8,
+                end_day=30,
+                objective="根据真实回执保留或调整系列。",
+                series_ids=("relations",),
+                actions=("回收可观测结果。",),
+                review_questions=("题眼是否形成了可持续问题？",),
+            ),
+        ),
+        checkpoints=(
+            LaunchCheckpoint(
+                day=7,
+                questions=("首个题眼是否得到证据？",),
+                possible_adjustments=("调整证据需求。",),
+            ),
+            LaunchCheckpoint(
+                day=30,
+                questions=("系列是否值得继续？",),
+                possible_adjustments=("保留或停止该系列。",),
+            ),
+        ),
+    )
+    plan_proposal_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=plan_proposal.revision_number,
+        payload=plan_proposal.model_dump(mode="json"),
+        parents=(direction.to_parent_ref(), content_world.to_parent_ref()),
+        created_at=NOW,
+        source_thread_id="thread-plan-proposal",
+        source_run_id="run-plan-proposal",
+    )
+    plan = AccountLaunchPlan.model_validate(
+        plan_proposal.model_copy(
+            update={
+                "revision_number": 2,
+                "supersedes_plan_artifact_id": plan_proposal_artifact.artifact_id,
+                "revision_reason": "用户确认采用当前起号计划。",
+                "decision_status": "confirmed",
+                "confirmation_user_text": account_launch_plan_confirmation_text(plan_proposal_artifact.artifact_id),
+            }
+        ).model_dump(mode="json")
+    )
+    return ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=plan.revision_number,
+        payload=plan.model_dump(mode="json"),
+        parents=(
+            direction.to_parent_ref(),
+            content_world.to_parent_ref(),
+            plan_proposal_artifact.to_parent_ref(),
+        ),
+        created_at=NOW,
+        source_thread_id="thread-plan",
+        source_run_id="run-plan",
+    )
+
+
 def test_content_run_artifacts_preserve_roles_and_parent_lineage() -> None:
     bundle, delivery = _content_run()
     project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
@@ -255,15 +375,26 @@ def test_message_plan_can_reference_a_confirmed_direction_without_a_map_bound_st
         project_id="golden-gift",
         logical_account_id="account-1",
     )
+    direction_payload = AccountDirectionVersion(
+        revision_number=1,
+        proposal_artifact_id="proposal-1",
+        source_user_text="我是做黄金礼品的，我想从礼与关系切入。",
+        confirmation_user_text="确认采用这个方向。",
+        marketing_subject="黄金礼品业务",
+        selected_option=AccountDirectionOption(
+            option_id="direction_1",
+            name="从礼观察关系",
+            content_root="礼与人与人相处",
+            long_term_content_subject="从具体赠与事件观察人与人如何相处",
+            rationale="业务提供观察入口，内容根保持在礼与关系。",
+        ),
+    )
     direction = ArtifactEnvelope.seal(
         project=project,
         logical_account=logical_account,
         artifact_type="account_direction_version",
         version=1,
-        payload={
-            "revision_number": 1,
-            "long_term_content_subject": "人与人之间的相处与人情世故",
-        },
+        payload=direction_payload.model_dump(mode="json"),
         created_at=NOW,
         source_thread_id="thread-direction",
         source_run_id="run-direction",
@@ -284,6 +415,180 @@ def test_message_plan_can_reference_a_confirmed_direction_without_a_map_bound_st
         sealed.topic_brief.to_parent_ref(),
         direction.to_parent_ref(),
     }
+    assert sealed.content_world.parents == (direction.to_parent_ref(),)
+
+
+def test_launch_topic_lineage_binds_the_exact_confirmed_plan_seed_and_proposal_parent() -> None:
+    bundle, delivery = _content_run()
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    logical_account = LogicalAccountRef(
+        owner_user_id="user-1",
+        project_id="golden-gift",
+        logical_account_id="account-1",
+    )
+    direction_payload = AccountDirectionVersion(
+        revision_number=1,
+        proposal_artifact_id="proposal-1",
+        source_user_text="我是做黄金礼品的，我想从礼与关系切入。",
+        confirmation_user_text="确认采用这个方向。",
+        marketing_subject="黄金礼品业务",
+        selected_option=AccountDirectionOption(
+            option_id="direction_1",
+            name="从礼观察关系",
+            content_root="礼与人与人相处",
+            long_term_content_subject="从具体赠与事件观察人与人如何相处",
+            rationale="业务提供观察入口，内容根保持在礼与关系。",
+        ),
+    )
+    direction = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=direction_payload.model_dump(mode="json"),
+        created_at=NOW,
+        source_thread_id="thread-direction",
+        source_run_id="run-direction",
+    )
+    map_run = seal_content_run_artifacts(
+        project=project,
+        logical_account=logical_account,
+        bundle=bundle,
+        delivery=None,
+        account_direction_artifact=direction,
+        created_at=NOW,
+        source_thread_id="thread-map",
+        source_run_id="run-map",
+    )
+    launch_plan = _confirmed_launch_plan(
+        project=project,
+        logical_account=logical_account,
+        direction=direction,
+        content_world=map_run.content_world,
+    )
+
+    sealed = seal_content_run_artifacts(
+        project=project,
+        logical_account=logical_account,
+        bundle=bundle,
+        delivery=delivery,
+        account_direction_artifact=direction,
+        launch_plan_artifact=launch_plan,
+        launch_topic_seed_id="seed-rites",
+        created_at=NOW,
+        source_thread_id="thread-topic",
+        source_run_id="run-topic",
+    )
+
+    assert sealed.content_reading.payload["launch_plan_context"] == {
+        "plan_artifact_id": launch_plan.artifact_id,
+        "plan_content_sha256": launch_plan.content_sha256,
+        "topic_seed_id": "seed-rites",
+    }
+    assert launch_plan.to_parent_ref() in sealed.content_reading.parents
+    assert launch_plan.to_parent_ref() in sealed.topic_brief.parents
+    assert direction.to_parent_ref() in sealed.content_world.parents
+
+    orphan_plan = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=launch_plan.version,
+        payload=launch_plan.payload,
+        parents=(direction.to_parent_ref(), map_run.content_world.to_parent_ref()),
+        created_at=NOW,
+        source_thread_id="thread-orphan-plan",
+        source_run_id="run-orphan-plan",
+    )
+    with pytest.raises(ValueError, match="exact proposal parent"):
+        seal_content_run_artifacts(
+            project=project,
+            logical_account=logical_account,
+            bundle=bundle,
+            delivery=delivery,
+            account_direction_artifact=direction,
+            launch_plan_artifact=orphan_plan,
+            launch_topic_seed_id="seed-rites",
+            created_at=NOW,
+            source_thread_id="thread-topic",
+            source_run_id="run-topic",
+        )
+
+
+@pytest.mark.parametrize(
+    ("plan_present", "seed_id", "message"),
+    (
+        (False, "seed-rites", "supplied together"),
+        (True, None, "supplied together"),
+        (True, "missing-seed", "topic seed"),
+    ),
+)
+def test_launch_topic_lineage_rejects_an_incomplete_or_unknown_receipt_pair(
+    plan_present: bool,
+    seed_id: str | None,
+    message: str,
+) -> None:
+    bundle, delivery = _content_run()
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    logical_account = LogicalAccountRef(
+        owner_user_id="user-1",
+        project_id="golden-gift",
+        logical_account_id="account-1",
+    )
+    direction_payload = AccountDirectionVersion(
+        revision_number=1,
+        proposal_artifact_id="proposal-1",
+        source_user_text="我是做黄金礼品的。",
+        confirmation_user_text="确认这个方向。",
+        marketing_subject="黄金礼品业务",
+        selected_option=AccountDirectionOption(
+            option_id="direction_1",
+            name="从礼观察关系",
+            content_root="礼与人与人相处",
+            long_term_content_subject="礼与人与人相处",
+            rationale="保持内容根稳定。",
+        ),
+    )
+    direction = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=direction_payload.model_dump(mode="json"),
+        created_at=NOW,
+        source_thread_id="thread-direction",
+        source_run_id="run-direction",
+    )
+    map_run = seal_content_run_artifacts(
+        project=project,
+        logical_account=logical_account,
+        bundle=bundle,
+        delivery=None,
+        account_direction_artifact=direction,
+        created_at=NOW,
+        source_thread_id="thread-map",
+        source_run_id="run-map",
+    )
+    launch_plan = _confirmed_launch_plan(
+        project=project,
+        logical_account=logical_account,
+        direction=direction,
+        content_world=map_run.content_world,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        seal_content_run_artifacts(
+            project=project,
+            logical_account=logical_account,
+            bundle=bundle,
+            delivery=delivery,
+            account_direction_artifact=direction,
+            launch_plan_artifact=(launch_plan if plan_present else None),
+            launch_topic_seed_id=seed_id,
+            created_at=NOW,
+            source_thread_id="thread-topic",
+            source_run_id="run-topic",
+        )
 
 
 def test_rejects_judgment_lineage_without_a_delivery() -> None:

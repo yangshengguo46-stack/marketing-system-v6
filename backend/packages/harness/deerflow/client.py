@@ -316,10 +316,19 @@ class DeerFlowClient:
             skills_list,
             enabled=self._app_config.skills.deferred_discovery,
             container_base_path=self._app_config.skills.container_path,
+            prompt_index_patterns=getattr(
+                self._app_config.skills,
+                "prompt_index_patterns",
+                None,
+            ),
         )
         late_tools = []
-        if skill_setup.describe_skill_tool:
-            late_tools.append(skill_setup.describe_skill_tool)
+        for skill_tool in (
+            skill_setup.describe_skill_tool,
+            getattr(skill_setup, "activate_skill_tool", None),
+        ):
+            if skill_tool:
+                late_tools.append(skill_tool)
 
         # Apply authorization Layer 1 before deferred assembly.
         from deerflow.authz.tool_filter import apply_tool_authorization
@@ -380,7 +389,7 @@ class DeerFlowClient:
                 deferred_names=deferred_setup.deferred_names,
                 mcp_routing_hints_section=mcp_routing_hints_section,
                 user_id=effective_user_id,
-                skill_names=skill_setup.skill_names or None,
+                skill_names=(skill_setup.skill_names if self._app_config.skills.deferred_discovery else None),
             ),
             "state_schema": get_thread_state_schema(self._checkpoint_channel_mode, self._checkpoint_snapshot_frequency),
         }

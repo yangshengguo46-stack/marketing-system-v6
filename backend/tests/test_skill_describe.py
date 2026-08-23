@@ -1,12 +1,16 @@
-"""Tests for describe_skill tool and skill index prompt rendering."""
+"""Tests for Skill discovery, inspection, activation, and prompt rendering."""
 
+import hashlib
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from deerflow.skills.catalog import SkillCatalog
 from deerflow.skills.describe import (
+    SKILL_ACTIVATION_ENTRY_KEY,
     _render_skill_metadata,
+    build_activate_skill_tool,
     build_describe_skill_tool,
     build_skill_search_setup,
     get_skill_index_prompt_section,
@@ -114,18 +118,59 @@ def test_describe_skill_parameter_name_matches_prompt(catalog: SkillCatalog):
 def test_setup_enabled_with_skills(sample_skills: list[Skill]):
     setup = build_skill_search_setup(sample_skills, enabled=True)
     assert setup.describe_skill_tool is not None
+    assert setup.activate_skill_tool is not None
     assert setup.skill_names == frozenset(s.name for s in sample_skills)
+
+
+def test_setup_can_limit_static_index_without_hiding_searchable_skills():
+    skills = [
+        _make_skill("incubate-gift-human-relations", "Gift incubation method"),
+        _make_skill("deep-research", "Generic research workflow"),
+        _make_skill("consulting-analysis", "Consulting report workflow"),
+    ]
+
+    setup = build_skill_search_setup(
+        skills,
+        enabled=True,
+        prompt_index_patterns=["incubate-*"],
+    )
+
+    assert setup.describe_skill_tool is not None
+    assert setup.skill_names == frozenset({"incubate-gift-human-relations"})
+
+    result = setup.describe_skill_tool.invoke(
+        {
+            "args": {"name": "select:deep-research"},
+            "name": "describe_skill",
+            "type": "tool_call",
+            "id": "test_full_catalog_remains_searchable",
+        }
+    )
+    assert "## Skill: deep-research" in result.update["messages"][0].content
+
+
+def test_setup_allows_empty_static_index_with_searchable_catalog(sample_skills: list[Skill]):
+    setup = build_skill_search_setup(
+        sample_skills,
+        enabled=True,
+        prompt_index_patterns=[],
+    )
+
+    assert setup.describe_skill_tool is not None
+    assert setup.skill_names == frozenset()
 
 
 def test_setup_disabled():
     setup = build_skill_search_setup([_make_skill("a", "A")], enabled=False)
     assert setup.describe_skill_tool is None
+    assert setup.activate_skill_tool is None
     assert setup.skill_names == frozenset()
 
 
 def test_setup_empty_skills():
     setup = build_skill_search_setup([], enabled=True)
     assert setup.describe_skill_tool is None
+    assert setup.activate_skill_tool is None
     assert setup.skill_names == frozenset()
 
 
@@ -181,9 +226,63 @@ def test_skill_index_contains_discovery_instructions():
         skill_names=frozenset({"data-analysis"}),
     )
     assert "describe_skill" in section
+    assert "activate_skill" in section
     assert "On-Demand Skill Discovery" in section
     assert "optional capabilities, not mandatory stages" in section
+    assert "call read_file on the returned location" not in section
     assert "Follow the skill's instructions precisely" not in section
+
+
+def test_activate_skill_returns_exact_hashed_body_and_trusted_marker(tmp_path):
+    skill_dir = tmp_path / "public" / "data-analysis"
+    skill_dir.mkdir(parents=True)
+    skill_file = skill_dir / "SKILL.md"
+    content = "---\nname: data-analysis\ndescription: Analyze data\n---\n\n# Method\nUse evidence.\n"
+    skill_file.write_text(content, encoding="utf-8")
+    skill = replace(
+        _make_skill("data-analysis", "Analyze data"),
+        skill_dir=skill_dir,
+        skill_file=skill_file,
+    )
+    tool = build_activate_skill_tool(SkillCatalog((skill,)))
+
+    result = tool.invoke(
+        {
+            "args": {"name": "data-analysis"},
+            "name": "activate_skill",
+            "type": "tool_call",
+            "id": "activate-1",
+        }
+    )
+
+    message = result.update["messages"][0]
+    marker = message.additional_kwargs[SKILL_ACTIVATION_ENTRY_KEY]
+    assert message.name == "activate_skill"
+    assert message.status == "success"
+    assert "# Method" in message.content
+    assert marker == {
+        "name": "data-analysis",
+        "path": "/mnt/skills/public/data-analysis/SKILL.md",
+        "description": "Analyze data",
+        "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+    }
+
+
+def test_activate_skill_requires_one_exact_name(catalog: SkillCatalog):
+    tool = build_activate_skill_tool(catalog)
+
+    for name in ("research", "select:deep-research", "missing"):
+        result = tool.invoke(
+            {
+                "args": {"name": name},
+                "name": "activate_skill",
+                "type": "tool_call",
+                "id": f"activate-{name}",
+            }
+        )
+        message = result.update["messages"][0]
+        assert message.status == "error"
+        assert "exact installed Skill name" in message.content
 
 
 def test_skill_index_empty_returns_empty():

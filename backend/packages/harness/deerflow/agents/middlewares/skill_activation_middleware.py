@@ -1,4 +1,4 @@
-"""Middleware for skill activation: explicit slash + in-context secret binding."""
+"""Middleware for user slash and Agent-selected task-scoped Skill activation."""
 
 from __future__ import annotations
 
@@ -8,14 +8,16 @@ import html
 import logging
 import posixpath
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, override
 
 from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import ModelRequest, ModelResponse
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
+from langgraph.prebuilt.tool_node import ToolCallRequest
+from langgraph.types import Command
 
 from deerflow.runtime.events.catalog import (
     MIDDLEWARE_SKILL_ACTIVATION_TAG,
@@ -26,9 +28,12 @@ from deerflow.runtime.secret_context import (
     _SLASH_SKILL_ACTIVATION_RUN_KEY,
     ACTIVE_SECRETS_CONTEXT_KEY,
     extract_request_secrets,
+    read_agent_skill_source_path,
     read_slash_skill_source_path,
+    write_agent_skill_source_path,
     write_slash_skill_source_path,
 )
+from deerflow.skills.describe import SKILL_ACTIVATION_ENTRY_KEY
 from deerflow.skills.slash import parse_slash_skill_reference, resolve_slash_skill
 from deerflow.skills.storage import get_or_new_skill_storage, get_or_new_user_skill_storage
 from deerflow.skills.storage.skill_storage import SkillStorage
@@ -42,6 +47,8 @@ logger = logging.getLogger(__name__)
 
 _SLASH_SKILL_ACTIVATION_KEY = "slash_skill_activation"
 _SLASH_SKILL_ACTIVATION_TARGET_ID_KEY = "slash_skill_activation_target_id"
+_AGENT_ACTIVATION_TOOL_NAME = "activate_skill"
+_ACTIVE_SKILL_CONTEXT_KEY = "active_skill_context"
 
 # _SECRETS_BINDING_AUDIT_KEY: last audited binding (skill and secret names only,
 # never values) so unchanged bindings are not re-recorded each call.
@@ -290,7 +297,7 @@ Follow this skill before choosing a general workflow. Load supporting resources 
         return target_index, target, resolution, run_key
 
     @staticmethod
-    def _record_activation(request: ModelRequest, activation: _Activation, *, hook: str) -> None:
+    def _record_activation(request: ModelRequest | ToolCallRequest, activation: _Activation, *, hook: str, mode: str = "slash") -> None:
         runtime = getattr(request, "runtime", None)
         context = getattr(runtime, "context", None)
         journal = context.get("__run_journal") if isinstance(context, dict) else None
@@ -303,6 +310,7 @@ Follow this skill before choosing a general workflow. Load supporting resources 
                 hook=hook,
                 action="activate",
                 changes={
+                    "mode": mode,
                     "skill_name": activation.skill_name,
                     "category": activation.category,
                     "path": activation.container_file_path,
@@ -310,7 +318,90 @@ Follow this skill before choosing a general workflow. Load supporting resources 
                 },
             )
         except Exception:
-            logger.warning("Failed to record slash skill activation audit event", exc_info=True)
+            logger.warning("Failed to record skill activation audit event", exc_info=True)
+
+    @staticmethod
+    def _activation_tool_error(request: ToolCallRequest, content: str) -> ToolMessage:
+        return ToolMessage(
+            content=f"Error: {content}",
+            tool_call_id=str(request.tool_call.get("id") or "missing_tool_call_id"),
+            name=_AGENT_ACTIVATION_TOOL_NAME,
+            status="error",
+        )
+
+    @staticmethod
+    def _activation_tool_message(result: ToolMessage | Command) -> ToolMessage | None:
+        if isinstance(result, ToolMessage):
+            return result if result.name == _AGENT_ACTIVATION_TOOL_NAME else None
+        if not isinstance(result, Command) or not isinstance(result.update, dict):
+            return None
+        messages = result.update.get("messages")
+        if not isinstance(messages, list) or len(messages) != 1:
+            return None
+        message = messages[0]
+        return message if isinstance(message, ToolMessage) and message.name == _AGENT_ACTIVATION_TOOL_NAME else None
+
+    def _consume_agent_activation_result(
+        self,
+        request: ToolCallRequest,
+        result: ToolMessage | Command,
+        *,
+        hook: str,
+    ) -> ToolMessage | Command:
+        if str(request.tool_call.get("name") or "") != _AGENT_ACTIVATION_TOOL_NAME:
+            return result
+
+        context = getattr(getattr(request, "runtime", None), "context", None)
+        if not isinstance(context, dict):
+            return self._activation_tool_error(request, "runtime context is unavailable; Skill was not activated.")
+        if read_slash_skill_source_path(context, owner_token=self._slash_source_owner_token) is not None:
+            return self._activation_tool_error(request, "the user already selected a /skill for this run; autonomous activation cannot replace it.")
+
+        message = self._activation_tool_message(result)
+        if message is None:
+            return self._activation_tool_error(request, "activate_skill returned an invalid result; Skill was not activated.")
+        if getattr(message, "status", "success") == "error":
+            return result
+        marker = message.additional_kwargs.get(SKILL_ACTIVATION_ENTRY_KEY)
+        if not isinstance(marker, Mapping):
+            return self._activation_tool_error(request, "activate_skill result omitted its activation marker.")
+
+        called_args = request.tool_call.get("args")
+        called_name = called_args.get("name") if isinstance(called_args, dict) else None
+        name = marker.get("name")
+        path = marker.get("path")
+        content_hash = marker.get("sha256")
+        if not all(isinstance(value, str) and value for value in (called_name, name, path, content_hash)) or name != called_name:
+            return self._activation_tool_error(request, "activate_skill result did not match the requested exact Skill name.")
+
+        registry = self._load_skill_registry_by_path()
+        if registry is None:
+            return self._activation_tool_error(request, "the live Skill registry is unavailable; Skill was not activated.")
+        skill = self._resolve_registry_skill_reference(registry, path)
+        if skill is None or skill.name != name:
+            return self._activation_tool_error(request, "the selected Skill is disabled, unavailable, or outside this Agent's allowlist.")
+        try:
+            live_content = skill.skill_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            logger.exception("Failed to revalidate Agent-activated Skill %s", name)
+            return self._activation_tool_error(request, "the selected Skill could not be revalidated from disk.")
+        live_hash = hashlib.sha256(live_content.encode("utf-8")).hexdigest()
+        if live_hash != content_hash:
+            return self._activation_tool_error(request, "the selected Skill changed while it was being activated; inspect it again.")
+
+        write_agent_skill_source_path(context, path, owner_token=self._slash_source_owner_token)
+        activation = _Activation(
+            skill_name=skill.name,
+            category=str(skill.category),
+            container_file_path=path,
+            skill_content=live_content,
+            content_hash=live_hash,
+            remaining_text="",
+            editable=skill.category == SkillCategory.CUSTOM,
+            required_secrets=tuple(skill.required_secrets or ()),
+        )
+        self._record_activation(request, activation, hook=hook, mode="agent")
+        return result
 
     def _prepare_model_request(self, request: ModelRequest, *, hook: str) -> tuple[ModelRequest | AIMessage | None, _Activation | None]:
         run_context = self._run_context(request)
@@ -355,8 +446,96 @@ Follow this skill before choosing a general workflow. Load supporting resources 
         if isinstance(prepared, AIMessage):
             return prepared
         effective = prepared if prepared is not None else request
+        if activation is None:
+            effective = self._inject_active_skill_context(effective)
         self._resolve_secret_bindings(effective, activation, hook=hook)
         return effective
+
+    @staticmethod
+    def _contains_activation_body(messages: list, activation: _Activation) -> bool:
+        for message in messages:
+            if not isinstance(message, ToolMessage) or message.name != _AGENT_ACTIVATION_TOOL_NAME:
+                continue
+            marker = message.additional_kwargs.get(SKILL_ACTIVATION_ENTRY_KEY)
+            if not isinstance(marker, Mapping):
+                continue
+            if marker.get("path") == activation.container_file_path and marker.get("sha256") == activation.content_hash:
+                return True
+        return False
+
+    def _active_activation_from_context(self, request: ModelRequest) -> tuple[_Activation, str] | None:
+        context = getattr(getattr(request, "runtime", None), "context", None)
+        if not isinstance(context, dict):
+            return None
+        slash_path = read_slash_skill_source_path(context, owner_token=self._slash_source_owner_token)
+        agent_path = read_agent_skill_source_path(context, owner_token=self._slash_source_owner_token)
+        path = slash_path or agent_path
+        mode = "slash" if slash_path else "agent"
+        if path is None:
+            return None
+
+        registry = self._load_skill_registry_by_path()
+        if registry is None:
+            return None
+        skill = self._resolve_registry_skill_reference(registry, path)
+        if skill is None:
+            return None
+        try:
+            content = skill.skill_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            logger.exception("Failed to reload active Skill context %s", skill.name)
+            return None
+        return (
+            _Activation(
+                skill_name=skill.name,
+                category=str(skill.category),
+                container_file_path=path,
+                skill_content=content,
+                content_hash=hashlib.sha256(content.encode("utf-8")).hexdigest(),
+                remaining_text="",
+                editable=skill.category == SkillCategory.CUSTOM,
+                required_secrets=tuple(skill.required_secrets or ()),
+            ),
+            mode,
+        )
+
+    @staticmethod
+    def _build_active_skill_context(activation: _Activation, *, mode: str) -> str:
+        escaped_name = html.escape(activation.skill_name, quote=True)
+        escaped_path = html.escape(activation.container_file_path, quote=True)
+        escaped_hash = html.escape(activation.content_hash, quote=True)
+        escaped_mode = html.escape(mode, quote=True)
+        escaped_content = html.escape(activation.skill_content, quote=False)
+        return f"""<active_skill_context name="{escaped_name}" path="{escaped_path}" sha256="{escaped_hash}" mode="{escaped_mode}">
+This Skill is active only for the current run. Apply it with judgment; user facts and higher-level boundaries still govern.
+<skill_content encoding="xml-escaped">
+{escaped_content}
+</skill_content>
+</active_skill_context>"""
+
+    def _inject_active_skill_context(self, request: ModelRequest) -> ModelRequest:
+        resolved = self._active_activation_from_context(request)
+        if resolved is None:
+            return request
+        activation, mode = resolved
+        messages = list(request.messages)
+        if mode == "agent" and self._contains_activation_body(messages, activation):
+            return request
+
+        insertion_index = 0
+        while insertion_index < len(messages) and isinstance(messages[insertion_index], SystemMessage):
+            insertion_index += 1
+        messages.insert(
+            insertion_index,
+            HumanMessage(
+                content=self._build_active_skill_context(activation, mode=mode),
+                additional_kwargs={
+                    "hide_from_ui": True,
+                    _ACTIVE_SKILL_CONTEXT_KEY: True,
+                },
+            ),
+        )
+        return request.override(messages=messages)
 
     def _resolve_secret_bindings(self, request: ModelRequest, activation: _Activation | None, *, hook: str) -> None:
         """Recompute the per-run secret injection set (binding point A+, #3861/#3914).
@@ -370,15 +549,15 @@ Follow this skill before choosing a general workflow. Load supporting resources 
           ``_resolve_activation``), and deliberately NOT re-validated per call:
           slash is a run-scoped commitment made by the user, and it dies with
           the run anyway;
-        - skills the model loaded earlier in the thread (``ThreadState.skill_context``),
+        - the latest Skill selected by ``activate_skill`` in this run,
           re-validated against the live registry on each call: enabled,
           runtime-allowed for this agent, and not opted out via
-          ``secrets-autonomous: false``. Slash activation is exempt from the
-          opt-out — it is the explicit-ceremony path.
+          ``secrets-autonomous: false``. Slash activation dominates and is
+          exempt from the opt-out because it is the explicit user ceremony.
 
-        The set is recomputed and REPLACED each call, so a skill evicted from
-        skill_context, or a caller that stops supplying a value, loses its
-        injection on the next call automatically. Injected values always come
+        The set is recomputed and REPLACED each call, so ending the run or a
+        caller that stops supplying a value loses its injection automatically.
+        Injected values always come
         from the caller's request (``context.secrets``) — never the host
         environment, which ``env_policy.build_sandbox_env`` scrubs before
         injection — so a skill can never harvest a host platform credential.
@@ -411,7 +590,11 @@ Follow this skill before choosing a general workflow. Load supporting resources 
                 slash_skill = self._resolve_registry_skill(registry, slash_path, require_autonomous=False)
                 if slash_skill is not None:
                     sources.append((slash_skill.name, tuple(slash_skill.required_secrets)))
-                sources.extend(self._in_context_secret_sources(request, registry))
+                else:
+                    agent_path = read_agent_skill_source_path(context, owner_token=self._slash_source_owner_token)
+                    agent_skill = self._resolve_registry_skill(registry, agent_path, require_autonomous=True)
+                    if agent_skill is not None:
+                        sources.append((agent_skill.name, tuple(agent_skill.required_secrets)))
 
         injected: dict[str, str] = {}
         bound_skills: set[str] = set()
@@ -461,8 +644,8 @@ Follow this skill before choosing a general workflow. Load supporting resources 
 
         Paths are normalized so a non-canonical ``container_path`` config (e.g. a
         trailing slash) still matches the canonical path captured in
-        ``skill_context`` (#3938). Returns ``None`` if the registry can't load —
-        both the slash and in-context sources then bind nothing for that call
+        the activation source. Returns ``None`` if the registry can't load —
+        both the slash and Agent-selected sources then bind nothing for that call
         (fail closed). This is a deliberate availability-for-security trade-off:
         a transient registry read failure mid-run drops the injection for that
         call rather than trusting stale caller-supplied data.
@@ -475,6 +658,17 @@ Follow this skill before choosing a general workflow. Load supporting resources 
             logger.exception("Failed to load skills while resolving secret bindings")
             return None
         return {posixpath.normpath(skill.get_container_file_path(container_root)): skill for skill in skills}
+
+    def _resolve_registry_skill_reference(self, registry: dict[str, Skill], path: object) -> Skill | None:
+        """Resolve an enabled, agent-allowed Skill by canonical container path."""
+        if not isinstance(path, str) or not path:
+            return None
+        skill = registry.get(posixpath.normpath(path))
+        if skill is None or not skill.enabled:
+            return None
+        if self._available_skills is not None and skill.name not in self._available_skills:
+            return None
+        return skill
 
     def _resolve_registry_skill(self, registry: dict[str, Skill], path: object, *, require_autonomous: bool) -> Skill | None:
         """Resolve a container path to a live registry skill eligible for secret
@@ -489,46 +683,16 @@ Follow this skill before choosing a general workflow. Load supporting resources 
 
         Gates: the skill must be enabled, declare secrets, and be allowlisted for
         this agent. ``require_autonomous`` additionally enforces the
-        ``secrets-autonomous`` opt-out for the in-context path; the slash path
+        ``secrets-autonomous`` opt-out for the Agent-selected path; the slash path
         passes ``False`` because explicit activation is the ceremony that opt-out
         is meant to preserve.
         """
-        if not isinstance(path, str) or not path:
-            return None
-        skill = registry.get(posixpath.normpath(path))
-        if skill is None or not skill.enabled or not skill.required_secrets:
+        skill = self._resolve_registry_skill_reference(registry, path)
+        if skill is None or not skill.required_secrets:
             return None
         if require_autonomous and not skill.secrets_autonomous:
             return None
-        if self._available_skills is not None and skill.name not in self._available_skills:
-            return None
         return skill
-
-    def _in_context_secret_sources(self, request: ModelRequest, registry: dict[str, Skill]) -> list[tuple[str, tuple[SecretRequirement, ...]]]:
-        """Map ``ThreadState.skill_context`` entries to declared-secret sources.
-
-        Entries are references to skills the model actually loaded in this
-        thread. Each is re-validated against the live registry so a skill that
-        was disabled, uninstalled, opted out, or removed from the agent's
-        allowlist after being read stops binding immediately.
-        """
-        state = getattr(request, "state", None) or {}
-        try:
-            entries = state.get("skill_context") or []
-        except AttributeError:
-            return []
-
-        sources: list[tuple[str, tuple[SecretRequirement, ...]]] = []
-        seen: set[str] = set()
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            skill = self._resolve_registry_skill(registry, entry.get("path"), require_autonomous=True)
-            if skill is None or skill.name in seen:
-                continue
-            seen.add(skill.name)
-            sources.append((skill.name, tuple(skill.required_secrets)))
-        return sources
 
     @staticmethod
     def _record_secret_binding(context: dict, audit_state: dict, *, hook: str) -> None:
@@ -582,3 +746,38 @@ Follow this skill before choosing a general workflow. Load supporting resources 
         if isinstance(prepared, AIMessage):
             return prepared
         return await handler(prepared)
+
+    @override
+    def wrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], ToolMessage | Command],
+    ) -> ToolMessage | Command:
+        if (
+            str(request.tool_call.get("name") or "") == _AGENT_ACTIVATION_TOOL_NAME
+            and read_slash_skill_source_path(
+                getattr(getattr(request, "runtime", None), "context", None),
+                owner_token=self._slash_source_owner_token,
+            )
+            is not None
+        ):
+            return self._activation_tool_error(request, "the user already selected a /skill for this run; autonomous activation cannot replace it.")
+        return self._consume_agent_activation_result(request, handler(request), hook="wrap_tool_call")
+
+    @override
+    async def awrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Command]],
+    ) -> ToolMessage | Command:
+        if (
+            str(request.tool_call.get("name") or "") == _AGENT_ACTIVATION_TOOL_NAME
+            and read_slash_skill_source_path(
+                getattr(getattr(request, "runtime", None), "context", None),
+                owner_token=self._slash_source_owner_token,
+            )
+            is not None
+        ):
+            return self._activation_tool_error(request, "the user already selected a /skill for this run; autonomous activation cannot replace it.")
+        result = await handler(request)
+        return self._consume_agent_activation_result(request, result, hook="awrap_tool_call")

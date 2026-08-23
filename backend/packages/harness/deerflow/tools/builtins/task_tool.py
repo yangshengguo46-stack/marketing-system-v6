@@ -371,6 +371,7 @@ async def task_tool(
         "groups": parent_tool_groups,
         "subagent_enabled": False,
         "include_upload_tool": False,
+        "include_user_profile_tool": False,
     }
     if resolved_app_config is not None:
         available_tools_kwargs["app_config"] = resolved_app_config

@@ -48,7 +48,7 @@ from deerflow.persistence.migrations._helpers import _normalize_default
 asyncio_test = pytest.mark.asyncio
 
 
-HEAD = "0015_incubation_logical_accounts"
+HEAD = "0017_account_launch_plan_unique"
 BASELINE = "0001_baseline"
 
 

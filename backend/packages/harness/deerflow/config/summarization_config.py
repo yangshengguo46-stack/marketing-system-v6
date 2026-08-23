@@ -57,7 +57,7 @@ class SummarizationConfig(BaseModel):
     )
     skill_file_read_tool_names: list[str] = Field(
         default_factory=lambda: list(DEFAULT_SKILL_FILE_READ_TOOL_NAMES),
-        description="Tool names treated as skill-file reads when capturing loaded skills into the durable skill_context channel.",
+        description="Tool names treated as Skill-file inspections when capturing non-authoritative references into the legacy durable skill_context channel.",
     )
 
 

@@ -31,6 +31,17 @@ ACTIVE_SECRETS_CONTEXT_KEY = "__active_skill_secrets"
 # entire value must be stripped from every observable serialization surface.
 SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY = "__skill_tool_policy_decision"
 
+# Owner-token-bound counter used by the read-only ContextManifest middleware.
+# It has no user data, but remains internal run-control state and must not be
+# accepted as observable caller metadata or echoed from config.
+CONTEXT_MANIFEST_COUNTER_CONTEXT_KEY = "__context_manifest_counter"
+
+# Owner-token-bound metadata for the user-profile projection injected into one
+# physical Lead model request. The carrier contains only version/hash/counts,
+# never profile text, but remains authenticated internal state so callers
+# cannot forge what ContextManifest reports.
+USER_PROFILE_PROJECTION_CONTEXT_KEY = "__user_profile_projection"
+
 LEGACY_AUTH_TOKEN_METADATA_KEY = "auth_token"
 
 
@@ -101,12 +112,110 @@ def read_slash_skill_source_path(context: Any, *, owner_token: str) -> str | Non
     return path if isinstance(path, str) and path else None
 
 
+def write_agent_skill_source_path(context: Any, path: str, *, owner_token: str) -> None:
+    """Persist the latest Agent-selected Skill path for this run.
+
+    This source is separate from slash activation so an autonomous tool call
+    cannot overwrite a Skill the user explicitly selected. The owner token is
+    local to the assembled middleware chain and never enters model context.
+    """
+    if isinstance(context, dict) and isinstance(path, str) and path and isinstance(owner_token, str) and owner_token:
+        context[_AGENT_SKILL_ACTIVATION_SOURCE_KEY] = {"path": path, "owner_token": owner_token}
+
+
+def read_agent_skill_source_path(context: Any, *, owner_token: str) -> str | None:
+    """Return the authenticated Agent-selected Skill path, if well formed."""
+    if not isinstance(context, dict):
+        return None
+    source = context.get(_AGENT_SKILL_ACTIVATION_SOURCE_KEY)
+    if not isinstance(source, dict):
+        return None
+    path = source.get("path")
+    source_owner_token = source.get("owner_token")
+    if not isinstance(owner_token, str) or not owner_token or source_owner_token != owner_token:
+        return None
+    return path if isinstance(path, str) and path else None
+
+
+def clear_user_profile_projection(context: Any) -> None:
+    """Remove a prior per-call profile projection from a mutable run context."""
+    if isinstance(context, dict):
+        context.pop(USER_PROFILE_PROJECTION_CONTEXT_KEY, None)
+
+
+def write_user_profile_projection(
+    context: Any,
+    *,
+    owner_token: str,
+    version: int,
+    content_sha256: str,
+    item_count: int,
+    projected_item_count: int,
+    omitted_item_count: int,
+) -> None:
+    """Write authenticated, content-free profile accounting for one call."""
+    if not isinstance(context, dict) or not isinstance(owner_token, str) or not owner_token:
+        return
+    if type(version) is not int or version < 1:
+        return
+    if not isinstance(content_sha256, str) or len(content_sha256) != 64:
+        return
+    if any(character not in "0123456789abcdef" for character in content_sha256):
+        return
+    counts = (item_count, projected_item_count, omitted_item_count)
+    if any(type(value) is not int or value < 0 for value in counts):
+        return
+    if projected_item_count + omitted_item_count != item_count:
+        return
+    context[USER_PROFILE_PROJECTION_CONTEXT_KEY] = {
+        "owner_token": owner_token,
+        "version": version,
+        "content_sha256": content_sha256,
+        "item_count": item_count,
+        "projected_item_count": projected_item_count,
+        "omitted_item_count": omitted_item_count,
+    }
+
+
+def read_user_profile_projection(context: Any, *, owner_token: str) -> dict[str, Any] | None:
+    """Return authenticated, content-free profile accounting, if valid."""
+    if not isinstance(context, dict) or not isinstance(owner_token, str) or not owner_token:
+        return None
+    projection = context.get(USER_PROFILE_PROJECTION_CONTEXT_KEY)
+    if not isinstance(projection, dict) or projection.get("owner_token") != owner_token:
+        return None
+    version = projection.get("version")
+    content_sha256 = projection.get("content_sha256")
+    item_count = projection.get("item_count")
+    projected_item_count = projection.get("projected_item_count")
+    omitted_item_count = projection.get("omitted_item_count")
+    if type(version) is not int or version < 1:
+        return None
+    if not isinstance(content_sha256, str) or len(content_sha256) != 64:
+        return None
+    if any(character not in "0123456789abcdef" for character in content_sha256):
+        return None
+    counts = (item_count, projected_item_count, omitted_item_count)
+    if any(type(value) is not int or value < 0 for value in counts):
+        return None
+    if projected_item_count + omitted_item_count != item_count:
+        return None
+    return {
+        "version": version,
+        "content_sha256": content_sha256,
+        "item_count": item_count,
+        "projected_item_count": projected_item_count,
+        "omitted_item_count": omitted_item_count,
+    }
+
+
 # Private run-context keys the skill-activation middleware uses to carry secret
 # bindings across a run. Only ``secrets`` / ``__active_skill_secrets`` hold
 # secret values; the slash source holds a middleware-chain owner token, while
 # the audit keys hold names only. All are listed so the redaction allowlist
 # remains a complete guard.
 _SLASH_SECRET_SOURCE_KEY = "__slash_skill_secret_source"
+_AGENT_SKILL_ACTIVATION_SOURCE_KEY = "__agent_skill_activation_source"
 _SECRETS_BINDING_AUDIT_KEY = "__skill_secrets_binding_audit"
 
 # Identity of the latest slash activation that has already fired in this run, so
@@ -126,9 +235,12 @@ REDACTED_CONTEXT_KEYS = frozenset(
         SECRETS_CONTEXT_KEY,
         ACTIVE_SECRETS_CONTEXT_KEY,
         _SLASH_SECRET_SOURCE_KEY,
+        _AGENT_SKILL_ACTIVATION_SOURCE_KEY,
         _SECRETS_BINDING_AUDIT_KEY,
         _SLASH_SKILL_ACTIVATION_RUN_KEY,
         SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY,
+        CONTEXT_MANIFEST_COUNTER_CONTEXT_KEY,
+        USER_PROFILE_PROJECTION_CONTEXT_KEY,
     }
 )
 

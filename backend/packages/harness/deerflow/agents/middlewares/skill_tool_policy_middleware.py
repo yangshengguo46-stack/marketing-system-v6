@@ -7,7 +7,7 @@ import json
 import logging
 import posixpath
 import secrets
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, override
 
 from langchain.agents import AgentState
@@ -17,7 +17,11 @@ from langchain_core.messages import ToolMessage
 from langgraph.prebuilt.tool_node import ToolCallRequest
 from langgraph.types import Command
 
-from deerflow.runtime.secret_context import SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY, read_slash_skill_source_path
+from deerflow.runtime.secret_context import (
+    SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY,
+    read_agent_skill_source_path,
+    read_slash_skill_source_path,
+)
 from deerflow.skills.storage import get_or_new_skill_storage, get_or_new_user_skill_storage
 from deerflow.skills.tool_policy import ALWAYS_AVAILABLE_BUILTIN_TOOL_NAMES, allowed_tool_names_for_skills
 from deerflow.skills.types import Skill
@@ -28,11 +32,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_POLICY_DECISION_VERSION = 2
+_POLICY_DECISION_VERSION = 3
 _POLICY_SOURCE_PASSIVE = "passive"
 _POLICY_SOURCE_SLASH = "slash"
-_POLICY_SOURCE_SKILL_CONTEXT = "skill_context"
-_POLICY_SOURCES = frozenset({_POLICY_SOURCE_PASSIVE, _POLICY_SOURCE_SLASH, _POLICY_SOURCE_SKILL_CONTEXT})
+_POLICY_SOURCE_AGENT_ACTIVATION = "agent_activation"
+_POLICY_SOURCES = frozenset({_POLICY_SOURCE_PASSIVE, _POLICY_SOURCE_SLASH, _POLICY_SOURCE_AGENT_ACTIVATION})
 _MISSING_POLICY_DECISION = object()
 _TOOL_SEARCH_NAME = "tool_search"
 
@@ -40,13 +44,13 @@ type _PolicySignature = tuple[str, tuple[str, ...]]
 
 
 class SkillToolPolicyMiddleware(AgentMiddleware[AgentState]):
-    """Restrict agent tools to declarations from slash/in-context skills.
+    """Restrict agent tools to declarations from explicitly activated Skills.
 
     Merely enabling a skill makes it discoverable; it does not activate its
     authority policy. A skill becomes policy-active when the user slash-activates
-    it for the run or after the model loads it into ``skill_context``. Explicit
-    slash activation dominates for the rest of that run: passively reading a
-    second skill cannot widen the slash skill's authority.
+    it for the run or the model explicitly calls ``activate_skill``. Reading or
+    describing a Skill is inspection only. Explicit slash activation dominates
+    for the rest of that run and cannot be overwritten by autonomous activation.
     """
 
     def __init__(
@@ -78,26 +82,9 @@ class SkillToolPolicyMiddleware(AgentMiddleware[AgentState]):
         slash_path = read_slash_skill_source_path(context, owner_token=self._slash_source_owner_token)
         if slash_path is not None:
             return _POLICY_SOURCE_SLASH, (slash_path,)
-
-        paths: list[str] = []
-        state = getattr(request, "state", None)
-        if state is None:
-            state = {}
-        if isinstance(state, Mapping):
-            entries = state.get("skill_context") or []
-        elif hasattr(state, "skill_context"):
-            entries = getattr(state, "skill_context") or []
-        else:
-            logger.warning("Unsupported agent state shape for skill tool policy: %s", type(state).__name__)
-            entries = []
-        if not isinstance(entries, (list, tuple)):
-            logger.warning("Invalid skill_context shape for skill tool policy: %s", type(entries).__name__)
-            entries = []
-        for entry in entries:
-            if isinstance(entry, dict) and isinstance(entry.get("path"), str):
-                paths.append(entry["path"])
-        if paths:
-            return _POLICY_SOURCE_SKILL_CONTEXT, tuple(paths)
+        agent_path = read_agent_skill_source_path(context, owner_token=self._slash_source_owner_token)
+        if agent_path is not None:
+            return _POLICY_SOURCE_AGENT_ACTIVATION, (agent_path,)
         return _POLICY_SOURCE_PASSIVE, ()
 
     def _active_skills_for_paths(self, paths: tuple[str, ...]) -> tuple[list[Skill], bool]:

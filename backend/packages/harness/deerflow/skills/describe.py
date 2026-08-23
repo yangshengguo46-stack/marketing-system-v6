@@ -1,8 +1,9 @@
-"""describe_skill — deferred skill metadata retrieval at runtime.
+"""Deferred Skill discovery, inspection, and explicit activation.
 
-Builds the ``describe_skill`` tool as a closure over a :class:`SkillCatalog`.
-The tool returns structured metadata (description, allowed tools, file location)
-so the LLM can decide whether to ``read_file`` the full SKILL.md.
+``describe_skill`` returns metadata without changing Agent behavior.
+``activate_skill`` loads one exact SKILL.md and emits an authenticated-by-origin
+activation marker that runtime middleware validates before changing task-scoped
+authority. Ordinary file reads are inspection only.
 
 Mirrors ``build_tool_search_tool`` from ``tool_search.py``: same query syntax,
 same ``Command`` + ``ToolMessage`` return shape, same fail-safe degradation.
@@ -10,10 +11,12 @@ same ``Command`` + ``ToolMessage`` return shape, same fail-safe degradation.
 
 from __future__ import annotations
 
+import hashlib
 import html
 import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
+from fnmatch import fnmatchcase
 from typing import TYPE_CHECKING, Annotated
 
 from langchain_core.messages import ToolMessage
@@ -25,11 +28,12 @@ if TYPE_CHECKING:
 
 from deerflow.constants import DEFAULT_SKILLS_CONTAINER_PATH
 from deerflow.skills.catalog import SkillCatalog
-from deerflow.skills.types import SkillCategory
+from deerflow.skills.types import SKILL_MD_FILE, Skill, SkillCategory
 
 logger = logging.getLogger(__name__)
 
 _SKILL_INDEX_DESCRIPTION_MAX_CHARS = 120
+SKILL_ACTIVATION_ENTRY_KEY = "skill_activation_entry"
 
 
 # ── Setup ────────────────────────────────────────────────────────────────────
@@ -41,13 +45,15 @@ class SkillSearchSetup:
 
     Mirrors ``DeferredToolSetup`` from ``tool_search.py``.
 
-    - **Empty** ``(None, frozenset())``: no skills available or skill search
+    - **Empty** ``(None, None, frozenset())``: no skills available or skill search
       disabled.  The agent falls back to the legacy full-metadata prompt.
-    - **Populated**: ``describe_skill_tool`` is appended to the agent's tools,
-      ``skill_names`` are rendered in ``<skill_index>`` instead of full metadata.
+    - **Populated**: inspection and activation tools are appended to the agent's
+      tools, while ``skill_names`` are rendered in ``<skill_index>`` instead of
+      full metadata.
     """
 
     describe_skill_tool: BaseTool | None
+    activate_skill_tool: BaseTool | None
     skill_names: frozenset[str]
 
 
@@ -73,7 +79,8 @@ def build_describe_skill_tool(
         Skills appear with short routing summaries in <skill_index> in the
         system prompt. This tool matches a query against installed skills and
         returns their full metadata — description, allowed tools, and file
-        location — so you can decide whether to load the SKILL.md via read_file.
+        location — without activating them. If one fits the current task, call
+        activate_skill with that exact Skill name.
 
         Query forms:
           - "select:data-analysis,deep-research" -- fetch these exact skills (no cap)
@@ -101,11 +108,94 @@ def build_describe_skill_tool(
     return describe_skill
 
 
+def _exact_skill(catalog: SkillCatalog, name: str) -> Skill | None:
+    normalized = name.strip()
+    if not normalized or normalized != name or any(skill.name == normalized for skill in catalog.skills) is False:
+        return None
+    return next(skill for skill in catalog.skills if skill.name == normalized)
+
+
+def build_activate_skill_tool(
+    catalog: SkillCatalog,
+    *,
+    container_base_path: str = DEFAULT_SKILLS_CONTAINER_PATH,
+) -> BaseTool:
+    """Build the exact-name, task-scoped ``activate_skill`` tool."""
+
+    @tool
+    def activate_skill(
+        name: str,
+        tool_call_id: Annotated[str, InjectedToolCallId],
+    ) -> Command:
+        """Activate one installed Skill for the current task using its exact name.
+
+        Inspect candidates with describe_skill first. Activation loads the
+        selected SKILL.md, returns its full guidance, and lets the runtime apply
+        its tool and secret policy for this run. A later activation may replace
+        an Agent-selected Skill, but cannot override a Skill explicitly selected
+        by the user with /skill-name.
+        """
+        skill = _exact_skill(catalog, name)
+        if skill is None:
+            message = ToolMessage(
+                content=f"Error: '{name}' is not one exact installed Skill name. Inspect candidates with describe_skill first.",
+                tool_call_id=tool_call_id,
+                name="activate_skill",
+                status="error",
+            )
+            return Command(update={"messages": [message]})
+
+        try:
+            if skill.skill_file.name != SKILL_MD_FILE:
+                raise ValueError(f"expected {SKILL_MD_FILE}")
+            content = skill.skill_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeError, ValueError) as exc:
+            logger.warning("Failed to load Skill %s for activation: %s", skill.name, exc)
+            message = ToolMessage(
+                content=f"Error: Skill '{skill.name}' could not be loaded safely.",
+                tool_call_id=tool_call_id,
+                name="activate_skill",
+                status="error",
+            )
+            return Command(update={"messages": [message]})
+
+        content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        path = skill.get_container_file_path(container_base_path)
+        escaped_name = html.escape(skill.name, quote=True)
+        escaped_path = html.escape(path, quote=True)
+        escaped_hash = html.escape(content_hash, quote=True)
+        escaped_content = html.escape(content, quote=False)
+        message = ToolMessage(
+            content=(
+                f'<skill_activation name="{escaped_name}" path="{escaped_path}" sha256="{escaped_hash}">\n'
+                "This Skill is active for the current task. Apply it with judgment; user facts and higher-level boundaries still govern.\n"
+                '<skill_content encoding="xml-escaped">\n'
+                f"{escaped_content}\n"
+                "</skill_content>\n"
+                "</skill_activation>"
+            ),
+            tool_call_id=tool_call_id,
+            name="activate_skill",
+            additional_kwargs={
+                SKILL_ACTIVATION_ENTRY_KEY: {
+                    "name": skill.name,
+                    "path": path,
+                    "description": " ".join((skill.description or "").split()),
+                    "sha256": content_hash,
+                }
+            },
+        )
+        return Command(update={"messages": [message]})
+
+    return activate_skill
+
+
 def build_skill_search_setup(
     skills: list,
     *,
     enabled: bool,
     container_base_path: str = DEFAULT_SKILLS_CONTAINER_PATH,
+    prompt_index_patterns: list[str] | None = None,
 ) -> SkillSearchSetup:
     """Build the skill search setup from a filtered skill list.
 
@@ -114,15 +204,23 @@ def build_skill_search_setup(
     Returns an empty setup when *enabled* is ``False`` or *skills* is empty.
     """
     if not enabled or not skills:
-        return SkillSearchSetup(None, frozenset())
+        return SkillSearchSetup(None, None, frozenset())
 
     catalog = SkillCatalog(tuple(skills))
+    prompt_names = catalog.names
+    if isinstance(prompt_index_patterns, (list, tuple)):
+        patterns = tuple(pattern.strip() for pattern in prompt_index_patterns if pattern.strip())
+        prompt_names = frozenset(name for name in catalog.names if any(fnmatchcase(name, pattern) for pattern in patterns))
     return SkillSearchSetup(
         describe_skill_tool=build_describe_skill_tool(
             catalog,
             container_base_path=container_base_path,
         ),
-        skill_names=catalog.names,
+        activate_skill_tool=build_activate_skill_tool(
+            catalog,
+            container_base_path=container_base_path,
+        ),
+        skill_names=prompt_names,
     )
 
 
@@ -159,8 +257,9 @@ def get_skill_index_prompt_section(
     """Generate ``<skill_system>`` with a compact ``<skill_index>``.
 
     A name and bounded usage summary are level-one routing metadata. The agent
-    can use ``describe_skill`` to fetch full metadata and then load SKILL.md.
-    Skill method bodies remain out of the base prompt.
+    can use ``describe_skill`` to inspect full metadata and ``activate_skill``
+    to load one exact method for the current task. Skill method bodies remain
+    out of the base prompt.
 
     Returns empty string when there are no skills.
     """
@@ -184,9 +283,10 @@ You have access to skills that provide optimized workflows for specific tasks.
 
 **On-Demand Skill Discovery:**
 1. Treat listed Skills as optional capabilities, not mandatory stages
-2. When a listed Skill can materially improve the task, call describe_skill(name)
-3. If its capability fits, call read_file on the returned location
-4. Apply relevant guidance with judgment; user facts, goals, and higher-level boundaries still govern
+2. When a Skill may materially improve the task, call describe_skill(name) to inspect metadata only
+3. If its capability fits, call activate_skill(exact_name) to activate it for this task
+4. A read_file call, including a direct read of SKILL.md, is inspection only and never activates a Skill
+5. Apply activated guidance with judgment; user facts, goals, and higher-level boundaries still govern
 
 **Explicit Slash Skill Activation:**
 - If the user starts a request with `/<skill-name>`, that skill was explicitly requested.

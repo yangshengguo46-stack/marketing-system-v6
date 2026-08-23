@@ -9,6 +9,7 @@ class TaskStatus(StrEnum):
     """Protocol-neutral lifecycle states for long-running MCP work."""
 
     SUBMISSION_PENDING = "submission_pending"
+    SUBMISSION_UNKNOWN = "submission_unknown"
     SUBMITTED = "submitted"
     WORKING = "working"
     INPUT_REQUIRED = "input_required"
@@ -31,11 +32,27 @@ CLAIMABLE_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
 )
 TERMINAL_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
     {
+        TaskStatus.SUBMISSION_UNKNOWN,
         TaskStatus.COMPLETED,
         TaskStatus.FAILED,
         TaskStatus.CANCELLED,
     }
 )
+LOCAL_ONLY_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
+    {
+        TaskStatus.SUBMISSION_PENDING,
+        TaskStatus.SUBMISSION_UNKNOWN,
+    }
+)
+
+
+class TaskSubmissionPolicy(StrEnum):
+    """Durable behavior after an interrupted or ambiguous provider submit."""
+
+    IDEMPOTENT_RETRY = "idempotent_retry"
+    AT_MOST_ONCE = "at_most_once"
+
+
 ATTENTION_TASK_STATUSES: frozenset[TaskStatus] = frozenset(
     {
         TaskStatus.INPUT_REQUIRED,
@@ -123,3 +140,5 @@ class TaskSubmission:
     def __post_init__(self) -> None:
         if not self.remote_task_id.strip():
             raise ValueError("remote_task_id must not be empty")
+        if self.snapshot.status in LOCAL_ONLY_TASK_STATUSES:
+            raise ValueError("remote task submission cannot use a local-only status")

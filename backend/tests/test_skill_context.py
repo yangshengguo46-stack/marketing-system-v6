@@ -381,8 +381,9 @@ class TestRenderSkillContext:
             }
         ]
         out = render_skill_context(entries)
-        assert "Active skills" in out
-        assert "re-read" in out.lower()
+        assert "Inspected skills" in out
+        assert "not active" in out.lower()
+        assert "activate_skill" in out
         assert "data-analysis" in out
         assert "Analyze data with pandas." in out
         assert "/mnt/skills/public/data-analysis/SKILL.md" in out

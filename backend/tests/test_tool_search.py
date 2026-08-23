@@ -15,6 +15,7 @@ from deerflow.tools.builtins.tool_search import get_deferred_tools_prompt_sectio
 class TestToolSearchConfig:
     def test_default_disabled(self):
         assert ToolSearchConfig().enabled is False
+        assert ToolSearchConfig().prompt_index is True
         assert ToolSearchConfig().auto_promote_top_k == 3
         assert ToolSearchConfig().defer_tools == []
 
@@ -29,16 +30,19 @@ class TestToolSearchConfig:
         loaded = load_tool_search_config_from_dict(
             {
                 "enabled": True,
+                "prompt_index": False,
                 "auto_promote_top_k": 4,
                 "defer_tools": ["read_file", "write_file"],
             }
         )
         assert loaded.enabled is True
+        assert loaded.prompt_index is False
         assert loaded.auto_promote_top_k == 4
         assert loaded.defer_tools == ["read_file", "write_file"]
 
     def test_load_from_empty_dict(self):
         assert load_tool_search_config_from_dict({}).enabled is False
+        assert load_tool_search_config_from_dict({}).prompt_index is True
         assert load_tool_search_config_from_dict({}).auto_promote_top_k == 3
 
 
@@ -76,10 +80,13 @@ class TestConfigExampleToolSearchSection:
         tool_search = data.get("tool_search")
         assert isinstance(tool_search, dict)
         assert tool_search.get("enabled") is True
+        assert tool_search.get("prompt_index") is False
         assert tool_search.get("auto_promote_top_k") == 3
         assert {
             "analyze_content_intelligence",
             "ask_clarification",
+            "collect_douyin_benchmark_account",
+            "collect_douyin_benchmark_candidate",
             "confirm_account_launch_plan",
             "confirm_account_direction",
             "confirm_account_strategy",
@@ -88,6 +95,8 @@ class TestConfigExampleToolSearchSection:
             "plan_account_launch",
             "propose_account_direction",
             "verify_business_term",
+            "web_fetch",
+            "web_search",
             "write_file",
             "list_uploaded_files",
         } <= set(tool_search.get("defer_tools") or [])
@@ -100,6 +109,7 @@ class TestConfigExampleToolSearchSection:
         skills = data.get("skills")
         assert isinstance(skills, dict)
         assert skills.get("deferred_discovery") is True
+        assert skills.get("prompt_index_patterns") == ["incubate-*"]
 
 
 class TestDeferredToolsPromptSection:

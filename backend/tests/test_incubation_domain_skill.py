@@ -595,11 +595,11 @@ def test_bundled_gift_skill_is_discoverable_and_owns_its_profile() -> None:
     assert parts is not None
     assert skill.category == SkillCategory.PUBLIC
     assert parts.metadata["license"] == "MIT"
-    assert parts.metadata["metadata"]["version"] == "1.2.0"
+    assert parts.metadata["metadata"]["version"] == "1.3.4"
     assert parts.metadata["metadata"]["lifecycle"] == "active"
     assert profile.skill_name == skill.name
     assert profile.schema_version == 3
-    assert profile.profile_version == "1.2.0"
+    assert profile.profile_version == "1.3.4"
     assert profile.lifecycle_status == "active"
     assert profile.candidate_paths[0].root == "人与人之间的相处与人情世故"
     assert profile.preferred_root_candidate == "人与人之间的相处与人情世故"
@@ -612,10 +612,21 @@ def test_bundled_gift_skill_is_discoverable_and_owns_its_profile() -> None:
     assert "The Lead decides whether any content-intelligence tool is useful" in " ".join(skill_body.split())
     assert "Do not introduce a specific occasion the user did not state" in " ".join(skill_body.split())
     assert "Do not read the runtime resources during an ordinary Lead conversation" in " ".join(skill_body.split())
-    assert "A relationship-world route has not passed if every content example still centers the gift commodity or the act of gifting" in " ".join(skill_body.split())
-    assert "relationships where no object is exchanged" in " ".join(skill_body.split())
-    assert "use at most one optional `explore_content_world` call" in " ".join(skill_body.split())
-    assert "only after the commercial object and materially different audiences are understood" in " ".join(skill_body.split())
+    assert "A relationship-world route has not passed if every content example still centers the gift commodity, a buying decision, or the act of gifting" in " ".join(skill_body.split())
+    assert "surface subject and audience-interest engine are a relationship event" in " ".join(skill_body.split())
+    assert "Money, meals, favors, gifts, or other ordinary social objects may appear" in " ".join(skill_body.split())
+    assert "do not ban them by keyword" in " ".join(skill_body.split())
+    assert "remain understandable and worth watching when the user's gold product is removed or replaced" in " ".join(skill_body.split())
+    assert "Keep the commercial return at the account level" in " ".join(skill_body.split())
+    assert 'Do not give every topic a "gold\'s role"' in " ".join(skill_body.split())
+    assert "Explain the account-level business connection once after the topic set instead" in " ".join(skill_body.split())
+    assert "Label an invented scene as hypothetical at its first appearance" in " ".join(skill_body.split())
+    assert "Do not add invented budgets, quantities, durations, customer requests, results, or authority" in " ".join(skill_body.split())
+    assert 'Never write "we made this for a company"' in " ".join(skill_body.split())
+    assert "Never disguise a fictional or hypothetical scene as a customer story" in " ".join(skill_body.split())
+    assert "A named public event needs evidence before it is presented as fact" in " ".join(skill_body.split())
+    assert "`explore_content_world`" not in skill_body
+    assert "`explore_content_worlds`" not in skill_body
     assert "Treat any proposed expert persona as conditional on user evidence" in " ".join(skill_body.split())
     assert "An assertion followed by uncertainty is still an unsupported assertion" in " ".join(skill_body.split())
     assert "does not choose the root or final account route" in skill_body

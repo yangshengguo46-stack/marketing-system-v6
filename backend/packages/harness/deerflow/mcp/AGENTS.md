@@ -1,8 +1,54 @@
 ### MCP System (`packages/harness/deerflow/mcp/`)
 
 - Uses `langchain-mcp-adapters` `MultiServerMCPClient` for multi-server management
-- **Long-running task foundation**: `mcp/tasks/` defines the protocol-neutral `McpTaskDriver` contract and normalized remote `TaskSnapshot` states (`submitted`, `working`, `input_required`, `completed`, `failed`, `cancelled`), plus the local-only `submission_pending` intent. `persistence/mcp_tasks/` owns the durable remote-handle mapping, poll schedule, notification state, lease owner, and a consecutive error counter (incremented on failed work and reset on any applied snapshot; `poll_attempt_count` grows on every claim). `app/mcp_tasks/McpTaskService` performs submission and status calls outside the Agent/LLM loop. A result is applied only while the worker owns an unexpired lease, and schedules use the remote call's completion time. The legacy `submit()` path still calls remote first and best-effort cancels on persistence failure. Drivers without audited cancellation must use `enqueue()`: it persists a non-secret submission intent first, then a worker submits with the stable local task ID as the provider idempotency key and atomically binds the remote handle. Binding failure never cancels that task; lease expiry retries with the same ID. Successful binding clears submission arguments. Durable arguments must not contain credentials, cookies, temporary URLs, or local paths. The exact `uq_mcp_tasks_user_server_remote` conflict never cancels the task already tracked by another row. Unexpected per-task failures are isolated from sibling claims and remain recoverable through lease expiry; Gateway shutdown cancels the poller so a hung external call cannot block exit. `input_required` and terminal states stop polling and become `notification_status=pending` for later Agent/UI delivery. Durable recovery requires SQL (`sqlite` or `postgres`); the in-memory backend leaves the service unavailable. The runtime is startup-configured by `mcp_tasks` and disabled until a driver is registered, so ordinary MCP tools are unchanged.
+- **Long-running task foundation**: `mcp/tasks/` defines the protocol-neutral
+  `McpTaskDriver` contract and normalized remote `TaskSnapshot` states
+  (`submitted`, `working`, `input_required`, `completed`, `failed`,
+  `cancelled`). `submission_pending` and `submission_unknown` are local-only
+  states and must never be returned by a driver. `persistence/mcp_tasks/` owns
+  the durable remote-handle mapping, poll schedule, notification state, lease
+  owner, and error counters; `poll_attempt_count` grows on every claim.
+  `app/mcp_tasks/McpTaskService` performs provider submission and status calls
+  outside the Agent/LLM loop. A result is applied only while the worker owns an
+  unexpired lease, and schedules use the remote call's completion time.
+- **Submission policies**: `enqueue()` persists a non-secret intent before a
+  worker enters provider submission code. The compatibility default is
+  `idempotent_retry`, and it is valid only when the provider has an audited
+  idempotency key that maps the stable local task ID to the same remote task;
+  after an interrupted call or binding failure, lease recovery may submit again
+  with that same key. `at_most_once` is for providers without that guarantee. A
+  worker persists `submission_started_at` before entering provider submission;
+  an exception or a later recovery claim with that marker seals the terminal,
+  attention-required, non-claimable `submission_unknown` state instead of
+  submitting again. The row may therefore be claimed again for recovery, but
+  the provider submission may not be attempted again. The legacy `submit()`
+  path remains remote-first and best-effort cancels after persistence failure;
+  an at-most-once-only driver must never use it. Successful binding clears
+  submission arguments. Durable arguments must not contain credentials,
+  cookies, temporary URLs, or local paths. The exact
+  `uq_mcp_tasks_user_server_remote` conflict never cancels the task already
+  tracked by another row.
+- **Future paid Ark registration gate**: the current Ark adapter is
+  unregistered. Registration must mechanically force `at_most_once` and reject
+  the legacy `submit()` path; complete authentication/resource/model/parameter
+  preflight and durably preserve `operation_sha256` plus the exact selected
+  model before setting the cost-incurring submission marker; prove lease
+  coverage or safe lease refresh with a two-worker expiry race test; and reject
+  any driver snapshot containing the local-only `submission_pending` or
+  `submission_unknown` states. These are registration requirements, not
+  properties the generic driver registry currently enforces.
+- **Recovery and availability**: unexpected per-task failures are isolated
+  from sibling claims. Gateway shutdown cancels the poller so a hung external
+  call cannot block exit. `input_required`, `submission_unknown`, and terminal
+  provider states stop polling and become `notification_status=pending` for
+  later Agent/UI delivery. Durable recovery requires SQL (`sqlite` or
+  `postgres`); the in-memory backend leaves the service unavailable. The
+  runtime is startup-configured by `mcp_tasks` and disabled until a driver is
+  registered, so ordinary MCP tools are unchanged.
 - **Lazy initialization**: Tools loaded on first use via `get_cached_mcp_tools()`
+- **Cancellation ownership**: a child transport/session that raises `CancelledError` during persistent-session
+  initialization becomes an ordinary recoverable tool failure when the current caller task is not cancelling. A real
+  caller/run cancellation must continue to propagate as `CancelledError`; never broadly convert cancellation signals.
 - **Cache invalidation**: Detects extensions-config changes by comparing the resolved config path and a `(mtime, size, sha256)` content signature against the values recorded at initialization, not a strict mtime `>` comparison. This catches same-second edits, mtime that stays put or moves backward (`git checkout`, `cp -p` / backup restore, `tar` / `rsync`, object-store / network mounts), and a switch to a different config file with an equal-or-older mtime. The signature helper (`config/file_signature.py::get_config_signature`) is shared with `config/app_config.py::get_app_config()` for the sibling runtime-editable config file, rather than each maintaining its own copy. `ExtensionsConfig.resolve_config_path()` raises `FileNotFoundError` for an explicit `config_path`/`DEER_FLOW_EXTENSIONS_CONFIG_PATH` that points at a missing file — an operator-asserted path going missing is a real misconfiguration, so this is intentionally loud for callers that load the config for actual use (e.g. `from_file()` via `get_mcp_tools()`); only the fallback search mode returns `None`. The MCP cache's own path resolution (`mcp/cache.py::_resolve_config_path`) is narrower: it catches that specific `FileNotFoundError` locally and treats it the same as "unconfigured", so this staleness check degrades to "not stale" instead of propagating an exception when a previously-valid explicit/env-var config disappears mid-run
 - **Transports**: stdio (command-based), SSE, HTTP
 - **Single first-party capability gateway**: only the installed `deerflow-capability-mcp` console script is registered as the product MCP in `extensions_config.example.json`. It keeps stable domain names (`tool_name_prefix=false`) and follows single-domain-first progressive disclosure. Enabling it through the Gateway API requires explicitly extending `DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST`; do not broaden the generic allowlist silently. Official APIs, authenticated browsers, reviewed third-party MCPs, and future MediaKit execution are internal Providers behind Child contracts, not sibling Host registrations. The 119-row official Douyin catalog is an evidence inventory, not a callable-tool count.

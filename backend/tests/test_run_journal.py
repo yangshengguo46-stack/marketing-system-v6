@@ -661,6 +661,19 @@ class TestContextEvents:
         assert len(events) == 1
         assert events[0]["content"] == {"content_sha256": "a" * 64}
 
+    @pytest.mark.anyio
+    async def test_record_context_manifest_keeps_one_event_per_model_call(self, journal_setup):
+        j, store = journal_setup
+        manifest = {"version": 1, "call_index": 1, "outcome": "success"}
+
+        j.record_context_manifest(manifest)
+        j.record_context_manifest({**manifest, "call_index": 2})
+        await j.flush()
+
+        events = await store.list_events("t1", "r1", event_types=["context:manifest"])
+        assert [event["content"]["call_index"] for event in events] == [1, 2]
+        assert all(event["category"] == "context" for event in events)
+
 
 class TestCallerBucketing:
     """Tests for caller-bucketed token accumulation (lead_agent / subagent / middleware)."""

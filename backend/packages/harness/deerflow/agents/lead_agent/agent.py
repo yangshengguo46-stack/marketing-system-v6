@@ -440,6 +440,18 @@ def build_middlewares(
 
     middlewares.append(DynamicContextMiddleware(agent_name=agent_name, app_config=resolved_app_config))
 
+    # UserProfile is a small, sourced, user-level projection. It is independent
+    # from project/account truth and cannot grant tool or external-action rights.
+    from deerflow.agents.middlewares.user_profile_middleware import UserProfileMiddleware
+
+    user_profile_owner_token = secrets.token_urlsafe(24)
+    middlewares.append(
+        UserProfileMiddleware(
+            user_id=user_id or "default",
+            owner_token=user_profile_owner_token,
+        )
+    )
+
     # Deterministically load a full SKILL.md when the user starts the turn with
     # /skill-name. This keeps the base system prompt metadata-only while giving
     # explicit user activation priority over model-side relevance guessing.
@@ -468,7 +480,7 @@ def build_middlewares(
         )
     )
 
-    # Capture completed task delegations and loaded skill files before
+    # Capture completed task delegations and inspected Skill files before
     # summarization can compact them, then inject durable context channels
     # (summary + ledger + skills) into model calls.
     from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
@@ -599,7 +611,20 @@ def build_middlewares(
     if safety_config.enabled:
         middlewares.append(SafetyFinishReasonMiddleware.from_config(safety_config))
 
-    # ClarificationMiddleware should always be last
+    # Read-only accounting sits immediately outside MODEL_PHYSICAL extension
+    # observers. Those observers are contractually non-transforming, so both
+    # see the same final provider request while MODEL_PHYSICAL remains innermost.
+    from deerflow.agents.middlewares.context_manifest_middleware import ContextManifestMiddleware
+
+    middlewares.append(
+        ContextManifestMiddleware(
+            agent_name=agent_name,
+            activation_owner_token=slash_source_owner_token,
+            user_profile_owner_token=user_profile_owner_token,
+        )
+    )
+
+    # ClarificationMiddleware should always be last.
     middlewares.append(ClarificationMiddleware())
 
     # Extension contributions are merged only here, once the full stack exists.
@@ -611,27 +636,31 @@ def build_middlewares(
     from deerflow.extensions.stack import compose_with_extensions
 
     if not resolved_extensions.has_middleware_contributors:
-        return compose_with_extensions(middlewares, AgentScope.LEAD, None, resolved_extensions)
+        composed_middlewares = compose_with_extensions(middlewares, AgentScope.LEAD, None, resolved_extensions)
+    else:
+        from deerflow_extension_api import AgentBuildContext
 
-    from deerflow_extension_api import AgentBuildContext
+        from deerflow.extensions.policy import project_host_policy
 
-    from deerflow.extensions.policy import project_host_policy
-
-    return compose_with_extensions(
-        middlewares,
-        AgentScope.LEAD,
-        AgentBuildContext(
-            scope=AgentScope.LEAD,
-            agent_name=agent_name,
-            model_name=model_name,
-            policy=project_host_policy(
-                resolved_app_config,
-                token_budget_config=token_budget_config,
-                max_subagents_per_run=effective_max_subagents_per_run,
+        composed_middlewares = compose_with_extensions(
+            middlewares,
+            AgentScope.LEAD,
+            AgentBuildContext(
+                scope=AgentScope.LEAD,
+                agent_name=agent_name,
+                model_name=model_name,
+                policy=project_host_policy(
+                    resolved_app_config,
+                    token_budget_config=token_budget_config,
+                    max_subagents_per_run=effective_max_subagents_per_run,
+                ),
             ),
-        ),
-        resolved_extensions,
-    )
+            resolved_extensions,
+        )
+
+    if not composed_middlewares or not isinstance(composed_middlewares[-1], ClarificationMiddleware):
+        raise RuntimeError("ClarificationMiddleware must remain the final Lead middleware")
+    return composed_middlewares
 
 
 def _available_skill_names(agent_config, is_bootstrap: bool) -> set[str] | None:
@@ -815,8 +844,12 @@ def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
         if non_interactive:
             configured_tools = [tool for tool in configured_tools if tool.name not in _NON_INTERACTIVE_DISABLED_TOOL_NAMES]
         authorization_candidates = [*configured_tools]
-        if skill_setup.describe_skill_tool:
-            authorization_candidates.append(skill_setup.describe_skill_tool)
+        for skill_tool in (
+            skill_setup.describe_skill_tool,
+            getattr(skill_setup, "activate_skill_tool", None),
+        ):
+            if skill_tool:
+                authorization_candidates.append(skill_tool)
         if should_use_memory_tools(resolved_app_config.memory):
             _append_memory_tools_without_name_conflicts(authorization_candidates)
         configured_tool_ids = {id(tool) for tool in configured_tools}
@@ -862,7 +895,7 @@ def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
                 app_config=resolved_app_config,
                 deferred_names=setup.deferred_names,
                 user_id=resolved_user_id,
-                skill_names=skill_setup.skill_names or None,
+                skill_names=skill_setup.skill_names if skill_search_enabled else None,
             ),
             state_schema=get_thread_state_schema(mode),
         )
@@ -876,6 +909,11 @@ def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
         enabled_skills,
         enabled=skill_search_enabled,
         container_base_path=container_base_path,
+        prompt_index_patterns=getattr(
+            resolved_app_config.skills,
+            "prompt_index_patterns",
+            None,
+        ),
     )
     #
     # Withhold ``update_agent`` from runs triggered by webhook channels
@@ -899,8 +937,12 @@ def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
     if non_interactive:
         configured_tools = [tool for tool in configured_tools if tool.name not in _NON_INTERACTIVE_DISABLED_TOOL_NAMES]
     authorization_candidates = [*configured_tools]
-    if skill_setup.describe_skill_tool:
-        authorization_candidates.append(skill_setup.describe_skill_tool)
+    for skill_tool in (
+        skill_setup.describe_skill_tool,
+        getattr(skill_setup, "activate_skill_tool", None),
+    ):
+        if skill_tool:
+            authorization_candidates.append(skill_tool)
     if should_use_memory_tools(resolved_app_config.memory):
         _append_memory_tools_without_name_conflicts(authorization_candidates)
     configured_tool_ids = {id(tool) for tool in configured_tools}
@@ -950,7 +992,7 @@ def _make_lead_agent(config: RunnableConfig, *, app_config: AppConfig):
             deferred_names=setup.deferred_names,
             mcp_routing_hints_section=mcp_routing_hints_section,
             user_id=resolved_user_id,
-            skill_names=skill_setup.skill_names or None,
+            skill_names=skill_setup.skill_names if skill_search_enabled else None,
         ),
         state_schema=get_thread_state_schema(mode),
     )

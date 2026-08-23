@@ -169,7 +169,13 @@ async def propose_account_direction_tool(
     unknowns: ModelStringList | None = None,
     revision_reason: str | None = None,
 ) -> Command:
-    """Persist one to three coherent account-direction candidates without selecting for the user."""
+    """Persist reviewed account-direction candidates only after the user explicitly asks to save them.
+
+    Do not use it for a first-pass account recommendation, an ordinary strategy
+    answer, or merely because the request concerns starting an account. First
+    deliver the provisional judgment in conversation; this tool records it for
+    future work only when durable persistence is part of the user's assignment.
+    """
 
     tool_name = "propose_account_direction"
     owner_user_id = runtime_context_text(runtime, "user_id")

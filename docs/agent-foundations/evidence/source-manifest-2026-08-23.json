@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "retrieved_at": "2026-08-23",
+  "purpose": "Primary-source manifest for the developer-facing Agent Foundations library. This file is not runtime context for the product Lead.",
+  "sources": [
+    {
+      "id": "deeplearningai-agentic-ai",
+      "publisher": "DeepLearning.AI",
+      "authors": ["Andrew Ng"],
+      "title": "Agentic AI",
+      "url": "https://www.deeplearning.ai/courses/agentic-ai",
+      "source_type": "official_course_page",
+      "supports": ["reflection", "tool_use", "planning", "multi_agent", "evaluation"]
+    },
+    {
+      "id": "deeplearningai-langgraph",
+      "publisher": "DeepLearning.AI",
+      "authors": ["Harrison Chase", "Rotem Weiss"],
+      "title": "AI Agents in LangGraph",
+      "url": "https://www.deeplearning.ai/short-courses/ai-agents-in-langgraph/",
+      "source_type": "official_course_page",
+      "supports": ["agent_loop", "llm_code_boundary", "persistence", "human_in_the_loop"]
+    },
+    {
+      "id": "openai-practical-agents",
+      "publisher": "OpenAI",
+      "title": "A practical guide to building agents",
+      "url": "https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/",
+      "source_type": "official_guide",
+      "supports": ["agent_definition", "model_tools_instructions", "run_loop", "single_agent_first", "manager_pattern", "guardrails"]
+    },
+    {
+      "id": "anthropic-building-effective-agents",
+      "publisher": "Anthropic",
+      "title": "Building effective agents",
+      "url": "https://www.anthropic.com/engineering/building-effective-agents",
+      "source_type": "official_engineering_article",
+      "supports": ["workflow_agent_distinction", "augmented_llm", "composable_patterns", "agent_loop"]
+    },
+    {
+      "id": "anthropic-context-engineering",
+      "publisher": "Anthropic",
+      "title": "Effective context engineering for AI agents",
+      "url": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents",
+      "source_type": "official_engineering_article",
+      "supports": ["context_budget", "prompt_tools_mcp_history", "progressive_disclosure", "high_signal_context"]
+    },
+    {
+      "id": "anthropic-agent-evals",
+      "publisher": "Anthropic",
+      "title": "Demystifying evals for AI agents",
+      "url": "https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents",
+      "source_type": "official_engineering_article",
+      "supports": ["harness_plus_model_evaluation", "environment_outcomes", "mixed_graders", "eval_driven_development"]
+    },
+    {
+      "id": "claude-code-how-it-works",
+      "publisher": "Anthropic",
+      "title": "How Claude Code works",
+      "url": "https://code.claude.com/docs/en/how-claude-code-works",
+      "source_type": "official_product_documentation",
+      "supports": ["gather_act_verify_loop", "tools", "sessions", "steering"]
+    },
+    {
+      "id": "claude-code-features",
+      "publisher": "Anthropic",
+      "title": "Extend Claude Code",
+      "url": "https://code.claude.com/docs/en/features-overview",
+      "source_type": "official_product_documentation",
+      "supports": ["claude_md", "skills", "mcp", "subagents", "hooks", "plugins", "progressive_disclosure"]
+    },
+    {
+      "id": "claude-code-memory",
+      "publisher": "Anthropic",
+      "title": "Manage Claude's memory",
+      "url": "https://code.claude.com/docs/en/memory",
+      "source_type": "official_product_documentation",
+      "supports": ["user_instructions", "auto_memory", "scope_separation"]
+    },
+    {
+      "id": "claude-code-subagents",
+      "publisher": "Anthropic",
+      "title": "Create custom subagents",
+      "url": "https://code.claude.com/docs/en/sub-agents",
+      "source_type": "official_product_documentation",
+      "supports": ["isolated_context", "tool_permissions", "delegation"]
+    },
+    {
+      "id": "openai-codex-source",
+      "publisher": "OpenAI",
+      "title": "openai/codex",
+      "url": "https://github.com/openai/codex/tree/422239eb4b1e0d0f85fac7256a079a1befe78472",
+      "source_type": "official_source_repository_snapshot",
+      "revision": "422239eb4b1e0d0f85fac7256a079a1befe78472",
+      "supports": ["base_prompt", "typed_context", "world_state", "agents_md", "compaction", "tools", "skills", "permissions", "integration_tests"]
+    },
+    {
+      "id": "hermes-architecture",
+      "publisher": "NousResearch",
+      "title": "Hermes Agent Architecture",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/architecture.md",
+      "source_type": "official_repository_documentation",
+      "supports": ["agent_loop", "prompt_builder", "providers", "tools", "session", "gateway", "plugins", "file_map"]
+    },
+    {
+      "id": "hermes-prompt-assembly",
+      "publisher": "NousResearch",
+      "title": "Hermes Agent Prompt Assembly",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/prompt-assembly.md",
+      "source_type": "official_repository_documentation",
+      "supports": ["stable_context_volatile", "identity", "context_files", "memory", "skills", "prompt_caching"]
+    },
+    {
+      "id": "hermes-file-roles",
+      "publisher": "NousResearch",
+      "title": "Which File Does What",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/which-file-does-what.md",
+      "source_type": "official_repository_documentation",
+      "supports": ["soul", "user", "memory", "agents_md", "hermes_md"]
+    },
+    {
+      "id": "hermes-soul",
+      "publisher": "NousResearch",
+      "title": "Use SOUL with Hermes",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/guides/use-soul-with-hermes.md",
+      "source_type": "official_repository_documentation",
+      "supports": ["identity", "personality", "tone", "stable_soul", "non_workflow_scope"]
+    },
+    {
+      "id": "hermes-skills",
+      "publisher": "NousResearch",
+      "title": "Hermes Agent Skills",
+      "url": "https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/skills.md",
+      "source_type": "official_repository_documentation",
+      "supports": ["skill_discovery", "progressive_disclosure", "on_demand_methods"]
+    }
+  ]
+}

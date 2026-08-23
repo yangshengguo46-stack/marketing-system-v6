@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, CheckConstraint, DateTime, ForeignKeyConstraint, Index, Integer, String
+from sqlalchemy import JSON, BigInteger, CheckConstraint, DateTime, ForeignKeyConstraint, Index, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from deerflow.persistence.base import Base
@@ -175,6 +175,23 @@ class IncubationArtifactRow(Base):
             "owner_user_id",
             "project_id",
             "evidence_role",
+        ),
+        # AccountLaunchPlan uses ``artifact_version`` as its immutable revision
+        # number. The read-before-write check in the repository is useful for
+        # a clear error, but it cannot arbitrate two Gateway workers that race
+        # on different content-addressed artifact ids. Keep this partial unique
+        # index in ORM metadata as well as migration 0017 because the empty-DB
+        # bootstrap path runs ``create_all`` and stamps head without replaying
+        # the migration chain.
+        Index(
+            "uq_incubation_artifacts_account_launch_plan_version",
+            "owner_user_id",
+            "project_id",
+            "logical_account_id",
+            "artifact_version",
+            unique=True,
+            sqlite_where=text("artifact_type = 'account_launch_plan'"),
+            postgresql_where=text("artifact_type = 'account_launch_plan'"),
         ),
     )
 

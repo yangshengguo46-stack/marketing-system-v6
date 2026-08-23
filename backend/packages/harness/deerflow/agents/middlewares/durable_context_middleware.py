@@ -1,9 +1,9 @@
-"""Durable-context middleware: inject summary, delegation ledger, and skills.
+"""Durable-context middleware: inject summary, delegation ledger, and Skill inspections.
 
-Capture enumerates task delegations and loaded skill files into checkpointed
+Capture enumerates task delegations and inspected Skill files into checkpointed
 state channels. Injection renders static authority rules as a SystemMessage and
-renders untrusted channel values (`summary_text`, `delegations`,
-`skill_context`) as one hidden <durable_context_data> HumanMessage, never
+renders untrusted channel values (`summary_text`, `delegations`, and the legacy
+inspection-only `skill_context`) as one hidden <durable_context_data> HumanMessage, never
 written back to state.
 """
 
@@ -194,7 +194,7 @@ def _with_run_id(delegations: list[dict], run_id: str | None, existing: list[dic
 
 
 class DurableContextMiddleware(AgentMiddleware[AgentState]):
-    """Capture delegations + loaded skills; inject durable context ephemerally."""
+    """Capture delegations + inspected Skills; inject durable context ephemerally."""
 
     def __init__(
         self,

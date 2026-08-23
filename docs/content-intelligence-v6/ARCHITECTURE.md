@@ -7,8 +7,8 @@
 ## 整体运营编排
 
 内容理解是孵化输入，但不是账号定位本身。完整系统采用“一个总脑、三条按需循环、两个执行底座、
-一套事实台账”。A128 后 Lead 已收回账号方向判断权；A134 又确认，自由判断尚未接入长期账号工件。
-所以下图同时标出目标架构和当前断点，不能把设计图冒充已完成闭环：
+一套事实台账”。A128 后 Lead 已收回账号方向判断权；A135 已把可复用判断接入长期账号工件，A140 又将
+确认方向接到可选起号计划。下图同时标出已实现接缝和仍未完成的执行闭环，不能把设计图冒充真实验收：
 
 ```mermaid
 flowchart LR
@@ -16,7 +16,7 @@ flowchart LR
     FACTS["用户原话 / 项目事实 / 已确认旧版本"] --> LEAD
     SKILL["可选 Skill / 词项 / 内容地图 / 对标"] --> LEAD
     LEAD --> ANSWER["当前账号方向判断"]
-    ANSWER -. "当前断点：尚未落账" .-> PROPOSAL["AccountDirectionProposal"]
+    ANSWER -->|"Lead 显式提交可复用判断"| PROPOSAL["AccountDirectionProposal"]
     PROPOSAL --> CHOICE["用户确认或选择"]
     CHOICE --> DIRECTION["AccountDirectionVersion vN"]
     DIRECTION --> LAUNCH["可选 7/30 天计划"]
@@ -41,9 +41,10 @@ flowchart LR
 它们的差异会实质改变路线时，Lead 才问一个有界问题或把该假设写入方向提案。“你自己”指向当前 Agent
 时，仍只读取服务端版本化 `HostProductProfile`。人口统计、资源、渠道和案例没有证据就保持未知。
 
-ADR-044 的新方向工件将在 Lead 已形成可复用判断时幂等创建逻辑账号作用域；普通聊天不因一句话自动建
+ADR-044 的新方向工件会在 Lead 已形成可复用判断并显式提交时幂等创建逻辑账号作用域；普通聊天不因一句话自动建
 项目。提案可以只有一条明确方向，也可以在确有实质分歧时包含少量完整路线。推荐不等于用户确认；确认
-产生追加式新版本。平台登录不是前置条件，7/30 天计划也只在用户明确要求时生成。
+产生追加式新版本。A140 后，7/30 天计划可消费当前方向和与其精确关联的候选地图；存在多个合法地图时
+必须使用准确工件回执，不按内容根猜最新版本。平台登录不是前置条件，计划也只在用户明确要求时生成。
 完整决策、产物合同、硬门边界和迁移原则见
 [`ADR-018`](decisions/ADR-018-artifact-graph-orchestration.md)；工作包与验收顺序见
 [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)。
@@ -58,13 +59,14 @@ ADR-044 的新方向工件将在 Lead 已形成可复用判断时幂等创建逻
 保留的 v2 兼容合同：选题检索生成
 `topic_evidence`，对标发现生成 `benchmark_account_candidate`。搜索回执中的作者显示名没有稳定
 账号身份。现有聚合层可在同一 Manifest 下跨页搜索，按归一后的显示名筛选、去重，
-并将最多 24 条公开作品封存为项目级候选证据；它仍不能直接升级为
-`BenchmarkSnapshot`。只有后续官方账号能力或经审阅的官方页面连接器取得稳定账号 ID、
-作者一致作品和覆盖回执后，才能封存正式对标快照。星图和百应延期为明确字段缺口的
+并将最多 24 条公开作品封存为项目级候选证据；候选本身不能直接升级为
+`BenchmarkSnapshot`。当前经审阅的认证浏览器账号连接器可从用户明确给出的账号链接取得稳定账号 ID、
+作者一致作品和覆盖回执并封存正式对标快照，且已通过一条真实切片；官方账号能力和更广真实回归仍待完成。
+星图和百应延期为明确字段缺口的
 补充源；第五版 Playwright 采集器不作为默认路径迁移。
 
-Lead 不直接看全量抖音 Child，当前只注册一个高层对标候选工具。它只接受
-搜索语、目标作者显示名和样本上限，内部复用 DomainRouter 与候选聚合器。未选项目时
+Lead 不直接看全量抖音 Child，当前注册对标候选发现与指定账号链接采集两个高层工具。候选工具只接受
+搜索语、目标作者显示名和样本上限，内部复用 DomainRouter 与候选聚合器；账号工具接受用户明确提供的链接。未选项目时
 返回只读证据；选中项目时，项目 ID 由 Gateway 上下文转发，所有者始终从服务端认证
 身份解析并在平台请求前检查。项目写入失败不会丢弃已采集证据，但会显式标记未保存。
 Gateway 已提供 owner-scoped 项目与逻辑账号创建、读取、线程绑定和解绑 API；运行请求中的项目/账号
@@ -129,6 +131,20 @@ Schema 严格的运营方价格文件，重新发现本机 CLI 当前 Schema，�
 过期、格式错误、能力 Schema 漂移或素材谱系不符均关闭报价。相同操作即使生成多个报价产物，也只会
 重放同一对批准凭证；接口仍不创建 `mcp_task`、不上传素材、不注册驱动、不调用供应商。
 
+A141 在不改变上述已有谱系的前提下恢复视频制作研发。项目原生
+`marketing-video-production` Skill 只负责在精确封存 `AdaptedDraft` 且用户明确要求继续制作后，将现有
+`ProductionPlan` 路由到证据、
+素材、生成、装配和质检，不创建第二套计划或台账。单视频 `benchmark_video_evidence` 精确绑定
+`MediaSourceReceipt + MediaObservationSnapshot`，将机器观察、编辑解释、可迁移结构、身份/品牌装潢禁迁项与
+未知分层；它不代替多作品 `BenchmarkSnapshot`，也没有账号方向权。
+
+Ark 纯文生视频 V1 请求合同只接受一个 ready 计划中的单资产、单生成动作和单装配步，并在哈希前要求显式画幅、
+分辨率和时长；它拒绝 URL、路径、凭据、
+参考文件和自由参数。适配器只能注入 runner，当前未注册到 Lead、Tool、Gateway 或持久任务。`0016`
+新增 `idempotent_retry | at_most_once`；后者在供应商调用前持久化 `submission_started_at`，不可判定结果进入终态且
+不可领取的 `submission_unknown`。这是重复扣费防线，不是已完成的 Ark 付费纵切；真实启用仍需当期报价、精确批准、
+at-most-once 驱动接线、私有物化、质检和一次全新的用户明确授权真实回执。
+
 ## 内容理解纵切
 
 ```mermaid
@@ -139,7 +155,7 @@ flowchart LR
     LEAD -->|"需要理解商业表达"| SEMANTIC["可选业务语义分析"]
     LEAD -->|"内容机会或具体选题请求"| TOOL["explore_content_world"]
     LEAD -->|"需要外部参照"| BENCH["可选只读对标 / 受众证据"]
-    LEAD -->|"形成可复用账号方向"| PROPOSAL["AccountDirectionProposal：ADR-044 待实现"]
+    LEAD -->|"形成可复用账号方向"| PROPOSAL["AccountDirectionProposal：已实现"]
     PROPOSAL --> CHOICE["用户确认或选择"]
     CHOICE --> DIRECTION["confirmed AccountDirectionVersion vN"]
     DIRECTION -. "可选编辑上下文" .-> TOOL
@@ -228,6 +244,12 @@ AI 微电影、MV 等只是可选表现方式。Lead 可以给一条明确推荐
 修改原因。账号方向不能反向改写语义、候选地图或单条选题，账号级表现方向也不替代本条内容的
 `FormatDecision`。
 
+A140 又让 `AccountLaunchPlan` 接受新 `AccountDirectionVersion` 与一张精确关联的
+`content_map_candidate`，同时保留旧 `IncubationJudgment` 路径只读兼容。计划确认必须回传页面显示的
+精确提案编号并严格匹配 `确认起号计划 <proposal-id>`，确认原话只从最近一条真实用户消息读取。数据库在逻辑账号+
+revision 上原子唯一。该计划只安排栏目、题眼和观察节奏；续写必须同时绑定当前 confirmed plan 回执和精确 `seed_id`，从计划父级
+重水化候选地图，再进入取证、`TopicBrief -> MessagePlan -> BaseDraft`；`content_reading` 和 `TopicBrief` 都保留计划/seed 谱系，不能直接跳到制作。
+
 方向写入端只接受服务端认证作用域、用户原话和 Lead 显式提交的结构化判断；确定性代码负责 Schema、
 所有权、版本、哈希、幂等和确认，不从聊天结尾或 Middleware 偷抽结论。完整对标、受众和地图快照留在
 台账，内容循环只读取已确认方向的有界编辑投影。旧 `IncubationJudgment` 在迁移完成前仍可只读投影，
@@ -246,7 +268,7 @@ topic_brief + optional confirmed account_direction_version
                 -> format_decision
 base draft + format decision
                 -> adapted_draft
-adapted draft + format decision + approved user material
+adapted draft + format decision + exact reviewed user material
                 -> production_plan
 production_plan + exact media inputs + MediaKit receipt
                 -> media_artifact

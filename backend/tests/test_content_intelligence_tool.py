@@ -12,6 +12,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.types import Command
 
+from deerflow.agents.lead_agent.agent_core_contract import PRODUCTION_AGENT_KERNEL
 from deerflow.agents.lead_agent.prompt import SYSTEM_PROMPT_TEMPLATE
 from deerflow.tools.builtins.content_intelligence_tool import content_intelligence_tool, explore_content_world_tool
 from deerflow.tools.tools import BUILTIN_TOOLS
@@ -75,18 +76,26 @@ def test_content_intelligence_tool_is_available_to_the_lead_by_default() -> None
     assert "broad account-starting" not in content_intelligence_tool.description
 
 
-def test_lead_does_not_bypass_an_explicit_shootable_topic_failure() -> None:
-    normalized_prompt = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
+def test_shootable_topic_failure_is_a_self_contained_terminal_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "_render_content_opportunity_map",
+        lambda _bundle: "# 内容机会依据",
+    )
 
-    assert "do not bypass it with generic search" in normalized_prompt
-    assert "synthesize its working material yourself" not in SYSTEM_PROMPT_TEMPLATE
+    rendered = content_intelligence_tool_module._render_shootable_topic_failure(object())
+
+    assert "这是失败回执，不是继续创作授权" in rendered
+    assert "不要另行调用通用搜索或依据地图自行补写稿件" in rendered
+    assert rendered.endswith("# 内容机会依据")
 
 
-def test_lead_keeps_current_surface_exclusions_out_of_the_entire_visible_answer() -> None:
-    normalized_prompt = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
-
-    assert "explicit surface exclusions bind the entire visible answer" in normalized_prompt
-    assert "confirmed-direction reference, preface, or commercial bridge" in normalized_prompt
+def test_global_lead_prompt_does_not_embed_content_surface_policy() -> None:
+    assert "<content_intelligence>" not in SYSTEM_PROMPT_TEMPLATE
+    assert "surface exclusions" not in SYSTEM_PROMPT_TEMPLATE
+    assert "confirmed-direction reference" not in SYSTEM_PROMPT_TEMPLATE
 
 
 def test_confirmed_direction_reference_projects_the_frozen_root_not_the_business_bearing_subject() -> None:
@@ -482,6 +491,7 @@ async def test_confirmed_account_direction_guides_topic_without_requiring_a_boun
     option = SimpleNamespace(
         option_id="direction_1",
         name="人情世故观察者",
+        content_root=None,
         long_term_content_subject="人与人之间的相处与人情世故",
         content_audience_hypothesis="关心关系分寸与人情判断的人",
         audience_promise="用具体人物与事件讲清关系、分寸与人性",
@@ -542,6 +552,7 @@ async def test_confirmed_account_direction_guides_topic_without_requiring_a_boun
             "name": "explore_content_world",
             "args": {
                 "user_request": "给我一个今天能拍的人情世故选题。",
+                "subject_expression": "模型想改成黄金产品知识",
                 "runtime": _tool_runtime(
                     "content-world-call-direction",
                     context={"incubation_project_id": "project-1"},
@@ -566,6 +577,162 @@ async def test_confirmed_account_direction_guides_topic_without_requiring_a_boun
     assert persistence.await_args.kwargs["account_direction_artifact"] is direction_artifact
     assert "已确认账号方向" in result.update["messages"][0].content
     render_direction.assert_called_once_with(direction)
+
+
+@pytest.mark.asyncio
+async def test_confirmed_launch_plan_seed_replaces_free_topic_seed_and_reuses_exact_map(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frozen_bundle = object()
+    enriched_bundle = SimpleNamespace(
+        topic_brief=SimpleNamespace(
+            content_map_version_id="content-map-relations-v1",
+            path=SimpleNamespace(path_id="path-rites"),
+        )
+    )
+    shooting_delivery = object()
+    direction = SimpleNamespace(
+        selected_option=SimpleNamespace(
+            option_id="direction_1",
+            name="关系观察向",
+            content_root="人与人的关系",
+            long_term_content_subject="人与人的关系",
+            audience_promise=None,
+            content_audience_hypothesis=None,
+            account_role=None,
+        )
+    )
+    direction_artifact = object()
+    prepared_direction = SimpleNamespace(
+        direction=direction,
+        direction_artifact=direction_artifact,
+    )
+    plan_artifact = SimpleNamespace(
+        artifact_id="artifact-plan-confirmed",
+        content_sha256="a" * 64,
+    )
+    planned_seed = SimpleNamespace(
+        seed_id="seed-rites",
+        map_path_id="path-rites",
+        concrete_event_or_question="古代的礼为什么不只是礼貌？",
+    )
+    launch_context = SimpleNamespace(
+        bundle=frozen_bundle,
+        plan=SimpleNamespace(content_map_version_id="content-map-relations-v1"),
+        plan_artifact=plan_artifact,
+        topic_seed=planned_seed,
+        direction=prepared_direction,
+        strategy=None,
+    )
+    load_direction = AsyncMock(return_value=prepared_direction)
+    load_launch = AsyncMock(return_value=launch_context)
+    semantic_analysis = AsyncMock()
+    research = AsyncMock(return_value=enriched_bundle)
+    persistence = AsyncMock(return_value={"status": "stored", "artifacts": []})
+
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_content_intelligence_model", lambda config: object())
+    monkeypatch.setattr(content_intelligence_tool_module, "_create_lexical_evidence_provider", lambda: None)
+    monkeypatch.setattr(content_intelligence_tool_module, "_load_current_account_direction", load_direction)
+    monkeypatch.setattr(content_intelligence_tool_module, "_load_confirmed_launch_topic_context", load_launch)
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", semantic_analysis)
+    monkeypatch.setattr(content_intelligence_tool_module, "enrich_content_world_with_research", research)
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "DouyinMcpTopicEvidenceSearch",
+        Mock(return_value=SimpleNamespace(snapshots=())),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "synthesize_shooting_delivery",
+        AsyncMock(return_value=shooting_delivery),
+    )
+    monkeypatch.setattr(
+        content_intelligence_tool_module,
+        "render_shooting_delivery",
+        Mock(return_value="# 今日建议拍摄\n\n## 古代的礼为什么不只是礼貌？"),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "_persist_content_run", persistence)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "按已确认计划做第一条。",
+                "subject_expression": "黄金产品知识",
+                "topic_seed": "模型自由补出的热点",
+                "launch_plan_artifact_id": "artifact-plan-confirmed",
+                "launch_topic_seed_id": "seed-rites",
+                "runtime": _tool_runtime(
+                    "content-world-launch-seed",
+                    context={"incubation_project_id": "golden-gift"},
+                ),
+            },
+            "id": "content-world-launch-seed",
+            "type": "tool_call",
+        }
+    )
+
+    load_direction.assert_awaited_once()
+    load_launch.assert_awaited_once_with(
+        runtime=load_launch.await_args.kwargs["runtime"],
+        plan_artifact_id="artifact-plan-confirmed",
+        topic_seed_id="seed-rites",
+        current_direction=prepared_direction,
+    )
+    semantic_analysis.assert_not_awaited()
+    assert research.await_args.args[0] is frozen_bundle
+    assert research.await_args.kwargs["topic_seed"] == "古代的礼为什么不只是礼貌？"
+    assert "模型自由补出的热点" not in research.await_args.kwargs["topic_seed"]
+    assert persistence.await_args.kwargs["launch_plan_artifact"] is plan_artifact
+    assert persistence.await_args.kwargs["launch_topic_seed_id"] == "seed-rites"
+    rendered = result.update["messages"][0].content
+    assert "## 已确认起号计划题眼" in rendered
+    assert "artifact-plan-confirmed" in rendered
+    assert "seed-rites" in rendered
+
+
+@pytest.mark.asyncio
+async def test_launch_plan_and_seed_receipts_are_rejected_when_only_one_is_supplied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis = AsyncMock()
+    monkeypatch.setattr(content_intelligence_tool_module, "analyze_content_intelligence", analysis)
+
+    result = await explore_content_world_tool.ainvoke(
+        {
+            "name": "explore_content_world",
+            "args": {
+                "user_request": "按起号计划做第一条。",
+                "launch_plan_artifact_id": "artifact-plan-confirmed",
+                "runtime": _tool_runtime("content-world-incomplete-launch-seed"),
+            },
+            "id": "content-world-incomplete-launch-seed",
+            "type": "tool_call",
+        }
+    )
+
+    assert "必须成对提供" in result.update["messages"][0].content
+    assert "没有使用模型自由补出" in result.update["messages"][0].content
+    analysis.assert_not_awaited()
+
+
+def test_launch_topic_brief_must_instantiate_the_selected_plan_seed_path() -> None:
+    context = SimpleNamespace(
+        plan=SimpleNamespace(content_map_version_id="content-map-relations-v1"),
+        topic_seed=SimpleNamespace(map_path_id="path-rites"),
+    )
+    wrong_path_bundle = SimpleNamespace(
+        topic_brief=SimpleNamespace(
+            content_map_version_id="content-map-relations-v1",
+            path=SimpleNamespace(path_id="path-products"),
+        )
+    )
+
+    with pytest.raises(ValueError, match="selected seed path"):
+        content_intelligence_tool_module._validate_launch_topic_brief(
+            bundle=wrong_path_bundle,
+            context=context,
+        )
 
 
 def test_confirmed_direction_uses_its_concise_subject_as_the_frozen_root() -> None:
@@ -632,6 +799,433 @@ async def test_current_direction_loader_reads_the_implicit_thread_scope_without_
         logical_account=logical_account,
         artifact_type="account_direction_version",
     )
+
+
+@pytest.mark.asyncio
+async def test_launch_topic_loader_requires_exact_current_lineage_and_unchanged_proposal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from deerflow.content_intelligence import (
+        ComprehensionRecord,
+        ContentDimension,
+        ContentIntelligenceBundle,
+        ContentPath,
+        ContentPathStep,
+        ContentWorldView,
+        SourceItem,
+    )
+    from deerflow.incubation import (
+        AccountDirectionOption,
+        AccountDirectionProposal,
+        AccountDirectionVersion,
+        AccountLaunchPlan,
+        ArtifactEnvelope,
+        FirstWeekDay,
+        LaunchCapacity,
+        LaunchCheckpoint,
+        LaunchPhase,
+        LaunchSeries,
+        PlannedTopicSeed,
+        account_launch_plan_confirmation_text,
+        implicit_thread_logical_account_ref,
+        seal_content_run_artifacts,
+        select_current_account_direction,
+    )
+    from deerflow.incubation.contracts import ProjectRef
+
+    now = datetime(2026, 8, 22, 13, 0, tzinfo=UTC)
+    project = ProjectRef(owner_user_id="user-1", project_id="golden-gift")
+    logical_account = implicit_thread_logical_account_ref(
+        project=project,
+        thread_id="thread-1",
+    )
+    selected_option = AccountDirectionOption(
+        option_id="direction_1",
+        name="礼与关系",
+        content_root="礼与人与人相处",
+        long_term_content_subject="礼与人与人相处",
+        rationale="从具体赠与事件观察关系。",
+    )
+    proposal_payload = AccountDirectionProposal(
+        target_revision_number=1,
+        source_user_text="我是做黄金礼品的，想从礼与关系切入。",
+        marketing_subject="黄金礼品",
+        direction_options=(selected_option,),
+        recommended_option_id="direction_1",
+    )
+    proposal_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_proposal",
+        version=1,
+        payload=proposal_payload.model_dump(mode="json"),
+        created_at=now,
+        source_thread_id="thread-proposal",
+        source_run_id="run-proposal",
+    )
+    direction_payload = AccountDirectionVersion(
+        revision_number=1,
+        proposal_artifact_id=proposal_artifact.artifact_id,
+        source_user_text="我是做黄金礼品的，想从礼与关系切入。",
+        confirmation_user_text="确认这个方向。",
+        marketing_subject="黄金礼品",
+        selected_option=selected_option,
+    )
+    direction_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=direction_payload.model_dump(mode="json"),
+        parents=(proposal_artifact.to_parent_ref(),),
+        created_at=now,
+        source_thread_id="thread-direction",
+        source_run_id="run-direction",
+    )
+    record = ComprehensionRecord(
+        record_id="record-gift",
+        subject_expression="我是做黄金礼品的",
+        sources=(
+            SourceItem(
+                source_id="source-user",
+                kind="user_statement",
+                content="我是做黄金礼品的",
+            ),
+        ),
+    )
+    path = ContentPath(
+        path_id="path-rites",
+        steps=(
+            ContentPathStep(
+                from_label="礼与人与人相处",
+                relation="通过具体制度观察",
+                to_label="古代礼制",
+                status="candidate",
+                verification_needed=True,
+            ),
+        ),
+        rationale="从具体礼制理解关系。",
+    )
+    world = ContentWorldView(
+        record_id=record.record_id,
+        source_object="黄金礼品",
+        content_entry="送礼",
+        content_root="礼与人与人相处",
+        root_rationale="从送礼进入礼与关系。",
+        editorial_promise="用具体事件理解礼与关系。",
+        recurring_lens="观察人物、时间、地方和事件。",
+        dimensions=(
+            ContentDimension(
+                name="制度与习俗",
+                rationale="礼如何成为制度。",
+                paths=(path,),
+            ),
+        ),
+    )
+    map_run = seal_content_run_artifacts(
+        project=project,
+        logical_account=logical_account,
+        bundle=ContentIntelligenceBundle(record=record, content_world=world),
+        delivery=None,
+        account_direction_artifact=direction_artifact,
+        created_at=now,
+        source_thread_id="thread-map",
+        source_run_id="run-map",
+    )
+    plan_proposal = AccountLaunchPlan(
+        direction_artifact_id=direction_artifact.artifact_id,
+        content_map_version_id=world.content_map_version_id(),
+        planning_request="编排首轮起号计划",
+        capacity=LaunchCapacity(
+            status="provisional",
+            cadence_summary="先做一条。",
+            basis="用户尚未确认发布能力。",
+            adjustment_trigger="按实际回执调整。",
+        ),
+        series=(
+            LaunchSeries(
+                series_id="rites",
+                name="礼制与关系",
+                purpose="从礼制观察关系。",
+                map_path_ids=("path-rites",),
+                repeatable_question="一项礼制怎样安排关系？",
+                topic_sources=("public_evidence",),
+            ),
+        ),
+        topic_seeds=(
+            PlannedTopicSeed(
+                seed_id="seed-rites",
+                series_id="rites",
+                map_path_id="path-rites",
+                content_role="understanding",
+                focal_subject="古代礼制",
+                concrete_event_or_question="古代的礼为什么不只是礼貌？",
+                account_viewpoint="从礼品经营者的视角观察。",
+                source_kind="public_evidence",
+                evidence_need="可核验的礼制资料。",
+            ),
+        ),
+        first_week=tuple(
+            FirstWeekDay(
+                day=day,
+                focus=f"第 {day} 天",
+                actions=("核对证据。",),
+                topic_seed_ids=(("seed-rites",) if day == 1 else ()),
+            )
+            for day in range(1, 8)
+        ),
+        later_phases=(
+            LaunchPhase(
+                start_day=8,
+                end_day=30,
+                objective="按回执调整。",
+                series_ids=("rites",),
+                actions=("回收结果。",),
+                review_questions=("是否继续？",),
+            ),
+        ),
+        checkpoints=(
+            LaunchCheckpoint(
+                day=7,
+                questions=("题眼是否成立？",),
+                possible_adjustments=("调整证据需求。",),
+            ),
+            LaunchCheckpoint(
+                day=30,
+                questions=("系列是否继续？",),
+                possible_adjustments=("保留或停止。",),
+            ),
+        ),
+    )
+    plan_proposal_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=plan_proposal.revision_number,
+        payload=plan_proposal.model_dump(mode="json"),
+        parents=(
+            direction_artifact.to_parent_ref(),
+            map_run.content_world.to_parent_ref(),
+        ),
+        created_at=now,
+        source_thread_id="thread-plan-proposal",
+        source_run_id="run-plan-proposal",
+    )
+    plan = AccountLaunchPlan.model_validate(
+        plan_proposal.model_copy(
+            update={
+                "revision_number": 2,
+                "supersedes_plan_artifact_id": plan_proposal_artifact.artifact_id,
+                "revision_reason": "用户确认采用当前起号计划。",
+                "decision_status": "confirmed",
+                "confirmation_user_text": account_launch_plan_confirmation_text(plan_proposal_artifact.artifact_id),
+            }
+        ).model_dump(mode="json")
+    )
+    plan_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=plan.revision_number,
+        payload=plan.model_dump(mode="json"),
+        parents=(
+            direction_artifact.to_parent_ref(),
+            map_run.content_world.to_parent_ref(),
+            plan_proposal_artifact.to_parent_ref(),
+        ),
+        created_at=now,
+        source_thread_id="thread-plan",
+        source_run_id="run-plan",
+    )
+    stored = [
+        proposal_artifact,
+        direction_artifact,
+        map_run.content_reading,
+        map_run.content_world,
+        plan_proposal_artifact,
+        plan_artifact,
+    ]
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        list_artifacts=AsyncMock(return_value=stored),
+    )
+    monkeypatch.setattr(content_intelligence_tool_module, "_get_incubation_repository", lambda: repository)
+    current_direction = select_current_account_direction(
+        stored,
+        logical_account=logical_account,
+    )
+    assert current_direction is not None
+
+    context = await content_intelligence_tool_module._load_confirmed_launch_topic_context(
+        runtime=_tool_runtime(
+            "load-launch-topic",
+            context={"incubation_project_id": project.project_id},
+        ),
+        plan_artifact_id=plan_artifact.artifact_id,
+        topic_seed_id="seed-rites",
+        current_direction=current_direction,
+    )
+
+    assert context.plan_artifact == plan_artifact
+    assert context.topic_seed.seed_id == "seed-rites"
+    assert context.bundle.content_world is not None
+    assert context.bundle.content_world.content_map_version_id() == world.content_map_version_id()
+    assert context.direction == current_direction
+    assert context.strategy is None
+
+    with pytest.raises(ValueError, match="exact current confirmed"):
+        await content_intelligence_tool_module._load_confirmed_launch_topic_context(
+            runtime=_tool_runtime(
+                "load-stale-launch-topic",
+                context={"incubation_project_id": project.project_id},
+            ),
+            plan_artifact_id="artifact-stale-plan",
+            topic_seed_id="seed-rites",
+            current_direction=current_direction,
+        )
+
+    with pytest.raises(ValueError, match="absent from the confirmed plan"):
+        await content_intelligence_tool_module._load_confirmed_launch_topic_context(
+            runtime=_tool_runtime(
+                "load-unknown-launch-seed",
+                context={"incubation_project_id": project.project_id},
+            ),
+            plan_artifact_id=plan_artifact.artifact_id,
+            topic_seed_id="seed-not-in-plan",
+            current_direction=current_direction,
+        )
+
+    orphan_plan_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=plan.revision_number,
+        payload=plan.model_dump(mode="json"),
+        parents=(
+            direction_artifact.to_parent_ref(),
+            map_run.content_world.to_parent_ref(),
+        ),
+        created_at=now + timedelta(seconds=1),
+        source_thread_id="thread-orphan-plan",
+        source_run_id="run-orphan-plan",
+    )
+    repository.list_artifacts.return_value = [
+        *stored[:-1],
+        orphan_plan_artifact,
+    ]
+    with pytest.raises(ValueError, match="exactly one account_launch_plan parent"):
+        await content_intelligence_tool_module._load_confirmed_launch_topic_context(
+            runtime=_tool_runtime(
+                "load-orphan-launch-plan",
+                context={"incubation_project_id": project.project_id},
+            ),
+            plan_artifact_id=orphan_plan_artifact.artifact_id,
+            topic_seed_id="seed-rites",
+            current_direction=current_direction,
+        )
+    repository.list_artifacts.return_value = stored
+
+    changed_plan = AccountLaunchPlan.model_validate(plan.model_copy(update={"planning_request": "确认时被篡改的起号计划"}).model_dump(mode="json"))
+    changed_plan_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_launch_plan",
+        version=changed_plan.revision_number,
+        payload=changed_plan.model_dump(mode="json"),
+        parents=(
+            direction_artifact.to_parent_ref(),
+            map_run.content_world.to_parent_ref(),
+            plan_proposal_artifact.to_parent_ref(),
+        ),
+        created_at=now + timedelta(seconds=1),
+        source_thread_id="thread-changed-plan",
+        source_run_id="run-changed-plan",
+    )
+    repository.list_artifacts.return_value = [
+        *stored[:-1],
+        changed_plan_artifact,
+    ]
+    with pytest.raises(ValueError, match="changed content after its proposal"):
+        await content_intelligence_tool_module._load_confirmed_launch_topic_context(
+            runtime=_tool_runtime(
+                "load-changed-launch-plan",
+                context={"incubation_project_id": project.project_id},
+            ),
+            plan_artifact_id=changed_plan_artifact.artifact_id,
+            topic_seed_id="seed-rites",
+            current_direction=current_direction,
+        )
+    repository.list_artifacts.return_value = stored
+
+    orphan_direction_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=direction_payload.model_dump(mode="json"),
+        created_at=now,
+        source_thread_id="thread-orphan-direction",
+        source_run_id="run-orphan-direction",
+    )
+    orphan_direction = select_current_account_direction(
+        [orphan_direction_artifact],
+        logical_account=logical_account,
+    )
+    assert orphan_direction is not None
+    orphan_map = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="content_map_candidate",
+        version=1,
+        payload=map_run.content_world.payload,
+        parents=(orphan_direction_artifact.to_parent_ref(),),
+        created_at=now,
+        source_thread_id="thread-orphan-map",
+        source_run_id="run-orphan-map",
+    )
+    with pytest.raises(ValueError, match="exact proposal parent"):
+        content_intelligence_tool_module._validate_direction_map_link(
+            direction=orphan_direction,
+            map_artifact=orphan_map,
+            artifacts_by_id={proposal_artifact.artifact_id: proposal_artifact},
+        )
+
+    tampered_direction_payload = direction_payload.model_copy(update={"selected_option": selected_option.model_copy(update={"name": "被篡改的方向名"})})
+    tampered_direction_artifact = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=tampered_direction_payload.model_dump(mode="json"),
+        parents=(proposal_artifact.to_parent_ref(),),
+        created_at=now,
+        source_thread_id="thread-tampered-direction",
+        source_run_id="run-tampered-direction",
+    )
+    tampered_direction = select_current_account_direction(
+        [tampered_direction_artifact],
+        logical_account=logical_account,
+    )
+    assert tampered_direction is not None
+    tampered_map = ArtifactEnvelope.seal(
+        project=project,
+        logical_account=logical_account,
+        artifact_type="content_map_candidate",
+        version=1,
+        payload=map_run.content_world.payload,
+        parents=(tampered_direction_artifact.to_parent_ref(),),
+        created_at=now,
+        source_thread_id="thread-tampered-map",
+        source_run_id="run-tampered-map",
+    )
+    with pytest.raises(ValueError, match="exact proposal option"):
+        content_intelligence_tool_module._validate_direction_map_link(
+            direction=tampered_direction,
+            map_artifact=tampered_map,
+            artifacts_by_id={proposal_artifact.artifact_id: proposal_artifact},
+        )
 
 
 @pytest.mark.asyncio
@@ -1493,6 +2087,8 @@ def test_content_world_tool_hides_injected_delivery_arguments_from_the_model() -
 
     assert set(schema["properties"]) == {
         "answer_goal",
+        "launch_plan_artifact_id",
+        "launch_topic_seed_id",
         "subject_expression",
         "topic_seed",
         "user_request",
@@ -1955,6 +2551,49 @@ async def test_content_run_persistence_is_optional_without_a_selected_project(
 
 
 @pytest.mark.asyncio
+async def test_launch_topic_persistence_uses_the_exact_implicit_plan_scope(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from deerflow.incubation import (
+        implicit_thread_logical_account_ref,
+        implicit_thread_project_ref,
+    )
+
+    project = implicit_thread_project_ref(
+        owner_user_id="user-1",
+        thread_id="thread-1",
+    )
+    logical_account = implicit_thread_logical_account_ref(
+        project=project,
+        thread_id="thread-1",
+    )
+    plan_artifact = SimpleNamespace(project=project)
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        put_artifact=AsyncMock(side_effect=lambda artifact: artifact),
+    )
+    seal = Mock(return_value=SimpleNamespace(storage_order=lambda: ()))
+    monkeypatch.setattr(content_intelligence_tool_module, "_get_incubation_repository", lambda: repository)
+    monkeypatch.setattr(content_intelligence_tool_module, "seal_content_run_artifacts", seal)
+
+    receipt = await content_intelligence_tool_module._persist_content_run(
+        bundle=object(),
+        delivery=None,
+        runtime=_tool_runtime("persist-implicit-launch-topic"),
+        topic_evidence_snapshots=(),
+        launch_plan_artifact=plan_artifact,
+        launch_topic_seed_id="seed-rites",
+    )
+
+    assert receipt["status"] == "stored"
+    assert receipt["project_id"] == project.project_id
+    assert receipt["logical_account_id"] == logical_account.logical_account_id
+    assert seal.call_args.kwargs["project"] == project
+    assert seal.call_args.kwargs["launch_plan_artifact"] is plan_artifact
+    assert seal.call_args.kwargs["launch_topic_seed_id"] == "seed-rites"
+
+
+@pytest.mark.asyncio
 async def test_content_world_tool_keeps_the_answer_when_project_persistence_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2028,69 +2667,40 @@ def test_tool_schema_exposes_one_optional_shared_analysis_request() -> None:
 
 
 def test_lead_prompt_uses_a_thin_content_incubation_contract() -> None:
-    assert "content incubation and new-media operations agent" in SYSTEM_PROMPT_TEMPLATE
-    assert "<account_incubation>" in SYSTEM_PROMPT_TEMPLATE
-    assert "<content_intelligence>" in SYSTEM_PROMPT_TEMPLATE
-    assert "analyze_content_intelligence" in SYSTEM_PROMPT_TEMPLATE
-    assert "explore_content_world" in SYSTEM_PROMPT_TEMPLATE
-    assert "develop_account_strategy" not in SYSTEM_PROMPT_TEMPLATE
-    assert "optional" in SYSTEM_PROMPT_TEMPLATE.lower()
+    normalized = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
 
-    content_section = SYSTEM_PROMPT_TEMPLATE.split("<content_intelligence>", 1)[1].split("</content_intelligence>", 1)[0]
-    assert "黄金礼品" not in content_section
-    assert "海鲜" not in content_section
-    assert "火锅底料" not in content_section
-    assert "10 days" not in content_section
-    assert "3 candidates" not in content_section
-    normalized_section = " ".join(content_section.split())
-    assert "Use `analyze_content_intelligence` only when" in normalized_section
-    assert "answer_goal=`content_opportunities`" in normalized_section
-    assert "answer_goal=`one_shootable_topic`" in normalized_section
-    assert "A candidate content map is input evidence, not an adopted account position" in normalized_section
-    assert "never creates, confirms, or revises account strategy" in normalized_section
-    assert "BenchmarkSnapshot" in normalized_section
-    assert "cannot decide positioning" in normalized_section
-    assert "Do not route a concrete shootable-topic request through `analyze_content_intelligence`" in normalized_section
-    assert "asks for one concrete shootable topic or script under a confirmed direction" in normalized_section
-    assert "use `tool_search` to fetch `explore_content_world`" in normalized_section
-    assert "omit `subject_expression` so the tool rehydrates that confirmed route's exact frozen map" in normalized_section
-    assert "Delivery words such as topic, script, draft, or today's post are not the subject" in normalized_section
-    assert "topic_seed" in normalized_section
-    assert "contiguous verbatim span of the current user request" in normalized_section
-    assert "posting cadence" in normalized_section
-    assert "`content_entry` only explains the semantic route" in normalized_section
-    assert "`content_root` is only the root of that candidate map" in normalized_section
-    assert "long_term_positioning" not in normalized_section
-    assert "audience territory define the account-level map" not in normalized_section
-    assert "content root is the entry into the map" not in normalized_section
-    assert "do not add an arbitrary number of posts, days, or branches" in normalized_section
-    assert "Avoid duplicate research" in normalized_section
-    for attention_leak in (
-        "return path",
-        "product-return",
-        "commercial return",
-        "object anchor",
-        "bridge path",
+    assert SYSTEM_PROMPT_TEMPLATE.startswith(PRODUCTION_AGENT_KERNEL)
+    assert "new-media incubation and operations employee" in normalized
+    assert "no capability or workflow is mandatory" in normalized
+
+    for embedded_domain_route in (
+        "<account_incubation>",
+        "<content_intelligence>",
+        "analyze_content_intelligence",
+        "explore_content_world",
+        "develop_account_strategy",
+        "answer_goal=`content_opportunities`",
+        "answer_goal=`one_shootable_topic`",
+        "BenchmarkSnapshot",
+        "topic_seed",
+        "posting cadence",
     ):
-        assert attention_leak not in content_section.lower()
+        assert embedded_domain_route not in SYSTEM_PROMPT_TEMPLATE
+
+    for industry_answer in ("黄金礼品", "海鲜", "火锅底料", "10 days", "3 candidates"):
+        assert industry_answer not in SYSTEM_PROMPT_TEMPLATE
 
 
-def test_lead_owns_account_incubation_routing() -> None:
-    account_section = SYSTEM_PROMPT_TEMPLATE.split("<account_incubation>", 1)[1].split("</account_incubation>", 1)[0]
-    normalized_section = " ".join(account_section.split())
+def test_lead_owns_judgment_without_an_embedded_account_router() -> None:
+    normalized = " ".join(PRODUCTION_AGENT_KERNEL.split())
 
-    assert "understand what the subject does" in normalized_section
-    assert "whose behavior should change" in normalized_section
-    assert "No tool or method is a mandatory first step" in normalized_section
-    assert "Do not force lexical decomposition" in normalized_section
-    assert "unfamiliar, recent, or materially ambiguous" in normalized_section
-    assert "ask one bounded clarification" in normalized_section
-    assert "business target" in normalized_section
-    assert "content audience" in normalized_section
-    assert "fixed pipeline" in normalized_section
-    assert "call `develop_account_strategy`" not in normalized_section
-    assert "first domain action" not in normalized_section
-    assert "must stop before" not in normalized_section
+    assert "Own the work the user gives you" in normalized
+    assert "Think and act independently" in normalized
+    assert "no capability or workflow is mandatory" in normalized
+    assert "<account_incubation>" not in SYSTEM_PROMPT_TEMPLATE
+    assert "fixed pipeline" not in SYSTEM_PROMPT_TEMPLATE
+    assert "first domain action" not in SYSTEM_PROMPT_TEMPLATE
+    assert "develop_account_strategy" not in SYSTEM_PROMPT_TEMPLATE
 
 
 def test_confirmed_route_reference_keeps_only_the_selected_name_and_id() -> None:
@@ -2112,8 +2722,10 @@ def test_confirmed_route_reference_keeps_only_the_selected_name_and_id() -> None
 
 
 def test_clarification_is_not_a_mandatory_business_workflow_gate() -> None:
+    normalized = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
+
     assert "MANDATORY Clarification Scenarios" not in SYSTEM_PROMPT_TEMPLATE
     assert "Approach Choices" not in SYSTEM_PROMPT_TEMPLATE
     assert "If missing details do not prevent a useful response" in SYSTEM_PROMPT_TEMPLATE
     assert "ALWAYS clarify unclear/missing/ambiguous requirements" not in SYSTEM_PROMPT_TEMPLATE
-    assert "Scope-Aligned" in SYSTEM_PROMPT_TEMPLATE
+    assert "Ask only when a missing user-owned fact truly blocks useful work" in normalized

@@ -373,7 +373,7 @@ def test_make_lead_agent_all_legacy_skills_preserve_all_tools(monkeypatch):
 
     # No skill is active yet, so the configured lead tools remain available.
     tool_names = [tool.name for tool in agent_kwargs["tools"]]
-    assert tool_names == ["bash", "read_file", "update_agent", "describe_skill"]
+    assert tool_names == ["bash", "read_file", "update_agent", "describe_skill", "activate_skill"]
 
 
 def test_make_lead_agent_passive_empty_skill_policy_preserves_mcp_and_other_tools_when_cache_is_cold(monkeypatch):

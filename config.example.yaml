@@ -1046,6 +1046,9 @@ tools:
 
 tool_search:
   enabled: true
+  # Keep the full deferred catalog available through tool_search without
+  # preloading every tool name into the first model call.
+  prompt_index: false
   # When tool_search is enabled, PR1 MCP routing metadata can auto-promote
   # matching deferred MCP tool schemas before a model call. This is the maximum
   # number of matched schemas promoted per model call. Valid range: 1..5.
@@ -1057,6 +1060,8 @@ tool_search:
     - analyze_content_intelligence
     - ask_clarification
     - bash
+    - collect_douyin_benchmark_account
+    - collect_douyin_benchmark_candidate
     - confirm_account_launch_plan
     - confirm_account_direction
     - confirm_account_strategy
@@ -1075,6 +1080,8 @@ tool_search:
     - view_image
     - write_file
     - verify_business_term
+    - web_fetch
+    - web_search
 
 # ============================================================================
 # Tool Output Budget Protection
@@ -1579,11 +1586,16 @@ skills:
   container_path: /mnt/skills
 
   # Deferred skill discovery (enabled in this distribution)
-  # When enabled, only skill names appear in the system prompt (<skill_index>).
-  # The LLM discovers skill details on demand via the describe_skill tool.
+  # When enabled, only skill names and bounded routing summaries appear in the
+  # system prompt (<skill_index>). The LLM discovers full skill details on
+  # demand via the describe_skill tool.
   # This keeps the system prompt compact and prefix-cache friendly when many
   # skills are installed.
   deferred_discovery: true
+  # Only product-native incubation capabilities are advertised on every turn.
+  # Other enabled skills remain searchable through describe_skill.
+  prompt_index_patterns:
+    - "incubate-*"
 
 # ============================================================================
 # SkillScan Configuration

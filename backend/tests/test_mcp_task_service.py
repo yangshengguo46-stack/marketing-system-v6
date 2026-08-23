@@ -10,6 +10,7 @@ from deerflow.mcp.tasks import (
     TaskSnapshot,
     TaskStatus,
     TaskSubmission,
+    TaskSubmissionPolicy,
     TaskSubmitRequest,
 )
 from deerflow.persistence.mcp_tasks import DuplicateMcpRemoteTaskError
@@ -24,6 +25,8 @@ class FakeRepository:
         self.created = []
         self.intents = []
         self.bound = []
+        self.submission_starts = []
+        self.submission_unknown = []
 
     async def create(self, **kwargs):
         self.created.append(kwargs)
@@ -40,6 +43,17 @@ class FakeRepository:
 
     async def bind_submission(self, task_id, **kwargs):
         self.bound.append((task_id, kwargs))
+        return True
+
+    async def mark_submission_started(self, task_id, **kwargs):
+        self.submission_starts.append((task_id, kwargs))
+        for row in self.rows:
+            if row.get("id") == task_id:
+                row["submission_started_at"] = kwargs["started_at"].isoformat()
+        return True
+
+    async def mark_submission_unknown(self, task_id, **kwargs):
+        self.submission_unknown.append((task_id, kwargs))
         return True
 
     async def claim_due_tasks(self, **_kwargs):
@@ -158,7 +172,12 @@ def _claimed_row(*, driver_name="fake"):
     }
 
 
-def _pending_row(*, driver_name="fake"):
+def _pending_row(
+    *,
+    driver_name="fake",
+    submission_policy="idempotent_retry",
+    submission_started_at=None,
+):
     return {
         "id": "task-pending-1",
         "user_id": "user-1",
@@ -170,6 +189,8 @@ def _pending_row(*, driver_name="fake"):
         "remote_task_id": None,
         "task_name": "Generate report",
         "status": "submission_pending",
+        "submission_policy": submission_policy,
+        "submission_started_at": submission_started_at,
         "submit_arguments": {"topic": "durable"},
         "driver_data": {"submit_tool": "submit"},
         "lease_owner": "ignored-by-service-fixture",
@@ -212,6 +233,47 @@ async def test_enqueue_persists_submission_intent_before_driver_is_called():
     assert created["status"] == "submission_pending"
     assert repo.intents[0]["submit_arguments"] == {"topic": "durable"}
     assert repo.intents[0]["next_poll_at"] == now
+    assert repo.intents[0]["submission_policy"] == "idempotent_retry"
+    assert driver.submit_calls == []
+
+
+@pytest.mark.asyncio
+async def test_enqueue_persists_at_most_once_policy_without_calling_driver():
+    now = datetime.now(UTC)
+    repo = FakeRepository()
+    driver = FakeDriver(
+        submission=TaskSubmission(
+            remote_task_id="remote-1",
+            snapshot=TaskSnapshot(status=TaskStatus.SUBMITTED),
+        )
+    )
+    registry = McpTaskDriverRegistry()
+    registry.register("fake", driver)
+    service = McpTaskService(
+        repository=repo,
+        drivers=registry,
+        poll_interval_seconds=5,
+        lease_seconds=120,
+        max_concurrent_polls=3,
+    )
+
+    await service.enqueue(
+        driver_name="fake",
+        request=TaskSubmitRequest(
+            user_id="user-1",
+            thread_id="thread-1",
+            run_id="run-1",
+            tool_call_id="call-1",
+            server_name="reports",
+            task_name="Generate once",
+            arguments={"topic": "durable"},
+            local_task_id="task-once-1",
+        ),
+        submission_policy=TaskSubmissionPolicy.AT_MOST_ONCE,
+        now=now,
+    )
+
+    assert repo.intents[0]["submission_policy"] == "at_most_once"
     assert driver.submit_calls == []
 
 
@@ -253,6 +315,122 @@ async def test_pending_intent_is_submitted_and_bound_by_background_worker():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "status",
+    [TaskStatus.SUBMISSION_PENDING, TaskStatus.SUBMISSION_UNKNOWN],
+)
+async def test_poll_rejects_driver_local_only_status_without_corrupting_remote_task(
+    status: TaskStatus,
+):
+    repo = FakeRepository([_claimed_row()])
+    driver = FakeDriver(snapshots=[TaskSnapshot(status=status)])
+    registry = McpTaskDriverRegistry()
+    registry.register("fake", driver)
+    service = McpTaskService(
+        repository=repo,
+        drivers=registry,
+        poll_interval_seconds=5,
+        lease_seconds=120,
+        max_concurrent_polls=3,
+    )
+
+    await service.run_once(now=datetime.now(UTC))
+
+    assert repo.applied == []
+    assert len(repo.released) == 1
+    assert "local-only submission status" in repo.released[0][1]["error"]
+
+
+@pytest.mark.asyncio
+async def test_at_most_once_submission_records_boundary_before_driver_call_and_can_bind():
+    repo = FakeRepository([_pending_row(submission_policy="at_most_once")])
+    driver = FakeDriver(
+        submission=TaskSubmission(
+            remote_task_id="remote-once-1",
+            snapshot=TaskSnapshot(status=TaskStatus.SUBMITTED),
+        )
+    )
+    registry = McpTaskDriverRegistry()
+    registry.register("fake", driver)
+    service = McpTaskService(
+        repository=repo,
+        drivers=registry,
+        poll_interval_seconds=5,
+        lease_seconds=120,
+        max_concurrent_polls=3,
+    )
+
+    await service.run_once(now=datetime.now(UTC))
+
+    assert repo.submission_starts[0][0] == "task-pending-1"
+    assert len(driver.submit_calls) == 1
+    assert repo.bound[0][1]["remote_task_id"] == "remote-once-1"
+
+
+@pytest.mark.asyncio
+async def test_at_most_once_submission_failure_becomes_unknown_without_retry_release():
+    repo = FakeRepository([_pending_row(submission_policy="at_most_once")])
+    driver = FakeDriver(submission=RuntimeError("timeout after request write"))
+
+    async def raise_submission(_request):
+        driver.submit_calls.append(_request)
+        raise RuntimeError("timeout after request write")
+
+    driver.submit = raise_submission
+    registry = McpTaskDriverRegistry()
+    registry.register("fake", driver)
+    service = McpTaskService(
+        repository=repo,
+        drivers=registry,
+        poll_interval_seconds=5,
+        lease_seconds=120,
+        max_concurrent_polls=3,
+    )
+
+    await service.run_once(now=datetime.now(UTC))
+
+    assert len(driver.submit_calls) == 1
+    assert repo.released == []
+    task_id, update = repo.submission_unknown[0]
+    assert task_id == "task-pending-1"
+    assert update["error"] == "timeout after request write"
+
+
+@pytest.mark.asyncio
+async def test_recovered_at_most_once_submission_with_started_marker_is_never_resubmitted():
+    repo = FakeRepository(
+        [
+            _pending_row(
+                submission_policy="at_most_once",
+                submission_started_at=datetime.now(UTC).isoformat(),
+            )
+        ]
+    )
+    driver = FakeDriver(
+        submission=TaskSubmission(
+            remote_task_id="must-not-be-created",
+            snapshot=TaskSnapshot(status=TaskStatus.SUBMITTED),
+        )
+    )
+    registry = McpTaskDriverRegistry()
+    registry.register("fake", driver)
+    service = McpTaskService(
+        repository=repo,
+        drivers=registry,
+        poll_interval_seconds=5,
+        lease_seconds=120,
+        max_concurrent_polls=3,
+    )
+
+    await service.run_once(now=datetime.now(UTC))
+
+    assert driver.submit_calls == []
+    assert repo.submission_starts == []
+    assert repo.submission_unknown[0][0] == "task-pending-1"
+    assert "outcome is unknown" in repo.submission_unknown[0][1]["error"]
+
+
+@pytest.mark.asyncio
 async def test_binding_failure_retries_same_idempotent_submission_without_cancel(caplog):
     repo = FailingBindRepository([_pending_row()])
     driver = FakeDriver(
@@ -282,6 +460,36 @@ async def test_binding_failure_retries_same_idempotent_submission_without_cancel
     ]
     assert driver.cancel_calls == []
     assert len(repo.bound) == 2
+    assert "database unavailable after remote submit" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_binding_failure_never_resubmits_at_most_once_submission(caplog):
+    repo = FailingBindRepository([_pending_row(submission_policy="at_most_once")])
+    driver = FakeDriver(
+        submission=TaskSubmission(
+            remote_task_id="remote-1",
+            snapshot=TaskSnapshot(status=TaskStatus.SUBMITTED),
+        )
+    )
+    registry = McpTaskDriverRegistry()
+    registry.register("fake", driver)
+    service = McpTaskService(
+        repository=repo,
+        drivers=registry,
+        poll_interval_seconds=5,
+        lease_seconds=120,
+        max_concurrent_polls=3,
+    )
+
+    with caplog.at_level(logging.ERROR):
+        await service.run_once(now=datetime.now(UTC))
+    repo.claimed = False
+    await service.run_once(now=datetime.now(UTC) + timedelta(seconds=121))
+
+    assert [request.local_task_id for request in driver.submit_calls] == ["task-pending-1"]
+    assert len(repo.bound) == 1
+    assert repo.submission_unknown[0][0] == "task-pending-1"
     assert "database unavailable after remote submit" in caplog.text
 
 

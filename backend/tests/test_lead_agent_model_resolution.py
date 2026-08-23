@@ -602,18 +602,20 @@ def test_build_middlewares_uses_resolved_model_name_for_vision(monkeypatch):
     # verify the custom middleware is injected correctly.
     # With this test's default safety config enabled, the tail order is:
     #   ..., custom, TerminalResponseMiddleware, ModelLengthFinishReasonMiddleware,
-    #   SafetyFinishReasonMiddleware, ClarificationMiddleware, so the custom mock
-    #   sits at index [-5].
-    assert len(middlewares) > 0 and isinstance(middlewares[-5], MagicMock)
+    #   SafetyFinishReasonMiddleware, ContextManifestMiddleware,
+    #   ClarificationMiddleware, so the custom mock sits at index [-6].
+    assert len(middlewares) > 0 and isinstance(middlewares[-6], MagicMock)
 
     from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from deerflow.agents.middlewares.context_manifest_middleware import ContextManifestMiddleware
     from deerflow.agents.middlewares.model_length_finish_reason_middleware import ModelLengthFinishReasonMiddleware
     from deerflow.agents.middlewares.safety_finish_reason_middleware import SafetyFinishReasonMiddleware
     from deerflow.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
 
-    assert isinstance(middlewares[-4], TerminalResponseMiddleware)
-    assert isinstance(middlewares[-3], ModelLengthFinishReasonMiddleware)
-    assert isinstance(middlewares[-2], SafetyFinishReasonMiddleware)
+    assert isinstance(middlewares[-5], TerminalResponseMiddleware)
+    assert isinstance(middlewares[-4], ModelLengthFinishReasonMiddleware)
+    assert isinstance(middlewares[-3], SafetyFinishReasonMiddleware)
+    assert isinstance(middlewares[-2], ContextManifestMiddleware)
     assert isinstance(middlewares[-1], ClarificationMiddleware)
 
 
@@ -722,6 +724,56 @@ def test_build_middlewares_orders_skill_activation_before_policy_and_durable_con
     assert policy_idx == activation_idx + 1
     assert durable_idx == policy_idx + 1
     assert middlewares[activation_idx]._slash_source_owner_token == middlewares[policy_idx]._slash_source_owner_token
+
+
+def test_build_middlewares_places_context_manifest_at_final_request_boundary(monkeypatch):
+    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from deerflow.agents.middlewares.context_manifest_middleware import ContextManifestMiddleware
+    from deerflow.agents.middlewares.system_message_coalescing_middleware import SystemMessageCoalescingMiddleware
+    from deerflow.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
+
+    app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
+    monkeypatch.setattr(lead_agent_module, "build_lead_runtime_middlewares", lambda *, app_config, lazy_init=True: [])
+    monkeypatch.setattr(lead_agent_module, "_create_summarization_middleware", lambda **_kwargs: None)
+    monkeypatch.setattr(lead_agent_module, "_create_todo_list_middleware", lambda is_plan_mode: None)
+
+    middlewares = lead_agent_module.build_middlewares(
+        {"configurable": {"is_plan_mode": False, "subagent_enabled": False}},
+        model_name="safe-model",
+        app_config=app_config,
+    )
+
+    coalesce_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, SystemMessageCoalescingMiddleware))
+    terminal_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, TerminalResponseMiddleware))
+    manifest_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, ContextManifestMiddleware))
+    clarification_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, ClarificationMiddleware))
+
+    assert coalesce_idx < terminal_idx < manifest_idx < clarification_idx
+
+
+def test_build_middlewares_places_user_profile_after_dynamic_context_and_before_manifest(monkeypatch):
+    from deerflow.agents.middlewares.context_manifest_middleware import ContextManifestMiddleware
+    from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+    from deerflow.agents.middlewares.user_profile_middleware import UserProfileMiddleware
+
+    app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
+    monkeypatch.setattr(lead_agent_module, "build_lead_runtime_middlewares", lambda *, app_config, lazy_init=True: [])
+    monkeypatch.setattr(lead_agent_module, "_create_summarization_middleware", lambda **_kwargs: None)
+    monkeypatch.setattr(lead_agent_module, "_create_todo_list_middleware", lambda is_plan_mode: None)
+
+    middlewares = lead_agent_module.build_middlewares(
+        {"configurable": {"is_plan_mode": False, "subagent_enabled": False, "user_id": "user-a"}},
+        model_name="safe-model",
+        user_id="user-a",
+        app_config=app_config,
+    )
+
+    dynamic_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, DynamicContextMiddleware))
+    profile_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, UserProfileMiddleware))
+    manifest_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, ContextManifestMiddleware))
+
+    assert dynamic_idx < profile_idx < manifest_idx
+    assert middlewares[profile_idx]._owner_token == middlewares[manifest_idx]._user_profile_owner_token
 
 
 @pytest.mark.parametrize("use_stale_path", [False, True], ids=["restrictive-skill", "stale-active-path"])
@@ -901,12 +953,13 @@ def test_build_middlewares_injects_configured_extension_middlewares(monkeypatch)
     )
 
     middleware_types = [type(m).__name__ for m in middlewares]
-    assert middleware_types[-6:] == [
+    assert middleware_types[-7:] == [
         "ConfiguredGuardMiddleware",
         "ConfiguredAuditMiddleware",
         "TerminalResponseMiddleware",
         "ModelLengthFinishReasonMiddleware",
         "SafetyFinishReasonMiddleware",
+        "ContextManifestMiddleware",
         "ClarificationMiddleware",
     ]
     assert middlewares[middleware_types.index("ConfiguredGuardMiddleware") - 1] is manual_middleware

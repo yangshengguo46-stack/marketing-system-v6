@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, CheckConstraint, DateTime, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
+from deerflow.mcp.tasks import TaskSubmissionPolicy
 from deerflow.persistence.base import Base
 
 
@@ -22,6 +23,12 @@ class McpTaskRow(Base):
     remote_task_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     task_name: Mapped[str] = mapped_column(String(255))
     status: Mapped[str] = mapped_column(String(32), index=True)
+    submission_policy: Mapped[str] = mapped_column(
+        String(32),
+        default=TaskSubmissionPolicy.IDEMPOTENT_RETRY.value,
+        server_default=TaskSubmissionPolicy.IDEMPOTENT_RETRY.value,
+    )
+    submission_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     submit_arguments: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     result: Mapped[Any | None] = mapped_column(JSON, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -45,6 +52,10 @@ class McpTaskRow(Base):
     )
 
     __table_args__ = (
+        CheckConstraint(
+            "submission_policy IN ('idempotent_retry', 'at_most_once')",
+            name="ck_mcp_tasks_submission_policy",
+        ),
         UniqueConstraint(
             "user_id",
             "server_name",

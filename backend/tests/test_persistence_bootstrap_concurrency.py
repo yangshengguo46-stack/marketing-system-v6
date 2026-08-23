@@ -28,7 +28,7 @@ from deerflow.persistence.bootstrap import bootstrap_schema
 pytestmark = pytest.mark.asyncio
 
 
-HEAD = "0015_incubation_logical_accounts"
+HEAD = "0017_account_launch_plan_unique"
 
 
 def _url(tmp_path: Path) -> str:

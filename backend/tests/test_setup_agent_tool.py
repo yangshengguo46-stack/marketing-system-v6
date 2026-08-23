@@ -35,7 +35,7 @@ def _make_paths_mock(tmp_path: Path):
 
 def _call_setup_agent(tmp_path: Path, soul: str, description: str, agent_name: str = "test-agent"):
     """Call the underlying setup_agent function directly, bypassing langchain tool wrapper."""
-    with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+    with patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
         return setup_agent.func(
             soul=soul,
             description=description,
@@ -89,7 +89,7 @@ class TestSetupAgentNoDataLoss:
         old_soul = agent_dir / "SOUL.md"
         old_soul.write_text("original soul content", encoding="utf-8")
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             # Force soul_file.write_text to raise after directory already exists
             with patch("yaml.dump", side_effect=OSError("disk full")):
                 setup_agent.func(
@@ -109,7 +109,7 @@ class TestSetupAgentNoDataLoss:
         agent_dir = tmp_path / "users" / "test-user-autouse" / "agents" / "test-agent"
         assert not agent_dir.exists()
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             with patch("yaml.dump", side_effect=OSError("write error")):
                 setup_agent.func(
                     soul="new soul",
@@ -137,7 +137,7 @@ class TestSetupAgentNoDataLoss:
             tool_call_id="tool-3",
         )
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             setup_agent.func(
                 soul="# My Agent",
                 description="A test agent",
@@ -185,7 +185,7 @@ class TestSetupAgentEmptySoulGuard:
         global_soul = tmp_path / "SOUL.md"
         global_soul.write_text("original global soul", encoding="utf-8")
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             setup_agent.func(
                 soul="",
                 description="desc",
@@ -203,3 +203,14 @@ class TestSetupAgentEmptySoulGuard:
         _call_setup_agent(tmp_path, soul="   ", description="desc")
 
         assert existing_soul.read_text(encoding="utf-8") == "original per-agent soul"
+
+
+def test_setup_agent_requires_explicit_agent_name_and_never_writes_global_soul(tmp_path, monkeypatch):
+    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    runtime = _DummyRuntime(context={"agent_name": None}, tool_call_id="tool-no-agent")
+
+    result = setup_agent.func(soul="# Unexpected global soul", description="desc", runtime=runtime)
+
+    assert "agent_name" in result.update["messages"][0].content
+    assert "created_agent_name" not in result.update
+    assert not (tmp_path / "SOUL.md").exists()

@@ -551,6 +551,11 @@ class IncubationLedgerRepository:
                     raise ArtifactConflictError(f"artifact id {artifact.artifact_id!r} has conflicting canonical content")
                 return stored
 
+            if artifact.artifact_type == "account_launch_plan":
+                incumbent = await self._account_launch_plan_version_row(session, artifact)
+                if incumbent is not None:
+                    raise self._account_launch_plan_version_conflict(artifact, incumbent)
+
             row = IncubationArtifactRow(
                 artifact_id=artifact.artifact_id,
                 owner_user_id=artifact.project.owner_user_id,
@@ -570,7 +575,29 @@ class IncubationLedgerRepository:
                 stored_at=datetime.now(UTC),
             )
             session.add(row)
-            await session.commit()
+            try:
+                await session.commit()
+            except IntegrityError:
+                await session.rollback()
+                # The losing side of a concurrent canonical replay can hit the
+                # artifact primary key even though both writes are identical.
+                # Reload after rollback and preserve the repository's normal
+                # idempotent contract in that case.
+                existing = await session.get(IncubationArtifactRow, artifact.artifact_id)
+                if existing is not None:
+                    stored = self._artifact_contract(existing)
+                    if self._artifact_identity(stored) == self._artifact_identity(artifact):
+                        return stored
+                    raise ArtifactConflictError(f"artifact id {artifact.artifact_id!r} changed during persistence") from None
+                # Different content-addressed ids can still contend for the
+                # same account-launch revision. The partial unique index is the
+                # cross-worker arbiter; translate only that known collision and
+                # leave unrelated FK/check failures as SQLAlchemy errors.
+                if artifact.artifact_type == "account_launch_plan":
+                    incumbent = await self._account_launch_plan_version_row(session, artifact)
+                    if incumbent is not None:
+                        raise self._account_launch_plan_version_conflict(artifact, incumbent) from None
+                raise
             return self._artifact_contract(row)
 
     async def get_artifact(
@@ -665,6 +692,34 @@ class IncubationLedgerRepository:
                 or row.content_sha256 != parent.content_sha256
             ):
                 raise MissingParentArtifactError(f"parent artifact {parent.artifact_id!r} is missing or mismatched")
+
+    @staticmethod
+    async def _account_launch_plan_version_row(
+        session: AsyncSession,
+        artifact: ArtifactEnvelope,
+    ) -> IncubationArtifactRow | None:
+        if artifact.logical_account is None:
+            return None
+        result = await session.execute(
+            select(IncubationArtifactRow)
+            .where(
+                IncubationArtifactRow.owner_user_id == artifact.project.owner_user_id,
+                IncubationArtifactRow.project_id == artifact.project.project_id,
+                IncubationArtifactRow.logical_account_id == artifact.logical_account.logical_account_id,
+                IncubationArtifactRow.artifact_type == "account_launch_plan",
+                IncubationArtifactRow.artifact_version == artifact.version,
+            )
+            .limit(1)
+        )
+        return result.scalars().first()
+
+    @staticmethod
+    def _account_launch_plan_version_conflict(
+        artifact: ArtifactEnvelope,
+        incumbent: IncubationArtifactRow,
+    ) -> ArtifactConflictError:
+        assert artifact.logical_account is not None
+        return ArtifactConflictError(f"account_launch_plan version {artifact.version} already exists for logical account {artifact.logical_account.logical_account_id!r} as artifact {incumbent.artifact_id!r}")
 
     @staticmethod
     def _artifact_identity(artifact: ArtifactEnvelope) -> tuple[object, ...]:

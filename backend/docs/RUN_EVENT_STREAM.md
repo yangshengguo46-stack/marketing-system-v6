@@ -74,12 +74,25 @@ through run-event or specialized APIs:
 | `llm.tool.result` | `message` | `on_tool_end()` |
 | `llm.error` | `trace` | `on_llm_error()` |
 | `context:memory` | `context` | `record_memory_context()` |
+| `context:manifest` | `context` | `ContextManifestMiddleware` after one physical Lead model call |
 | `middleware:{tag}` | `middleware` | `record_middleware()` |
 
 Current middleware tags are `guardrail`, `safety_termination`,
 `skill_activation`, and `skill_secrets`. The pattern is intentionally open so
 new middleware tags are additive. Because the full event type is limited to 32
 characters and `middleware:` uses 11, a tag must contain 1-21 characters.
+
+`context:manifest` is a content-free accounting projection, not a copy of the
+provider request. It records the packaged identity version and presence, model
+identity, message counts and UTF-8 size estimates by role, hidden-context layer
+sizes, visible tool names and schema hashes, response-format size, inspected and
+activated Skill state, and provider-reported token usage when available. It never
+stores message bodies, tool descriptions or arguments, Skill paths, credentials,
+UserProfile text, or provider error text. When a sourced UserProfile is projected,
+the event includes only its authenticated version, content hash, total/projected/
+omitted item counts, and the corresponding hidden-layer byte count.
+`estimated_payload_utf8_bytes` is an implementation-level estimate before
+provider-specific serialization and must not be treated as exact wire bytes or tokens.
 
 ### Opaque Run Outputs
 
@@ -130,6 +143,7 @@ Schema. It is the authoritative field-level reference.
 | Run debug/audit | `GET /api/threads/{thread_id}/runs/{run_id}/events` calls `list_events()` and supports `event_types`, `task_id`, `limit`, and `after_seq`. |
 | Historical subtask cards | Fetch `subagent.step` through the run-events endpoint, filtered and paginated by `task_id`. |
 | Memory audit | Filters run events to `context:memory` and compares `content_sha256`; full memory text is not duplicated into the event store. |
+| Context accounting | Filters run events to `context:manifest` and compares identity/tool hashes, per-call request sizes, Skill activation, UserProfile revision/counts, and provider token usage without exposing prompt/profile text. |
 | Workspace review | `GET /api/threads/{thread_id}/runs/{run_id}/workspace-changes` projects the latest `workspace_changes` payload. |
 
 Token and cost summaries are not reconstructed by reading event rows.

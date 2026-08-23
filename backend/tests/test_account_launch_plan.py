@@ -7,11 +7,18 @@ import pytest
 from pydantic import ValidationError
 
 from deerflow.incubation import ArtifactEnvelope, LogicalAccountRef, ProjectRef
+from deerflow.incubation.account_direction import (
+    AccountDirectionOption,
+    AccountDirectionProposal,
+    AccountDirectionVersion,
+)
 from deerflow.incubation.account_launch_plan import (
+    account_launch_plan_confirmation_text,
     confirm_account_launch_plan,
     prepare_account_launch_plan,
     select_current_account_launch_plan,
 )
+from deerflow.incubation.account_launch_plan_presentation import render_account_launch_plan
 from deerflow.incubation.judgment import (
     AccountPresentationPlan,
     AccountRouteOption,
@@ -71,7 +78,11 @@ class _MemoryRepository:
         ]
 
 
-def _map_artifact(*, logical_account: LogicalAccountRef = LOGICAL_ACCOUNT) -> ArtifactEnvelope:
+def _map_artifact(
+    *,
+    logical_account: LogicalAccountRef = LOGICAL_ACCOUNT,
+    direction_artifact: ArtifactEnvelope | None = None,
+) -> ArtifactEnvelope:
     return ArtifactEnvelope.seal(
         project=PROJECT,
         artifact_type="content_map_candidate",
@@ -120,6 +131,7 @@ def _map_artifact(*, logical_account: LogicalAccountRef = LOGICAL_ACCOUNT) -> Ar
             ],
         },
         logical_account=logical_account,
+        parents=((direction_artifact.to_parent_ref(),) if direction_artifact is not None else ()),
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-1",
@@ -192,6 +204,64 @@ def _strategy_artifact(
         source_thread_id="thread-1",
         source_run_id="run-1",
     )
+
+
+def _direction_lineage(
+    *,
+    content_root: str | None = "人与人之间的相处与人情世故",
+    logical_account: LogicalAccountRef = LOGICAL_ACCOUNT,
+) -> tuple[ArtifactEnvelope, ArtifactEnvelope]:
+    option = AccountDirectionOption(
+        option_id="direction_1",
+        name="从礼赠观察关系",
+        content_root=content_root,
+        long_term_content_subject="人与人之间的相处与人情世故：从具体人物、事件和生活选择观察关系。",
+        rationale="业务提供观察入口，内容根保持在人与人的关系。",
+        content_audience_hypothesis="关心关系、礼节和处世分寸的人。",
+        audience_promise="每次讲清一个具体的人情判断。",
+        account_role="从礼赠行业出发观察关系的人。",
+        presentation_directions=("真人口述与公开素材叙事",),
+        business_connection="用户理解关系后，在礼赠需求出现时能自然回到业务。",
+    )
+    proposal = AccountDirectionProposal(
+        target_revision_number=1,
+        source_user_text="我们做黄金礼赠，想从人与人的关系切入长期内容。",
+        marketing_subject="黄金礼赠业务",
+        business_goal="通过长期内容建立信任。",
+        direction_options=(option,),
+        recommended_option_id=option.option_id,
+    )
+    proposal_artifact = ArtifactEnvelope.seal(
+        project=PROJECT,
+        artifact_type="account_direction_proposal",
+        version=1,
+        payload=proposal.model_dump(mode="json"),
+        logical_account=logical_account,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-direction-proposal",
+    )
+    direction = AccountDirectionVersion(
+        revision_number=1,
+        proposal_artifact_id=proposal_artifact.artifact_id,
+        source_user_text="我们做黄金礼赠，想从人与人的关系切入长期内容。",
+        confirmation_user_text="确认第一个方向。",
+        marketing_subject="黄金礼赠业务",
+        business_goal="通过长期内容建立信任。",
+        selected_option=option,
+    )
+    direction_artifact = ArtifactEnvelope.seal(
+        project=PROJECT,
+        artifact_type="account_direction_version",
+        version=1,
+        payload=direction.model_dump(mode="json"),
+        logical_account=logical_account,
+        parents=(proposal_artifact.to_parent_ref(),),
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-direction",
+    )
+    return proposal_artifact, direction_artifact
 
 
 def _plan(*, strategy_artifact_id: str, status: str = "proposed") -> AccountLaunchPlan:
@@ -311,7 +381,9 @@ def _draft_payload(*, planning_request: str = "给我一个7天和30天起号计
         "supersedes_plan_artifact_id",
         "revision_reason",
         "decision_status",
+        "confirmation_user_text",
         "strategy_artifact_id",
+        "direction_artifact_id",
         "content_map_version_id",
         "horizon_days",
         "first_sprint_days",
@@ -345,6 +417,57 @@ def test_launch_plan_rejects_unknown_series_and_topic_references() -> None:
                 "topic_seeds": [broken_seed.model_dump(mode="json"), plan.topic_seeds[1].model_dump(mode="json")],
             }
         )
+
+
+def test_confirmed_launch_plan_requires_a_versioned_confirmation_receipt() -> None:
+    proposed = _plan(strategy_artifact_id="strategy-1")
+    payload = {
+        **proposed.model_dump(mode="json"),
+        "revision_number": 2,
+        "supersedes_plan_artifact_id": "plan-proposal-1",
+        "revision_reason": "用户确认。",
+        "decision_status": "confirmed",
+    }
+
+    with pytest.raises(ValidationError, match="confirmation text"):
+        AccountLaunchPlan.model_validate(payload)
+
+    payload["revision_number"] = 1
+    payload["supersedes_plan_artifact_id"] = None
+    payload["revision_reason"] = None
+    payload["confirmation_user_text"] = account_launch_plan_confirmation_text("plan-proposal-1")
+    with pytest.raises(ValidationError, match="revision 2"):
+        AccountLaunchPlan.model_validate(payload)
+
+
+def test_launch_plan_projection_exposes_exact_seed_and_confirmation_receipts() -> None:
+    proposal = _plan(strategy_artifact_id="strategy-1")
+    proposal_id = "artifact_plan_proposal"
+
+    rendered = render_account_launch_plan(proposal, artifact_id=proposal_id)
+
+    assert f"计划提案编号：** `{proposal_id}`" in rendered
+    assert f"`{account_launch_plan_confirmation_text(proposal_id)}`" in rendered
+    assert "`seed-evan-kail`" in rendered
+    assert "来源：public_evidence" in rendered
+    assert "执行前取证" in rendered
+
+    confirmed = AccountLaunchPlan.model_validate(
+        {
+            **proposal.model_dump(mode="json"),
+            "revision_number": 2,
+            "supersedes_plan_artifact_id": proposal_id,
+            "revision_reason": "用户以精确口令确认。",
+            "decision_status": "confirmed",
+            "confirmation_user_text": account_launch_plan_confirmation_text(proposal_id),
+        }
+    )
+    confirmed_rendered = render_account_launch_plan(
+        confirmed,
+        artifact_id="artifact_plan_confirmed",
+    )
+    assert "已确认回执编号：** `artifact_plan_confirmed`" in confirmed_rendered
+    assert "计划提案编号：** `artifact_plan_confirmed`" not in confirmed_rendered
 
 
 def test_launch_plan_seal_binds_confirmed_strategy_and_real_map_paths() -> None:
@@ -382,6 +505,31 @@ def test_launch_plan_seal_binds_confirmed_strategy_and_real_map_paths() -> None:
             logical_account=LOGICAL_ACCOUNT,
             plan=broken_plan,
             strategy_artifact=strategy,
+            content_world_artifact=world,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-2",
+        )
+
+
+def test_direction_launch_plan_seal_rejects_same_root_map_without_exact_link() -> None:
+    direction_proposal, direction = _direction_lineage()
+    world = _map_artifact()
+    plan = AccountLaunchPlan.model_validate(
+        {
+            **_plan(strategy_artifact_id="placeholder").model_dump(mode="json"),
+            "strategy_artifact_id": None,
+            "direction_artifact_id": direction.artifact_id,
+        }
+    )
+
+    with pytest.raises(ValueError, match="exact account direction proposal basis"):
+        seal_account_launch_plan(
+            project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
+            plan=plan,
+            direction_artifact=direction,
+            direction_proposal_artifact=direction_proposal,
             content_world_artifact=world,
             created_at=NOW,
             source_thread_id="thread-1",
@@ -438,6 +586,157 @@ async def test_prepare_launch_plan_requires_confirmed_strategy_and_keeps_request
 
 
 @pytest.mark.asyncio
+async def test_prepare_and_confirm_launch_plan_use_current_account_direction_bridge() -> None:
+    direction_proposal, direction = _direction_lineage()
+    world = _map_artifact(direction_artifact=direction)
+    repository = _MemoryRepository((world, direction_proposal, direction))
+    seen_input: dict[str, object] = {}
+
+    async def structured_model(schema, messages):
+        nonlocal seen_input
+        seen_input = json.loads(messages[1].content)
+        return _draft_payload(planning_request="按确认方向编排首轮起号计划")
+
+    prepared = await prepare_account_launch_plan(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        repository=repository,
+        planning_request="按确认方向编排首轮起号计划",
+        content_map_artifact_id=world.artifact_id,
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-launch",
+    )
+
+    assert prepared.plan.direction_artifact_id == direction.artifact_id
+    assert prepared.plan.strategy_artifact_id is None
+    assert seen_input["confirmed_account_direction"]["artifact_id"] == direction.artifact_id
+    assert direction.to_parent_ref() in prepared.plan_artifact.parents
+
+    confirmed = await confirm_account_launch_plan(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        repository=repository,
+        plan_artifact_id=prepared.plan_artifact.artifact_id,
+        confirmation_user_text=account_launch_plan_confirmation_text(prepared.plan_artifact.artifact_id),
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-confirm",
+    )
+
+    assert confirmed.plan.decision_status == "confirmed"
+    assert confirmed.plan.direction_artifact_id == direction.artifact_id
+    assert direction.to_parent_ref() in confirmed.plan_artifact.parents
+
+
+@pytest.mark.asyncio
+async def test_direction_launch_bridge_requires_the_exact_direction_proposal_parent() -> None:
+    _, direction = _direction_lineage()
+    world = _map_artifact(direction_artifact=direction)
+    repository = _MemoryRepository((world, direction))
+
+    async def should_not_run(schema, messages):
+        raise AssertionError("model must not run for an orphaned confirmed direction")
+
+    with pytest.raises(ValueError, match="exact account direction proposal"):
+        await prepare_account_launch_plan(
+            project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
+            repository=repository,
+            planning_request="编排起号计划",
+            content_map_artifact_id=world.artifact_id,
+            structured_model=should_not_run,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-launch",
+        )
+
+
+@pytest.mark.asyncio
+async def test_direction_launch_bridge_uses_the_shared_derived_content_root() -> None:
+    direction_proposal, direction = _direction_lineage(content_root=None)
+    world = _map_artifact(direction_artifact=direction)
+    repository = _MemoryRepository((world, direction_proposal, direction))
+
+    async def structured_model(schema, messages):
+        return _draft_payload(planning_request="沿推导后的内容根编排起号计划")
+
+    prepared = await prepare_account_launch_plan(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        repository=repository,
+        planning_request="沿推导后的内容根编排起号计划",
+        content_map_artifact_id=world.artifact_id,
+        structured_model=structured_model,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-launch",
+    )
+
+    assert prepared.plan.direction_artifact_id == direction.artifact_id
+
+
+@pytest.mark.asyncio
+async def test_direction_launch_bridge_rejects_a_map_from_another_content_root() -> None:
+    direction_proposal, direction = _direction_lineage(content_root="黄金产品知识")
+    world = _map_artifact(direction_artifact=direction)
+    repository = _MemoryRepository((world, direction_proposal, direction))
+
+    async def should_not_run(schema, messages):
+        raise AssertionError("model must not run for a mismatched direction and map")
+
+    with pytest.raises(ValueError, match="content root"):
+        await prepare_account_launch_plan(
+            project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
+            repository=repository,
+            planning_request="编排起号计划",
+            content_map_artifact_id=world.artifact_id,
+            structured_model=should_not_run,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-launch",
+        )
+
+
+@pytest.mark.asyncio
+async def test_direction_launch_bridge_requires_an_exact_map_when_multiple_are_linked() -> None:
+    direction_proposal, direction = _direction_lineage()
+    first_world = _map_artifact(direction_artifact=direction)
+    second_world = ArtifactEnvelope.seal(
+        project=PROJECT,
+        artifact_type="content_map_candidate",
+        version=2,
+        payload={
+            **first_world.payload,
+            "content_map_version_id": "content-map-relations-v2",
+        },
+        logical_account=LOGICAL_ACCOUNT,
+        parents=(direction.to_parent_ref(),),
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-map-v2",
+    )
+    repository = _MemoryRepository((direction_proposal, direction, first_world, second_world))
+
+    async def should_not_run(schema, messages):
+        raise AssertionError("model must wait for an exact map receipt")
+
+    with pytest.raises(ValueError, match="exact content map artifact id"):
+        await prepare_account_launch_plan(
+            project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
+            repository=repository,
+            planning_request="编排起号计划",
+            structured_model=should_not_run,
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-launch",
+        )
+
+
+@pytest.mark.asyncio
 async def test_confirm_launch_plan_versions_the_exact_proposal_and_is_idempotent() -> None:
     world = _map_artifact()
     strategy = _strategy_artifact()
@@ -453,10 +752,25 @@ async def test_confirm_launch_plan_versions_the_exact_proposal_and_is_idempotent
     )
     repository = _MemoryRepository((world, strategy, proposal))
 
+    with pytest.raises(ValueError, match="exact confirmation command"):
+        await confirm_account_launch_plan(
+            project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
+            repository=repository,
+            plan_artifact_id=proposal.artifact_id,
+            confirmation_user_text="确认采用这版起号计划。",
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-rejected",
+        )
+
+    confirmation_text = account_launch_plan_confirmation_text(proposal.artifact_id)
     confirmed = await confirm_account_launch_plan(
         project=PROJECT,
         logical_account=LOGICAL_ACCOUNT,
         repository=repository,
+        plan_artifact_id=proposal.artifact_id,
+        confirmation_user_text=confirmation_text,
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-3",
@@ -465,6 +779,8 @@ async def test_confirm_launch_plan_versions_the_exact_proposal_and_is_idempotent
         project=PROJECT,
         logical_account=LOGICAL_ACCOUNT,
         repository=repository,
+        plan_artifact_id=proposal.artifact_id,
+        confirmation_user_text=confirmation_text,
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-4",
@@ -482,6 +798,61 @@ async def test_confirm_launch_plan_versions_the_exact_proposal_and_is_idempotent
         require_confirmed=True,
     )
     assert selected is not None and selected.plan_artifact == confirmed.plan_artifact
+
+
+@pytest.mark.asyncio
+async def test_confirm_launch_plan_rejects_a_tampered_existing_confirmation_child() -> None:
+    world = _map_artifact()
+    strategy = _strategy_artifact()
+    proposal = seal_account_launch_plan(
+        project=PROJECT,
+        logical_account=LOGICAL_ACCOUNT,
+        plan=_plan(strategy_artifact_id=strategy.artifact_id),
+        strategy_artifact=strategy,
+        content_world_artifact=world,
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-2",
+    )
+    proposed_plan = AccountLaunchPlan.model_validate(proposal.payload)
+    tampered_plan = proposed_plan.model_copy(
+        update={
+            "revision_number": 2,
+            "supersedes_plan_artifact_id": proposal.artifact_id,
+            "revision_reason": "伪造的确认子工件。",
+            "decision_status": "confirmed",
+            "confirmation_user_text": account_launch_plan_confirmation_text(proposal.artifact_id),
+            "planning_request": "被改写的起号计划",
+        }
+    )
+    tampered_confirmation = ArtifactEnvelope.seal(
+        project=PROJECT,
+        artifact_type="account_launch_plan",
+        version=2,
+        payload=tampered_plan.model_dump(mode="json"),
+        logical_account=LOGICAL_ACCOUNT,
+        parents=(
+            strategy.to_parent_ref(),
+            world.to_parent_ref(),
+            proposal.to_parent_ref(),
+        ),
+        created_at=NOW,
+        source_thread_id="thread-1",
+        source_run_id="run-tampered",
+    )
+    repository = _MemoryRepository((world, strategy, proposal, tampered_confirmation))
+
+    with pytest.raises(ValueError, match="changed content"):
+        await confirm_account_launch_plan(
+            project=PROJECT,
+            logical_account=LOGICAL_ACCOUNT,
+            repository=repository,
+            plan_artifact_id=proposal.artifact_id,
+            confirmation_user_text=account_launch_plan_confirmation_text(proposal.artifact_id),
+            created_at=NOW,
+            source_thread_id="thread-1",
+            source_run_id="run-replay",
+        )
 
 
 @pytest.mark.asyncio
@@ -525,6 +896,8 @@ async def test_launch_plan_selection_and_confirmation_are_isolated_by_logical_ac
         project=PROJECT,
         logical_account=LOGICAL_ACCOUNT,
         repository=repository,
+        plan_artifact_id=first_proposal.artifact_id,
+        confirmation_user_text=account_launch_plan_confirmation_text(first_proposal.artifact_id),
         created_at=NOW,
         source_thread_id="thread-1",
         source_run_id="run-confirm-first",

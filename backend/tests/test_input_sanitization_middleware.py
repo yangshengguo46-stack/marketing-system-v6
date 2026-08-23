@@ -182,6 +182,9 @@ _FRAMEWORK_STRUCTURED_TAGS = [
     "soul",
     "self_update",
     "thinking_style",
+    "agent_kernel",
+    "work_ownership",
+    "marketing_charter",
     "clarification_system",
     "critical_reminders",
     "response_style",
@@ -208,6 +211,10 @@ _FRAMEWORK_STRUCTURED_TAGS = [
     "memory_tool_system",
     "durable_context_data",
     "slash_skill_activation",
+    "active_skill_context",
+    "skill_activation",
+    "user_profile_context",
+    "user_profile_item",
     "system_reminder",
     # Rendered into the lead-agent system prompt by tools/builtins/tool_search.py
     # via the {deferred_tools_section} / {mcp_routing_hints_section} placeholders.

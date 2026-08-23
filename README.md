@@ -463,7 +463,7 @@ real receipts separate. It also separates mobile/website-app capabilities from
 mini-app, local-life, service-market, clone-skill, and music product lines, so a
 large documentation catalog cannot be mistaken for one application's live toolset.
 
-The Gateway also includes a disabled-by-default, protocol-neutral foundation for durable long-running MCP tasks. It stores remote task handles outside model context, polls them under cross-worker leases, rejects results returned after their lease expires, schedules the next attempt from the time a remote status call finishes, isolates unexpected failures between claimed tasks, cancels in-flight polling during Gateway shutdown, and makes expired claims recoverable after restart. If remote submission succeeds but the handle cannot be persisted, the runtime makes a best-effort cancellation so an untracked task is not silently left running. The exact scoped duplicate-handle conflict is surfaced without cancellation because an existing durable row already owns that remote task. Durable recovery requires a SQL database backend (`sqlite` or `postgres`); the in-memory backend does not initialize this task repository. This foundation does not make existing MCP tools asynchronous by itself: `mcp_tasks.enabled` should remain `false` until a compatible task driver is configured. Ordinary `submit/status/cancel` tools and the future MCP Tasks extension can share the same runtime without making the model remember remote task IDs.
+The Gateway also includes a disabled-by-default, protocol-neutral foundation for durable long-running MCP tasks. It stores remote task handles outside model context, polls them under cross-worker leases, rejects results returned after their lease expires, schedules the next attempt from the time a remote status call finishes, isolates unexpected failures between claimed tasks, cancels in-flight polling during Gateway shutdown, and makes expired claims recoverable after restart. New queued work selects an explicit submission policy: `idempotent_retry` may resubmit only with an audited provider idempotency key, while `at_most_once` persists `submission_started_at` before provider code and turns an ambiguous outcome into terminal, non-claimable `submission_unknown` instead of buying a replacement. The legacy remote-first `submit()` path still makes a best-effort cancellation when a returned handle cannot be persisted and must not be used by at-most-once-only drivers. The exact scoped duplicate-handle conflict is surfaced without cancellation because an existing durable row already owns that remote task. Durable recovery requires a SQL database backend (`sqlite` or `postgres`); the in-memory backend does not initialize this task repository. This foundation does not make existing MCP tools asynchronous by itself: `mcp_tasks.enabled` should remain `false` until a compatible task driver is configured. Ordinary `submit/status/cancel` tools and the future MCP Tasks extension can share the same runtime without making the model remember remote task IDs.
 See the [MCP Server Guide](backend/docs/MCP_SERVER.md) for detailed instructions.
 
 Security: pass per-request MCP credentials only through `config.context.secrets`;
@@ -816,6 +816,14 @@ Skill, one bounded term verification, semantic analysis, one content map, or ben
 None is a mandatory first stage. The historical `develop_account_strategy` implementation remains
 for stored-artifact compatibility and offline evaluation, but it is no longer a default Lead tool.
 
+The Lead also uses one model-neutral operator contract across providers. It treats a clear request as the
+current assignment, returns the smallest useful result, and keeps irreversible external actions behind explicit
+approval. A first-pass account direction uses the user's facts without automatically researching competitors;
+current evidence is fetched only when requested or when an unfamiliar term needs bounded verification. The final
+delivery review removes unsupported specificity and capability menus without rewriting model output in middleware.
+This improves tool restraint and operator posture, but real-model acceptance remains behavioral: current GLM runs
+can still occasionally append a consultant-style follow-up offer.
+
 Ordinary businesses still trust only user and project facts. An explicit request to market the
 current Agent reads its server-owned `HostProductProfile`. A recent or ambiguous trade term may get
 one bounded lookup whose snippets remain `term_evidence`; they cannot choose an audience, content
@@ -824,6 +832,17 @@ distinct, but the Lead asks about them only when their difference would material
 Unsupported demographics, cases, resources, channels, and authority remain unknown. A broad account
 direction request does not silently expand into a calendar, cadence, ratios, ad spend, or a 7/30-day
 plan.
+
+When a Lead judgment is worth reusing, it can now be sealed as an
+`AccountDirectionProposal`; only the exact proposal option plus the user's authentic confirmation
+creates an append-only `AccountDirectionVersion`. A 7/30-day `AccountLaunchPlan` remains optional.
+It can consume that direction only with one exactly linked candidate map, returns a proposal receipt,
+and requires that exact receipt for confirmation. Its topic seeds still re-enter evidence research,
+`TopicBrief`, `MessagePlan`, and `BaseDraft`; they are not scripts or automatic production jobs.
+That continuation accepts only a paired current confirmed plan artifact ID and stored seed ID. The
+Host resolves the exact plan, map, and account-decision parents from the current account ledger,
+ignores any free-form model `topic_seed`, and records the plan ID, hash, and seed ID in the content
+reading while both the reading and `TopicBrief` retain the exact plan parent.
 
 When the user explicitly enters the formal versioned route flow, a route may still carry a separate business-intent facet: the user's role in the declared business,
 the outcome the account should produce after reach, the people whose behavior should change,
@@ -987,6 +1006,15 @@ plan is stored and rendered after the adapted draft. A first local execution ver
 bind an exact ready-plan action, assembly step, reviewed user material, dynamic CLI Schema, and
 `trim-video` arguments to a resulting `MediaArtifact`. It is a backend execution boundary, not
 yet a user-facing content-tool or Gateway action.
+
+The public `marketing-video-production` Skill is the single downstream routing guide for continuing
+from an exact sealed `AdaptedDraft` after the user explicitly asks to make the video. Today it can
+review already-produced benchmark evidence, prepare plan-bound asset/provider contracts, and route the accepted local trim vertical; it does not automatically run MediaKit ASR/OCR/scene analysis or Ark generation. It reuses the V6 `ProductionPlan` and ledger rather than
+creating a second shot-state system; Shanyin-derived shot craft is optional method knowledge behind
+that plan. Benchmark observations, editorial interpretations, transferable patterns, identity/trade-
+dress exclusions, and unknowns remain separate. The Ark single-shot contract and at-most-once task
+request contract and at-most-once task foundation are deliberately unregistered until a Gateway approval continuation and a fresh live run
+with exact user authorization are complete; no paid generation is implied by their presence.
 
 Content-world research reaches official Douyin video search through the unified gateway's
 `douyin_search` domain. It discovers the current Manifest, calls the exact `video_search`
@@ -1480,6 +1508,10 @@ request the binary capability retain the legacy JSON/base64 frame protocol.
 **Isolated Sub-Agent Context**: Each sub-agent runs in its own isolated context. This means that the sub-agent will not be able to see the context of the main agent or other sub-agents. This is important to ensure that the sub-agent is able to focus on the task at hand and not be distracted by the context of the main agent or other sub-agents.
 
 **Summarization**: Within a session, DeerFlow manages context aggressively — summarizing completed sub-tasks, offloading intermediate results to the filesystem, compressing what's no longer immediately relevant. This lets it stay sharp across long, multi-step tasks without blowing the context window.
+
+**Content-Free Context Accounting**: Each physical lead-model call appends a `context:manifest` run event with the packaged identity version, message and hidden-context sizes, visible tool/schema hashes, active Skill source, and provider-reported token usage. It does not store prompt bodies, tool arguments, Skill paths, credentials, or provider error text, and it never changes the model request.
+
+**Sourced User Profile**: The lead can explicitly remember, correct, or forget a small set of stable cross-project user facts and collaboration preferences. Every mutation must quote the latest visible user message, is stored as an immutable user-scoped revision, and is projected within a 2,400-byte budget. Project/account facts, model inferences, temporary requests, and action permissions are excluded; sub-agents cannot mutate the profile. `context:manifest` records only its version, hash, and item counts.
 
 **Strict Tool-Call Recovery**: When a provider or middleware interrupts a tool-call loop, DeerFlow now strips provider-level raw tool-call metadata on forced-stop assistant messages and injects placeholder tool results for dangling calls before the next model invocation. This keeps OpenAI-compatible reasoning models that strictly validate `tool_call_id` sequences from failing with malformed history errors.
 

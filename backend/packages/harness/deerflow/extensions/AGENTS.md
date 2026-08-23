@@ -154,6 +154,13 @@ which is `assert_ordering` / composition time, already inside the middleware bui
 Defer by deferring the *call*; do not fake a resolved value with a lazy container
 subclass, which reports one answer when iterated and another when measured.
 
+For the Lead stack, `MODEL_PHYSICAL` uses `ContextManifestMiddleware` as its stable
+primary anchor. The manifest is always present and observes the final provider request
+without changing it, so conditionally disabling safety handling must not force extension
+observers onto a secondary anchor. Safety, terminal-response, clarification, and
+innermost anchors remain ordered fallbacks for compatible stacks that do not contain the
+manifest; resolving one of those fallbacks emits the existing runtime diagnostic.
+
 Contributed middlewares are wrapped by `IsolatedMiddleware`: extension failures emit
 diagnostics and fail open without repeating a downstream model/tool side effect. The
 wrapper mirrors lifecycle hooks, tools, transformers, and state schema implemented by

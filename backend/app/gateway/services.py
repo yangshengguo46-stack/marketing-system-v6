@@ -17,7 +17,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from fastapi import HTTPException, Request
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.messages.utils import convert_to_messages
 from langgraph.types import Command
 
@@ -279,6 +279,11 @@ def normalize_input(raw_input: dict[str, Any] | None, *, trusted_internal: bool 
                     ) from exc
             else:
                 converted.append(msg)
+        if not trusted_internal and any(isinstance(message, SystemMessage) for message in converted):
+            raise HTTPException(
+                status_code=400,
+                detail="External input.messages cannot contain system messages",
+            )
         if not trusted_internal:
             converted = [_strip_external_message_metadata(message) for message in converted]
         return {**raw_input, "messages": converted}
@@ -305,14 +310,15 @@ _CONTEXT_CONFIGURABLE_KEYS: frozenset[str] = frozenset(
         "max_concurrent_subagents",
         "max_total_subagents",
         "agent_name",
-        "is_bootstrap",
     }
 )
 
-# Keys honored only for internally-authenticated callers (the scheduler path).
+# Keys honored only for internally-authenticated callers (scheduler/bootstrap paths).
 # ``non_interactive`` strips ``ask_clarification`` from the lead-agent toolset;
 # arbitrary HTTP/IM clients must not be able to force autonomous execution.
-_CONTEXT_INTERNAL_CALLER_KEYS: frozenset[str] = frozenset({"non_interactive"})
+# ``is_bootstrap`` exposes agent-creation behavior and must never be selected by
+# an ordinary user-owned run.
+_CONTEXT_INTERNAL_CALLER_KEYS: frozenset[str] = frozenset({"non_interactive", "is_bootstrap"})
 
 # Server-owned authorization identity fields. These must never be accepted from
 # client-supplied ``body.config.context`` or ``body.config.configurable``. They

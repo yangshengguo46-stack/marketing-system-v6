@@ -706,3 +706,37 @@ def test_apply_prompt_template_deferred_path_mentions_describe_skill(monkeypatch
     assert "data-analysis: Analyze uploaded tables and explain the result." in prompt
     # Must NOT contain the mandatory legacy wording
     assert "Always load the relevant skill" not in prompt
+
+
+def test_apply_prompt_template_can_hide_deferred_tool_names_without_disabling_search(monkeypatch):
+    config = _make_minimal_app_config()
+    config.tool_search = SimpleNamespace(enabled=True, prompt_index=False)
+    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+    monkeypatch.setattr(
+        prompt_module,
+        "get_enabled_skills_for_config",
+        lambda app_config=None, user_id=None: [],
+    )
+    monkeypatch.setattr(prompt_module, "get_agent_soul", lambda agent_name=None, **kwargs: "")
+
+    prompt = prompt_module.apply_prompt_template(
+        app_config=config,
+        deferred_names=frozenset({"collect_douyin_benchmark_account", "plan_account_launch"}),
+        skill_names=frozenset(),
+    )
+
+    assert "<available-deferred-tools>" not in prompt
+    assert "collect_douyin_benchmark_account" not in prompt
+    assert "plan_account_launch" not in prompt
+
+
+def test_default_agent_uses_product_role_name_instead_of_deerflow_brand(monkeypatch):
+    config = _make_minimal_app_config()
+    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+    monkeypatch.setattr(prompt_module, "get_or_new_skill_storage", lambda app_config=None: SimpleNamespace(load_skills=lambda enabled_only=True: []))
+    monkeypatch.setattr(prompt_module, "get_agent_soul", lambda agent_name=None, **kwargs: "")
+
+    prompt = prompt_module.apply_prompt_template(app_config=config)
+
+    assert "DeerFlow 2.0" not in prompt
+    assert "new-media operations teammate" in prompt

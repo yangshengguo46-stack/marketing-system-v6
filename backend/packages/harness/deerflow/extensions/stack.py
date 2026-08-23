@@ -32,6 +32,7 @@ from deerflow.extensions.registry import LoadedExtensions
 
 def _anchors() -> dict[Placement, PlacementAnchor]:
     from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from deerflow.agents.middlewares.context_manifest_middleware import ContextManifestMiddleware
     from deerflow.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
     from deerflow.agents.middlewares.safety_finish_reason_middleware import SafetyFinishReasonMiddleware
     from deerflow.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
@@ -45,6 +46,7 @@ def _anchors() -> dict[Placement, PlacementAnchor]:
         # and moving the anchor past it would change what "the final request"
         # means.
         Placement.MODEL_PHYSICAL: PlacementAnchor.of(
+            inner_of_last(ContextManifestMiddleware),
             inner_of_last_after(
                 SafetyFinishReasonMiddleware,
                 after=(TerminalResponseMiddleware,),

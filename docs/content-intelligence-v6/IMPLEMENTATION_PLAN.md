@@ -74,10 +74,9 @@ OpenHowNet 证据、成对偏好与 DSPy 离线优化。不得把普通向量 RA
 一边猜 B2B/B2C 一边生成完整定位。观察到的真实受众仍是后续独立证据，不冒充冷启动假设。
 
 2026-08-21 A128 又取消了上述对象的固定执行顺序。`develop_account_strategy` 已退出默认 Lead，主体、
-受众、词项、地图和对标都变成按当前不确定性选用的方法；Lead 可以在事实足够时直接给方向。A134 对账
-确认，新的自由判断目前只存在于聊天，旧 `IncubationJudgment` 又强制绑定候选地图，因此孵化循环在
-“方向落账与确认”处断开。下一主线不是恢复 A126 流程，而是实现 ADR-044 的薄
-`AccountDirectionProposal -> AccountDirectionVersion` 接缝。
+受众、词项、地图和对标都变成按当前不确定性选用的方法；Lead 可以在事实足够时直接给方向。A135 已实现
+ADR-044 的薄 `AccountDirectionProposal -> AccountDirectionVersion` 接缝。A140 再让确认方向与一张
+精确关联的候选地图进入可选 `AccountLaunchPlan`，没有恢复 A126 的固定流程。
 
 发布回执之前仍必须完成的主链为：
 
@@ -89,13 +88,14 @@ OpenHowNet 证据、成对偏好与 DSPy 离线优化。不得把普通向量 RA
 -> 按实际任务选择候选内容地图 / 对标与受众证据 / 具体 TopicBrief
 -> MessagePlan / BaseDraft
 -> 用户明确要求时才进入 FormatDecision / AdaptedDraft
+-> 用户再次明确要求制作时进入 ProductionPlan
 
-暂停：ProductionPlan、素材任务、MediaKit 制作与 MediaArtifact
+恢复中的视频执行底座：对标视频证据合同 / Ark 单镜头封存请求 / 持久任务安全
+尚未完成：Gateway 高层入口、真实费用批准与 Ark 付费回执、多镜头装配
 ```
 
-当前暂缓点前移到 AdaptedDraft 之后，包括素材、制作、预演、不可逆发布审批、平台写
-操作、发布回执、指标与复盘。已实现的 A41-A75 代码和证据不删除；需要恢复该主线时仍从同一产物
-谱系继续，不能另起一条孤立链路。
+当前制作恢复从既有 `ProductionPlan -> MediaArtifact` 谱系继续，不能另起视频计划或 JSON 台账。
+预演、不可逆发布审批、平台写操作、发布回执、指标与复盘仍未随本轮自动启用。
 
 ## 状态语义
 
@@ -115,11 +115,11 @@ OpenHowNet 证据、成对偏好与 DSPy 离线优化。不得把普通向量 RA
 | 模块 | 当前来源 | 真实状态 | 第六版决定 | 下一验收 |
 | --- | --- | --- | --- | --- |
 | DeerFlow Lead | 第六版 | `implemented` | 保留唯一对外判断权 | 工具路由不要求固定轨迹 |
-| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; existing project hydration verified; new dynamic direction bootstrap missing` | 保留最小产物图合同、SQL 持久化、owner-scoped API；正式方向落账时才幂等创建隐式项目与逻辑账号 | ADR-044 薄方向桥、正式项目管理 UI、产物查询与真实多账号验收 |
+| 项目与账号事实台账 | 第六版 `deerflow.incubation` | `implemented; existing project hydration and dynamic direction bootstrap verified offline` | 保留最小产物图合同、SQL 持久化、owner-scoped API；正式方向落账时才幂等创建隐式项目与逻辑账号 | 正式项目管理 UI、产物查询与真实多账号验收 |
 | 营销主体与产品自认知 | 第六版 `MarketingSubjectSnapshot` / `HostProductProfile` | `implemented; agent-self live verified` | 用户业务只读用户事实；当前 Agent 只读服务端版本化产品事实、能力、证据与限制 | 产品档案运营更新流程、显示品牌定名与更多主体指代留出 |
 | 冷启动受众假设 | 第六版 `AccountAudienceDecision` | `legacy workflow implemented; optional under autonomous Lead` | 保留付款者、决策者、使用者、业务目标人群和内容受众的概念区分；只有差异实质改变路线时才询问或封存 | 作为薄方向提案的可空假设投影，不恢复必经表单 |
 | 语义、内容根与候选机会地图 | 第六版 `content_intelligence` | `implemented corrective checkpoint; golden-gift and fruit container live root recovery` | 使用 ADR-020 顺序链与单根裁决；先解析供应商结构，再由确定性代码约束语义路径和构成语境；泛化容器交易回声只作分支；地图不拥有账号定位权 | 全新留出集真实质量、稳定率、延迟与候选地图审阅 |
-| 账号孵化方向版本 | 旧 `IncubationJudgment` + ADR-044 待实现薄工件 | `legacy map-bound contract implemented; autonomous Lead persistence missing` | Lead 拥有判断；新提案不要求地图、对标或完整受众父级，用户确认后形成追加式账号方向版本 | 实现 AccountDirectionProposal/Version、内容侧有界投影与旧工件只读兼容 |
+| 账号孵化方向版本 | `AccountDirectionProposal -> AccountDirectionVersion` + 旧 `IncubationJudgment` 兼容 | `implemented and topic E2E exercised; business quality not accepted` | Lead 拥有判断；新提案不要求地图、对标或完整受众父级，用户确认后形成追加式账号方向版本 | 全新账号真实质量、多账号与修订学习验收 |
 | 选题证据与洞察 | 第六版联网阅读 | `implemented; goal and exact-path contracts verified offline` | 洞察收敛保留在 `TopicBrief` 前，不新建自由 Agent | 真实模型热点、跨事件和象征联系回执 |
 | 抖音 OpenAPI Catalog/MCP | 第六版 | `catalog and stable client token implemented; official search scope blocked` | 保留 Manifest 渐进披露；目录、授权与真实回执分层 | 平台 Scope 获批后重跑固定官方验收，不继续改 Token |
 | 抖音公开证据 | 单一能力网关 + 本机只读 Child | `local live verified; production license pending` | 选题资料与对标证据分角色；原始 Cookie、页面和临时地址不出网关 | 上游许可澄清或洁净实现；官方 Scope 通过后优先官方 Provider |
@@ -155,7 +155,7 @@ OpenHowNet 证据、成对偏好与 DSPy 离线优化。不得把普通向量 RA
 | Sandbox/uploads | 用户素材隔离、广义文档读取、MediaKit 输入输出和中间工件 | W02/W04 | 无所有权的跨用户文件路径 |
 | Vision | 关键帧、素材和成片人机质检 | W02/W04 | 将整账号视频原文全部塞入 Lead 上下文 |
 | Tool output budget | 大账号包、MediaKit 回执和平台原始结果外部化，只投影摘要 | W02 扩展 | 无限截断导致来源、哈希或限制丢失 |
-| Durable MCP tasks | 长耗时平台或云媒体任务的租约、轮询、重启恢复与快照 | W04/W05 | 在 Agent 循环内持续轮询远程任务 |
+| Durable MCP tasks | 长耗时平台或云媒体任务的租约、轮询、重启恢复与快照；按 Provider 选 `idempotent_retry` 或 `at_most_once` | W04/W05；A141 安全原语已实现 | 在 Agent 循环内持续轮询，或对 `submission_unknown` 自动重提 |
 | Scheduler | 定时发布、指标回收、未知对账和定期复盘 | W05/W06 | 另建一套背景 Agent 运行时 |
 | Run events/SSE/StreamBridge | 子任务、媒体、发布和复盘的可见进度、恢复与成本观测 | W02 起 | 将大原始工件作为 SSE 消息传输 |
 | Authorization/guardrails | 账号、路由、工具和不可逆操作授权 | W01/W05 | 基于内容评分拦截创作 |
@@ -269,7 +269,7 @@ Gateway 环境中的 Key、Secret 和 Device ID
 
 ### W03 孵化与单条内容产物谱系
 
-状态：`core through AdaptedDraft implemented and partially live-verified; ProductionPlan and material execution paused by user`
+状态：`core through ProductionPlan implemented; first local MediaArtifact vertical verified; broader video execution resuming behind safety contracts`
 
 目标：将候选 `ContentWorldView -> TopicBrief -> MessagePlan -> BaseDraft -> FormatDecision -> AdaptedDraft`
 绑定到项目、地图版本和精确父产物；账号长期方向改由 ADR-044 的薄追加式工件管理。主体、受众、词项、
@@ -398,11 +398,11 @@ ADR-020 恢复顺序语义链，根裁决新增“消费场景不是自动上位
 重复起号请求错误续写到完整成稿，造成 `103380` Token 和 `18` 次调用，故首次编排与速度均未通过。
 详见 `audits/A82-thread-project-bootstrap-and-container-root.md`。
 
-### W04 MediaKit 制作路由
+### W04 MediaKit 与生成式视频制作路由
 
-状态：`paused by user after A75; retain code and evidence, do not extend in current mainline`
+状态：`resumed at A141; local trim vertical accepted, benchmark/Ark safety contracts implemented but unregistered, full production continuation pending`
 
-目标：以动态 Schema 建立统一媒体能力路由，将已批准的制作请求执行为内容寻址的
+目标：以动态 Schema 建立统一媒体能力路由，将精确封存、用户明确要求继续且费用/执行授权完整的制作请求执行为内容寻址的
 `MediaArtifact`。
 
 前置合同已实现：`MediaKitCapabilityRouter` 动态读取版本和 Schema，
@@ -480,6 +480,21 @@ ProductionPlan 的动作、装配步骤和素材，执行前复核授权来源�
 回执。聚焦回归 `51 passed`，本机 `mediakit-cli 0.2.0` 真实视频烟测通过。高层调用入口和其他媒体
 能力仍待逐项接线。详见 `audits/A75-mediakit-production-plan-local-execution.md`。
 
+2026-08-22 A141 恢复制作管线，但仅建设无费用的安全基础。新项目原生
+`marketing-video-production` Skill 复用现有 `ProductionPlan -> MediaArtifact`；单视频对标合同精确绑定
+来源、用户权利声明/引用（非系统核验）、内容哈希和 MediaKit 观察，只允许迁移抽象结构。Ark 纯文生视频 V1 请求封闭为单资产、
+单动作、单装配请求，CLI runner 必须注入且没有默认 subprocess。持久任务新增
+`at_most_once`：外部调用前先记 `submission_started_at`，模糊结果进入不可领取的终态
+`submission_unknown`，不自动重提。Ark 仍未注册，没有 Gateway 生产入口、当期报价/批准原子绑定、
+结果私有物化、多镜头装配或真实付费回执。详见 `audits/A141-video-production-safety-foundation.md` 与
+`decisions/ADR-047-at-most-once-ark-generation-boundary.md`。
+
+同日 GitHub 官方快照显示 OpenMontage、HyperFrames 和 `video-shotcraft` 是生命周期内累计关注度最突出的新仓，
+但 GitHub 不提供历史 star 序列，不把它们写成“最近 7/30 天加速”或成熟度证据。OpenMontage 只借鉴开放素材 connector、
+生成前 sample/审批和 QA，不引入其 AGPL 全栈总控；HyperFrames 只作 renderer 候选；`video-shotcraft` 与山音是两个不同项目，
+前者只审计镜头卡/模板方法，后者才是本轮冻结 MIT 来源并缩成导演方法参考的上游。MediaKit 确有火山官方 MIT 公开仓，
+但其 cloud-first 默认更要求第六版注册层强制显式 `--local | --cloud`。
+
 首批验收：
 
 - 本地剪辑、字幕、裁剪、拼接、混音、合成和元信息。
@@ -534,7 +549,7 @@ draft -> prepared -> approved -> executing
 | E2E-01 | 用户说“我是做黄金礼品的” | 语义可进入“礼、人与人相处”的长期地图，不被发布或商品目录倒灌 |
 | E2E-02 | 用户给一个抖音对标链接 | 账号身份、多作品、MediaKit 证据、覆盖和反例进入 `BenchmarkSnapshot` |
 | E2E-03 | 从账号地图生成当日内容 | 热点或取证路径不改写内容根，输出具体可拍 `TopicBrief` 与 `MessagePlan` |
-| E2E-04 | 将已批准成稿制作为视频 | MediaKit 回执、费用授权、恢复和输出哈希完整，并通过质检 |
+| E2E-04 | 将精确封存成稿在用户明确要求后制作为视频 | 内容/费用/执行授权、MediaKit 回执、恢复和输出哈希完整，并通过质检 |
 | E2E-05 | 在抖音真实测试账号发布 | 审批绑定、幂等、崩溃恢复、第一方回执与 `unknown` 对账 |
 | E2E-06 | 到指定观察窗口后复盘 | 实绩与预演精确绑定，缺失与反例保留，学习不自动改写规则 |
 | E2E-07 | 两用户各自连接抖音账号 | 项目、令牌、素材、审批、回执、指标和学习结论全部隔离 |
@@ -576,12 +591,10 @@ W01 同时必须完成 Memory 与业务台账的分界测试：用户偏好和�
 `evidence/incubation-ledger-a38-2026-08-16.md` 与
 `evidence/incubation-project-runtime-a46-2026-08-17.md`。
 
-下一验收断点仍是 W02 的官方视频搜索真实回执，需要本地绑定 Client Key、Client Secret 和精确
-获批 Scope；W04 的持久提交意图与
-隔离云驱动、精确批准账本、受信来源与幂等物化已通过无费用验收。下一切片先对照实时能力 Schema、
-输出类型和计费证据，只为一个明确 MediaKit 云能力登记策略；取得用户对精确费用上限的新批准后才能做真实
-回执验收。不得用网页视觉采集伪装 W02 已通过，也不得在 Agent 循环内
-长轮询云任务。
+下一验收断点分两条。W02 仍需官方视频搜索的真实回执，不得用网页视觉采集伪装已通过。W04 先把
+内容寻址但尚未持久化/注册的 Ark 请求接入 owner/project Gateway 续写，将当期报价、云处理/费用批准和 `at_most_once` 任务原子绑定，
+再补私有下载物化与视频 QC。只有取得用户对精确费用上限的全新批准，才可运行一次小额真实回执；不得在
+Agent 循环内长轮询，也不得在 `submission_unknown` 上自动购买替代任务。
 
 2026-08-18 主链继续完成 A71：选中项目的有效 BaseDraft 已自动进入精确 `FormatDecision ->
 AdaptedDraft`，并将结果分栏呈现；内部附加正文不进入公开持久化回执。该层联合回归 `103 passed`。

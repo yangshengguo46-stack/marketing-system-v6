@@ -182,10 +182,16 @@ These apply repo-wide; module guides own the module-specific detail.
 - **Test-driven development** — features and bug fixes ship with tests. Backend tests live
   in `backend/tests/` (TDD is mandatory there; see [backend/AGENTS.md](backend/AGENTS.md));
   frontend tests live in `frontend/tests/`.
-- **V6 content core** — Account starts resolve subject and audience before maps. User businesses read
-  user/project facts; `agent_self` reads only the host profile. One bounded lookup may clarify an unknown term,
-  but its evidence cannot choose roots or mix with topic/benchmark evidence. Keep business and content audiences
-  distinct; material ambiguity waits for the user. Maps are not strategy, users alone adopt routes, and normal
-  topic delivery stops at `BaseDraft`. See `backend/AGENTS.md`.
+- **Agent foundation standard** — before changing Lead identity or prompts, context assembly,
+  SOUL/user/project memory, Skills, tools/MCP, subagents, compaction, permissions, or agent
+  evaluation, read [docs/agent-foundations/README.md](docs/agent-foundations/README.md) and
+  [docs/agent-foundations/04-v6-agent-standard.md](docs/agent-foundations/04-v6-agent-standard.md).
+  This library governs coding agents and architecture review only; never inject it wholesale into
+  the product Lead. Its engineering boundaries do not define a mandatory marketing workflow.
+- **V6 content core** — The Lead owns account judgment; methods are optional, not an onboarding chain. Reusable
+  choices use `DirectionProposal -> DirectionVersion` and real user confirmation. An explicit `AccountLaunchPlan`
+  binds one exact map; seeds still enter `TopicBrief -> MessagePlan -> BaseDraft`. Video starts only after explicit
+  format/adaptation/`ProductionPlan`; benchmark evidence cannot write direction. Ark stays unregistered behind
+  quote, approval, `at_most_once`, private materialization, and QC. See `backend/AGENTS.md`.
 - **Format before pushing** — run `make format` (backend) / `pnpm check` (frontend). Backend
   CI enforces `ruff format --check`, so formatting must be clean before a push.

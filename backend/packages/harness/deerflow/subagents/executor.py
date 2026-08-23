@@ -682,8 +682,9 @@ class SubagentExecutor:
         from deerflow.tools.builtins.tool_search import assemble_deferred_tools, get_deferred_tools_prompt_section, get_mcp_routing_hints_prompt_section
 
         # Skills are discoverable metadata until explicitly slash-activated or
-        # loaded through read_file. Their allowed-tools declarations are applied
-        # dynamically by SkillToolPolicyMiddleware, not eagerly here.
+        # selected through activate_skill. Reading a Skill file is inspection
+        # only. Allowed-tools declarations are applied dynamically by
+        # SkillToolPolicyMiddleware, not eagerly here.
         skills = await self._load_skills()
         self._available_skill_names = {skill.name for skill in skills}
 
@@ -695,6 +696,15 @@ class SubagentExecutor:
             skills,
             enabled=resolved_app_config.skills.deferred_discovery,
             container_base_path=resolved_app_config.skills.container_path,
+            prompt_index_patterns=(
+                None
+                if self.config.skills is not None
+                else getattr(
+                    resolved_app_config.skills,
+                    "prompt_index_patterns",
+                    None,
+                )
+            ),
         )
 
         # Apply authorization Layer 1: filter tools before deferred assembly
@@ -711,8 +721,12 @@ class SubagentExecutor:
             "authz_attributes": self.authz_attributes,
         }
         authorization_candidates = [*self._base_tools]
-        if skill_setup.describe_skill_tool is not None:
-            authorization_candidates.append(skill_setup.describe_skill_tool)
+        for skill_tool in (
+            skill_setup.describe_skill_tool,
+            getattr(skill_setup, "activate_skill_tool", None),
+        ):
+            if skill_tool is not None:
+                authorization_candidates.append(skill_tool)
         configured_tool_ids = {id(tool) for tool in self._base_tools}
         authorized_tools, self._authz_provider = apply_tool_authorization(
             authorization_candidates,
@@ -745,9 +759,10 @@ class SubagentExecutor:
         if self.config.system_prompt:
             system_parts.append(self.config.system_prompt)
         if skills:
-            if skill_setup.skill_names:
+            if resolved_app_config.skills.deferred_discovery:
                 skills_section = get_skill_index_prompt_section(
                     skill_names=skill_setup.skill_names,
+                    skill_descriptions={skill.name: getattr(skill, "description", "") for skill in skills},
                     container_base_path=resolved_app_config.skills.container_path,
                 )
             else:
@@ -765,7 +780,7 @@ class SubagentExecutor:
                 system_parts.append(skills_section)
         # Name the deferred MCP tools in the prompt; their schemas stay withheld
         # until tool_search promotes them. Empty set -> "" -> appends nothing.
-        deferred_section = get_deferred_tools_prompt_section(deferred_names=deferred_setup.deferred_names)
+        deferred_section = get_deferred_tools_prompt_section(deferred_names=deferred_setup.deferred_names) if getattr(resolved_app_config.tool_search, "prompt_index", True) else ""
         if deferred_section:
             system_parts.append(deferred_section)
         mcp_routing_hints_section = get_mcp_routing_hints_prompt_section(authorized_tools, deferred_names=deferred_setup.deferred_names)

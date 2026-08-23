@@ -4,8 +4,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
 from langgraph.types import Command
 
-from deerflow.config.agents_config import SOUL_FILENAME, validate_agent_name
-from deerflow.config.paths import get_paths
+from deerflow.config.agents_config import validate_agent_name
 from deerflow.persistence.agents import get_agent_store
 from deerflow.runtime.user_context import resolve_runtime_user_id
 from deerflow.tools.types import Runtime
@@ -51,25 +50,28 @@ def setup_agent(
 
     try:
         agent_name = validate_agent_name(agent_name)
-        if agent_name:
-            # Custom agents are persisted under the current user's bucket (via
-            # the configured store — file or db) so different users, and
-            # different nodes, resolve the same agent. setup is idempotent, so
-            # this is an upsert.
-            user_id = resolve_runtime_user_id(runtime)
-            config_data: dict = {"name": agent_name}
-            if description:
-                config_data["description"] = description
-            if skills is not None:
-                config_data["skills"] = skills
-            get_agent_store().update(agent_name, config_data, soul, user_id=user_id)
-        else:
-            # Default agent (no agent_name): SOUL.md lives at the global base
-            # dir. It is not a custom-agent record, so it stays file-based
-            # regardless of the agent-storage backend.
-            paths = get_paths()
-            paths.base_dir.mkdir(parents=True, exist_ok=True)
-            (paths.base_dir / SOUL_FILENAME).write_text(soul, encoding="utf-8")
+        if not agent_name:
+            return Command(
+                update={
+                    "messages": [
+                        ToolMessage(
+                            content="Error: agent_name is required; refusing to write a global SOUL.md",
+                            tool_call_id=runtime.tool_call_id,
+                        )
+                    ]
+                }
+            )
+
+        # Custom agents are persisted under the current user's bucket (via
+        # the configured store — file or db) so different users, and different
+        # nodes, resolve the same agent. setup is idempotent, so this is an upsert.
+        user_id = resolve_runtime_user_id(runtime)
+        config_data: dict = {"name": agent_name}
+        if description:
+            config_data["description"] = description
+        if skills is not None:
+            config_data["skills"] = skills
+        get_agent_store().update(agent_name, config_data, soul, user_id=user_id)
 
         logger.info(f"[agent_creator] Created agent '{agent_name}'")
         return Command(

@@ -1,4 +1,8 @@
-"""Deterministic capture and rendering for loaded skill files."""
+"""Deterministic capture and rendering for inspected Skill files.
+
+This legacy ``skill_context`` channel is an inspection ledger only. It never
+activates a Skill, changes tool authority, or binds request secrets.
+"""
 
 from __future__ import annotations
 
@@ -183,11 +187,11 @@ def extract_skills(
 
 
 def render_skill_context(entries: list[SkillEntry]) -> str:
-    """Render active-skill references as a compact reminder, not the body."""
+    """Render inspected-Skill references as a compact, non-authoritative reminder."""
     if not entries:
         return ""
 
-    lines = ["## Active skills (loaded earlier - re-read the file before applying its instructions)"]
+    lines = ["## Inspected skills (not active - call activate_skill with the exact name before applying one)"]
     for entry in entries:
         name = _escape_context_text(entry["name"])
         path = _escape_context_text(entry["path"])

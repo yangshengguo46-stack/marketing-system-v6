@@ -123,17 +123,22 @@ def test_new_direction_tools_replace_the_old_strategy_surface() -> None:
     assert "user_request" not in propose_account_direction_tool.tool_call_schema.model_json_schema()["properties"]
 
 
-def test_lead_treats_direction_persistence_as_optional_and_user_confirmed() -> None:
-    section = SYSTEM_PROMPT_TEMPLATE.split("<account_incubation>", 1)[1].split("</account_incubation>", 1)[0]
-    normalized = " ".join(section.split())
+def test_direction_proposal_tool_is_described_as_explicit_persistence_not_first_pass_advice() -> None:
+    description = " ".join((propose_account_direction_tool.description or "").split())
 
-    assert "Use `propose_account_direction` only when" in normalized
-    assert "One coherent option is valid" in normalized
-    assert "does not adopt it" in normalized
-    assert "explicitly accepts an exact proposal and option" in normalized
-    assert "ordinary conversation" in normalized
-    assert "asks to choose or confirm before continuing" in normalized
-    assert "`tool_search`" in normalized
+    assert "only after the user explicitly asks to save" in description
+    assert "Do not use it for a first-pass account recommendation" in description
+
+
+def test_lead_treats_direction_persistence_as_optional_and_user_confirmed() -> None:
+    normalized = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
+    tool_description = " ".join((propose_account_direction_tool.description or "").split())
+
+    assert SYSTEM_PROMPT_TEMPLATE.count("<agent_kernel>") == 1
+    assert "<account_incubation>" not in SYSTEM_PROMPT_TEMPLATE
+    assert "Own the work the user gives you" in normalized
+    assert "only after the user explicitly asks to save" in tool_description
+    assert "Do not use it for a first-pass account recommendation" in tool_description
 
 
 @pytest.mark.asyncio

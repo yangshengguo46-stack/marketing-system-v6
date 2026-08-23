@@ -31,6 +31,7 @@ from langgraph.types import Command
 
 from deerflow.agents.human_input import read_human_input_response
 from deerflow.runtime.events.catalog import (
+    CONTEXT_MANIFEST_EVENT,
     LLM_AI_RESPONSE_EVENT,
     LLM_ERROR_EVENT,
     LLM_HUMAN_INPUT_EVENT,
@@ -845,6 +846,19 @@ class RunJournal(BaseCallbackHandler):
             content={"content_sha256": content_sha256},
         )
         self._memory_context_recorded = True
+
+    def record_context_manifest(self, manifest: dict[str, Any]) -> None:
+        """Record one content-free manifest for a physical model call.
+
+        Unlike memory identity, this is intentionally not deduplicated: a tool
+        loop or retry can produce several materially different model requests
+        under the same run, and each must remain independently explainable.
+        """
+        self._put(
+            event_type=CONTEXT_MANIFEST_EVENT.event_type,
+            category=CONTEXT_MANIFEST_EVENT.category,
+            content=manifest,
+        )
 
     def _record_produced_artifacts(self, artifacts: Any, tool_name: str | None) -> None:
         """Accumulate produced artifact paths, deduped by (path, tool_name)."""

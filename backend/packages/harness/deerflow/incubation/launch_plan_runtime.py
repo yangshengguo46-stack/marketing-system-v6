@@ -8,6 +8,7 @@ from typing import Any, Literal
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from pydantic import Field, ValidationError, model_validator
 
+from deerflow.incubation.account_direction import AccountDirectionVersion, account_direction_content_root
 from deerflow.incubation.contracts import (
     ArtifactEnvelope,
     IncubationContract,
@@ -59,11 +60,11 @@ ACCOUNT_LAUNCH_PLAN_MODEL_INPUT_MAX_BYTES = 24_000
 _MAX_PROJECTED_PATHS = 16
 
 ACCOUNT_LAUNCH_PLAN_SYSTEM_PROMPT = """<account_launch_plan>
-你正在为一个已经由用户确认路线的逻辑账号，编制可修改的 7 天首轮和 30 天运营计划。你只负责编排栏目、计划题眼、行动节奏、观察问题和调整条件；不得重新做账号定位。
+你正在为一个已经由用户确认方向的逻辑账号，编制可修改的 7 天首轮和 30 天运营计划。你只负责编排栏目、计划题眼、行动节奏、观察问题和调整条件；不得重新做账号定位。
 
 边界：
 - 7 天不是算法门槛，只是第一轮方向与真实产能验证期。30 天不是成功期限，只是形成第一版可重复运营系统的计划视窗。
-- 不得修改已确认的定位、受众、人设、表现形式或变现判断。confirmed_account_strategy 是父级，不是供你改写的草稿。
+- 不得修改已确认的定位、受众、人设、表现形式或变现判断。对新方向桥，同样不得改写内容根、受众假设、账号角色、表现方向或业务连接。confirmed_account_direction/confirmed_account_strategy 是父级，不是供你改写的草稿。
 - 栏目和题眼只能引用 allowed_content_map_path_ids 中的路径。地图路径是候选方向，不是已经证实的爆款机制。
 - 一个计划题眼必须写清具体主体、具体事件或问题，以及账号准备表达的观点。笼统的行业方向不能充当题眼。
 - 计划题眼不能冒充 TopicBrief。人物、历史、作品、数字和当前事件在执行前仍须搜索、读证据并形成 TopicBrief；evidence_need 必须明说如何核验。
@@ -105,7 +106,36 @@ def _clip(value: object, *, max_chars: int) -> object:
     return value
 
 
-def _strategy_projection(artifact: ArtifactEnvelope) -> dict[str, object]:
+def _clip_sequence(
+    values: tuple[str, ...],
+    *,
+    max_items: int,
+    max_chars: int,
+) -> list[str]:
+    return [str(_clip(value, max_chars=max_chars)) for value in values[:max_items]]
+
+
+def _account_decision_projection(artifact: ArtifactEnvelope) -> dict[str, object]:
+    if artifact.artifact_type == "account_direction_version":
+        direction = AccountDirectionVersion.model_validate(artifact.payload)
+        option = direction.selected_option
+        return {
+            "marketing_subject": _clip(direction.marketing_subject, max_chars=800),
+            "business_goal": _clip(direction.business_goal, max_chars=800),
+            "selected_option": {
+                "option_id": option.option_id,
+                "name": _clip(option.name, max_chars=160),
+                "content_root": _clip(option.content_root, max_chars=160),
+                "long_term_content_subject": _clip(option.long_term_content_subject, max_chars=800),
+                "content_audience_hypothesis": _clip(option.content_audience_hypothesis, max_chars=600),
+                "audience_promise": _clip(option.audience_promise, max_chars=600),
+                "account_role": _clip(option.account_role, max_chars=600),
+                "presentation_directions": _clip_sequence(option.presentation_directions, max_items=6, max_chars=240),
+                "business_connection": _clip(option.business_connection, max_chars=600),
+                "unknowns": _clip_sequence(option.unknowns, max_items=8, max_chars=240),
+            },
+            "unknowns": _clip_sequence(direction.unknowns, max_items=8, max_chars=240),
+        }
     fields = (
         "selected_option_id",
         "positioning",
@@ -161,17 +191,18 @@ def _path_projection(content_world_artifact: ArtifactEnvelope) -> list[dict[str,
 def _render_model_input(
     *,
     planning_request: str,
-    strategy_artifact: ArtifactEnvelope,
+    account_decision_artifact: ArtifactEnvelope,
     content_world_artifact: ArtifactEnvelope,
     previous_plan_artifact: ArtifactEnvelope | None,
 ) -> str:
     paths = _path_projection(content_world_artifact)
+    decision_key = "confirmed_account_direction" if account_decision_artifact.artifact_type == "account_direction_version" else "confirmed_account_strategy"
     payload = {
         "planning_request": planning_request,
-        "confirmed_account_strategy": {
-            "artifact_id": strategy_artifact.artifact_id,
-            "content_sha256": strategy_artifact.content_sha256,
-            "payload": _strategy_projection(strategy_artifact),
+        decision_key: {
+            "artifact_id": account_decision_artifact.artifact_id,
+            "content_sha256": account_decision_artifact.content_sha256,
+            "payload": _account_decision_projection(account_decision_artifact),
         },
         "candidate_content_map": {
             "artifact_id": content_world_artifact.artifact_id,
@@ -203,22 +234,29 @@ def _render_model_input(
 def _validate_parents(
     *,
     project: ProjectRef,
-    strategy_artifact: ArtifactEnvelope,
+    account_decision_artifact: ArtifactEnvelope,
     content_world_artifact: ArtifactEnvelope,
     logical_account: LogicalAccountRef,
-) -> IncubationJudgment:
-    if strategy_artifact.project != project or strategy_artifact.artifact_type != "incubation_judgment":
-        raise ValueError("launch planning requires a same-project incubation judgment")
+) -> None:
+    if account_decision_artifact.project != project:
+        raise ValueError("launch planning requires a same-project account decision")
     if content_world_artifact.project != project or content_world_artifact.artifact_type != "content_map_candidate":
         raise ValueError("launch planning requires a same-project candidate content map")
-    if strategy_artifact.logical_account != logical_account or content_world_artifact.logical_account != logical_account:
+    if account_decision_artifact.logical_account != logical_account or content_world_artifact.logical_account != logical_account:
         raise ValueError("launch planning parent logical accounts must match")
-    strategy = IncubationJudgment.model_validate(strategy_artifact.payload)
+    if account_decision_artifact.artifact_type == "account_direction_version":
+        direction = AccountDirectionVersion.model_validate(account_decision_artifact.payload)
+        direction_root = account_direction_content_root(direction.selected_option)
+        if direction_root != content_world_artifact.payload.get("content_root"):
+            raise ValueError("account direction content root must match the candidate content map")
+        return
+    if account_decision_artifact.artifact_type != "incubation_judgment":
+        raise ValueError("launch planning requires a confirmed account direction or legacy strategy")
+    strategy = IncubationJudgment.model_validate(account_decision_artifact.payload)
     if strategy.decision_status != "confirmed":
         raise ValueError("launch planning requires a confirmed account strategy")
     if strategy.content_map_version_id != content_world_artifact.payload.get("content_map_version_id"):
         raise ValueError("launch planning strategy and map versions must match")
-    return strategy
 
 
 async def generate_account_launch_plan(
@@ -226,17 +264,18 @@ async def generate_account_launch_plan(
     project: ProjectRef,
     logical_account: LogicalAccountRef,
     planning_request: str,
-    strategy_artifact: ArtifactEnvelope,
+    account_decision_artifact: ArtifactEnvelope,
     content_world_artifact: ArtifactEnvelope,
     structured_model: StructuredLaunchPlanModel,
     created_at: datetime,
     source_thread_id: str,
     source_run_id: str,
+    direction_proposal_artifact: ArtifactEnvelope | None = None,
     previous_plan_artifact: ArtifactEnvelope | None = None,
 ) -> ArtifactEnvelope:
     _validate_parents(
         project=project,
-        strategy_artifact=strategy_artifact,
+        account_decision_artifact=account_decision_artifact,
         content_world_artifact=content_world_artifact,
         logical_account=logical_account,
     )
@@ -245,7 +284,7 @@ async def generate_account_launch_plan(
         HumanMessage(
             content=_render_model_input(
                 planning_request=planning_request,
-                strategy_artifact=strategy_artifact,
+                account_decision_artifact=account_decision_artifact,
                 content_world_artifact=content_world_artifact,
                 previous_plan_artifact=previous_plan_artifact,
             )
@@ -287,7 +326,8 @@ async def generate_account_launch_plan(
         supersedes_plan_artifact_id=supersedes_id,
         revision_reason=revision_reason,
         decision_status="proposed",
-        strategy_artifact_id=strategy_artifact.artifact_id,
+        strategy_artifact_id=(account_decision_artifact.artifact_id if account_decision_artifact.artifact_type == "incubation_judgment" else None),
+        direction_artifact_id=(account_decision_artifact.artifact_id if account_decision_artifact.artifact_type == "account_direction_version" else None),
         content_map_version_id=str(content_world_artifact.payload["content_map_version_id"]),
         **draft.model_dump(),
     )
@@ -296,8 +336,10 @@ async def generate_account_launch_plan(
             project=project,
             logical_account=logical_account,
             plan=plan,
-            strategy_artifact=strategy_artifact,
             content_world_artifact=content_world_artifact,
+            strategy_artifact=(account_decision_artifact if account_decision_artifact.artifact_type == "incubation_judgment" else None),
+            direction_artifact=(account_decision_artifact if account_decision_artifact.artifact_type == "account_direction_version" else None),
+            direction_proposal_artifact=direction_proposal_artifact,
             previous_plan_artifact=previous_plan_artifact,
             created_at=created_at,
             source_thread_id=source_thread_id,

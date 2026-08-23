@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from deerflow.incubation.account_launch_plan import account_launch_plan_confirmation_text
 from deerflow.incubation.launch_plan import AccountLaunchPlan
 
 
@@ -7,7 +8,11 @@ def _bullet_lines(values: tuple[str, ...]) -> list[str]:
     return [f"- {value}" for value in values]
 
 
-def render_account_launch_plan(plan: AccountLaunchPlan) -> str:
+def render_account_launch_plan(
+    plan: AccountLaunchPlan,
+    *,
+    artifact_id: str | None = None,
+) -> str:
     """Render a compact, user-reviewable projection of a launch-plan artifact."""
 
     status = "已确认" if plan.decision_status == "confirmed" else "待确认"
@@ -19,13 +24,16 @@ def render_account_launch_plan(plan: AccountLaunchPlan) -> str:
         f"**当前节奏：** {plan.capacity.cadence_summary}",
         f"**依据：** {plan.capacity.basis}",
     ]
+    if artifact_id is not None:
+        receipt_label = "计划提案编号" if plan.decision_status == "proposed" else "已确认回执编号"
+        lines.insert(3, f"**{receipt_label}：** `{artifact_id}`")
     if plan.capacity.planned_publish_days:
         days = "、".join(f"第 {day} 天" for day in plan.capacity.planned_publish_days)
         lines.append(f"**暂定发布日：** {days}")
     lines.extend(["", "## 栏目与题眼"])
     seeds_by_series: dict[str, list[str]] = {}
     for seed in plan.topic_seeds:
-        seeds_by_series.setdefault(seed.series_id, []).append(f"{seed.focal_subject}：{seed.concrete_event_or_question}")
+        seeds_by_series.setdefault(seed.series_id, []).append(f"[`{seed.seed_id}`] {seed.focal_subject}：{seed.concrete_event_or_question}（来源：{seed.source_kind}；执行前取证：{seed.evidence_need}）")
     for series in plan.series:
         lines.extend(
             [
@@ -66,6 +74,7 @@ def render_account_launch_plan(plan: AccountLaunchPlan) -> str:
             [
                 "",
                 "这是一份可修改提案，不是平台规律，也不会阻止继续做选题。你可以确认、删改栏目，或先补充真实产能。",
+                *((f"若要精确确认，请单独发送：`{account_launch_plan_confirmation_text(artifact_id)}`",) if artifact_id is not None else ()),
             ]
         )
     return "\n".join(lines)

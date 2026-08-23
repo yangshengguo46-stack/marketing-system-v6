@@ -3,6 +3,9 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+from deerflow.agents.lead_agent.agent_core_contract import PRODUCTION_AGENT_KERNEL
+from deerflow.agents.lead_agent.prompt import SYSTEM_PROMPT_TEMPLATE
+
 HARNESS_ROOT = Path(__file__).parents[1] / "packages" / "harness" / "deerflow"
 
 
@@ -52,61 +55,26 @@ def test_lead_prompt_does_not_force_an_account_cognition_pipeline() -> None:
     assert "develop_account_strategy" not in source
 
 
-def test_lead_prompt_converges_after_one_optional_content_map_call() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
+def test_lead_prompt_keeps_incubation_modules_as_optional_capabilities() -> None:
+    normalized = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
 
-    assert "Never call `explore_content_world` more than once in one user turn" in normalized
-    assert "Analysis and `explore_content_world` are alternatives, not a required pair" in normalized
-
-
-def test_account_direction_does_not_expand_into_an_unrequested_operations_plan() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
-
-    assert "A broad account-starting question asks for a strategic direction" in normalized
-    assert "Do not add calendars, cadence, time slots, ratios, ads, or 7/30-day plans unless requested" in normalized
-    assert "Omit numeric precision unsupported by user facts or evidence" in normalized
-
-
-def test_unfamiliar_term_verification_is_bounded_before_strategy_reasoning() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
-
-    assert "use `verify_business_term` once" in normalized
-    assert "this is not market or competitor research" in normalized
+    assert "no capability or workflow is mandatory" in normalized
+    assert SYSTEM_PROMPT_TEMPLATE.startswith(PRODUCTION_AGENT_KERNEL)
+    for prescribed_route in (
+        "analyze_content_intelligence",
+        "explore_content_world",
+        "plan_account_launch",
+        "verify_business_term",
+        "propose_account_direction",
+        "confirm_account_direction",
+        "matching `incubate-*`",
+    ):
+        assert prescribed_route not in normalized
 
 
-def test_agent_self_reference_routes_to_product_facts_without_a_fixed_workflow() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
+def test_lead_prompt_keeps_truth_and_external_action_boundaries() -> None:
+    normalized = " ".join(SYSTEM_PROMPT_TEMPLATE.split())
 
-    assert "When the user asks you to market yourself" in normalized
-    assert "inspect_agent_product_profile" in normalized
-    assert "do not reinterpret the Agent as the user's business" in normalized
-
-
-def test_incubation_skill_discovery_happens_before_domain_questionnaires() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
-
-    assert "matching `incubate-*` vertical Skill" in normalized
-    assert "Inspect a matching Skill before domain-content questions" in normalized
-    assert "A domain Skill supplies hypotheses, not the final route" in normalized
-
-
-def test_one_clarification_is_not_a_multi_field_intake_form() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
-
-    assert "exactly one decision question" in normalized
-    assert "Never bundle optional profile fields into an intake form" in normalized
-
-
-def test_account_routes_do_not_invent_specific_business_context_for_completeness() -> None:
-    source = _source("agents/lead_agent/prompt.py")
-    normalized = " ".join(source.split())
-
-    assert "Do not introduce a specific occasion, audience subgroup, channel, format, or user resource" in normalized
-    assert "State it as unknown or keep the route at the broader level" in normalized
-    assert "Asserting an unstated capability and then softening it with uncertainty is still fabrication" in normalized
+    assert "Facts must be real; judgments can be bold" in normalized
+    assert "observed facts, inferences, hypotheses, and creative proposals distinguishable" in normalized
+    assert "Get explicit approval before irreversible external actions" in normalized

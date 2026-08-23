@@ -6,10 +6,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from langchain.tools import ToolRuntime
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 from langgraph.types import Command
 
 from deerflow.incubation import LogicalAccountRef, ProjectRef
+from deerflow.incubation.account_launch_plan import account_launch_plan_confirmation_text
 from deerflow.tools.tools import BUILTIN_TOOLS
 
 tool_module = importlib.import_module("deerflow.tools.builtins.account_launch_plan_tool")
@@ -24,9 +25,9 @@ LOGICAL_ACCOUNT = LogicalAccountRef(
 )
 
 
-def _runtime() -> ToolRuntime:
+def _runtime(*, messages: list[object] | None = None) -> ToolRuntime:
     return ToolRuntime(
-        state={},
+        state={"messages": messages or []},
         context={
             "thread_id": "thread-1",
             "run_id": "run-1",
@@ -46,12 +47,12 @@ def test_account_launch_plan_tools_are_optional_lead_capabilities() -> None:
     assert plan_account_launch_tool in BUILTIN_TOOLS
     assert plan_account_launch_tool.name == "plan_account_launch"
     assert plan_account_launch_tool.return_direct is True
-    assert set(plan_account_launch_tool.tool_call_schema.model_json_schema()["properties"]) == {"planning_request"}
+    assert set(plan_account_launch_tool.tool_call_schema.model_json_schema()["properties"]) == {"planning_request", "content_map_artifact_id"}
 
     assert confirm_account_launch_plan_tool in BUILTIN_TOOLS
     assert confirm_account_launch_plan_tool.name == "confirm_account_launch_plan"
     assert confirm_account_launch_plan_tool.return_direct is True
-    assert confirm_account_launch_plan_tool.tool_call_schema.model_json_schema()["properties"] == {}
+    assert set(confirm_account_launch_plan_tool.tool_call_schema.model_json_schema()["properties"]) == {"plan_artifact_id"}
 
 
 @pytest.mark.asyncio
@@ -79,6 +80,7 @@ async def test_plan_account_launch_uses_the_trusted_logical_account_scope(
             "name": "plan_account_launch",
             "args": {
                 "planning_request": "按当前路线给我一份7天和30天起号计划",
+                "content_map_artifact_id": "map-artifact-1",
                 "runtime": _runtime(),
             },
             "id": "launch-plan-call",
@@ -90,6 +92,7 @@ async def test_plan_account_launch_uses_the_trusted_logical_account_scope(
     assert prepare.await_args.kwargs["project"] == PROJECT
     assert prepare.await_args.kwargs["logical_account"] == LOGICAL_ACCOUNT
     assert prepare.await_args.kwargs["planning_request"] == "按当前路线给我一份7天和30天起号计划"
+    assert prepare.await_args.kwargs["content_map_artifact_id"] == "map-artifact-1"
     message = result.update["messages"][0]
     assert isinstance(message, ToolMessage)
     assert message.content == "# 账号起号计划"
@@ -118,7 +121,10 @@ async def test_confirm_account_launch_plan_seals_only_the_current_logical_accoun
     result = await confirm_account_launch_plan_tool.ainvoke(
         {
             "name": "confirm_account_launch_plan",
-            "args": {"runtime": _runtime()},
+            "args": {
+                "plan_artifact_id": "artifact-launch-plan-proposal",
+                "runtime": _runtime(messages=[HumanMessage(content=account_launch_plan_confirmation_text("artifact-launch-plan-proposal"))]),
+            },
             "id": "launch-plan-call",
             "type": "tool_call",
         }
@@ -127,7 +133,65 @@ async def test_confirm_account_launch_plan_seals_only_the_current_logical_accoun
     assert isinstance(result, Command)
     assert confirm.await_args.kwargs["project"] == PROJECT
     assert confirm.await_args.kwargs["logical_account"] == LOGICAL_ACCOUNT
+    assert confirm.await_args.kwargs["plan_artifact_id"] == "artifact-launch-plan-proposal"
+    assert confirm.await_args.kwargs["confirmation_user_text"] == account_launch_plan_confirmation_text("artifact-launch-plan-proposal")
     message = result.update["messages"][0]
     assert isinstance(message, ToolMessage)
     assert message.content == "# 已确认账号计划"
     assert message.additional_kwargs["incubation_persistence"]["artifact_id"] == artifact.artifact_id
+
+
+@pytest.mark.asyncio
+async def test_confirm_account_launch_plan_requires_authentic_user_confirmation_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
+    confirm = AsyncMock()
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(tool_module, "confirm_account_launch_plan", confirm)
+
+    result = await confirm_account_launch_plan_tool.ainvoke(
+        {
+            "name": "confirm_account_launch_plan",
+            "args": {
+                "plan_artifact_id": "artifact-launch-plan-proposal",
+                "runtime": _runtime(),
+            },
+            "id": "launch-plan-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert "用户确认原话" in result.update["messages"][0].content
+    confirm.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_confirm_account_launch_plan_rejects_non_exact_user_confirmation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = SimpleNamespace(
+        get_project=AsyncMock(return_value=object()),
+        get_logical_account=AsyncMock(return_value=object()),
+    )
+    confirm = AsyncMock()
+    monkeypatch.setattr(tool_module, "get_incubation_repository", Mock(return_value=repository))
+    monkeypatch.setattr(tool_module, "confirm_account_launch_plan", confirm)
+
+    result = await confirm_account_launch_plan_tool.ainvoke(
+        {
+            "name": "confirm_account_launch_plan",
+            "args": {
+                "plan_artifact_id": "artifact-launch-plan-proposal",
+                "runtime": _runtime(messages=[HumanMessage(content="确认采用这版计划。")]),
+            },
+            "id": "launch-plan-call",
+            "type": "tool_call",
+        }
+    )
+
+    assert "确认起号计划 artifact-launch-plan-proposal" in result.update["messages"][0].content
+    confirm.assert_not_awaited()

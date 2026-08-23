@@ -15,6 +15,7 @@ from .review_skill_package_tool import review_skill_package
 from .setup_agent_tool import setup_agent
 from .task_tool import task_tool
 from .update_agent_tool import update_agent
+from .user_profile_tool import manage_user_profile_tool
 from .view_image_tool import view_image_tool
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     "view_image_tool",
     "task_tool",
     "list_uploaded_files",
+    "manage_user_profile_tool",
 ]
