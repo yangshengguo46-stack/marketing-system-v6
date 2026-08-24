@@ -458,6 +458,7 @@ class SubagentExecutor:
         authz_attributes: Mapping[str, Any] | None = None,
         deerflow_trace_id: str | None = None,
         extensions: Any | None = None,
+        skill_tool_budget_scope: Mapping[str, Any] | None = None,
     ):
         """Initialize the executor.
 
@@ -486,6 +487,8 @@ class SubagentExecutor:
                 captured at ``task_tool`` dispatch. When None (embedded client,
                 standalone LangGraph Server), ``_aexecute`` falls back to the
                 process-wide singleton.
+            skill_tool_budget_scope: Validated opaque carrier for sharing an
+                active Skill's tool-call budget with this native child Agent.
         """
         self.config = config
         self.app_config = app_config
@@ -524,6 +527,7 @@ class SubagentExecutor:
         # the lead run's start and this subagent's execution must not swap the
         # generation underneath the delegated work.
         self.extensions = extensions
+        self.skill_tool_budget_scope = dict(skill_tool_budget_scope) if skill_tool_budget_scope is not None else None
 
         self._base_tools = _filter_tools(
             tools,
@@ -949,6 +953,10 @@ class SubagentExecutor:
             context["oauth_provider"] = self.oauth_provider
             context["oauth_id"] = self.oauth_id
             context["run_id"] = self.run_id
+            if self.skill_tool_budget_scope is not None:
+                from deerflow.runtime.secret_context import SKILL_TOOL_CALL_BUDGET_SCOPE_CONTEXT_KEY
+
+                context[SKILL_TOOL_CALL_BUDGET_SCOPE_CONTEXT_KEY] = dict(self.skill_tool_budget_scope)
             if task_store is not None:
                 from deerflow_extension_api import EXTENSION_TASK_STORE_KEY
 

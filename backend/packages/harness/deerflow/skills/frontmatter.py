@@ -17,6 +17,7 @@ ALLOWED_FRONTMATTER_PROPERTIES = {
     "description",
     "license",
     "allowed-tools",
+    "tool-call-budgets",
     "required-secrets",
     "secrets-autonomous",
     "metadata",

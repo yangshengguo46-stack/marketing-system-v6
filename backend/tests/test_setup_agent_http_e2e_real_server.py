@@ -216,8 +216,8 @@ def test_real_http_create_agent_lands_in_authenticated_user_dir(
     """The full real-server contract test.
 
     1. Register a real user via POST /api/v1/auth/register (also auto-logs in)
-    2. POST to /api/threads/{tid}/runs/stream with the **exact** body shape the
-       frontend (LangGraph SDK) sends during the bootstrap flow.
+    2. POST to /api/threads/{tid}/runs/stream through the trusted internal
+       bootstrap boundary, acting for the registered owner.
     3. Wait for the background run to finish.
     4. Assert SOUL.md exists under users/<authenticated_uid>/agents/<name>/.
     5. Assert NOTHING exists under users/default/agents/<name>/.
@@ -251,6 +251,10 @@ def test_real_http_create_agent_lands_in_authenticated_user_dir(
         assert client.cookies.get("access_token"), "register endpoint must set session cookie"
         csrf_token = client.cookies.get("csrf_token")
         assert csrf_token, "register endpoint must set csrf_token cookie"
+        from app.gateway.internal_auth import create_internal_auth_headers
+
+        bootstrap_headers = create_internal_auth_headers(owner_user_id=auth_uid)
+        bootstrap_headers["X-CSRF-Token"] = csrf_token
 
         # --- 2. Create a thread (require_existing=True on /runs/stream means
         # we must call POST /api/threads first; the React frontend does the
@@ -265,11 +269,9 @@ def test_real_http_create_agent_lands_in_authenticated_user_dir(
         )
         assert created.status_code == 200, created.text
 
-        # --- 3. POST /runs/stream with the bootstrap wire format ---
-        # This is the EXACT shape the React frontend sends after PR #2784:
-        #   thread.submit(input, {config, context}) ->
-        #   POST /api/threads/{id}/runs/stream body =
-        #     {assistant_id, input, config, context}
+        # --- 3. POST /runs/stream with the bootstrap wire format. The internal
+        # authentication header is required because ordinary user-owned runs may
+        # not select the server-owned ``is_bootstrap`` execution mode. ---
         body = {
             "assistant_id": "lead_agent",
             "input": {
@@ -297,7 +299,7 @@ def test_real_http_create_agent_lands_in_authenticated_user_dir(
             "POST",
             f"/api/threads/{thread_id}/runs/stream",
             json=body,
-            headers={"X-CSRF-Token": csrf_token},
+            headers=bootstrap_headers,
         ) as resp:
             assert resp.status_code == 200, resp.read().decode()
             transcript = _drain_stream(resp)

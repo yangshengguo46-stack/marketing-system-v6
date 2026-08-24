@@ -480,6 +480,20 @@ def build_middlewares(
         )
     )
 
+    # Active Skills may declare run-scoped execution budgets for expensive or
+    # failure-prone tools. This limits calls and retry storms without encoding
+    # business routing or replacing the Lead's judgment.
+    from deerflow.agents.middlewares.skill_tool_budget_middleware import SkillToolBudgetMiddleware
+
+    middlewares.append(
+        SkillToolBudgetMiddleware(
+            available_skills=available_skills,
+            app_config=resolved_app_config,
+            user_id=user_id,
+            slash_source_owner_token=slash_source_owner_token,
+        )
+    )
+
     # Capture completed task delegations and inspected Skill files before
     # summarization can compact them, then inject durable context channels
     # (summary + ledger + skills) into model calls.

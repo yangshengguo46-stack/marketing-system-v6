@@ -583,6 +583,10 @@ def test_stream_run_executes_real_lead_agent_setup_agent_business_path(isolated_
         csrf_token = _register_user(client, email="business-e2e@example.com")
         auth_user_id = client.get("/api/v1/auth/me").json()["id"]
         thread_id = _create_thread(client, csrf_token)
+        from app.gateway.internal_auth import create_internal_auth_headers
+
+        bootstrap_headers = create_internal_auth_headers(owner_user_id=auth_user_id)
+        bootstrap_headers["X-CSRF-Token"] = csrf_token
 
         body = _run_body(
             input={
@@ -606,7 +610,7 @@ def test_stream_run_executes_real_lead_agent_setup_agent_business_path(isolated_
             "POST",
             f"/api/threads/{thread_id}/runs/stream",
             json=body,
-            headers={"X-CSRF-Token": csrf_token},
+            headers=bootstrap_headers,
         ) as response:
             assert response.status_code == 200, response.read().decode()
             run_id = _run_id_from_response(response)

@@ -1152,7 +1152,12 @@ class TestLeakSurfaces:
         assert _SECRET not in str(config.get("configurable", {}))
 
     def test_redact_helper_strips_secret_keys(self):
-        from deerflow.runtime.secret_context import SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY, redact_secret_context_keys
+        from deerflow.runtime.secret_context import (
+            SKILL_TOOL_CALL_BUDGET_CONTEXT_KEY,
+            SKILL_TOOL_CALL_BUDGET_SCOPE_CONTEXT_KEY,
+            SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY,
+            redact_secret_context_keys,
+        )
 
         ctx = {
             "thread_id": "t",
@@ -1167,6 +1172,15 @@ class TestLeakSurfaces:
                 "owner_token": "policy-owner-token",
                 "active_paths": ["/mnt/skills/public/reviewer/SKILL.md"],
                 "allowed_names": None,
+            },
+            SKILL_TOOL_CALL_BUDGET_CONTEXT_KEY: {
+                "version": 2,
+                "owner_token": "budget-owner-token",
+            },
+            SKILL_TOOL_CALL_BUDGET_SCOPE_CONTEXT_KEY: {
+                "version": 1,
+                "token": "opaque-scope-token",
+                "run_id": "run-1",
             },
         }
         redacted = redact_secret_context_keys(ctx)

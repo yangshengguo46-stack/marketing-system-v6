@@ -705,6 +705,7 @@ def test_build_middlewares_passes_run_model_name_to_summarization(monkeypatch):
 def test_build_middlewares_orders_skill_activation_before_policy_and_durable_context(monkeypatch):
     from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
     from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+    from deerflow.agents.middlewares.skill_tool_budget_middleware import SkillToolBudgetMiddleware
     from deerflow.agents.middlewares.skill_tool_policy_middleware import SkillToolPolicyMiddleware
 
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
@@ -720,10 +721,13 @@ def test_build_middlewares_orders_skill_activation_before_policy_and_durable_con
 
     activation_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, SkillActivationMiddleware))
     policy_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, SkillToolPolicyMiddleware))
+    budget_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, SkillToolBudgetMiddleware))
     durable_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, DurableContextMiddleware))
     assert policy_idx == activation_idx + 1
-    assert durable_idx == policy_idx + 1
+    assert budget_idx == policy_idx + 1
+    assert durable_idx == budget_idx + 1
     assert middlewares[activation_idx]._slash_source_owner_token == middlewares[policy_idx]._slash_source_owner_token
+    assert middlewares[activation_idx]._slash_source_owner_token == middlewares[budget_idx]._slash_source_owner_token
 
 
 def test_build_middlewares_places_context_manifest_at_final_request_boundary(monkeypatch):
@@ -780,6 +784,7 @@ def test_build_middlewares_places_user_profile_after_dynamic_context_and_before_
 def test_compiled_skill_policy_chain_filters_schema_and_blocks_execution(monkeypatch, use_stale_path):
     from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
     from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+    from deerflow.agents.middlewares.skill_tool_budget_middleware import SkillToolBudgetMiddleware
     from deerflow.agents.middlewares.skill_tool_policy_middleware import SkillToolPolicyMiddleware
 
     app_config = _make_app_config(
@@ -798,7 +803,12 @@ def test_compiled_skill_policy_chain_filters_schema_and_blocks_execution(monkeyp
     activation_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, SkillActivationMiddleware))
     durable_idx = next(i for i, middleware in enumerate(middlewares) if isinstance(middleware, DurableContextMiddleware))
     compiled_slice = middlewares[activation_idx : durable_idx + 1]
-    assert [type(middleware) for middleware in compiled_slice] == [SkillActivationMiddleware, SkillToolPolicyMiddleware, DurableContextMiddleware]
+    assert [type(middleware) for middleware in compiled_slice] == [
+        SkillActivationMiddleware,
+        SkillToolPolicyMiddleware,
+        SkillToolBudgetMiddleware,
+        DurableContextMiddleware,
+    ]
 
     skill_dir = Path("/tmp/skills/public/restricted")
     restricted = Skill(
@@ -813,7 +823,13 @@ def test_compiled_skill_policy_chain_filters_schema_and_blocks_execution(monkeyp
         enabled=True,
     )
     policy = compiled_slice[1]
-    policy._storage = lambda: _PolicyStorageStub([] if use_stale_path else [restricted])
+    budget = compiled_slice[2]
+
+    def policy_storage():
+        return _PolicyStorageStub([] if use_stale_path else [restricted])
+
+    policy._storage = policy_storage
+    budget._storage = policy_storage
 
     context: dict[str, object] = {}
     active_path = "/mnt/skills/public/missing/SKILL.md" if use_stale_path else restricted.get_container_file_path()

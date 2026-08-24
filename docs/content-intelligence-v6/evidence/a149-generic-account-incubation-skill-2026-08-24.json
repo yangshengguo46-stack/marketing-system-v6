@@ -1,0 +1,115 @@
+{
+  "audit_id": "A149",
+  "date": "2026-08-24",
+  "status": "runtime_pass_business_partial",
+  "base_commit": "d11136f5",
+  "implementation": {
+    "skill": "account-incubation",
+    "skill_version": "1.2.0",
+    "middleware": "SkillToolBudgetMiddleware",
+    "budget_scope": "per_skill_root_run_shared_with_native_subagents",
+    "industry_routes_in_middleware": false,
+    "reservation_before_execution": true,
+    "concurrent_reservation_atomic": true,
+    "tool_arguments_returned_on_denial": false,
+    "model_step_decision_frozen": true,
+    "skill_switch_refreshes_budget": false,
+    "exhaustion_forces_completion": false,
+    "scope_carrier_identity_bound": true,
+    "scope_registry": "process_local"
+  },
+  "pre_budget_live_failures": [
+    {
+      "thread_id": "4ec50f3f-9b5e-4f61-be6c-5f487a80f436",
+      "run_id": "2430cc06-c9a1-4693-ace1-54bb79c40fef",
+      "status": "interrupted",
+      "model_calls_at_interrupt": 10,
+      "total_tokens_at_interrupt": 66461,
+      "failure": "parallel near-duplicate searches and fetch retries ignored the prompt-only limit"
+    },
+    {
+      "thread_id": "b04bab87-8a0c-4746-822b-e2228d45e094",
+      "run_id": "2417f642-0d67-4c73-b5a7-d52823df4712",
+      "status": "interrupted",
+      "model_calls_at_interrupt": 11,
+      "total_tokens_at_interrupt": 83473,
+      "failure": "parallel near-duplicate searches and fetch retries ignored the prompt-only limit"
+    }
+  ],
+  "live_runs": [
+    {
+      "case": "industrial_safety_training_chemical_parks",
+      "input": "我是做工业安全培训的，主要客户是化工园区，我该怎么起号？",
+      "thread_id": "e3cbfe00-0d8a-413c-945e-757e2a2a57d9",
+      "run_id": "a61ce274-6b1c-49da-b385-9afdacfd3a67",
+      "status": "success",
+      "model_calls": 5,
+      "input_tokens": 18459,
+      "output_tokens": 3807,
+      "total_tokens": 22266,
+      "wall_time_seconds": 87.47,
+      "tool_sequence": [
+        "describe_skill",
+        "activate_skill",
+        "tool_search",
+        "web_search"
+      ],
+      "final_answer_sha256": "5fa523151784975cac1e8d197b9aee96f86ebf574d1b59b97dd7f0d972ca7f2b",
+      "final_answer_utf8_bytes": 4097,
+      "business_acceptance": {
+        "account_incubation_task_recognized": true,
+        "audience_present": true,
+        "recommended_direction_present": true,
+        "directly_shootable_topic_present": true,
+        "search_runaway_prevented": true,
+        "unsupported_user_capability_avoided": false,
+        "overall": "partial"
+      }
+    },
+    {
+      "case": "tiktok_live_guild_mena_cca",
+      "input": "我是做TikTok直播公会的，主要地区为MENA和CCA，我该怎么起号？",
+      "thread_id": "b93c7a5a-0427-4653-b74e-23f7b79ac255",
+      "run_id": "4a5c06c0-61cf-4df5-a8d6-9e7306621d55",
+      "status": "success",
+      "model_calls": 5,
+      "input_tokens": 17725,
+      "output_tokens": 5791,
+      "total_tokens": 23516,
+      "wall_time_seconds": 132.71,
+      "tool_sequence": [
+        "describe_skill",
+        "activate_skill",
+        "tool_search",
+        "web_search"
+      ],
+      "final_answer_sha256": "eb04b1085a739362144e597ce18200633d1f68ed4bc2cb948131af0e7670e18f",
+      "final_answer_utf8_bytes": 4929,
+      "shootable_topic": "直播公会到底靠谁赚钱：拆“公会—代理—主播”这条链，每一环拿走什么、留下什么坑",
+      "business_acceptance": {
+        "account_incubation_task_recognized": true,
+        "business_target_and_content_audience_separated": true,
+        "recommended_direction_present": true,
+        "directly_shootable_topic_present": true,
+        "search_runaway_prevented": true,
+        "real_platform_benchmark_evidence_used": false,
+        "unsupported_regional_claims_avoided": false,
+        "unsupported_user_capability_avoided": false,
+        "overall": "partial"
+      }
+    }
+  ],
+  "test_results_before_closeout": {
+    "budget_and_task_scope_tests": "52 passed",
+    "adjacent_activation_and_bootstrap_regressions": "5 passed",
+    "full_backend_suite": "12679 passed, 76 skipped, 19 warnings in 511.17s",
+    "full_backend_suite_exit_code": 0
+  },
+  "decision": {
+    "adopt_generic_account_incubation_skill": true,
+    "adopt_deterministic_skill_tool_budget": true,
+    "restore_fixed_incubation_workflow": false,
+    "claim_full_business_acceptance": false,
+    "next_boundary": "bind first-person experience, user capability, and current regional claims to user/project facts or read evidence"
+  }
+}

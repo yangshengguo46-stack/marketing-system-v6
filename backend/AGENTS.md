@@ -165,6 +165,9 @@ The Lead owns incubation judgment and selects the least work needed: answer, one
 At most one active incubation Skill may offer bounded, rejectable advice; it cannot rewrite user text, own denials,
 classify free text, reject drafts by substring, or overwrite model judgment.
 
+`account-incubation` guides generic account starts without industry routing; its shared-Run budgets bound tool cost,
+never marketing judgment.
+
 Lead prompt ownership, the 1,600-byte Agent-kernel budget, and the 5,000-byte static-template budget live in
 `agents/AGENTS.md`; providers add no marketing behavior.
 

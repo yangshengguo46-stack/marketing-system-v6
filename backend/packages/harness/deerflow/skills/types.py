@@ -38,6 +38,14 @@ class SecretRequirement:
 
 
 @dataclass(frozen=True)
+class ToolCallBudget:
+    """One root-Run call budget shared by a group of exact tool names."""
+
+    tools: tuple[str, ...]
+    max_calls: int
+
+
+@dataclass(frozen=True)
 class Skill:
     """Represents a skill with its metadata and file path"""
 
@@ -51,6 +59,7 @@ class Skill:
     allowed_tools: tuple[str, ...] | None = None
     enabled: bool = False  # Whether this skill is enabled
     required_secrets: tuple[SecretRequirement, ...] = field(default_factory=tuple)
+    tool_call_budgets: tuple[ToolCallBudget, ...] = field(default_factory=tuple)
     # Whether declared secrets may bind after an autonomous activate_skill call,
     # or only on explicit user /slash activation. Frontmatter:
     # ``secrets-autonomous`` (default true).

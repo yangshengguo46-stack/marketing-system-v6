@@ -633,7 +633,13 @@ def test_task_tool_emits_running_and_completed_events(monkeypatch):
     # by SubagentExecutor and injected as conversation items (Codex pattern).
     assert captured["executor_kwargs"]["config"].system_prompt == "Base system prompt"
 
-    get_available_tools.assert_called_once_with(model_name="ark-model", groups=None, subagent_enabled=False, include_upload_tool=False)
+    get_available_tools.assert_called_once_with(
+        model_name="ark-model",
+        groups=None,
+        subagent_enabled=False,
+        include_upload_tool=False,
+        include_user_profile_tool=False,
+    )
 
     event_types = [e["type"] for e in events]
     assert event_types == ["task_started", "task_running", "task_running", "task_completed"]
@@ -643,6 +649,55 @@ def test_task_tool_emits_running_and_completed_events(monkeypatch):
     assert {event["task_id"] for event in events} == {"tc-123"}
     assert events[0]["model_name"] == "ark-model"
     assert events[-1]["result"] == "all done"
+
+
+def test_task_tool_propagates_shared_skill_budget_scope(monkeypatch):
+    config = _make_subagent_config()
+    runtime = _make_runtime()
+    runtime.context["run_id"] = "root-run-1"
+    captured = {}
+    carrier = {
+        "version": 1,
+        "token": "opaque-scope-token",
+        "run_id": "root-run-1",
+        "user_id": "default",
+        "thread_id": "thread-1",
+        "active_paths": ["/mnt/skills/public/account-incubation/SKILL.md"],
+    }
+
+    class DummyExecutor:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def execute_async(self, prompt, task_id=None):
+            return "execution-budget-scope"
+
+    monkeypatch.setattr(task_tool_module, "SubagentStatus", FakeSubagentStatus)
+    monkeypatch.setattr(task_tool_module, "SubagentExecutor", DummyExecutor)
+    monkeypatch.setattr(task_tool_module, "get_subagent_config", lambda _: config)
+    monkeypatch.setattr(
+        task_tool_module,
+        "get_background_task_result",
+        lambda _: _make_result(FakeSubagentStatus.COMPLETED, result="done"),
+    )
+    monkeypatch.setattr(task_tool_module, "get_stream_writer", lambda: lambda _: None)
+    monkeypatch.setattr(task_tool_module.asyncio, "sleep", _no_sleep)
+    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **_: [])
+
+    from deerflow.agents.middlewares import skill_tool_budget_middleware as budget_module
+
+    monkeypatch.setattr(budget_module, "export_skill_tool_budget_scope", lambda context: carrier)
+
+    output = _run_task_tool(
+        runtime=runtime,
+        description="研究对标",
+        prompt="research one benchmark",
+        subagent_type="general-purpose",
+        tool_call_id="tc-budget-scope",
+    )
+
+    assert _task_tool_message(output).content == "Task Succeeded. Result: done"
+    assert captured["skill_tool_budget_scope"] == carrier
 
 
 def test_task_tool_emits_cumulative_usage_on_running_event(monkeypatch):
@@ -747,7 +802,13 @@ def test_task_tool_propagates_tool_groups_to_subagent(monkeypatch):
 
     assert _task_tool_message(output).content == "Task Succeeded. Result: done"
     # The key assertion: groups should be propagated from parent metadata
-    get_available_tools.assert_called_once_with(model_name="ark-model", groups=parent_tool_groups, subagent_enabled=False, include_upload_tool=False)
+    get_available_tools.assert_called_once_with(
+        model_name="ark-model",
+        groups=parent_tool_groups,
+        subagent_enabled=False,
+        include_upload_tool=False,
+        include_user_profile_tool=False,
+    )
 
 
 def test_task_tool_uses_subagent_model_override_for_tool_loading(monkeypatch):
@@ -798,6 +859,7 @@ def test_task_tool_uses_subagent_model_override_for_tool_loading(monkeypatch):
         groups=None,
         subagent_enabled=False,
         include_upload_tool=False,
+        include_user_profile_tool=False,
     )
 
 
@@ -922,7 +984,13 @@ def test_task_tool_no_tool_groups_passes_none(monkeypatch):
 
     assert _task_tool_message(output).content == "Task Succeeded. Result: ok"
     # No tool_groups in metadata → groups=None (default behavior preserved)
-    get_available_tools.assert_called_once_with(model_name="ark-model", groups=None, subagent_enabled=False, include_upload_tool=False)
+    get_available_tools.assert_called_once_with(
+        model_name="ark-model",
+        groups=None,
+        subagent_enabled=False,
+        include_upload_tool=False,
+        include_user_profile_tool=False,
+    )
 
 
 def test_task_tool_runtime_none_passes_groups_none(monkeypatch):
@@ -967,6 +1035,7 @@ def test_task_tool_runtime_none_passes_groups_none(monkeypatch):
         groups=None,
         subagent_enabled=False,
         include_upload_tool=False,
+        include_user_profile_tool=False,
         app_config=fallback_app_config,
     )
 

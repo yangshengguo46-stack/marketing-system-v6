@@ -337,10 +337,11 @@ def build_subagent_runtime_middlewares(
     )
 
     # Enabled/configured skills are discoverable metadata, not automatically
-    # active authority. Mirror the lead agent's activation + policy pair so a
+    # active authority. Mirror the lead agent's activation + policy/budget set so a
     # subagent keeps its ordinary tool set until a slash command or an explicit
     # activate_skill call activates the corresponding allowed-tools declaration.
     from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+    from deerflow.agents.middlewares.skill_tool_budget_middleware import SkillToolBudgetMiddleware
     from deerflow.agents.middlewares.skill_tool_policy_middleware import SkillToolPolicyMiddleware
 
     slash_source_owner_token = secrets.token_urlsafe(24)
@@ -354,6 +355,14 @@ def build_subagent_runtime_middlewares(
     )
     middlewares.append(
         SkillToolPolicyMiddleware(
+            available_skills=available_skills,
+            app_config=app_config,
+            user_id=user_id,
+            slash_source_owner_token=slash_source_owner_token,
+        )
+    )
+    middlewares.append(
+        SkillToolBudgetMiddleware(
             available_skills=available_skills,
             app_config=app_config,
             user_id=user_id,

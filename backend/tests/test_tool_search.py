@@ -109,7 +109,7 @@ class TestConfigExampleToolSearchSection:
         skills = data.get("skills")
         assert isinstance(skills, dict)
         assert skills.get("deferred_discovery") is True
-        assert skills.get("prompt_index_patterns") == ["incubate-*"]
+        assert skills.get("prompt_index_patterns") == ["incubate-*", "account-incubation"]
 
 
 class TestDeferredToolsPromptSection:

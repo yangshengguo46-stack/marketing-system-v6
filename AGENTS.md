@@ -14,11 +14,8 @@ guide rather than expecting full detail here:
 
 ## What is DeerFlow
 
-DeerFlow is a LangGraph-based AI super-agent system with a full-stack architecture. The
-backend runs a "super agent" with sandboxed execution, persistent memory, subagent
-delegation, and extensible tools (built-in, MCP, community), all per-thread isolated. The
-frontend is a Next.js chat UI. External IM platforms (Feishu, Slack, Telegram, Discord,
-DingTalk) bridge into the same agent through the Gateway.
+DeerFlow is a LangGraph-based full-stack agent: a sandboxed, per-thread backend with
+memory, subagents, and extensible tools; a Next.js chat UI; and IM bridges through the Gateway.
 
 ## Service Topology
 
@@ -128,14 +125,8 @@ make up / down   # Build/stop the production Docker stack (browser at localhost:
 make docker-start / docker-stop / docker-logs   # Docker development environment
 ```
 
-Production startup uses the image's pre-built Python environment with `uv run
---no-sync`, gives the Gateway a real `/health` probe, and makes `make up` wait
-for that probe before printing its success banner. A readiness failure must
-surface Compose status and recent Gateway logs instead of claiming the stack is
-running.
-
-Docker log and restart commands resolve `DEER_FLOW_ROOT` from the current
-checkout before invoking Compose, matching the start and stop commands.
+Production uses `uv run --no-sync`; `make up` waits for Gateway `/health` and reports
+Compose status/logs on failure. Docker log/restart commands resolve `DEER_FLOW_ROOT`.
 
 Run `make help` for the full list.
 
@@ -161,16 +152,9 @@ Host pnpm callers must use `scripts/pnpm.py`. It runs in `frontend/`, prefers di
 falls back to Corepack, and forces the version pinned by `packageManager`. Build permissions
 must be booleans; never commit pnpm's generated placeholder values.
 
-## Where to Go Next
-
-- Backend work → **[backend/AGENTS.md](backend/AGENTS.md)**
-- Frontend work → **[frontend/AGENTS.md](frontend/AGENTS.md)**
-- Setup & install → **[Install.md](Install.md)**, **[CONTRIBUTING.md](CONTRIBUTING.md)**
-- Project overview & usage → **[README.md](README.md)** (translations: `README_zh.md`,
-  `README_ja.md`, `README_fr.md`, `README_ru.md`)
-- Security policy → **[SECURITY.md](SECURITY.md)**
-- Changes → **[CHANGELOG.md](CHANGELOG.md)**
-- Cutting a release → **[RELEASING.md](RELEASING.md)**
+Project usage and setup live in **[README.md](README.md)** and **[Install.md](Install.md)**;
+development, security, and releases use **[CONTRIBUTING.md](CONTRIBUTING.md)**,
+**[SECURITY.md](SECURITY.md)**, and **[RELEASING.md](RELEASING.md)**.
 
 ## Cross-Cutting Conventions
 

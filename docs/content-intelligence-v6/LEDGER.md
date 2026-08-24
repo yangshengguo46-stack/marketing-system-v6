@@ -2731,3 +2731,24 @@ Context 和子 Agent 均为空；模型在 reasoning 中自行判断无需搜索
 下的能力发现失败：成本问题已显著改善，业务脑尚未完成。测试只固定失败现场，没有恢复旧流水线，也没有新增行业
 硬门。详见 `audits/A148-tiktok-live-guild-thin-kernel-e2e.md` 与
 `evidence/a148-tiktok-live-guild-thin-kernel-e2e-2026-08-24.json`。
+
+## A149 通用起号 Skill 与根运行共享研究预算
+
+2026-08-24 针对 A148 的业务失败新增延迟发现的通用 `account-incubation` Skill，不恢复固定孵化流水线，也不在
+主提示词或中间件写入行业词表。Skill 负责提醒 Agent 把“我是做 X 的，怎么起号”识别为公开内容账号孵化，区分
+业务对象与内容受众，并交付方向和至少一个可直接拍摄的选题。提示正文要求“一次搜索、不重试”后，两次真实公会
+运行仍分别在 66,461 和 83,473 Token 时因搜索与抓取重试被人工中断，证明自然语言不是执行预算。
+
+本轮先写失败测试，再新增 Skill frontmatter `tool-call-budgets` 与 `SkillToolBudgetMiddleware`。预算只在 Skill
+显式激活后的根 Run 生效；同步、异步和并行调用在执行前原子预占，失败也消耗额度；额度耗尽后拒绝调用并隐藏
+相应 Tool Schema，但不命令模型收尾。独立审计随后发现首版会在 `A -> B -> A` 时刷新额度、父子 Agent 各算
+一份、并在工具执行时重读 Skill。`1.2.0` 已改为模型步冻结、每 Skill 根 Run 账本，并用身份绑定的 opaque carrier
+让 DeerFlow 原生子 Agent 共享同一原子额度。它不评价营销判断，不影响被动 Skill、未预算工具或下一根 Run。
+
+全新工业安全培训案例以 5 次模型调用、22,266 Token 完成；TikTok 直播公会回归以 5 次模型调用、23,516
+Token 完成，正确交付了受众区分、账号方向和可拍题目，相比预算上线前的两次中断至少少消耗 42,945 和 59,957
+Token。业务仍为部分通过：两份回答都推断了用户未提供的经历或能力，公会答案还有未经正文核实的区域判断，且没有
+取得真实抖音对标证据。因此本轮结论为“运行机制通过、通用起号判断部分通过、事实绑定未通过”，不得宣称完整起号
+脑已经验收。详见 `audits/A149-generic-account-incubation-skill.md` 与
+`evidence/a149-generic-account-incubation-skill-2026-08-24.json`。正式后端非 live 全量回归为
+`12679 passed, 76 skipped, 19 warnings in 511.17s`，退出码为 `0`。

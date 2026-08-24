@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 from deerflow.skills.frontmatter import ALLOWED_FRONTMATTER_PROPERTIES, split_skill_markdown
-from deerflow.skills.parser import parse_allowed_tools
+from deerflow.skills.parser import parse_allowed_tools, parse_tool_call_budgets
 from deerflow.skills.types import SKILL_MD_FILE
 
 
@@ -72,6 +72,11 @@ def _validate_skill_frontmatter(skill_dir: Path) -> tuple[bool, str, str | None]
 
     try:
         parse_allowed_tools(frontmatter.get("allowed-tools"), skill_md)
+    except ValueError as e:
+        return False, str(e).replace(str(skill_md), SKILL_MD_FILE), None
+
+    try:
+        parse_tool_call_budgets(frontmatter.get("tool-call-budgets"), skill_md)
     except ValueError as e:
         return False, str(e).replace(str(skill_md), SKILL_MD_FILE), None
 

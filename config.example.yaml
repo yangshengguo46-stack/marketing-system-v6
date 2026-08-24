@@ -1596,6 +1596,7 @@ skills:
   # Other enabled skills remain searchable through describe_skill.
   prompt_index_patterns:
     - "incubate-*"
+    - "account-incubation"
 
 # ============================================================================
 # SkillScan Configuration

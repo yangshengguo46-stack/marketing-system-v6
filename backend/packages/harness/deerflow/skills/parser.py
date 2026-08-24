@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from .types import SKILL_MD_FILE, SecretRequirement, Skill, SkillCategory
+from .types import SKILL_MD_FILE, SecretRequirement, Skill, SkillCategory, ToolCallBudget
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,9 @@ _INCUBATION_PROFILE_PATH = Path("references/incubation-profile.json")
 _INCUBATION_EVAL_PATH = Path("evals/evals.json")
 _MAX_INCUBATION_PROFILE_BYTES = 16_384
 _MAX_INCUBATION_EVAL_BYTES = 65_536
+_MAX_TOOL_CALL_BUDGET_GROUPS = 16
+_MAX_TOOL_CALL_BUDGET_TOOLS = 32
+_MAX_TOOL_CALLS_PER_GROUP = 20
 
 
 def _read_bounded_package_json(skill_file: Path, relative_path: Path, *, max_bytes: int) -> dict[str, object] | None:
@@ -128,6 +131,53 @@ def parse_allowed_tools(raw: object, skill_file: Path) -> tuple[str, ...] | None
             raise ValueError(f"allowed-tools in {skill_file} cannot contain empty tool names")
         allowed_tools.append(tool_name)
     return tuple(allowed_tools)
+
+
+def parse_tool_call_budgets(raw: object, skill_file: Path) -> tuple[ToolCallBudget, ...]:
+    """Parse optional run-scoped execution budgets for exact tool names."""
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise ValueError(f"tool-call-budgets in {skill_file} must be a list")
+    if len(raw) > _MAX_TOOL_CALL_BUDGET_GROUPS:
+        raise ValueError(f"tool-call-budgets in {skill_file} cannot contain more than {_MAX_TOOL_CALL_BUDGET_GROUPS} groups")
+
+    budgets: list[ToolCallBudget] = []
+    seen_tools: set[str] = set()
+    total_tools = 0
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            raise ValueError(f"tool-call-budgets group {index + 1} in {skill_file} must be a mapping")
+        unexpected = set(item) - {"tools", "max-calls"}
+        if unexpected:
+            names = ", ".join(sorted(str(key) for key in unexpected))
+            raise ValueError(f"tool-call-budgets group {index + 1} in {skill_file} has unexpected field(s): {names}")
+
+        raw_tools = item.get("tools")
+        if not isinstance(raw_tools, list) or not raw_tools:
+            raise ValueError(f"tool-call-budgets group {index + 1} in {skill_file} must contain a non-empty tools list")
+        tools: list[str] = []
+        for raw_tool in raw_tools:
+            if not isinstance(raw_tool, str) or not raw_tool.strip():
+                raise ValueError(f"tool-call-budgets group {index + 1} in {skill_file} must contain only non-empty tool names")
+            tool = raw_tool.strip()
+            if tool in tools:
+                raise ValueError(f"tool-call-budgets group {index + 1} in {skill_file} repeats tool '{tool}'")
+            if tool in seen_tools:
+                raise ValueError(f"tool-call-budgets in {skill_file} cannot place tool '{tool}' in more than one group")
+            tools.append(tool)
+            seen_tools.add(tool)
+
+        total_tools += len(tools)
+        if total_tools > _MAX_TOOL_CALL_BUDGET_TOOLS:
+            raise ValueError(f"tool-call-budgets in {skill_file} cannot cover more than {_MAX_TOOL_CALL_BUDGET_TOOLS} tools")
+
+        max_calls = item.get("max-calls")
+        if type(max_calls) is not int or not 1 <= max_calls <= _MAX_TOOL_CALLS_PER_GROUP:
+            raise ValueError(f"tool-call-budgets group {index + 1} in {skill_file} max-calls must be a positive integer no greater than {_MAX_TOOL_CALLS_PER_GROUP}")
+        budgets.append(ToolCallBudget(tools=tuple(tools), max_calls=max_calls))
+
+    return tuple(budgets)
 
 
 def parse_required_secrets(raw: object, skill_file: Path) -> tuple[SecretRequirement, ...]:
@@ -261,6 +311,12 @@ def parse_skill_file(skill_file: Path, category: SkillCategory, relative_path: P
             logger.error("Invalid required-secrets in %s: %s", skill_file, exc)
             return None
 
+        try:
+            tool_call_budgets = parse_tool_call_budgets(metadata.get("tool-call-budgets"), skill_file)
+        except ValueError as exc:
+            logger.error("Invalid tool-call-budgets in %s: %s", skill_file, exc)
+            return None
+
         secrets_autonomous = parse_secrets_autonomous(metadata.get("secrets-autonomous"), skill_file)
 
         return Skill(
@@ -274,6 +330,7 @@ def parse_skill_file(skill_file: Path, category: SkillCategory, relative_path: P
             allowed_tools=allowed_tools,
             enabled=True,  # Actual state comes from the extensions config file.
             required_secrets=required_secrets,
+            tool_call_budgets=tool_call_budgets,
             secrets_autonomous=secrets_autonomous,
         )
 

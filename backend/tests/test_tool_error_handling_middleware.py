@@ -162,6 +162,7 @@ def test_build_subagent_runtime_middlewares_threads_app_config_to_llm_middleware
     # + 1 ReadBeforeWriteMiddleware + 1 LoopDetectionMiddleware
     # + 1 TokenBudgetMiddleware (subagents.token_budget enabled by default, #3875 Phase 2)
     # + 1 SkillActivationMiddleware + 1 SkillToolPolicyMiddleware
+    # + 1 SkillToolBudgetMiddleware
     # + 1 SafetyFinishReasonMiddleware + 1 DurableContextMiddleware
     # + 1 SubagentDateContextMiddleware
     # + 1 SystemMessageCoalescingMiddleware (all enabled by default).
@@ -169,12 +170,13 @@ def test_build_subagent_runtime_middlewares_threads_app_config_to_llm_middleware
     from deerflow.agents.middlewares.dynamic_context_middleware import SubagentDateContextMiddleware
     from deerflow.agents.middlewares.safety_finish_reason_middleware import SafetyFinishReasonMiddleware
     from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+    from deerflow.agents.middlewares.skill_tool_budget_middleware import SkillToolBudgetMiddleware
     from deerflow.agents.middlewares.skill_tool_policy_middleware import SkillToolPolicyMiddleware
     from deerflow.agents.middlewares.system_message_coalescing_middleware import SystemMessageCoalescingMiddleware
     from deerflow.agents.middlewares.token_budget_middleware import TokenBudgetMiddleware
     from deerflow.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
 
-    assert len(middlewares) == 18
+    assert len(middlewares) == 19
     assert isinstance(middlewares[0], FakeMiddleware)  # InputSanitizationMiddleware stub
     assert isinstance(middlewares[1], ToolOutputBudgetMiddleware)
     assert any(isinstance(m, ToolErrorHandlingMiddleware) for m in middlewares)
@@ -183,8 +185,11 @@ def test_build_subagent_runtime_middlewares_threads_app_config_to_llm_middleware
     assert any(isinstance(m, SafetyFinishReasonMiddleware) for m in middlewares)
     activation_idx = next(i for i, m in enumerate(middlewares) if isinstance(m, SkillActivationMiddleware))
     policy_idx = next(i for i, m in enumerate(middlewares) if isinstance(m, SkillToolPolicyMiddleware))
+    budget_idx = next(i for i, m in enumerate(middlewares) if isinstance(m, SkillToolBudgetMiddleware))
     assert policy_idx == activation_idx + 1
+    assert budget_idx == policy_idx + 1
     assert middlewares[activation_idx]._slash_source_owner_token == middlewares[policy_idx]._slash_source_owner_token
+    assert middlewares[activation_idx]._slash_source_owner_token == middlewares[budget_idx]._slash_source_owner_token
     # DurableContextMiddleware is present but not last: the coalescer (#4040) is
     # appended innermost so it can merge the SystemMessage DurableContext injects.
     # The coalescer is appended unconditionally (after the optional summarization
@@ -193,7 +198,7 @@ def test_build_subagent_runtime_middlewares_threads_app_config_to_llm_middleware
     durable_idx = next(i for i, m in enumerate(middlewares) if isinstance(m, DurableContextMiddleware))
     date_idx = next(i for i, m in enumerate(middlewares) if isinstance(m, SubagentDateContextMiddleware))
     assert isinstance(middlewares[-1], SystemMessageCoalescingMiddleware)
-    assert policy_idx < durable_idx < date_idx == len(middlewares) - 2
+    assert budget_idx < durable_idx < date_idx == len(middlewares) - 2
 
 
 def test_tool_progress_middleware_is_outer_relative_to_error_handling(monkeypatch: pytest.MonkeyPatch):

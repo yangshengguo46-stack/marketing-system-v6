@@ -114,6 +114,42 @@ def test_parse_invalid_allowed_tools_returns_none(tmp_path):
     assert skill is None
 
 
+def test_parse_grouped_tool_call_budgets(tmp_path):
+    skill_file = _write_skill(
+        tmp_path,
+        """name: my-skill
+description: Test
+tool-call-budgets:
+  - tools: [web_search]
+    max-calls: 1
+  - tools: [web_fetch, collect_evidence]
+    max-calls: 2""",
+    )
+
+    skill = parse_skill_file(skill_file, category="custom")
+
+    assert skill is not None
+    assert [(item.tools, item.max_calls) for item in skill.tool_call_budgets] == [
+        (("web_search",), 1),
+        (("web_fetch", "collect_evidence"), 2),
+    ]
+
+
+def test_parse_overlapping_tool_call_budgets_returns_none(tmp_path):
+    skill_file = _write_skill(
+        tmp_path,
+        """name: my-skill
+description: Test
+tool-call-budgets:
+  - tools: [web_search, web_fetch]
+    max-calls: 1
+  - tools: [web_search]
+    max-calls: 2""",
+    )
+
+    assert parse_skill_file(skill_file, category="custom") is None
+
+
 def test_parse_missing_name_returns_none(tmp_path):
     """Skills missing a name field are rejected."""
     skill_file = _write_skill(tmp_path, "description: A test skill")

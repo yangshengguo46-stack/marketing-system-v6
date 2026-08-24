@@ -307,8 +307,9 @@ def test_skill_activation_middleware_activates_once_across_tool_loop(monkeypatch
     assert sum(is_slash_skill_activation_reminder(message) for message in first_capture["messages"]) == 1
 
     # --- model call 2: same turn, real state after the tool result comes back.
-    # The reminder from call 1 is gone (never persisted), exactly as create_agent
-    # rebuilds it. It must NOT be re-injected. ---
+    # The one-shot slash reminder from call 1 is gone. The current active Skill is
+    # nevertheless projected once as hidden context on every later model step so
+    # the model does not lose its method after a tool round-trip. ---
     ai_tool_call = first_result
     tool_result = ToolMessage(content="echoed", tool_call_id="call-1", id="tool-1")
     second_capture = {}
@@ -319,8 +320,12 @@ def test_skill_activation_middleware_activates_once_across_tool_loop(monkeypatch
 
     second_result = middleware.wrap_model_call(_make_model_request([user, ai_tool_call, tool_result], runtime=runtime), second_handler)
     assert isinstance(second_result, AIMessage)
-    assert second_capture["messages"] == [user, ai_tool_call, tool_result]
+    active_context, projected_user, projected_ai, projected_tool = second_capture["messages"]
+    assert active_context.additional_kwargs.get("active_skill_context") is True
+    assert '<active_skill_context name="data-analysis"' in active_context.content
+    assert [projected_user, projected_ai, projected_tool] == [user, ai_tool_call, tool_result]
     assert sum(is_slash_skill_activation_reminder(message) for message in second_capture["messages"]) == 0
+    assert sum(message.additional_kwargs.get("active_skill_context") is True for message in second_capture["messages"]) == 1
 
     # Skill read from disk once and the activation audit event recorded once for the
     # whole multi-call turn.
@@ -520,6 +525,7 @@ def test_skill_activation_middleware_records_activation_audit_event(monkeypatch,
     assert kwargs["hook"] == "wrap_model_call"
     assert kwargs["action"] == "activate"
     assert kwargs["changes"] == {
+        "mode": "slash",
         "skill_name": "data-analysis",
         "category": "custom",
         "path": "/mnt/skills/custom/data-analysis/SKILL.md",
@@ -568,7 +574,7 @@ def test_skill_activation_middleware_warns_and_ignores_activation_audit_errors(m
 
     assert isinstance(result, AIMessage)
     assert result.content == "ok"
-    assert "Failed to record slash skill activation audit event" in caplog.text
+    assert "Failed to record skill activation audit event" in caplog.text
 
 
 def test_skill_activation_middleware_activates_only_latest_real_user_message(monkeypatch, tmp_path):

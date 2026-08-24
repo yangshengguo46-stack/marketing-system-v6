@@ -42,6 +42,16 @@ CONTEXT_MANIFEST_COUNTER_CONTEXT_KEY = "__context_manifest_counter"
 # cannot forge what ContextManifest reports.
 USER_PROFILE_PROJECTION_CONTEXT_KEY = "__user_profile_projection"
 
+# Owner-token-bound run counter for tool-call budgets declared by an active
+# Skill. It contains only tool names and counts, but is internal execution
+# state: callers must not forge, persist, or observe it.
+SKILL_TOOL_CALL_BUDGET_CONTEXT_KEY = "__skill_tool_call_budget"
+
+# Opaque carrier for a run's shared Skill tool budget. The value contains only
+# a random registry token, run identity, and Skill paths; counts and locks stay
+# process-local. It is copied to native subagents but never serialized.
+SKILL_TOOL_CALL_BUDGET_SCOPE_CONTEXT_KEY = "__skill_tool_call_budget_scope"
+
 LEGACY_AUTH_TOKEN_METADATA_KEY = "auth_token"
 
 
@@ -241,6 +251,8 @@ REDACTED_CONTEXT_KEYS = frozenset(
         SKILL_TOOL_POLICY_DECISION_CONTEXT_KEY,
         CONTEXT_MANIFEST_COUNTER_CONTEXT_KEY,
         USER_PROFILE_PROJECTION_CONTEXT_KEY,
+        SKILL_TOOL_CALL_BUDGET_CONTEXT_KEY,
+        SKILL_TOOL_CALL_BUDGET_SCOPE_CONTEXT_KEY,
     }
 )
 

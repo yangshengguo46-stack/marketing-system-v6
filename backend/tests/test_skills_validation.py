@@ -30,7 +30,7 @@ class TestValidateSkillFrontmatter:
     def test_valid_with_all_allowed_fields(self, tmp_path):
         skill_dir = _write_skill(
             tmp_path,
-            "---\nname: my-skill\ndescription: A skill\nlicense: MIT\nversion: '1.0'\nauthor: test\nallowed-tools: [bash, read_file]\n---\n\nBody\n",
+            "---\nname: my-skill\ndescription: A skill\nlicense: MIT\nversion: '1.0'\nauthor: test\nallowed-tools: [bash, read_file]\ntool-call-budgets:\n  - tools: [bash]\n    max-calls: 2\n---\n\nBody\n",
         )
         valid, msg, name = _validate_skill_frontmatter(skill_dir)
         assert valid is True
@@ -69,6 +69,30 @@ class TestValidateSkillFrontmatter:
         assert "allowed-tools" in msg
         assert str(tmp_path) not in msg
         assert "SKILL.md" in msg
+        assert name is None
+
+    def test_rejects_overlapping_tool_call_budget_groups(self, tmp_path):
+        skill_dir = _write_skill(
+            tmp_path,
+            "---\nname: my-skill\ndescription: A skill\ntool-call-budgets:\n  - tools: [web_search, web_fetch]\n    max-calls: 1\n  - tools: [web_search]\n    max-calls: 1\n---\n\nBody\n",
+        )
+
+        valid, msg, name = _validate_skill_frontmatter(skill_dir)
+
+        assert valid is False
+        assert "more than one" in msg
+        assert name is None
+
+    def test_rejects_non_positive_tool_call_budget(self, tmp_path):
+        skill_dir = _write_skill(
+            tmp_path,
+            "---\nname: my-skill\ndescription: A skill\ntool-call-budgets:\n  - tools: [web_search]\n    max-calls: 0\n---\n\nBody\n",
+        )
+
+        valid, msg, name = _validate_skill_frontmatter(skill_dir)
+
+        assert valid is False
+        assert "positive integer" in msg
         assert name is None
 
     def test_missing_skill_md(self, tmp_path):
@@ -205,6 +229,7 @@ class TestValidateSkillFrontmatter:
         assert "name" in ALLOWED_FRONTMATTER_PROPERTIES
         assert "description" in ALLOWED_FRONTMATTER_PROPERTIES
         assert "license" in ALLOWED_FRONTMATTER_PROPERTIES
+        assert "tool-call-budgets" in ALLOWED_FRONTMATTER_PROPERTIES
 
     def test_reads_utf8_on_windows_locale(self, tmp_path, monkeypatch):
         skill_dir = _write_skill(

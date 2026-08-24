@@ -816,6 +816,12 @@ Skill, one bounded term verification, semantic analysis, one content map, or ben
 None is a mandatory first stage. The historical `develop_account_strategy` implementation remains
 for stored-artifact compatibility and offline evaluation, but it is no longer a default Lead tool.
 
+The public `account-incubation` Skill supplies the generic method for “I do X; how should I start an account?”
+requests without turning industries into a fixed router. It keeps business targets, content audience, account
+direction, and a directly shootable topic in view. Its optional `tool-call-budgets` cap research calls and retry
+storms for the root run; native subagents share the same allowance and switching away from a Skill does not
+refresh it. The budget does not score, accept, reject, or force completion of marketing judgment.
+
 The Lead also uses one model-neutral operator contract across providers. It treats a clear request as the
 current assignment, returns the smallest useful result, and keeps irreversible external actions behind explicit
 approval. A first-pass account direction uses the user's facts without automatically researching competitors;
@@ -1096,6 +1102,8 @@ Skills are what make DeerFlow do *almost anything*.
 A standard Agent Skill is a structured capability module — a Markdown file that defines a workflow, best practices, and references to supporting resources. DeerFlow ships with built-in skills for research, report generation, slide creation, web pages, image and video generation, and more. But the real power is extensibility: add your own skills, replace the built-in ones, or combine them into compound workflows.
 
 Skills are loaded progressively — only when the task needs them, not all at once. This keeps the context window lean and makes DeerFlow work well even with token-sensitive models.
+
+An active skill may declare grouped `tool-call-budgets` in frontmatter. DeerFlow atomically reserves those calls before execution, shares one allowance across tools in a group and across native subagents in the root run, and hides exhausted schemas for later model steps. Switching Skills does not refresh an earlier Skill's ledger. Passive skills and undeclared tools are unaffected. Exhaustion prevents another call to that tool but does not command the model to finish. This is a deterministic cost/retry control, separate from `allowed-tools` permission and from the agent's business judgment.
 
 A skill directory is a package boundary: once DeerFlow finds its `SKILL.md`, nested `SKILL.md` files under that package (for example evaluation fixtures) remain supporting data and are not registered as runtime skills. Namespace directories without their own `SKILL.md` can still group nested skills.
 

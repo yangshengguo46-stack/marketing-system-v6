@@ -396,6 +396,14 @@ async def task_tool(
         "authz_attributes": authz_attributes,
         "deerflow_trace_id": deerflow_trace_id,
     }
+    # A Skill's execution budget belongs to the root Run, not to one Agent
+    # process. Pass only a validated opaque scope carrier; counters and locks
+    # remain in the process-local budget registry.
+    from deerflow.agents.middlewares.skill_tool_budget_middleware import export_skill_tool_budget_scope
+
+    skill_tool_budget_scope = export_skill_tool_budget_scope(parent_context)
+    if skill_tool_budget_scope is not None:
+        executor_kwargs["skill_tool_budget_scope"] = skill_tool_budget_scope
     if resolved_app_config is not None:
         executor_kwargs["app_config"] = resolved_app_config
     if run_extensions is not None:
