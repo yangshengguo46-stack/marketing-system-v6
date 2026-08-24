@@ -2716,3 +2716,18 @@ Lead 专属 `manage_user_profile` Tool 写成背景事实、沟通偏好、协�
 查看/编辑和全部供应商一致性尚未验收。详见 `audits/A147-sourced-user-profile-projection.md`、
 `evidence/a147-user-profile-live-acceptance-2026-08-23.md` 与
 `decisions/ADR-052-sourced-user-profile-projection.md`。
+
+## A148 TikTok 直播公会薄内核真实端到端
+
+2026-08-24 在提交 `da6536f1` 上以全新 Thread 原样运行“我是做 TikTok 直播公会的，主要地区为 MENA 和
+CCA，我该怎么起号”。GLM 5.2 思考模式、Memory/Plan/子 Agent 关闭，真实 `2026 -> Gateway -> Lead ->
+RunJournal -> UI` 闭环成功。运行只有 1 次模型调用、4,616 Token、约 56 秒；相比 A112 的 7 次调用、
+25,006 Token、约 206 秒，Token 下降 81.5%。
+
+业务验收失败：模型没有调用 Tool、搜索、对标或 Skill，也没有产出账号受众、定位候选、内容世界、表现形式和直接
+可拍选题，而是把问题回答成公会资质、主播招募、主播七天养号与九十天扩张教程，并无来源地补入审核周期、分成、
+ARPU、时段、配额和人数等具体数字。ContextManifest 证明 Memory、UserProfile、Active Skill、Durable
+Context 和子 Agent 均为空；模型在 reasoning 中自行判断无需搜索。因此本轮不是旧提示或记忆污染，而是极薄内核
+下的能力发现失败：成本问题已显著改善，业务脑尚未完成。测试只固定失败现场，没有恢复旧流水线，也没有新增行业
+硬门。详见 `audits/A148-tiktok-live-guild-thin-kernel-e2e.md` 与
+`evidence/a148-tiktok-live-guild-thin-kernel-e2e-2026-08-24.json`。
